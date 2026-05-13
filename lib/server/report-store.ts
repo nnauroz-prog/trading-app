@@ -40,7 +40,7 @@ export async function persistDailyRun(reportDate: string) {
     status: 'open'
   }));
 
-  await supabase.from('recommendations').insert(recommendations);
+  await supabase.from('recommendations').upsert(recommendations, { onConflict: 'report_date,asset_id' });
 
   await supabase.from('price_snapshots').insert(
     Object.values(mockSnapshots).map((s) => ({
@@ -89,7 +89,7 @@ export async function runDailyReview(reportDate: string) {
     };
   });
 
-  await supabase.from('recommendation_reviews').insert(reviews);
+  await supabase.from('recommendation_reviews').upsert(reviews, { onConflict: 'recommendation_id,review_date' });
 
   return { reviewed: true, inserted: reviews.length, yesterday: yesterdayStr };
 }
