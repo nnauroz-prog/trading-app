@@ -37,9 +37,10 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 - `db/migrations/*.sql` Datenbankstruktur
 
 ## Daily Automation
-- Vercel-Cron triggert `GET /api/cron/daily-report` mit Header `Authorization: Bearer <CRON_SECRET>`.
+- `vercel.json` plant einen täglichen Cron um 06:00 UTC auf `/api/cron/daily-report`. Vercel injiziert dabei automatisch `Authorization: Bearer <CRON_SECRET>`, sobald die Env-Variable im Projekt gesetzt ist.
 - Route persistiert Tagesdaten und erzeugt Review für den Vortag, falls Supabase gesetzt ist.
 - Ohne Supabase-Env läuft der Endpoint transparent im Mock-Modus.
+- Schedule kann in `vercel.json` angepasst werden; Format ist Standard-Cron.
 
 ## Datenquellen
 - **Krypto (BTC/ETH/SOL):** CoinGecko `/coins/markets` mit `price_change_percentage=24h,7d,30d`. Fällt bei Fehler/Quota auf Mock zurück.
@@ -48,7 +49,7 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
   - `change30d` ist `monthToDatePriceReturnDaily` (Tage seit Monatsanfang — Wert variiert je nach Wochentag)
   - Reale 7/30-Tage-Returns liegen im Premium-Plan (`/stock/candle`). Falls aufgerüstet, kann der Provider direkt umgestellt werden.
   - Ohne `FINNHUB_API_KEY` oder bei Fehler → Mock-Fallback pro Asset.
-- **News-Sentiment:** Finnhub `/company-news` pro Aktie + `/news?category=crypto` als Sammel-Score für alle Krypto-Assets. Lexikon-basiertes Scoring (DE/EN) liefert eine 0-100-Zahl, die in `signal.sentiment` einfließt. Ohne `FINNHUB_API_KEY` bleibt der Default (60) erhalten. Das Lexikon ist klein und absichtlich konservativ — eine LLM- oder VADER-basierte Auswertung ist als Folge-Iteration möglich.
+- **News-Sentiment:** Finnhub `/company-news` pro Aktie + `/news?category=crypto` als Sammel-Score für alle Krypto-Assets. Lexikon-basiertes Scoring (DE/EN) liefert eine 0-100-Zahl, die in `signal.sentiment` einfließt. Die Asset-Detail-Seite rendert die letzten 6 Headlines pro Asset inkl. Klassifikation (+/-/·) als Transparenz-Layer. Ohne `FINNHUB_API_KEY` bleibt der Default (60) erhalten. Das Lexikon ist klein und absichtlich konservativ — eine LLM- oder VADER-basierte Auswertung ist als Folge-Iteration möglich.
 
 ## Trefferquote
 - `getHitRates()` liest `recommendation_reviews` über die letzten 7/30 Tage und liefert das Verhältnis `direction_correct = true` zu allen ausgewerteten Reviews.
