@@ -1,11 +1,14 @@
 import Link from 'next/link';
 import { runDailyAnalysis } from '@/lib/analysis/engine';
 import { ReportCard } from '@/components/report-card';
+import { mockAssets } from '@/lib/data/mock';
 
-export default function HomePage() {
-  const report = runDailyAnalysis();
-  const crypto = report.recommendations.filter((r) => ['btc', 'eth', 'sol'].includes(r.assetId));
-  const stocks = report.recommendations.filter((r) => ['nvda', 'sap', 'msft'].includes(r.assetId));
+export default async function HomePage() {
+  const report = await runDailyAnalysis();
+  const cryptoIds = new Set(mockAssets.filter((a) => a.category === 'crypto').map((a) => a.id));
+  const stockIds = new Set(mockAssets.filter((a) => a.category === 'stock').map((a) => a.id));
+  const crypto = report.recommendations.filter((r) => cryptoIds.has(r.assetId));
+  const stocks = report.recommendations.filter((r) => stockIds.has(r.assetId));
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-8">
@@ -21,9 +24,9 @@ export default function HomePage() {
       <section className="rounded-xl border border-slate-800 bg-slate-900 p-4">
         <h2 className="mb-3 text-lg font-semibold">Watchlist</h2>
         <div className="flex flex-wrap gap-2">
-          {['BTC', 'ETH', 'SOL', 'XRP', 'NVDA', 'AAPL', 'MSFT', 'SAP', 'SIE', 'ALV'].map((ticker) => (
-            <Link key={ticker} href={`/assets/${ticker.toLowerCase()}`} className="rounded bg-slate-800 px-3 py-1 text-sm hover:bg-slate-700">
-              {ticker}
+          {mockAssets.map((asset) => (
+            <Link key={asset.id} href={`/assets/${asset.ticker.toLowerCase()}`} className="rounded bg-slate-800 px-3 py-1 text-sm hover:bg-slate-700">
+              {asset.ticker}
             </Link>
           ))}
         </div>

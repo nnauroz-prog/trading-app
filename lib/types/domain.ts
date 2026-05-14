@@ -17,12 +17,14 @@ export interface PriceSnapshot {
   change7d: number;
   change30d: number;
   volume: number;
+  source: 'mock' | 'coingecko';
 }
 
 export interface AnalysisSignal {
   trend: number;
   volume: number;
   momentum: number;
+  /** 0-100, höher = riskanter. Wird im Score als Penalty (100 - volatilityRisk) verwendet. */
   volatilityRisk: number;
   macroContext: number;
   sentiment: number;
