@@ -41,7 +41,10 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
   - Reale 7/30-Tage-Returns liegen im Premium-Plan (`/stock/candle`). Falls aufgerüstet, kann der Provider direkt umgestellt werden.
   - Ohne `FINNHUB_API_KEY` oder bei Fehler → Mock-Fallback pro Asset.
 
+## Trefferquote
+- `getHitRates()` liest `recommendation_reviews` über die letzten 7/30 Tage und liefert das Verhältnis `direction_correct = true` zu allen ausgewerteten Reviews.
+- Im Dashboard rendert das `HitRateTile` die beiden Werte plus Sample-Size. Ohne Supabase-Env-Variablen zeigt es den Hinweis "Persistenz nicht aktiv".
+
 ## Nächster Schritt
 - News-Sentiment einbinden und in `signal.sentiment` einfließen lassen.
-- Trefferquote 7/30 Tage als Supabase-RPC + Anzeige im Dashboard.
 - Supabase Auth aktivieren (single-user access).

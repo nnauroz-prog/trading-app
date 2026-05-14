@@ -95,6 +95,45 @@ export async function runDailyReview(reportDate: string) {
   return { reviewed: true, inserted: reviews.length, yesterday: yesterdayStr };
 }
 
+export interface HitRateSummary {
+  hitRate7d: number | null;
+  hitRate30d: number | null;
+  sampleSize7d: number;
+  sampleSize30d: number;
+}
+
+export async function getHitRates(referenceDate = new Date().toISOString().slice(0, 10)): Promise<HitRateSummary | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  const since30 = shiftIsoDate(referenceDate, -30);
+
+  const { data, error } = await supabase
+    .from('recommendation_reviews')
+    .select('review_date, direction_correct')
+    .gte('review_date', since30)
+    .lte('review_date', referenceDate)
+    .not('direction_correct', 'is', null);
+
+  if (error || !data) return null;
+
+  const since7 = shiftIsoDate(referenceDate, -7);
+  const window7 = data.filter((r) => r.review_date >= since7);
+
+  return {
+    hitRate7d: ratio(window7),
+    hitRate30d: ratio(data),
+    sampleSize7d: window7.length,
+    sampleSize30d: data.length
+  };
+}
+
+function ratio(rows: { direction_correct: boolean | null }[]): number | null {
+  if (rows.length === 0) return null;
+  const hits = rows.filter((r) => r.direction_correct === true).length;
+  return hits / rows.length;
+}
+
 function shiftIsoDate(iso: string, days: number): string {
   const [y, m, d] = iso.split('-').map(Number);
   const shifted = new Date(Date.UTC(y, m - 1, d + days));

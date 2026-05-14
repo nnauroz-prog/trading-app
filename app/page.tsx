@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { runDailyAnalysis } from '@/lib/analysis/engine';
 import { ReportCard } from '@/components/report-card';
+import { HitRateTile } from '@/components/hit-rate-tile';
 import { mockAssets } from '@/lib/data/mock';
+import { getHitRates } from '@/lib/server/report-store';
 
 export default async function HomePage() {
-  const report = await runDailyAnalysis();
+  const [report, hitRates] = await Promise.all([runDailyAnalysis(), getHitRates()]);
   const cryptoIds = new Set(mockAssets.filter((a) => a.category === 'crypto').map((a) => a.id));
   const stockIds = new Set(mockAssets.filter((a) => a.category === 'stock').map((a) => a.id));
   const crypto = report.recommendations.filter((r) => cryptoIds.has(r.assetId));
@@ -17,6 +19,7 @@ export default async function HomePage() {
         <p className="mt-2 text-slate-300">{report.marketMood}</p>
         <p className="mt-2 text-xs text-slate-400">Analyse- und Entscheidungsunterstützungssystem. Keine Finanzberatung, keine Gewinn-Garantie.</p>
       </header>
+      <HitRateTile summary={hitRates} />
       <div className="grid gap-6 md:grid-cols-2">
         <ReportCard title="Top-Krypto" rows={crypto} />
         <ReportCard title="Top-Aktien" rows={stocks} />
