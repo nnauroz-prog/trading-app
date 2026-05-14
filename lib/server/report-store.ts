@@ -1,5 +1,5 @@
 import { mockAssets } from '@/lib/data/mock';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { runDailyAnalysis } from '@/lib/analysis/engine';
 import { evaluateDirection } from '@/lib/review/evaluator';
 import { getSnapshots } from '@/lib/providers';

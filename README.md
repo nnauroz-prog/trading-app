@@ -13,13 +13,21 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 | Variable | Pflicht | Zweck |
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Production | Persistenz von Reports, Recommendations, Snapshots, Reviews. Leer = Mock-Modus. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production | Aktiviert Supabase Auth (Magic Link). Leer → Middleware lässt durch. |
+| `ALLOWED_EMAIL` | Empfohlen | Nur diese E-Mail darf einloggen. Andere werden direkt abgemeldet. Leer = jeder mit Magic Link. |
 | `CRON_SECRET` | Production | Schützt `GET /api/cron/daily-report`. Im Dev darf der Wert leer sein (dann ungeprüft). |
 | `COINGECKO_API_KEY` | Optional | Pro-API für Krypto-Preise. Ohne Key wird die Free-API verwendet. |
 | `FINNHUB_API_KEY` | Optional | Aktien-Preise + Metriken + News-Sentiment via Finnhub. Ohne Key bleiben Aktien auf Mock und Sentiment auf Default. |
 | `NEWS_API_KEY` | Optional | Reserviert für zusätzliche News-Provider. |
 
+## Auth
+- Magic-Link-Login via Supabase Auth (`@supabase/ssr`).
+- `middleware.ts` schützt alle Routen außer `/login`, `/auth/callback` und `/api/cron/*`. Ohne `NEXT_PUBLIC_SUPABASE_*`-Vars deaktiviert sich das Gate (Mock-Modus).
+- `ALLOWED_EMAIL` macht aus dem System einen Single-User-Login: alle anderen Adressen werden direkt wieder ausgeloggt.
+- Supabase-Projekt-Setup: Email-Provider aktivieren, Redirect-URL `<APP_URL>/auth/callback` in den Auth-Settings hinterlegen.
+
 ## Architektur
-- `app/` Dashboard + Asset-Detail + Cron API Route
+- `app/` Dashboard + Login/Logout + Asset-Detail + Cron API Route
 - `lib/analysis` transparentes Scoring-Modell (Krypto/Aktien); Signale werden aus Snapshots abgeleitet
 - `lib/providers/coingecko.ts` Live-Preise für BTC/ETH/SOL (Free oder Pro)
 - `lib/providers/index.ts` aggregiert Live + Mock und liefert kombinierte Snapshots
