@@ -23,3 +23,9 @@ export const coingeckoIdByAssetId: Record<string, string> = {
   eth: 'ethereum',
   sol: 'solana'
 };
+
+export const finnhubSymbolByAssetId: Record<string, string> = {
+  nvda: 'NVDA',
+  msft: 'MSFT',
+  sap: 'SAP'
+};

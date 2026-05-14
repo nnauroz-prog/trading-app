@@ -15,7 +15,8 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 | `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Production | Persistenz von Reports, Recommendations, Snapshots, Reviews. Leer = Mock-Modus. |
 | `CRON_SECRET` | Production | Schützt `GET /api/cron/daily-report`. Im Dev darf der Wert leer sein (dann ungeprüft). |
 | `COINGECKO_API_KEY` | Optional | Pro-API für Krypto-Preise. Ohne Key wird die Free-API verwendet. |
-| `FINNHUB_API_KEY` / `NEWS_API_KEY` | Optional | Reserviert für künftige Stock-/News-Provider. |
+| `FINNHUB_API_KEY` | Optional | Aktien-Preise + Metriken via Finnhub. Ohne Key bleiben Aktien auf Mock. |
+| `NEWS_API_KEY` | Optional | Reserviert für News-Sentiment-Provider. |
 
 ## Architektur
 - `app/` Dashboard + Asset-Detail + Cron API Route
@@ -34,10 +35,13 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 
 ## Datenquellen
 - **Krypto (BTC/ETH/SOL):** CoinGecko `/coins/markets` mit `price_change_percentage=24h,7d,30d`. Fällt bei Fehler/Quota auf Mock zurück.
-- **Aktien (NVDA/SAP/MSFT):** aktuell Mock. Finnhub-Anbindung folgt.
+- **Aktien (NVDA/SAP/MSFT):** Finnhub `/quote` für Preis + 24h-Change, `/stock/metric?metric=all` für Renditen.
+  - `change7d` ist `5DayPriceReturnDaily` (≈ 5 Handelstage)
+  - `change30d` ist `monthToDatePriceReturnDaily` (Tage seit Monatsanfang — Wert variiert je nach Wochentag)
+  - Reale 7/30-Tage-Returns liegen im Premium-Plan (`/stock/candle`). Falls aufgerüstet, kann der Provider direkt umgestellt werden.
+  - Ohne `FINNHUB_API_KEY` oder bei Fehler → Mock-Fallback pro Asset.
 
 ## Nächster Schritt
-- Finnhub-Provider für Aktien ergänzen.
-- Supabase Auth aktivieren (single-user access).
-- Trefferquote 7/30 Tage als Supabase-RPC + Anzeige im Dashboard.
 - News-Sentiment einbinden und in `signal.sentiment` einfließen lassen.
+- Trefferquote 7/30 Tage als Supabase-RPC + Anzeige im Dashboard.
+- Supabase Auth aktivieren (single-user access).

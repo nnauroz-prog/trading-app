@@ -17,7 +17,7 @@ export interface PriceSnapshot {
   change7d: number;
   change30d: number;
   volume: number;
-  source: 'mock' | 'coingecko';
+  source: 'mock' | 'coingecko' | 'finnhub';
 }
 
 export interface AnalysisSignal {
