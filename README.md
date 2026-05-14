@@ -20,6 +20,12 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 | `FINNHUB_API_KEY` | Optional | Aktien-Preise + Metriken + News-Sentiment via Finnhub. Ohne Key bleiben Aktien auf Mock und Sentiment auf Default. |
 | `NEWS_API_KEY` | Optional | Reserviert für zusätzliche News-Provider. |
 
+## History
+- `/history` listet vergangene Recommendations + zugehörige Review-Verdicts aus Supabase.
+- Filter: Asset (Dropdown), Aktion (BUY/WATCH/HOLD/AVOID/SELL). Filterzustand lebt in der URL.
+- Bei mehreren Reviews pro Empfehlung wird der jüngste angezeigt.
+- Ohne Supabase-Env zeigt die Seite einen Hinweis statt einer leeren Tabelle.
+
 ## Auth
 - Magic-Link-Login via Supabase Auth (`@supabase/ssr`).
 - `middleware.ts` schützt alle Routen außer `/login`, `/auth/callback` und `/api/cron/*`. Ohne `NEXT_PUBLIC_SUPABASE_*`-Vars deaktiviert sich das Gate (Mock-Modus).

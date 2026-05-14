@@ -30,10 +30,18 @@ export default async function HomePage() {
             <p className="mt-2 text-xs text-slate-400">Analyse- und Entscheidungsunterstützungssystem. Keine Finanzberatung, keine Gewinn-Garantie.</p>
           </div>
           {authActive && user && (
-            <form action="/logout" method="post" className="text-right text-xs text-slate-400">
+            <div className="text-right text-xs text-slate-400">
               <p className="mb-1">{user.email}</p>
-              <button type="submit" className="rounded bg-slate-800 px-2 py-1 hover:bg-slate-700">Logout</button>
-            </form>
+              <div className="flex items-center gap-2">
+                <Link href="/history" className="rounded bg-slate-800 px-2 py-1 hover:bg-slate-700">History</Link>
+                <form action="/logout" method="post">
+                  <button type="submit" className="rounded bg-slate-800 px-2 py-1 hover:bg-slate-700">Logout</button>
+                </form>
+              </div>
+            </div>
+          )}
+          {!authActive && (
+            <Link href="/history" className="self-start rounded bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:bg-slate-700">History</Link>
           )}
         </div>
       </header>
