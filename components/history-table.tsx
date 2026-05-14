@@ -33,6 +33,7 @@ export function HistoryTable({ rows }: { rows: HistoryRow[] }) {
             <th className="px-3 py-2">Confidence</th>
             <th className="px-3 py-2">Einstieg</th>
             <th className="px-3 py-2">Review</th>
+            <th className="px-3 py-2">Horizont</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800">
@@ -49,6 +50,9 @@ export function HistoryTable({ rows }: { rows: HistoryRow[] }) {
                 ) : (
                   <span className="text-xs text-slate-500">–</span>
                 )}
+              </td>
+              <td className="px-3 py-2 text-xs text-slate-400">
+                {row.reviewHorizon !== null ? `${row.reviewHorizon}d` : '–'}
               </td>
             </tr>
           ))}

@@ -68,9 +68,11 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
   - Ohne `FINNHUB_API_KEY` oder bei Fehler → Mock-Fallback pro Asset.
 - **News-Sentiment:** Finnhub `/company-news` pro Aktie + `/news?category=crypto` als Sammel-Score für alle Krypto-Assets. Lexikon-basiertes Scoring (DE/EN) liefert eine 0-100-Zahl, die in `signal.sentiment` einfließt. Die Asset-Detail-Seite rendert die letzten 6 Headlines pro Asset inkl. Klassifikation (+/-/·) als Transparenz-Layer. Ohne `FINNHUB_API_KEY` bleibt der Default (60) erhalten. Das Lexikon ist klein und absichtlich konservativ — eine LLM- oder VADER-basierte Auswertung ist als Folge-Iteration möglich.
 
-## Trefferquote
-- `getHitRates()` liest `recommendation_reviews` über die letzten 7/30 Tage und liefert das Verhältnis `direction_correct = true` zu allen ausgewerteten Reviews.
-- Im Dashboard rendert das `HitRateTile` die beiden Werte plus Sample-Size. Ohne Supabase-Env-Variablen zeigt es den Hinweis "Persistenz nicht aktiv".
+## Reviews & Trefferquote
+- Der tägliche Cron-Job (`runDailyReview`) prüft Empfehlungen, die exakt **7 bzw. 30 Tage alt** sind (`horizon_days` in `recommendation_reviews`). Frühere Versionen reviewten am Folgetag, was nur Tagesrauschen gemessen hat.
+- Beide Horizonte landen in `recommendation_reviews` mit `review_date` = heute und `horizon_days` ∈ {7, 30}. Migration: `db/migrations/004_review_horizon.sql`.
+- `getHitRates()` bucketiert nach Horizont (`{ horizon7, horizon30 }`) und liefert `rate` + `sampleSize`. `HitRateTile` rendert die beiden Buckets. Solange noch keine 7d/30d-Reviews vorliegen, zeigt jede Kachel einen klaren Hinweis.
+- Alte Reviews aus dem alten 1-Tages-Pfad (Spalte `horizon_days = NULL`) bleiben in der Tabelle erhalten, werden aber für die Hit-Rate-Berechnung ignoriert.
 
 ## Nächster Schritt
 - Supabase Auth aktivieren (single-user access).

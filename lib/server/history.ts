@@ -9,6 +9,7 @@ export interface HistoryRow {
   entryPrice: number | null;
   rationale: string;
   reviewVerdict: 'good' | 'bad' | 'neutral' | null;
+  reviewHorizon: number | null;
   directionCorrect: boolean | null;
   learning: string | null;
 }
@@ -28,6 +29,7 @@ interface SupabaseHistoryRow {
   rationale: string;
   recommendation_reviews?: Array<{
     review_date: string;
+    horizon_days: number | null;
     verdict: 'good' | 'bad' | 'neutral' | null;
     direction_correct: boolean | null;
     learning: string | null;
@@ -40,7 +42,7 @@ export async function getHistory(filters: HistoryFilters = {}): Promise<HistoryR
 
   let query = supabase
     .from('recommendations')
-    .select('report_date, asset_id, action, confidence_score, entry_price, rationale, recommendation_reviews(review_date, verdict, direction_correct, learning)')
+    .select('report_date, asset_id, action, confidence_score, entry_price, rationale, recommendation_reviews(review_date, horizon_days, verdict, direction_correct, learning)')
     .order('report_date', { ascending: false })
     .limit(filters.limit ?? 100);
 
@@ -62,6 +64,7 @@ export async function getHistory(filters: HistoryFilters = {}): Promise<HistoryR
       entryPrice: row.entry_price,
       rationale: row.rationale,
       reviewVerdict: latestReview?.verdict ?? null,
+      reviewHorizon: latestReview?.horizon_days ?? null,
       directionCorrect: latestReview?.direction_correct ?? null,
       learning: latestReview?.learning ?? null
     };

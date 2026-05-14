@@ -4,6 +4,9 @@ import { runDailyAnalysis } from '@/lib/analysis/engine';
 import { evaluateDirection } from '@/lib/review/evaluator';
 import { getSnapshots } from '@/lib/providers';
 
+const REVIEW_HORIZONS = [7, 30] as const;
+export type ReviewHorizon = (typeof REVIEW_HORIZONS)[number];
+
 export async function persistDailyRun(reportDate: string) {
   const supabase = getSupabaseAdmin();
   const report = await runDailyAnalysis();
@@ -65,66 +68,75 @@ export async function runDailyReview(reportDate: string) {
     return { reviewed: false, reason: 'missing_supabase_env' as const };
   }
 
-  const yesterdayStr = shiftIsoDate(reportDate, -1);
-
-  const { data: recs } = await supabase
-    .from('recommendations')
-    .select('id,action,asset_id,entry_price')
-    .eq('report_date', yesterdayStr);
-
-  if (!recs?.length) return { reviewed: true, inserted: 0, yesterday: yesterdayStr };
-
   const snapshots = await getSnapshots();
+  const perHorizon: Record<number, number> = {};
+  let totalInserted = 0;
 
-  const reviews = recs.map((rec) => {
-    const nowPrice = snapshots[rec.asset_id]?.price ?? rec.entry_price ?? 0;
-    const entry = rec.entry_price ?? nowPrice;
-    const movePct = entry === 0 ? 0 : ((nowPrice - entry) / entry) * 100;
-    const result = evaluateDirection(rec.action, movePct);
-    return {
-      recommendation_id: rec.id,
-      review_date: reportDate,
-      direction_correct: result.correct,
-      verdict: result.verdict,
-      learning: result.learning
-    };
-  });
+  for (const horizon of REVIEW_HORIZONS) {
+    const targetDate = shiftIsoDate(reportDate, -horizon);
+    const { data: recs } = await supabase
+      .from('recommendations')
+      .select('id,action,asset_id,entry_price')
+      .eq('report_date', targetDate);
 
-  await supabase.from('recommendation_reviews').upsert(reviews, { onConflict: 'recommendation_id,review_date' });
+    if (!recs?.length) {
+      perHorizon[horizon] = 0;
+      continue;
+    }
 
-  return { reviewed: true, inserted: reviews.length, yesterday: yesterdayStr };
+    const reviews = recs.map((rec) => {
+      const nowPrice = snapshots[rec.asset_id]?.price ?? rec.entry_price ?? 0;
+      const entry = rec.entry_price ?? nowPrice;
+      const movePct = entry === 0 ? 0 : ((nowPrice - entry) / entry) * 100;
+      const result = evaluateDirection(rec.action, movePct);
+      return {
+        recommendation_id: rec.id,
+        review_date: reportDate,
+        horizon_days: horizon,
+        direction_correct: result.correct,
+        verdict: result.verdict,
+        learning: result.learning
+      };
+    });
+
+    await supabase.from('recommendation_reviews').upsert(reviews, { onConflict: 'recommendation_id,review_date' });
+    perHorizon[horizon] = reviews.length;
+    totalInserted += reviews.length;
+  }
+
+  return { reviewed: true, inserted: totalInserted, perHorizon };
+}
+
+export interface HitRateBucket {
+  rate: number | null;
+  sampleSize: number;
 }
 
 export interface HitRateSummary {
-  hitRate7d: number | null;
-  hitRate30d: number | null;
-  sampleSize7d: number;
-  sampleSize30d: number;
+  horizon7: HitRateBucket;
+  horizon30: HitRateBucket;
 }
 
-export async function getHitRates(referenceDate = new Date().toISOString().slice(0, 10)): Promise<HitRateSummary | null> {
+export async function getHitRates(): Promise<HitRateSummary | null> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
 
-  const since30 = shiftIsoDate(referenceDate, -30);
-
   const { data, error } = await supabase
     .from('recommendation_reviews')
-    .select('review_date, direction_correct')
-    .gte('review_date', since30)
-    .lte('review_date', referenceDate)
+    .select('horizon_days, direction_correct')
+    .in('horizon_days', [...REVIEW_HORIZONS])
     .not('direction_correct', 'is', null);
 
   if (error || !data) return null;
 
-  const since7 = shiftIsoDate(referenceDate, -7);
-  const window7 = data.filter((r) => r.review_date >= since7);
+  const bucketBy = (h: ReviewHorizon): HitRateBucket => {
+    const rows = data.filter((r) => r.horizon_days === h);
+    return { rate: ratio(rows), sampleSize: rows.length };
+  };
 
   return {
-    hitRate7d: ratio(window7),
-    hitRate30d: ratio(data),
-    sampleSize7d: window7.length,
-    sampleSize30d: data.length
+    horizon7: bucketBy(7),
+    horizon30: bucketBy(30)
   };
 }
 
