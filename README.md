@@ -15,8 +15,8 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 | `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Production | Persistenz von Reports, Recommendations, Snapshots, Reviews. Leer = Mock-Modus. |
 | `CRON_SECRET` | Production | Schützt `GET /api/cron/daily-report`. Im Dev darf der Wert leer sein (dann ungeprüft). |
 | `COINGECKO_API_KEY` | Optional | Pro-API für Krypto-Preise. Ohne Key wird die Free-API verwendet. |
-| `FINNHUB_API_KEY` | Optional | Aktien-Preise + Metriken via Finnhub. Ohne Key bleiben Aktien auf Mock. |
-| `NEWS_API_KEY` | Optional | Reserviert für News-Sentiment-Provider. |
+| `FINNHUB_API_KEY` | Optional | Aktien-Preise + Metriken + News-Sentiment via Finnhub. Ohne Key bleiben Aktien auf Mock und Sentiment auf Default. |
+| `NEWS_API_KEY` | Optional | Reserviert für zusätzliche News-Provider. |
 
 ## Architektur
 - `app/` Dashboard + Asset-Detail + Cron API Route
@@ -40,11 +40,12 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
   - `change30d` ist `monthToDatePriceReturnDaily` (Tage seit Monatsanfang — Wert variiert je nach Wochentag)
   - Reale 7/30-Tage-Returns liegen im Premium-Plan (`/stock/candle`). Falls aufgerüstet, kann der Provider direkt umgestellt werden.
   - Ohne `FINNHUB_API_KEY` oder bei Fehler → Mock-Fallback pro Asset.
+- **News-Sentiment:** Finnhub `/company-news` pro Aktie + `/news?category=crypto` als Sammel-Score für alle Krypto-Assets. Lexikon-basiertes Scoring (DE/EN) liefert eine 0-100-Zahl, die in `signal.sentiment` einfließt. Ohne `FINNHUB_API_KEY` bleibt der Default (60) erhalten. Das Lexikon ist klein und absichtlich konservativ — eine LLM- oder VADER-basierte Auswertung ist als Folge-Iteration möglich.
 
 ## Trefferquote
 - `getHitRates()` liest `recommendation_reviews` über die letzten 7/30 Tage und liefert das Verhältnis `direction_correct = true` zu allen ausgewerteten Reviews.
 - Im Dashboard rendert das `HitRateTile` die beiden Werte plus Sample-Size. Ohne Supabase-Env-Variablen zeigt es den Hinweis "Persistenz nicht aktiv".
 
 ## Nächster Schritt
-- News-Sentiment einbinden und in `signal.sentiment` einfließen lassen.
 - Supabase Auth aktivieren (single-user access).
+- Sentiment-Modell auf VADER/LLM upgraden, sobald die naïve Lexikon-Heuristik zu rauschig wird.
