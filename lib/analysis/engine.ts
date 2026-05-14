@@ -1,7 +1,9 @@
 import { mockAssets } from '@/lib/data/mock';
 import { getSnapshots } from '@/lib/providers';
 import { fetchSentimentScores } from '@/lib/providers/sentiment';
+import { fetchStockMetrics, StockMetrics } from '@/lib/providers/finnhub';
 import { buildRecommendation, scoreCrypto, scoreStock } from '@/lib/analysis/scoring';
+import { scoreEarningsGrowth, scoreFundamentals } from '@/lib/analysis/fundamentals';
 import { AnalysisSignal, PriceSnapshot } from '@/lib/types/domain';
 
 export interface DailyAnalysis {
@@ -12,13 +14,19 @@ export interface DailyAnalysis {
 }
 
 export async function runDailyAnalysis(): Promise<DailyAnalysis> {
-  const [snapshots, sentimentScores] = await Promise.all([getSnapshots(), fetchSentimentScores()]);
+  const [snapshots, sentimentScores, stockMetrics] = await Promise.all([
+    getSnapshots(),
+    fetchSentimentScores(),
+    fetchStockMetrics()
+  ]);
+
   const recommendations = mockAssets.map((asset) => {
     const snapshot = snapshots[asset.id];
     const sentiment = sentimentScores?.[asset.id] ?? 60;
-    const signal = buildSignal(asset.category, snapshot, sentiment);
+    const metrics = stockMetrics?.[asset.id];
+    const signal = buildSignal(asset.category, snapshot, sentiment, metrics);
     const score = asset.category === 'crypto' ? scoreCrypto(signal) : scoreStock(signal);
-    const rationale = buildRationale(asset.ticker, snapshot, sentimentScores?.[asset.id]);
+    const rationale = buildRationale(asset.ticker, snapshot, sentimentScores?.[asset.id], metrics);
     return buildRecommendation(asset.id, score, rationale);
   });
 
@@ -30,11 +38,19 @@ export async function runDailyAnalysis(): Promise<DailyAnalysis> {
   };
 }
 
-function buildSignal(category: 'crypto' | 'stock' | 'etf', snapshot: PriceSnapshot | undefined, sentiment: number): AnalysisSignal {
+function buildSignal(
+  category: 'crypto' | 'stock' | 'etf',
+  snapshot: PriceSnapshot | undefined,
+  sentiment: number,
+  metrics: StockMetrics | undefined
+): AnalysisSignal {
   const trend = snapshot ? scaleChange(snapshot.change30d, 30) : 60;
   const momentum = snapshot ? scaleChange(snapshot.change7d, 10) : 60;
   const dailyMove = snapshot ? Math.abs(snapshot.change24h) : 2;
   const volatilityRisk = clamp(40 + dailyMove * 6);
+
+  const fundamentals = category === 'stock' ? (metrics ? scoreFundamentals(metrics) ?? 50 : 50) : undefined;
+  const earningsGrowth = category === 'stock' ? (metrics ? scoreEarningsGrowth(metrics) ?? 50 : 50) : undefined;
 
   return {
     trend,
@@ -43,8 +59,8 @@ function buildSignal(category: 'crypto' | 'stock' | 'etf', snapshot: PriceSnapsh
     volatilityRisk,
     macroContext: 60,
     sentiment,
-    fundamentals: category === 'stock' ? 65 : undefined,
-    earningsGrowth: category === 'stock' ? 60 : undefined
+    fundamentals,
+    earningsGrowth
   };
 }
 
@@ -57,10 +73,18 @@ function clamp(value: number): number {
   return Math.max(0, Math.min(100, value));
 }
 
-function buildRationale(ticker: string, snapshot: PriceSnapshot | undefined, sentiment: number | undefined): string {
+function buildRationale(
+  ticker: string,
+  snapshot: PriceSnapshot | undefined,
+  sentiment: number | undefined,
+  metrics: StockMetrics | undefined
+): string {
   if (!snapshot) return `${ticker}: Keine aktuellen Daten – Bewertung auf Default-Annahmen.`;
   const arrow30 = snapshot.change30d >= 0 ? '+' : '';
   const arrow7 = snapshot.change7d >= 0 ? '+' : '';
-  const sentimentPart = sentiment !== undefined ? ` Sentiment ${sentiment}/100.` : '';
-  return `${ticker}: 30d ${arrow30}${snapshot.change30d.toFixed(1)}%, 7d ${arrow7}${snapshot.change7d.toFixed(1)}%.${sentimentPart} Risiko aktiv beachten.`;
+  const parts = [`${ticker}: 30d ${arrow30}${snapshot.change30d.toFixed(1)}%, 7d ${arrow7}${snapshot.change7d.toFixed(1)}%`];
+  if (metrics?.pe !== undefined && metrics?.pe !== null) parts.push(`PE ${metrics.pe.toFixed(1)}`);
+  if (metrics?.epsGrowthYoy !== undefined && metrics?.epsGrowthYoy !== null) parts.push(`EPS YoY ${metrics.epsGrowthYoy.toFixed(0)}%`);
+  if (sentiment !== undefined) parts.push(`Sentiment ${sentiment}/100`);
+  return parts.join(' · ') + '. Risiko aktiv beachten.';
 }

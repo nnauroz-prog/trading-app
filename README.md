@@ -56,6 +56,9 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 - Ohne Supabase-Env läuft der Endpoint transparent im Mock-Modus.
 - Schedule kann in `vercel.json` angepasst werden; Format ist Standard-Cron.
 
+- **Aktien-Fundamentals + Earnings:** Aus dem gleichen Finnhub `/stock/metric?metric=all`-Call werden `pe`, `peg`, `roe`, `debtToEquity` (Fundamentals-Score) und `epsGrowthQuarterlyYoy`, `revenueGrowthQuarterlyYoy` (Earnings-Score) abgeleitet (Logik in `lib/analysis/fundamentals.ts`). Jeder Metrik-Wert wird auf eine 0-100-Skala gemappt, fehlende Werte werden übersprungen. Liegt keine einzige Metrik vor, fällt der Score auf 50 (neutral). Damit sind `signal.fundamentals` und `signal.earningsGrowth` für Aktien echt; Krypto-Assets behalten den 50-Default, weil „Fundamentals" für Token konzeptionell nicht trägt.
+- **Volumen-Signal bleibt Default 60:** Das echte Tagesvolumen liegt nur in `/stock/candle` (Premium) bzw. bräuchte für Krypto eine zusätzliche `/coins/{id}/market_chart`-Anfrage je Asset. Daher offen als bewusste Lücke dokumentiert.
+
 ## Datenquellen
 - **Krypto (BTC/ETH/SOL):** CoinGecko `/coins/markets` mit `price_change_percentage=24h,7d,30d`. Fällt bei Fehler/Quota auf Mock zurück.
 - **Aktien (NVDA/SAP/MSFT):** Finnhub `/quote` für Preis + 24h-Change, `/stock/metric?metric=all` für Renditen.

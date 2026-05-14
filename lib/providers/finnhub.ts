@@ -10,12 +10,32 @@ interface FinnhubQuote {
   pc: number;
 }
 
+interface FinnhubMetricBlock {
+  '5DayPriceReturnDaily'?: number | null;
+  'monthToDatePriceReturnDaily'?: number | null;
+  '10DayAverageTradingVolume'?: number | null;
+  'peNormalizedAnnual'?: number | null;
+  'peTTM'?: number | null;
+  'pegRatio'?: number | null;
+  'roeRfy'?: number | null;
+  'roeTTM'?: number | null;
+  'totalDebt/totalEquityAnnual'?: number | null;
+  'epsGrowthQuarterlyYoy'?: number | null;
+  'revenueGrowthQuarterlyYoy'?: number | null;
+  'revenueGrowthTTMYoy'?: number | null;
+}
+
 interface FinnhubMetricResponse {
-  metric?: {
-    '5DayPriceReturnDaily'?: number | null;
-    'monthToDatePriceReturnDaily'?: number | null;
-    '10DayAverageTradingVolume'?: number | null;
-  };
+  metric?: FinnhubMetricBlock;
+}
+
+export interface StockMetrics {
+  pe: number | null;
+  peg: number | null;
+  roe: number | null;
+  debtToEquity: number | null;
+  epsGrowthYoy: number | null;
+  revenueGrowthYoy: number | null;
 }
 
 export async function fetchStockSnapshots(): Promise<Record<string, PriceSnapshot> | null> {
@@ -32,11 +52,44 @@ export async function fetchStockSnapshots(): Promise<Record<string, PriceSnapsho
   return Object.keys(map).length > 0 ? map : null;
 }
 
+export async function fetchStockMetrics(): Promise<Record<string, StockMetrics> | null> {
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) return null;
+
+  const entries = Object.entries(finnhubSymbolByAssetId);
+  const results = await Promise.all(entries.map(async ([assetId, symbol]) => {
+    const metric = await fetchJson<FinnhubMetricResponse>(metricUrl(symbol, apiKey));
+    if (!metric?.metric) return null;
+    return [assetId, extractMetrics(metric.metric)] as const;
+  }));
+
+  const map: Record<string, StockMetrics> = {};
+  for (const entry of results) {
+    if (entry) map[entry[0]] = entry[1];
+  }
+  return Object.keys(map).length > 0 ? map : null;
+}
+
+function metricUrl(symbol: string, apiKey: string): string {
+  return `${BASE}/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${apiKey}`;
+}
+
+function extractMetrics(m: FinnhubMetricBlock): StockMetrics {
+  return {
+    pe: m['peNormalizedAnnual'] ?? m['peTTM'] ?? null,
+    peg: m['pegRatio'] ?? null,
+    roe: m['roeRfy'] ?? m['roeTTM'] ?? null,
+    debtToEquity: m['totalDebt/totalEquityAnnual'] ?? null,
+    epsGrowthYoy: m['epsGrowthQuarterlyYoy'] ?? null,
+    revenueGrowthYoy: m['revenueGrowthQuarterlyYoy'] ?? m['revenueGrowthTTMYoy'] ?? null
+  };
+}
+
 async function fetchOne(assetId: string, symbol: string, apiKey: string): Promise<PriceSnapshot | null> {
   try {
     const [quote, metric] = await Promise.all([
       fetchJson<FinnhubQuote>(`${BASE}/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`),
-      fetchJson<FinnhubMetricResponse>(`${BASE}/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${apiKey}`)
+      fetchJson<FinnhubMetricResponse>(metricUrl(symbol, apiKey))
     ]);
     if (!quote || quote.c === 0) return null;
 
