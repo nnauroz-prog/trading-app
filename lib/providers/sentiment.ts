@@ -133,10 +133,10 @@ function scoreHeadlines(items: FinnhubNews[]): number | null {
   return clamp(Math.round((normalised + 1) * 50));
 }
 
-function classifyText(text: string): 'positive' | 'negative' | 'neutral' {
+export function classifyText(text: string): 'positive' | 'negative' | 'neutral' {
   let pos = 0;
   let neg = 0;
-  const tokens = text.split(/[^\p{L}-]+/u);
+  const tokens = text.toLowerCase().split(/[^\p{L}-]+/u);
   for (const token of tokens) {
     if (!token) continue;
     if (POSITIVE.has(token)) pos += 1;

@@ -8,6 +8,14 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 3. Migrationen in `db/migrations/*.sql` per Supabase/Postgres-Workflow einspielen.
 4. `npm run dev`
 
+## Skripte
+- `npm run dev` – Entwicklungsserver
+- `npm run build` – Production-Build
+- `npm run start` – Production-Server
+- `npm run lint` – ESLint
+- `npm run typecheck` – `tsc --noEmit`
+- `npm test` – Vitest-Suite (scoring, evaluator, sentiment classifier)
+
 ## Environment
 
 | Variable | Pflicht | Zweck |
