@@ -1,28 +1,28 @@
 import { AnalysisSignal, Recommendation, RecommendationAction } from '@/lib/types/domain';
 
-const cryptoWeights = { trend: 0.25, volume: 0.15, momentum: 0.2, volatilityRisk: 0.15, macroContext: 0.1, sentiment: 0.15 };
-const stockWeights = { trend: 0.2, fundamentals: 0.2, earningsGrowth: 0.15, macroContext: 0.15, sentiment: 0.15, volatilityRisk: 0.15 };
+const cryptoWeights = { trend: 0.25, volume: 0.15, momentum: 0.2, volatilityPenalty: 0.15, macroContext: 0.1, sentiment: 0.15 };
+const stockWeights = { trend: 0.2, fundamentals: 0.2, earningsGrowth: 0.15, macroContext: 0.15, sentiment: 0.15, volatilityPenalty: 0.15 };
 
 export function scoreCrypto(signal: AnalysisSignal): number {
-  return Math.round(
+  const raw =
     signal.trend * cryptoWeights.trend +
-      signal.volume * cryptoWeights.volume +
-      signal.momentum * cryptoWeights.momentum +
-      signal.volatilityRisk * cryptoWeights.volatilityRisk +
-      signal.macroContext * cryptoWeights.macroContext +
-      signal.sentiment * cryptoWeights.sentiment
-  );
+    signal.volume * cryptoWeights.volume +
+    signal.momentum * cryptoWeights.momentum +
+    (100 - signal.volatilityRisk) * cryptoWeights.volatilityPenalty +
+    signal.macroContext * cryptoWeights.macroContext +
+    signal.sentiment * cryptoWeights.sentiment;
+  return clamp(Math.round(raw));
 }
 
 export function scoreStock(signal: AnalysisSignal): number {
-  return Math.round(
+  const raw =
     signal.trend * stockWeights.trend +
-      (signal.fundamentals ?? 50) * stockWeights.fundamentals +
-      (signal.earningsGrowth ?? 50) * stockWeights.earningsGrowth +
-      signal.macroContext * stockWeights.macroContext +
-      signal.sentiment * stockWeights.sentiment +
-      signal.volatilityRisk * stockWeights.volatilityRisk
-  );
+    (signal.fundamentals ?? 50) * stockWeights.fundamentals +
+    (signal.earningsGrowth ?? 50) * stockWeights.earningsGrowth +
+    signal.macroContext * stockWeights.macroContext +
+    signal.sentiment * stockWeights.sentiment +
+    (100 - signal.volatilityRisk) * stockWeights.volatilityPenalty;
+  return clamp(Math.round(raw));
 }
 
 export function mapScoreToAction(score: number): RecommendationAction {
@@ -41,9 +41,13 @@ export function buildRecommendation(assetId: string, score: number, rationale: s
     confidence: score,
     rationale,
     holdDuration: action === 'BUY' || action === 'WATCH' ? '2-8 Wochen' : '1-4 Wochen',
-    riskLevel: score > 75 ? 'medium' : score > 50 ? 'medium' : 'high',
+    riskLevel: score >= 75 ? 'low' : score >= 50 ? 'medium' : 'high',
     stopLossIdea: '6-10% unter Einstieg oder letztem Swing-Low.',
     takeProfitZone: 'Teilgewinn bei +8-15%, Rest per Trailing Stop.',
     counterArguments: ['Makro-Schocks können Trend brechen.', 'News-Sentiment kann schnell drehen.']
   };
+}
+
+function clamp(score: number): number {
+  return Math.max(0, Math.min(100, score));
 }
