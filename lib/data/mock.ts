@@ -29,3 +29,9 @@ export const finnhubSymbolByAssetId: Record<string, string> = {
   msft: 'MSFT',
   sap: 'SAP'
 };
+
+export const binanceSymbolByAssetId: Record<string, string> = {
+  btc: 'BTCUSDT',
+  eth: 'ETHUSDT',
+  sol: 'SOLUSDT'
+};

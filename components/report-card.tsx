@@ -1,26 +1,32 @@
 import { Recommendation } from '@/lib/types/domain';
 
-const colorByAction: Record<Recommendation['action'], string> = {
-  BUY: 'bg-emerald-600',
-  WATCH: 'bg-amber-600',
-  HOLD: 'bg-blue-600',
-  AVOID: 'bg-orange-700',
-  SELL: 'bg-rose-700'
+const styleByAction: Record<Recommendation['action'], string> = {
+  BUY: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
+  WATCH: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
+  HOLD: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
+  AVOID: 'border-orange-500/40 bg-orange-500/10 text-orange-300',
+  SELL: 'border-rose-500/40 bg-rose-500/10 text-rose-300'
 };
 
 export function ReportCard({ title, rows }: { title: string; rows: Recommendation[] }) {
   return (
-    <section className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-      <h3 className="mb-3 text-lg font-semibold">{title}</h3>
-      <div className="space-y-3">
+    <section className="rounded-xl border border-slate-800/80 bg-slate-900/40 p-4">
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-400">{title}</h3>
+      <div className="space-y-2">
         {rows.map((row) => (
-          <div key={row.assetId} className="rounded-lg bg-slate-950 p-3">
+          <div key={row.assetId} className="rounded-lg border border-slate-800/60 bg-slate-950/60 p-3 transition hover:border-slate-700">
             <div className="mb-2 flex items-center justify-between">
-              <span className="font-medium uppercase">{row.assetId}</span>
-              <span className={`rounded px-2 py-0.5 text-xs ${colorByAction[row.action]}`}>{row.action}</span>
+              <span className="font-mono text-sm font-bold uppercase tracking-wide text-slate-100">{row.assetId}</span>
+              <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${styleByAction[row.action]}`}>
+                {row.action}
+              </span>
             </div>
-            <p className="text-sm text-slate-300">{row.rationale}</p>
-            <p className="mt-1 text-xs text-slate-400">Risiko: {row.riskLevel} · Haltedauer: {row.holdDuration} · Confidence: {row.confidence}/100</p>
+            <p className="text-sm leading-relaxed text-slate-300">{row.rationale}</p>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-wider text-slate-500">
+              <span>Risk <span className="text-slate-300">{row.riskLevel}</span></span>
+              <span>Hold <span className="text-slate-300">{row.holdDuration}</span></span>
+              <span>Conf <span className="text-slate-300">{row.confidence}/100</span></span>
+            </div>
           </div>
         ))}
       </div>
