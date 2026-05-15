@@ -1,6 +1,7 @@
 import { SignalReport } from '@/lib/analysis/signal-engine';
 import { TradeSignal } from '@/lib/types/domain';
 import { SignalSizing } from '@/components/signal-sizing';
+import { TakeSignalButton } from '@/components/take-signal-button';
 
 function formatPrice(value: number): string {
   if (value >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -87,6 +88,9 @@ function SignalCard({ signal }: { signal: TradeSignal }) {
       </div>
       <div className="relative">
         <SignalSizing signal={signal} />
+      </div>
+      <div className="relative mt-3">
+        <TakeSignalButton signal={signal} />
       </div>
     </div>
   );

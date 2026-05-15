@@ -7,6 +7,7 @@ import { HitRateTile } from '@/components/hit-rate-tile';
 import { SignalBoard } from '@/components/signal-board';
 import { BacktestSummary } from '@/components/backtest-summary';
 import { AccountConfigBar } from '@/components/account-config-bar';
+import { PaperTradesPanel } from '@/components/paper-trades-panel';
 import { mockAssets } from '@/lib/data/mock';
 import { getHitRates } from '@/lib/server/report-store';
 import { getCurrentUser, isAuthConfigured } from '@/lib/supabase/server';
@@ -26,6 +27,9 @@ export default async function HomePage() {
   const stockIds = new Set(mockAssets.filter((a) => a.category === 'stock').map((a) => a.id));
   const crypto = report.recommendations.filter((r) => cryptoIds.has(r.assetId));
   const stocks = report.recommendations.filter((r) => stockIds.has(r.assetId));
+  const latestPrices: Record<string, number | null> = Object.fromEntries(
+    signalReport.statuses.map((s) => [s.assetId, s.lastPrice])
+  );
 
   return (
     <main className="mx-auto max-w-6xl space-y-8 p-4 md:p-8">
@@ -57,6 +61,8 @@ export default async function HomePage() {
       <AccountConfigBar />
 
       <SignalBoard report={signalReport} />
+
+      <PaperTradesPanel latestPrices={latestPrices} />
 
       <BacktestSummary report={backtestReport} />
 
