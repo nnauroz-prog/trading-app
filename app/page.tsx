@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { runDailyAnalysis } from '@/lib/analysis/engine';
+import { generateSignals } from '@/lib/analysis/signal-engine';
 import { ReportCard } from '@/components/report-card';
 import { HitRateTile } from '@/components/hit-rate-tile';
+import { SignalBoard } from '@/components/signal-board';
 import { mockAssets } from '@/lib/data/mock';
 import { getHitRates } from '@/lib/server/report-store';
 import { getCurrentUser, isAuthConfigured } from '@/lib/supabase/server';
@@ -9,8 +11,9 @@ import { getCurrentUser, isAuthConfigured } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const [report, hitRates, user] = await Promise.all([
+  const [report, signalReport, hitRates, user] = await Promise.all([
     runDailyAnalysis(),
+    generateSignals(),
     getHitRates(),
     getCurrentUser()
   ]);
@@ -21,45 +24,64 @@ export default async function HomePage() {
   const stocks = report.recommendations.filter((r) => stockIds.has(r.assetId));
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-8">
-      <header className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">MARKTBERICHT – {report.date}</h1>
-            <p className="mt-2 text-slate-300">{report.marketMood}</p>
-            <p className="mt-2 text-xs text-slate-400">Analyse- und Entscheidungsunterstützungssystem. Keine Finanzberatung, keine Gewinn-Garantie.</p>
+    <main className="mx-auto max-w-6xl space-y-8 p-4 md:p-8">
+      <header className="flex items-start justify-between gap-4 pb-2">
+        <div>
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            Signal Desk
           </div>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-white">
+            {report.date}
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-400">{report.marketMood}</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <Link href="/history" className="rounded-md border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-slate-300 transition hover:border-slate-700 hover:bg-slate-800">
+            History
+          </Link>
           {authActive && user && (
-            <div className="text-right text-xs text-slate-400">
-              <p className="mb-1">{user.email}</p>
-              <div className="flex items-center gap-2">
-                <Link href="/history" className="rounded bg-slate-800 px-2 py-1 hover:bg-slate-700">History</Link>
-                <form action="/logout" method="post">
-                  <button type="submit" className="rounded bg-slate-800 px-2 py-1 hover:bg-slate-700">Logout</button>
-                </form>
-              </div>
-            </div>
-          )}
-          {!authActive && (
-            <Link href="/history" className="self-start rounded bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:bg-slate-700">History</Link>
+            <form action="/logout" method="post">
+              <button type="submit" className="rounded-md border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-slate-300 transition hover:border-slate-700 hover:bg-slate-800">
+                Logout
+              </button>
+            </form>
           )}
         </div>
       </header>
-      <HitRateTile summary={hitRates} />
-      <div className="grid gap-6 md:grid-cols-2">
-        <ReportCard title="Top-Krypto" rows={crypto} />
-        <ReportCard title="Top-Aktien" rows={stocks} />
-      </div>
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-        <h2 className="mb-3 text-lg font-semibold">Watchlist</h2>
+
+      <SignalBoard report={signalReport} />
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Daily Outlook (Langfrist-Sicht)</h2>
+          <p className="mt-1 text-xs text-slate-600">Tägliche Buy/Hold/Sell-Einschätzung. Ergänzt die Signale, ersetzt sie nicht.</p>
+        </div>
+        <HitRateTile summary={hitRates} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <ReportCard title="Krypto" rows={crypto} />
+          <ReportCard title="Aktien" rows={stocks} />
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-slate-800/60 bg-slate-900/40 p-4">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Watchlist</h2>
         <div className="flex flex-wrap gap-2">
           {mockAssets.map((asset) => (
-            <Link key={asset.id} href={`/assets/${asset.ticker.toLowerCase()}`} className="rounded bg-slate-800 px-3 py-1 text-sm hover:bg-slate-700">
+            <Link
+              key={asset.id}
+              href={`/assets/${asset.ticker.toLowerCase()}`}
+              className="rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 font-mono text-xs text-slate-300 transition hover:border-emerald-500/40 hover:bg-slate-800 hover:text-emerald-200"
+            >
               {asset.ticker}
             </Link>
           ))}
         </div>
       </section>
+
+      <footer className="border-t border-slate-900 pt-4 text-[10px] text-slate-600">
+        Analyse- und Entscheidungsunterstützungssystem. Keine Finanzberatung. Keine Erfolgs-Garantie. Vergangene Performance ist kein Indikator für zukünftige Ergebnisse.
+      </footer>
     </main>
   );
 }

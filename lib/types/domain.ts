@@ -45,3 +45,38 @@ export interface Recommendation {
   takeProfitZone: string;
   counterArguments: string[];
 }
+
+export interface Candle {
+  openTime: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export type TradeSignalType = 'LONG' | 'SHORT';
+
+export interface TradeSignal {
+  assetId: string;
+  ticker: string;
+  type: TradeSignalType;
+  entry: number;
+  stopLoss: number;
+  takeProfit1: number;
+  takeProfit2: number;
+  riskPct: number;
+  rewardPct1: number;
+  rewardPct2: number;
+  riskRewardRatio: number;
+  confidence: number;
+  reasoning: string[];
+  indicators: {
+    rsi1h: number;
+    macdState: 'bullish_cross' | 'bearish_cross' | 'bullish' | 'bearish' | 'neutral';
+    trend4h: 'up' | 'down' | 'sideways';
+    trend4hDistancePct: number;
+    volumeRatio: number;
+  };
+  generatedAt: string;
+}
