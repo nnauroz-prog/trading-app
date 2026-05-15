@@ -38,7 +38,6 @@ export function PriceChart({ candles, title }: { candles: Candle[]; title: strin
   }
 
   const sliced = candles.slice(-120);
-  const closes = sliced.map((c) => c.close);
   const ema50Full = ema(candles.map((c) => c.close), 50);
   const ema50Tail = ema50Full.slice(-sliced.length);
   const rsiFull = rsi(candles.map((c) => c.close), 14);

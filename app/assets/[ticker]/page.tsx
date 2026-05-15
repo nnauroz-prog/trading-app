@@ -1,10 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { mockAssets, binanceSymbolByAssetId } from '@/lib/data/mock';
+import { TOP_50, getCoinBySymbol } from '@/lib/coin-universe';
 import { runDailyAnalysis } from '@/lib/analysis/engine';
 import { getSnapshots } from '@/lib/providers';
 import { fetchAssetHeadlines } from '@/lib/providers/sentiment';
-import { fetchCandles } from '@/lib/providers/binance';
+import { fetchKlinesBySymbol } from '@/lib/providers/binance';
+import { fetchAllTickers } from '@/lib/providers/binance-tickers';
+import { Asset, PriceSnapshot } from '@/lib/types/domain';
 import { HeadlinesList } from '@/components/headlines-list';
 import { PriceChart } from '@/components/price-chart';
 
@@ -43,20 +46,48 @@ const actionColor: Record<string, string> = {
 
 export default async function AssetDetail({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = await params;
-  const asset = mockAssets.find(
-    (a) => a.ticker.toLowerCase() === ticker.toLowerCase() || a.id === ticker.toLowerCase()
-  );
-  if (!asset) notFound();
+  const lower = ticker.toLowerCase();
 
-  const hasBinance = !!binanceSymbolByAssetId[asset.id];
-  const [snapshots, analysis, headlines, candles] = await Promise.all([
-    getSnapshots(),
-    runDailyAnalysis(),
-    fetchAssetHeadlines(asset.id),
-    hasBinance ? fetchCandles(asset.id, '1h', 200) : Promise.resolve(null)
+  const mockAsset = mockAssets.find((a) => a.ticker.toLowerCase() === lower || a.id === lower);
+  const universeCoin = mockAsset ? undefined : getCoinBySymbol(lower) ?? TOP_50.find((c) => c.id === lower);
+
+  if (!mockAsset && !universeCoin) notFound();
+
+  const asset: Asset = mockAsset ?? {
+    id: universeCoin!.id,
+    name: universeCoin!.name,
+    ticker: universeCoin!.symbol,
+    category: 'crypto',
+    venueAvailability: ['Binance Spot']
+  };
+
+  const hasBinance = !!(mockAsset ? binanceSymbolByAssetId[asset.id] : universeCoin);
+  const binanceSymbol = mockAsset ? binanceSymbolByAssetId[asset.id] : universeCoin?.binanceSymbol;
+
+  const [snapshots, analysis, headlines, candles, tickers] = await Promise.all([
+    mockAsset ? getSnapshots() : Promise.resolve({} as Record<string, PriceSnapshot>),
+    mockAsset ? runDailyAnalysis() : Promise.resolve({ recommendations: [] }),
+    mockAsset ? fetchAssetHeadlines(asset.id) : Promise.resolve([]),
+    hasBinance && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1h', 200) : Promise.resolve(null),
+    !mockAsset ? fetchAllTickers() : Promise.resolve(null)
   ]);
-  const snapshot = snapshots[asset.id];
-  const recommendation = analysis.recommendations.find((r) => r.assetId === asset.id);
+
+  let snapshot: PriceSnapshot | undefined = snapshots[asset.id];
+  if (!snapshot && tickers && binanceSymbol) {
+    const tk = tickers.get(binanceSymbol);
+    if (tk) {
+      snapshot = {
+        assetId: asset.id,
+        price: tk.price,
+        change24h: tk.priceChangePct,
+        change7d: 0,
+        change30d: 0,
+        volume: tk.quoteVolume,
+        source: 'binance'
+      };
+    }
+  }
+  const recommendation = ('recommendations' in analysis ? analysis.recommendations : []).find((r) => r.assetId === asset.id);
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
@@ -92,13 +123,17 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
               <div className="text-[10px] uppercase tracking-widest text-slate-500">24h</div>
               <div className={`mt-1 font-mono text-lg font-bold ${pctColor(snapshot.change24h)}`}>{fmtPct(snapshot.change24h)}</div>
             </div>
-            <div className={`rounded-lg border p-3 ${pctBg(snapshot.change7d)}`}>
+            <div className={`rounded-lg border p-3 ${snapshot.change7d !== 0 ? pctBg(snapshot.change7d) : 'border-slate-700 bg-slate-900/40'}`}>
               <div className="text-[10px] uppercase tracking-widest text-slate-500">7 Tage</div>
-              <div className={`mt-1 font-mono text-lg font-bold ${pctColor(snapshot.change7d)}`}>{fmtPct(snapshot.change7d)}</div>
+              <div className={`mt-1 font-mono text-lg font-bold ${snapshot.change7d !== 0 ? pctColor(snapshot.change7d) : 'text-slate-500'}`}>
+                {snapshot.change7d !== 0 ? fmtPct(snapshot.change7d) : '—'}
+              </div>
             </div>
-            <div className={`rounded-lg border p-3 ${pctBg(snapshot.change30d)}`}>
+            <div className={`rounded-lg border p-3 ${snapshot.change30d !== 0 ? pctBg(snapshot.change30d) : 'border-slate-700 bg-slate-900/40'}`}>
               <div className="text-[10px] uppercase tracking-widest text-slate-500">30 Tage</div>
-              <div className={`mt-1 font-mono text-lg font-bold ${pctColor(snapshot.change30d)}`}>{fmtPct(snapshot.change30d)}</div>
+              <div className={`mt-1 font-mono text-lg font-bold ${snapshot.change30d !== 0 ? pctColor(snapshot.change30d) : 'text-slate-500'}`}>
+                {snapshot.change30d !== 0 ? fmtPct(snapshot.change30d) : '—'}
+              </div>
             </div>
             <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-3">
               <div className="text-[10px] uppercase tracking-widest text-slate-500">Volume</div>
