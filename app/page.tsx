@@ -6,6 +6,7 @@ import { ReportCard } from '@/components/report-card';
 import { HitRateTile } from '@/components/hit-rate-tile';
 import { SignalBoard } from '@/components/signal-board';
 import { BacktestSummary } from '@/components/backtest-summary';
+import { AccountConfigBar } from '@/components/account-config-bar';
 import { mockAssets } from '@/lib/data/mock';
 import { getHitRates } from '@/lib/server/report-store';
 import { getCurrentUser, isAuthConfigured } from '@/lib/supabase/server';
@@ -52,6 +53,8 @@ export default async function HomePage() {
           )}
         </div>
       </header>
+
+      <AccountConfigBar />
 
       <SignalBoard report={signalReport} />
 
