@@ -52,9 +52,11 @@ function buildSignal(
   const fundamentals = category === 'stock' ? (metrics ? scoreFundamentals(metrics) ?? 50 : 50) : undefined;
   const earningsGrowth = category === 'stock' ? (metrics ? scoreEarningsGrowth(metrics) ?? 50 : 50) : undefined;
 
+  const volume = snapshot?.volumeRatio != null ? scoreVolumeRatio(snapshot.volumeRatio) : 60;
+
   return {
     trend,
-    volume: 60,
+    volume,
     momentum,
     volatilityRisk,
     macroContext: 60,
@@ -62,6 +64,15 @@ function buildSignal(
     fundamentals,
     earningsGrowth
   };
+}
+
+export function scoreVolumeRatio(ratio: number): number {
+  if (ratio < 0.5) return 30;
+  if (ratio < 0.8) return 45;
+  if (ratio < 1.2) return 55;
+  if (ratio < 1.8) return 65;
+  if (ratio < 3) return 75;
+  return 85;
 }
 
 function scaleChange(changePct: number, normalisingRange: number): number {

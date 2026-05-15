@@ -57,15 +57,13 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 - Schedule kann in `vercel.json` angepasst werden; Format ist Standard-Cron.
 
 - **Aktien-Fundamentals + Earnings:** Aus dem gleichen Finnhub `/stock/metric?metric=all`-Call werden `pe`, `peg`, `roe`, `debtToEquity` (Fundamentals-Score) und `epsGrowthQuarterlyYoy`, `revenueGrowthQuarterlyYoy` (Earnings-Score) abgeleitet (Logik in `lib/analysis/fundamentals.ts`). Jeder Metrik-Wert wird auf eine 0-100-Skala gemappt, fehlende Werte werden übersprungen. Liegt keine einzige Metrik vor, fällt der Score auf 50 (neutral). Damit sind `signal.fundamentals` und `signal.earningsGrowth` für Aktien echt; Krypto-Assets behalten den 50-Default, weil „Fundamentals" für Token konzeptionell nicht trägt.
-- **Volumen-Signal bleibt Default 60:** Das echte Tagesvolumen liegt nur in `/stock/candle` (Premium) bzw. bräuchte für Krypto eine zusätzliche `/coins/{id}/market_chart`-Anfrage je Asset. Daher offen als bewusste Lücke dokumentiert.
+- **Volumen-Signal (Aktien):** Aus dem Yahoo-Chart wird `volumeRatio = today / 30d-avg` berechnet und in `lib/analysis/engine.ts:scoreVolumeRatio` auf eine 0-100-Skala gemappt (ratio < 0.5 → 30, 0.8-1.2 → 55, ratio > 3 → 85). Für Krypto bleibt der 60-Default, weil CoinGeckos `/coins/markets` keine Volumen-Historie liefert (separater `/coins/{id}/market_chart`-Call wäre nötig — bewusste Lücke).
 
 ## Datenquellen
 - **Krypto (BTC/ETH/SOL):** CoinGecko `/coins/markets` mit `price_change_percentage=24h,7d,30d`. Fällt bei Fehler/Quota auf Mock zurück.
-- **Aktien (NVDA/SAP/MSFT):** Finnhub `/quote` für Preis + 24h-Change, `/stock/metric?metric=all` für Renditen.
-  - `change7d` ist `5DayPriceReturnDaily` (≈ 5 Handelstage)
-  - `change30d` ist `monthToDatePriceReturnDaily` (Tage seit Monatsanfang — Wert variiert je nach Wochentag)
-  - Reale 7/30-Tage-Returns liegen im Premium-Plan (`/stock/candle`). Falls aufgerüstet, kann der Provider direkt umgestellt werden.
-  - Ohne `FINNHUB_API_KEY` oder bei Fehler → Mock-Fallback pro Asset.
+- **Aktien-Preise (NVDA/SAP/MSFT):** Yahoo Finance `/v8/finance/chart` (Range 3mo, Interval 1d). Daraus werden echte 24h/7d/30d-Returns über die letzten Tagescloses berechnet, plus `volumeRatio` = heutiges Volumen / Mittel der vorhergehenden ~21 Handelstage. Der Endpoint ist offiziell undokumentiert, aber seit Jahren stabil und ohne API-Key nutzbar.
+  - Fallback-Kette: Yahoo → Finnhub `/quote + /stock/metric` (mit MTD-Approximation, wie zuvor) → Mock.
+  - Wenn Yahoo kippt, ist die Logik weiter funktionsfähig, nur mit weicheren Returns.
 - **News-Sentiment:** Finnhub `/company-news` pro Aktie + `/news?category=crypto` als Sammel-Score für alle Krypto-Assets. Lexikon-basiertes Scoring (DE/EN) liefert eine 0-100-Zahl, die in `signal.sentiment` einfließt. Die Asset-Detail-Seite rendert die letzten 6 Headlines pro Asset inkl. Klassifikation (+/-/·) als Transparenz-Layer. Ohne `FINNHUB_API_KEY` bleibt der Default (60) erhalten. Das Lexikon ist klein und absichtlich konservativ — eine LLM- oder VADER-basierte Auswertung ist als Folge-Iteration möglich.
 
 ## Reviews & Trefferquote
