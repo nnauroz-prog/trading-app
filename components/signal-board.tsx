@@ -1,5 +1,6 @@
 import { SignalReport } from '@/lib/analysis/signal-engine';
 import { TradeSignal } from '@/lib/types/domain';
+import { SignalSizing } from '@/components/signal-sizing';
 
 function formatPrice(value: number): string {
   if (value >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -83,6 +84,9 @@ function SignalCard({ signal }: { signal: TradeSignal }) {
             <span>{r}</span>
           </div>
         ))}
+      </div>
+      <div className="relative">
+        <SignalSizing signal={signal} />
       </div>
     </div>
   );
