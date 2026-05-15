@@ -10,13 +10,11 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 
 ## Deploy auf Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nnauroz-prog/trading-app)
-
 Die App ist Zero-Config-deploy-fähig. Ohne Env-Variablen läuft sie im Mock-Modus (keine Persistenz, kein Auth-Gate, Crypto-Preise von CoinGecko-Free) — damit kannst du erst deployen, dann Schritt für Schritt mit echten Daten anreichern.
 
 **Minimal-Deploy in 3 Schritten (kein Login, Mock-Daten):**
 
-1. Auf den „Deploy"-Button oben klicken (oder manuell: [vercel.com/new](https://vercel.com/new) → Repo `nnauroz-prog/trading-app` importieren).
+1. Auf [vercel.com/new](https://vercel.com/new) gehen → unter „Import Git Repository" das **bestehende** `nnauroz-prog/trading-app` auswählen (nicht „Clone Template" — das würde einen separaten Fork anlegen, der nicht mit unserem Repo verbunden ist).
 2. Vercel erkennt Next.js automatisch. Build & Output-Settings unverändert lassen, Env-Vars erstmal leer lassen.
 3. „Deploy" klicken. Nach ~60 Sek hast du eine Production-URL wie `https://<projektname>.vercel.app`.
 
