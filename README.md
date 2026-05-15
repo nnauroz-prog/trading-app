@@ -42,7 +42,21 @@ Nach jedem Env-Update Re-Deploy auslösen (Vercel-UI → Deployments → Redeplo
 2. Authentication → URL Configuration → Site-URL und Redirect-URL auf `https://<dein-projekt>.vercel.app/auth/callback` setzen.
 3. Migrationen `db/migrations/*.sql` der Reihe nach im Supabase SQL-Editor ausführen.
 
-**Cron-Job:** `vercel.json` registriert bereits einen täglichen Lauf um 06:00 UTC auf `/api/cron/daily-report`. Vercel injiziert `Authorization: Bearer ${CRON_SECRET}` automatisch, sobald `CRON_SECRET` als Env gesetzt ist. Auf dem Hobby-Plan ist ein Cron-Job pro Projekt inklusive.
+**Cron-Job:** `vercel.json` registriert zwei Läufe:
+- `/api/cron/daily-report` täglich 06:00 UTC (Daily-Outlook + History-Persistenz)
+- `/api/alerts/check` stündlich (Telegram-Alerts bei frischen MACD-Crosses)
+
+Vercel injiziert `Authorization: Bearer ${CRON_SECRET}` automatisch. Hobby-Plan unterstützt mehrere Cron-Jobs, allerdings nur in täglichem Intervall — für stündliche Alerts entweder Vercel Pro oder externer Scheduler (cron-job.org pingt `https://<deploy>/api/alerts/check?key=<CRON_SECRET>` stündlich).
+
+**Telegram-Alerts Setup:**
+
+1. In Telegram an `@BotFather` schreiben → `/newbot` → Bot-Name + Username vergeben → **Token kopieren** (`TELEGRAM_BOT_TOKEN`).
+2. Den neuen Bot in Telegram aufrufen → `/start` schicken (irgendeine Nachricht reicht).
+3. Im Browser öffnen: `https://api.telegram.org/bot<TOKEN>/getUpdates` → in der JSON-Antwort `result[0].message.chat.id` finden (das ist deine `TELEGRAM_CHAT_ID`).
+4. Beide Werte in Vercel als Env-Variablen setzen, Re-Deploy.
+5. Testen: `https://<deploy>/api/alerts/check?key=<CRON_SECRET>` aufrufen → wenn aktuell ein frischer Signal-Trigger existiert, kommt eine Nachricht. Wenn nicht, gibt der JSON-Response `freshSignals: 0` zurück (Engine ist OK, einfach gerade keine Konfluenz).
+
+Ohne `TELEGRAM_*`-Envs läuft alles wie gewohnt, nur die Push-Nachrichten fehlen.
 
 **Bekannte Stolperfallen:**
 
