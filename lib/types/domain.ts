@@ -17,7 +17,9 @@ export interface PriceSnapshot {
   change7d: number;
   change30d: number;
   volume: number;
-  source: 'mock' | 'coingecko';
+  /** today's volume divided by recent average; null when no baseline is available. */
+  volumeRatio?: number | null;
+  source: 'mock' | 'coingecko' | 'finnhub' | 'yahoo';
 }
 
 export interface AnalysisSignal {

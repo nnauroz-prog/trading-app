@@ -2,14 +2,20 @@ import { notFound } from 'next/navigation';
 import { mockAssets } from '@/lib/data/mock';
 import { runDailyAnalysis } from '@/lib/analysis/engine';
 import { getSnapshots } from '@/lib/providers';
+import { fetchAssetHeadlines } from '@/lib/providers/sentiment';
+import { HeadlinesList } from '@/components/headlines-list';
 
 export default async function AssetDetail({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = await params;
   const asset = mockAssets.find((a) => a.ticker.toLowerCase() === ticker.toLowerCase() || a.id === ticker.toLowerCase());
   if (!asset) notFound();
-  const snapshots = await getSnapshots();
+
+  const [snapshots, analysis, headlines] = await Promise.all([
+    getSnapshots(),
+    runDailyAnalysis(),
+    fetchAssetHeadlines(asset.id)
+  ]);
   const snapshot = snapshots[asset.id];
-  const analysis = await runDailyAnalysis();
   const recommendation = analysis.recommendations.find((r) => r.assetId === asset.id);
 
   return (
@@ -41,6 +47,7 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
           <li>Gegenargumente: {recommendation?.counterArguments.join(' | ')}</li>
         </ul>
       </section>
+      <HeadlinesList headlines={headlines} />
     </main>
   );
 }
