@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { runDailyAnalysis } from '@/lib/analysis/engine';
 import { generateSignals } from '@/lib/analysis/signal-engine';
+import { runBacktest } from '@/lib/analysis/backtest';
 import { ReportCard } from '@/components/report-card';
 import { HitRateTile } from '@/components/hit-rate-tile';
 import { SignalBoard } from '@/components/signal-board';
+import { BacktestSummary } from '@/components/backtest-summary';
 import { mockAssets } from '@/lib/data/mock';
 import { getHitRates } from '@/lib/server/report-store';
 import { getCurrentUser, isAuthConfigured } from '@/lib/supabase/server';
@@ -11,9 +13,10 @@ import { getCurrentUser, isAuthConfigured } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const [report, signalReport, hitRates, user] = await Promise.all([
+  const [report, signalReport, backtestReport, hitRates, user] = await Promise.all([
     runDailyAnalysis(),
     generateSignals(),
+    runBacktest(),
     getHitRates(),
     getCurrentUser()
   ]);
@@ -51,6 +54,8 @@ export default async function HomePage() {
       </header>
 
       <SignalBoard report={signalReport} />
+
+      <BacktestSummary report={backtestReport} />
 
       <section className="space-y-4">
         <div>
