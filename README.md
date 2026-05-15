@@ -1,6 +1,6 @@
 # Trading Decision Support App
 
-Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente Entscheidungsunterstützung, **keine Finanzberatung**).
+Live-Trading-Desk mit Top-Play-Engine über 50 Coins (Binance Spot, RSI/MACD/EMA50/Volume-Konfluenz) und Paper-Trading. **Keine Finanzberatung.**
 
 ## Setup
 1. `npm install`
