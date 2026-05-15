@@ -2,6 +2,7 @@ import { mockAssets } from '@/lib/data/mock';
 import { getSnapshots } from '@/lib/providers';
 import { fetchSentimentScores } from '@/lib/providers/sentiment';
 import { fetchStockMetrics, StockMetrics } from '@/lib/providers/finnhub';
+import { fetchMacroContext } from '@/lib/providers/macro';
 import { buildRecommendation, scoreCrypto, scoreStock } from '@/lib/analysis/scoring';
 import { scoreEarningsGrowth, scoreFundamentals } from '@/lib/analysis/fundamentals';
 import { AnalysisSignal, PriceSnapshot } from '@/lib/types/domain';
@@ -14,17 +15,20 @@ export interface DailyAnalysis {
 }
 
 export async function runDailyAnalysis(): Promise<DailyAnalysis> {
-  const [snapshots, sentimentScores, stockMetrics] = await Promise.all([
+  const [snapshots, sentimentScores, stockMetrics, macroScore] = await Promise.all([
     getSnapshots(),
     fetchSentimentScores(),
-    fetchStockMetrics()
+    fetchStockMetrics(),
+    fetchMacroContext()
   ]);
+
+  const macro = macroScore ?? 60;
 
   const recommendations = mockAssets.map((asset) => {
     const snapshot = snapshots[asset.id];
     const sentiment = sentimentScores?.[asset.id] ?? 60;
     const metrics = stockMetrics?.[asset.id];
-    const signal = buildSignal(asset.category, snapshot, sentiment, metrics);
+    const signal = buildSignal(asset.category, snapshot, sentiment, metrics, macro);
     const score = asset.category === 'crypto' ? scoreCrypto(signal) : scoreStock(signal);
     const rationale = buildRationale(asset.ticker, snapshot, sentimentScores?.[asset.id], metrics);
     return buildRecommendation(asset.id, score, rationale);
@@ -42,7 +46,8 @@ function buildSignal(
   category: 'crypto' | 'stock' | 'etf',
   snapshot: PriceSnapshot | undefined,
   sentiment: number,
-  metrics: StockMetrics | undefined
+  metrics: StockMetrics | undefined,
+  macroContext: number
 ): AnalysisSignal {
   const trend = snapshot ? scaleChange(snapshot.change30d, 30) : 60;
   const momentum = snapshot ? scaleChange(snapshot.change7d, 10) : 60;
@@ -59,7 +64,7 @@ function buildSignal(
     volume,
     momentum,
     volatilityRisk,
-    macroContext: 60,
+    macroContext,
     sentiment,
     fundamentals,
     earningsGrowth

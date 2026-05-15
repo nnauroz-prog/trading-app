@@ -58,6 +58,7 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 
 - **Aktien-Fundamentals + Earnings:** Aus dem gleichen Finnhub `/stock/metric?metric=all`-Call werden `pe`, `peg`, `roe`, `debtToEquity` (Fundamentals-Score) und `epsGrowthQuarterlyYoy`, `revenueGrowthQuarterlyYoy` (Earnings-Score) abgeleitet (Logik in `lib/analysis/fundamentals.ts`). Jeder Metrik-Wert wird auf eine 0-100-Skala gemappt, fehlende Werte werden übersprungen. Liegt keine einzige Metrik vor, fällt der Score auf 50 (neutral). Damit sind `signal.fundamentals` und `signal.earningsGrowth` für Aktien echt; Krypto-Assets behalten den 50-Default, weil „Fundamentals" für Token konzeptionell nicht trägt.
 - **Volumen-Signal (Aktien):** Aus dem Yahoo-Chart wird `volumeRatio = today / 30d-avg` berechnet und in `lib/analysis/engine.ts:scoreVolumeRatio` auf eine 0-100-Skala gemappt (ratio < 0.5 → 30, 0.8-1.2 → 55, ratio > 3 → 85). Für Krypto bleibt der 60-Default, weil CoinGeckos `/coins/markets` keine Volumen-Historie liefert (separater `/coins/{id}/market_chart`-Call wäre nötig — bewusste Lücke).
+- **Macro-Signal:** Yahoo `^VIX` (latest close) wird in `lib/providers/macro.ts:scoreVix` auf 0-100 abgebildet — niedriger VIX (< 15) → 70, normale Spanne 15-25 → 50-60, Panic > 40 → 20. Wird für alle Assets als `signal.macroContext` genutzt. Ohne Yahoo-Erreichbarkeit fällt der Wert auf 60.
 
 ## Datenquellen
 - **Krypto (BTC/ETH/SOL):** CoinGecko `/coins/markets` mit `price_change_percentage=24h,7d,30d`. Fällt bei Fehler/Quota auf Mock zurück.
