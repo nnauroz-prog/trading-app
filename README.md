@@ -8,6 +8,47 @@ Produktionsnahe Next.js-App für tägliche Krypto-/Aktienanalyse (transparente E
 3. Migrationen in `db/migrations/*.sql` per Supabase/Postgres-Workflow einspielen.
 4. `npm run dev`
 
+## Deploy auf Vercel
+
+Die App ist Zero-Config-deploy-fähig. Ohne Env-Variablen läuft sie im Mock-Modus (keine Persistenz, kein Auth-Gate, Crypto-Preise von CoinGecko-Free) — damit kannst du erst deployen, dann Schritt für Schritt mit echten Daten anreichern.
+
+**Minimal-Deploy in 3 Schritten (kein Login, Mock-Daten):**
+
+1. [vercel.com/new](https://vercel.com/new) → „Add New Project" → Repo `nnauroz-prog/trading-app` auswählen.
+2. Vercel erkennt Next.js automatisch. Build & Output-Settings unverändert lassen.
+3. Auf „Deploy" klicken. Nach ~60 Sek hast du eine Production-URL wie `https://<projektname>.vercel.app`.
+
+Die Startseite zeigt dann Live-Preise von CoinGecko (BTC/ETH/SOL) und Mock-Werte für Aktien. Login ist aus, History-Seite zeigt „Persistenz nicht aktiv".
+
+**Volle Konfiguration (Schritt für Schritt nachrüstbar):**
+
+In Vercel → Project Settings → Environment Variables eintragen:
+
+| Variable | Wofür | Quelle |
+|---|---|---|
+| `FINNHUB_API_KEY` | Aktien-Fundamentals + News-Sentiment | [finnhub.io](https://finnhub.io) (kostenloser Tier reicht) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Persistenz + Auth | Supabase Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Persistenz + Auth | Supabase Project Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side Schreibzugriff | Supabase Project Settings → API |
+| `ALLOWED_EMAIL` | Single-User-Login | Deine E-Mail |
+| `CRON_SECRET` | Schutz der Cron-Route | `openssl rand -hex 32` |
+| `COINGECKO_API_KEY` | optional, Pro-API für Krypto | [coingecko.com](https://www.coingecko.com/en/api/pricing) |
+
+Nach jedem Env-Update Re-Deploy auslösen (Vercel-UI → Deployments → Redeploy).
+
+**Supabase-Auth-Setup (einmalig):**
+
+1. Supabase Project → Authentication → Providers → Email aktivieren.
+2. Authentication → URL Configuration → Site-URL und Redirect-URL auf `https://<dein-projekt>.vercel.app/auth/callback` setzen.
+3. Migrationen `db/migrations/*.sql` der Reihe nach im Supabase SQL-Editor ausführen.
+
+**Cron-Job:** `vercel.json` registriert bereits einen täglichen Lauf um 06:00 UTC auf `/api/cron/daily-report`. Vercel injiziert `Authorization: Bearer ${CRON_SECRET}` automatisch, sobald `CRON_SECRET` als Env gesetzt ist. Auf dem Hobby-Plan ist ein Cron-Job pro Projekt inklusive.
+
+**Bekannte Stolperfallen:**
+
+- Yahoo Finance `/v8/finance/chart` ist offiziell undokumentiert. Manche Cloud-Regionen werden gelegentlich rate-limited. Wenn das passiert, fällt der Provider auf Finnhub-Snapshot zurück (MTD-Returns statt echter 30d) — die App bleibt funktionsfähig.
+- Beim ersten Deploy ohne `SUPABASE_SERVICE_ROLE_KEY` ist die History-Seite leer. Das ist by design: erst nach 7 bzw. 30 Tagen mit aktiver Cron-Schreibung füllen sich die Buckets.
+
 ## Skripte
 - `npm run dev` – Entwicklungsserver
 - `npm run build` – Production-Build
