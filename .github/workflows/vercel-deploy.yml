@@ -11,6 +11,18 @@ jobs:
     steps:
       - name: Ping Vercel Deploy Hook
         run: |
-          curl -X POST -f -s -S \
-            "https://api.vercel.com/v1/integrations/deploy/prj_Q8rpeuw68C5mjAurkC6Xnt020zrG/ViNa7YDsMf" \
-            && echo "Vercel deploy triggered"
+          set +e
+          echo "Pinging Vercel deploy hook…"
+          RESPONSE=$(curl -X POST -s -w "\nHTTP_STATUS:%{http_code}\n" \
+            "https://api.vercel.com/v1/integrations/deploy/prj_Q8rpeuw68C5mjAurkC6Xnt020zrG/ViNa7YDsMf")
+          echo "Vercel response:"
+          echo "$RESPONSE"
+          STATUS=$(echo "$RESPONSE" | grep -oE 'HTTP_STATUS:[0-9]+' | cut -d: -f2)
+          echo "Parsed status: $STATUS"
+          if [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then
+            echo "✓ Deploy triggered successfully"
+            exit 0
+          else
+            echo "✗ Vercel returned non-success status"
+            exit 1
+          fi
