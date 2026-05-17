@@ -132,7 +132,7 @@ export function SignalBoard({ report }: { report: SignalReport }) {
       <section className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
         <div className="flex items-center gap-3">
           <div className="h-2 w-2 animate-pulse rounded-full bg-rose-400" />
-          <span className="text-sm text-slate-300">Signal-Engine offline — Binance-API gerade nicht erreichbar. Retry beim nächsten Page-Load.</span>
+          <span className="text-sm text-slate-300">Signal-Engine offline — Krypto-Daten-Provider gerade nicht erreichbar. Retry beim nächsten Page-Load.</span>
         </div>
       </section>
     );
