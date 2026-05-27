@@ -1,11 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { IdeaValidation, ParsedTelegramIdea, UserRiskProfile, DerivativeAnalysis, ParsedInstrument, SignalDecision } from '@/lib/types/ideas';
 import { parseTelegramIdea } from '@/lib/telegram/parse-telegram-idea';
 import { validateIdea } from '@/lib/validation/validate-idea';
 import { DEFAULT_PROFILE, PROFILE_CHANGED_EVENT, loadUserProfile, profileLabel, saveUserProfile } from '@/lib/user-profile';
 import { checkInstrumentAvailability } from '@/lib/data/brokers/manual-instrument-allowlist';
+import { addJournalEntry } from '@/lib/journal';
+import { buildPrefillFromIdea, savePrefill } from '@/lib/position-prefill';
 
 const SAMPLE_BMW = `Tradingidee BMW-OS
 
@@ -240,6 +243,8 @@ export function IdeaInbox() {
   const [validation, setValidation] = useState<IdeaValidation | null>(null);
   const [profile, setProfile] = useState<UserRiskProfile>(DEFAULT_PROFILE);
   const [mounted, setMounted] = useState(false);
+  const [journalSaved, setJournalSaved] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const refresh = () => setProfile(loadUserProfile());
@@ -248,6 +253,20 @@ export function IdeaInbox() {
     window.addEventListener(PROFILE_CHANGED_EVENT, refresh);
     return () => window.removeEventListener(PROFILE_CHANGED_EVENT, refresh);
   }, []);
+
+  const handleSaveJournal = useCallback(() => {
+    if (!parsed || !validation) return;
+    addJournalEntry(parsed, validation, profile, 'idea_analysis');
+    setJournalSaved(true);
+    window.setTimeout(() => setJournalSaved(false), 2500);
+  }, [parsed, validation, profile]);
+
+  const handleCreatePosition = useCallback(() => {
+    if (!parsed || !validation) return;
+    const prefill = buildPrefillFromIdea(parsed, validation.bestInstrumentForProfile);
+    savePrefill(prefill);
+    router.push('/positions?prefill=1');
+  }, [parsed, validation, router]);
 
   const handleAnalyze = useCallback(() => {
     if (!text.trim()) return;
@@ -347,6 +366,25 @@ export function IdeaInbox() {
             </div>
           )}
           <p className="mt-3 text-[11px] text-slate-500">{validation.marketContextNote}</p>
+
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-800 pt-4">
+            <button
+              onClick={handleSaveJournal}
+              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                journalSaved
+                  ? 'border-emerald-400/60 bg-emerald-500/30 text-emerald-100'
+                  : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+              }`}
+            >
+              {journalSaved ? '✓ Im Journal gespeichert' : 'Im Journal speichern'}
+            </button>
+            <button
+              onClick={handleCreatePosition}
+              className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20"
+            >
+              Position erstellen →
+            </button>
+          </div>
         </section>
       )}
 

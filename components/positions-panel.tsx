@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Position } from '@/lib/types/positions';
 import { Broker, InstrumentType } from '@/lib/types/ideas';
+import { clearPrefill, loadPrefill } from '@/lib/position-prefill';
 import {
   POSITIONS_CHANGED_EVENT,
   addPosition,
@@ -66,6 +67,22 @@ function AddPositionForm({ onClose }: { onClose: () => void }) {
   const [stopLoss, setStopLoss] = useState('');
   const [takeProfit, setTakeProfit] = useState('');
   const [thesis, setThesis] = useState('');
+  const [prefillNotice, setPrefillNotice] = useState(false);
+
+  useEffect(() => {
+    const prefill = loadPrefill();
+    if (!prefill) return;
+    setUnderlying(prefill.underlying);
+    if (prefill.wkn) setWkn(prefill.wkn);
+    setType(prefill.instrumentType);
+    if (prefill.broker !== 'Unknown') setBroker(prefill.broker);
+    if (prefill.entryPrice > 0) setEntryPrice(prefill.entryPrice.toString());
+    if (prefill.stopLossPlanned !== null) setStopLoss(prefill.stopLossPlanned.toString());
+    if (prefill.takeProfitPlanned !== null) setTakeProfit(prefill.takeProfitPlanned.toString());
+    setThesis(prefill.thesis);
+    setPrefillNotice(true);
+    clearPrefill();
+  }, []);
 
   const handleSave = () => {
     const ep = parseFloat(entryPrice);
@@ -96,6 +113,11 @@ function AddPositionForm({ onClose }: { onClose: () => void }) {
   return (
     <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-4">
       <h3 className="mb-3 text-sm font-semibold text-emerald-200">Neue Position erfassen</h3>
+      {prefillNotice && (
+        <div className="mb-3 rounded-md border border-amber-500/30 bg-amber-950/20 p-2 text-[11px] text-amber-200">
+          ⚡ Vorbefüllt aus der Ideen-Analyse — bitte Werte prüfen und ggf. anpassen, bevor du speicherst.
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="text-xs">
           <span className="text-slate-400">Basiswert / Ticker</span>
@@ -276,6 +298,7 @@ export function PositionsPanel({ latestPrices }: { latestPrices: Record<string, 
   useEffect(() => {
     refresh();
     setMounted(true);
+    if (loadPrefill()) setShowForm(true);
     window.addEventListener(POSITIONS_CHANGED_EVENT, refresh);
     return () => window.removeEventListener(POSITIONS_CHANGED_EVENT, refresh);
   }, [refresh]);

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Candle } from '@/lib/types/domain';
 import { ema, macd, rsi } from '@/lib/analysis/indicators';
+import { DRAWINGS_CHANGED_EVENT, Trendline, addTrendline, clearAssetDrawings, deleteTrendline, loadDrawings } from '@/lib/chart-drawings';
 
 const INTERVALS = [
   { id: '15m', label: '15M' },
@@ -77,7 +78,17 @@ export function InteractiveChart({
   const [loading, setLoading] = useState(false);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [show, setShow] = useState({ ema50: true, ema20: true, rsi: true, macd: true, volume: true });
+  const [drawMode, setDrawMode] = useState(false);
+  const [pendingStart, setPendingStart] = useState<{ time: number; price: number } | null>(null);
+  const [drawings, setDrawings] = useState<Trendline[]>([]);
   const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    const refresh = () => setDrawings(loadDrawings(assetId));
+    refresh();
+    window.addEventListener(DRAWINGS_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(DRAWINGS_CHANGED_EVENT, refresh);
+  }, [assetId]);
 
   useEffect(() => {
     if (interval === initialInterval) return;
@@ -167,13 +178,29 @@ export function InteractiveChart({
     return out;
   }, [yMin, yMax, candleTop]);
 
-  const handleMove = useCallback((clientX: number, target: SVGSVGElement) => {
+  const svgPointFrom = useCallback((clientX: number, clientY: number, target: SVGSVGElement): { x: number; y: number } => {
     const rect = target.getBoundingClientRect();
-    const xRel = ((clientX - rect.left) / rect.width) * GEOM.width;
-    const idx = Math.floor((xRel - innerLeft) / candleSpacing);
-    if (idx >= 0 && idx < view.length) setHoverIdx(idx);
-    else setHoverIdx(null);
+    return {
+      x: ((clientX - rect.left) / rect.width) * GEOM.width,
+      y: ((clientY - rect.top) / rect.height) * (macdBottom + 30)
+    };
+  }, [macdBottom]);
+
+  const idxAtX = useCallback((svgX: number): number | null => {
+    const idx = Math.floor((svgX - innerLeft) / candleSpacing);
+    return idx >= 0 && idx < view.length ? idx : null;
   }, [candleSpacing, innerLeft, view.length]);
+
+  const priceAtY = useCallback((svgY: number): number => {
+    const t = (candleTop + GEOM.candleH - svgY) / GEOM.candleH;
+    return yMin + t * (yMax - yMin);
+  }, [candleTop, yMin, yMax]);
+
+  const handleMove = useCallback((clientX: number, target: SVGSVGElement) => {
+    const pt = svgPointFrom(clientX, 0, target);
+    const idx = idxAtX(pt.x);
+    setHoverIdx(idx);
+  }, [svgPointFrom, idxAtX]);
 
   const onMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     handleMove(e.clientX, e.currentTarget);
@@ -184,6 +211,32 @@ export function InteractiveChart({
     }
   };
   const onLeave = () => setHoverIdx(null);
+
+  const onSvgClick = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!drawMode) return;
+    const pt = svgPointFrom(e.clientX, e.clientY, e.currentTarget);
+    const idx = idxAtX(pt.x);
+    if (idx === null) return;
+    if (pt.y < candleTop || pt.y > candleBottom) return;
+    const time = view[idx].openTime;
+    const price = priceAtY(pt.y);
+    if (pendingStart === null) {
+      setPendingStart({ time, price });
+    } else {
+      addTrendline({ assetId, start: pendingStart, end: { time, price }, color: '#fbbf24' });
+      setPendingStart(null);
+      setDrawMode(false);
+    }
+  };
+
+  const xForTime = useCallback((time: number): number | null => {
+    if (view.length === 0) return null;
+    const first = view[0].openTime;
+    const lastTime = view[view.length - 1].openTime;
+    if (lastTime === first) return innerLeft;
+    const t = (time - first) / (lastTime - first);
+    return innerLeft + t * innerWidth;
+  }, [view, innerLeft, innerWidth]);
 
   const last = view[view.length - 1];
   const hovered = hoverIdx !== null ? view[hoverIdx] : null;
@@ -254,12 +307,13 @@ export function InteractiveChart({
       <svg
         ref={svgRef}
         viewBox={`0 0 ${GEOM.width} ${macdBottom + 30}`}
-        className="w-full touch-none select-none"
+        className={`w-full touch-none select-none ${drawMode ? 'cursor-crosshair' : ''}`}
         style={{ aspectRatio: `${GEOM.width}/${macdBottom + 30}` }}
         onMouseMove={onMouseMove}
         onMouseLeave={onLeave}
         onTouchMove={onTouchMove}
         onTouchEnd={onLeave}
+        onClick={onSvgClick}
       >
         {priceTicks.map((t, i) => (
           <g key={`yp-${i}`}>
@@ -329,6 +383,27 @@ export function InteractiveChart({
             <path d={signalLinePath} stroke="#f59e0b" strokeWidth={1.1} fill="none" />
           </>
         )}
+
+        {drawings.map((d) => {
+          const x1 = xForTime(d.start.time);
+          const x2 = xForTime(d.end.time);
+          if (x1 === null || x2 === null) return null;
+          const y1 = yPrice(d.start.price);
+          const y2 = yPrice(d.end.price);
+          return (
+            <g key={d.id}>
+              <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={d.color} strokeWidth={1.5} opacity={0.9} />
+              <circle cx={x1} cy={y1} r={3} fill={d.color} opacity={0.7} />
+              <circle cx={x2} cy={y2} r={3} fill={d.color} opacity={0.7} />
+            </g>
+          );
+        })}
+
+        {pendingStart !== null && (() => {
+          const px = xForTime(pendingStart.time);
+          if (px === null) return null;
+          return <circle cx={px} cy={yPrice(pendingStart.price)} r={5} fill="#fbbf24" opacity={0.8}><animate attributeName="r" values="3;7;3" dur="1s" repeatCount="indefinite" /></circle>;
+        })()}
 
         {hoverX !== null && (
           <>
@@ -425,6 +500,39 @@ export function InteractiveChart({
               </>
             )}
           </span>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-800 pt-3 text-[10px]">
+        <span className="text-[10px] uppercase tracking-widest text-slate-500">Tools</span>
+        <button
+          onClick={() => {
+            setDrawMode((m) => !m);
+            setPendingStart(null);
+          }}
+          className={`rounded px-2 py-0.5 text-[11px] font-semibold ${drawMode ? 'border border-amber-400/60 bg-amber-500/20 text-amber-200' : 'border border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-600'}`}
+        >
+          {drawMode ? (pendingStart === null ? '◯ Klick: Startpunkt' : '↗ Klick: Endpunkt') : '✎ Trendlinie zeichnen'}
+        </button>
+        {drawings.length > 0 && (
+          <>
+            <span className="font-mono text-[10px] text-slate-500">{drawings.length} Linie(n)</span>
+            <button
+              onClick={() => {
+                const last = drawings[drawings.length - 1];
+                if (last) deleteTrendline(last.id);
+              }}
+              className="rounded border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] text-slate-300 hover:border-rose-500/40 hover:text-rose-300"
+            >
+              Letzte löschen
+            </button>
+            <button
+              onClick={() => clearAssetDrawings(assetId)}
+              className="rounded border border-slate-800 bg-slate-900 px-2 py-0.5 text-[10px] text-slate-500 hover:border-rose-500/40 hover:text-rose-300"
+            >
+              Alle löschen
+            </button>
+          </>
         )}
       </div>
     </div>

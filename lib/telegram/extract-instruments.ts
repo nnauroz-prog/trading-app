@@ -2,8 +2,35 @@ import { Broker, InstrumentType, ParsedInstrument, UserIntent } from '@/lib/type
 import { extractRiskLevel } from './extract-risk-levels';
 import { splitByBrokerSections } from './extract-broker-availability';
 
-const WKN_PATTERN = /\b([A-Z]{2}[A-Z0-9]{4}|[A-Z0-9]{6})\b/g;
+const WKN_DERIVATIVE_PATTERN = /\b([A-Z]{2}[A-Z0-9]{4})\b/g;
+const WKN_STOCK_PATTERN = /\b(\d{6}|[A-Z]\d{5}|[A-Z0-9]{6})\b/g;
 const ISIN_PATTERN = /\b([A-Z]{2}[A-Z0-9]{9}\d)\b/g;
+
+const WKN_FALSE_POSITIVES = new Set([
+  'BMW', 'VW', 'SAP', 'BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'DOGE', 'AVAX', 'LINK',
+  'DOT', 'BNB', 'TRX', 'LTC', 'BCH', 'NEAR', 'ATOM', 'UNI', 'FIL', 'ARB', 'OP',
+  'INJ', 'APT', 'SUI', 'TIA', 'SEI', 'PYTH', 'JUP', 'JTO', 'PEPE', 'SHIB', 'WIF',
+  'BONK', 'FLOKI', 'BOME', 'MEW', 'AAVE', 'MKR', 'RUNE', 'CRV', 'RENDER', 'FET',
+  'IMX', 'MINA', 'KAS', 'STX', 'THETA', 'GRT', 'ALGO', 'FTM', 'HBAR', 'POL',
+  'CALL', 'PUT', 'LONG', 'SHORT', 'BULL', 'BEAR', 'BUY', 'SELL', 'HOLD', 'WATCH',
+  'STRIKE', 'BASIS', 'KURS', 'PREIS', 'STOP', 'LIMIT', 'TARGET', 'ENTRY', 'EXIT',
+  'AKTIE', 'KAUFEN', 'NEHMEN', 'MITTEL', 'NIEDRIG', 'HOEHE', 'HOEHER', 'TIEFE',
+  'WOCHE', 'MONAT', 'JAHR', 'TAG', 'STUNDE', 'TR', 'NULL'
+]);
+
+function isPlausibleWkn(candidate: string): boolean {
+  if (WKN_FALSE_POSITIVES.has(candidate.toUpperCase())) return false;
+  // Pure digits: traditional 6-digit WKN like 519000
+  if (/^\d{6}$/.test(candidate)) return true;
+  // Derivative WKN: 2 letters + 4 alphanumeric, must contain at least one digit
+  if (/^[A-Z]{2}[A-Z0-9]{4}$/.test(candidate) && /\d/.test(candidate)) return true;
+  // Mixed 6-char alphanumeric, must contain at least 2 digits to avoid ticker collisions
+  if (/^[A-Z0-9]{6}$/.test(candidate)) {
+    const digits = (candidate.match(/\d/g) ?? []).length;
+    return digits >= 2;
+  }
+  return false;
+}
 const STRIKE_PATTERN = /(\d+(?:[.,]\d+)?)\s*(?:€|EUR|\$|USD)\b/i;
 const STRIKE_NUMBER_PATTERN = /(?:^|\s)(\d{2,4}(?:[.,]\d+)?)\s*€/;
 const EXPIRY_PATTERN = /(jan|feb|mär|maerz|apr|mai|jun|jul|aug|sep|okt|nov|dez|jan|march|april|june|july|august|september|october|november|december)\.?\s*(20\d{2})/i;
@@ -64,11 +91,22 @@ function parseDirection(line: string): 'call' | 'put' | undefined {
   return undefined;
 }
 
+function collectWknMatches(line: string): string[] {
+  const found = new Set<string>();
+  for (const m of line.matchAll(WKN_DERIVATIVE_PATTERN)) {
+    if (isPlausibleWkn(m[1])) found.add(m[1]);
+  }
+  for (const m of line.matchAll(WKN_STOCK_PATTERN)) {
+    if (isPlausibleWkn(m[1])) found.add(m[1]);
+  }
+  return Array.from(found);
+}
+
 export function extractInstrumentsFromSection(section: { broker: Broker; text: string }): ParsedInstrument[] {
   const lines = section.text.split(/\n/).filter((l) => l.trim().length > 0);
   const out: ParsedInstrument[] = [];
   for (const line of lines) {
-    const wknMatches = Array.from(line.matchAll(WKN_PATTERN));
+    const wknMatches = collectWknMatches(line);
     const isinMatches = Array.from(line.matchAll(ISIN_PATTERN));
     if (wknMatches.length === 0 && isinMatches.length === 0) continue;
     const risk = extractRiskLevel(line);
@@ -77,8 +115,7 @@ export function extractInstrumentsFromSection(section: { broker: Broker; text: s
     const direction = parseDirection(line);
     const intent = detectUserIntent(line);
     const type = detectInstrumentType(line, section.broker);
-    for (const wm of wknMatches) {
-      const wkn = wm[1];
+    for (const wkn of wknMatches) {
       if (isinMatches.some((i) => i[1].includes(wkn))) continue;
       out.push({
         broker: section.broker,
