@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FAILURE_CATEGORY_LABELS, FailureCategory, IdeaJournalEntry, JournalOutcome } from '@/lib/types/positions';
 import { JOURNAL_CHANGED_EVENT, aggregateLessons, computeJournalStats, deleteJournalEntry, loadJournal, updateJournalEntry } from '@/lib/journal';
+import { AutoEvalSummary, evaluateAllPending } from '@/lib/journal-auto-evaluator';
 
 function fmtDate(ms: number): string {
   const d = new Date(ms);
@@ -174,8 +175,27 @@ function LessonsSection({ entries }: { entries: IdeaJournalEntry[] }) {
 export function JournalPanel() {
   const [entries, setEntries] = useState<IdeaJournalEntry[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
+  const [lastEval, setLastEval] = useState<AutoEvalSummary | null>(null);
 
   const refresh = useCallback(() => setEntries(loadJournal()), []);
+
+  const runAutoEval = useCallback(async () => {
+    setEvaluating(true);
+    try {
+      const current = loadJournal();
+      const summary = await evaluateAllPending(current);
+      for (const r of summary.results) {
+        if (Object.keys(r.patch).length > 0) {
+          updateJournalEntry(r.entryId, r.patch);
+        }
+      }
+      setLastEval(summary);
+      setEntries(loadJournal());
+    } finally {
+      setEvaluating(false);
+    }
+  }, []);
 
   useEffect(() => {
     refresh();
@@ -184,6 +204,13 @@ export function JournalPanel() {
     return () => window.removeEventListener(JOURNAL_CHANGED_EVENT, refresh);
   }, [refresh]);
 
+  useEffect(() => {
+    if (!mounted) return;
+    const all = loadJournal();
+    const hasPending = all.some((e) => e.outcome1d === 'pending' || e.outcome1d === undefined || e.outcome3d === 'pending' || e.outcome3d === undefined || e.outcome7d === 'pending' || e.outcome7d === undefined);
+    if (hasPending) runAutoEval();
+  }, [mounted, runAutoEval]);
+
   if (!mounted) return null;
 
   const stats = computeJournalStats(entries);
@@ -191,12 +218,27 @@ export function JournalPanel() {
 
   return (
     <section className="space-y-4 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
-      <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Trading Journal</h2>
-        <p className="mt-1 text-[11px] text-slate-500">
-          Alle analysierten Ideen mit App-Bewertung und Outcome-Tracking. Nach 1 / 3 / 7 / 30 Tagen markieren ob der Trade aufgegangen ist — danach wird sichtbar wann die App richtig liegt und wann nicht.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Trading Journal</h2>
+          <p className="mt-1 text-[11px] text-slate-500">
+            Alle analysierten Ideen mit App-Bewertung und Outcome-Tracking. Krypto-Outcomes werden automatisch bewertet (1d/3d/7d/30d, Schwelle ±2%), Aktien/OS müssen manuell bewertet werden (Auto-Eval braucht Finnhub-Integration).
+          </p>
+        </div>
+        <button
+          onClick={runAutoEval}
+          disabled={evaluating}
+          className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400 hover:border-emerald-500/40 hover:text-emerald-300 disabled:opacity-50"
+        >
+          {evaluating ? 'prüfe…' : 'Auto-Re-Check'}
+        </button>
       </div>
+
+      {lastEval && lastEval.attempted > 0 && (
+        <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[10px] text-slate-500">
+          Letzter Auto-Check: {lastEval.attempted} pending geprüft, {lastEval.updated} aktualisiert, {lastEval.unverified} unverifiziert (z.B. Aktien ohne Live-Daten).
+        </div>
+      )}
 
       {entries.length === 0 && (
         <div className="rounded-lg border border-dashed border-slate-800 bg-slate-950/40 p-4 text-center text-xs text-slate-500">
