@@ -197,19 +197,47 @@ function NoTradeCard({ report }: { report: Exclude<MasterSignalReport, TradeReco
       </p>
 
       {best && (
-        <div className="relative mt-5 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-slate-500">
-            Bestes Setup im Universum (nicht stark genug zum Handeln)
+        <div className="relative mt-5 space-y-3 rounded-xl border border-amber-500/30 bg-slate-950/60 p-4">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-amber-300">
+              Wenn du trotzdem traden willst — bester Setup im Universum (niedrige Konfidenz)
+            </div>
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="font-mono text-2xl font-bold text-white">{best.coin.symbol}</span>
+              <span className="font-mono text-sm text-slate-400">über {best.brokers[0]}</span>
+              <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
+                {best.passedCount}/{best.totalCount} confluences · low conf
+              </span>
+            </div>
           </div>
-          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="font-mono text-xl font-bold text-slate-100">{best.coin.symbol}</span>
-            <span className="font-mono text-sm text-slate-400">${fmtPrice(best.entry)}</span>
-            <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
-              {best.passedCount}/{best.totalCount} confluences
-            </span>
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="rounded-lg border border-slate-700/60 bg-slate-900/70 p-2.5">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500">Entry</div>
+              <div className="mt-1 font-mono text-base font-bold text-white">${fmtPrice(best.entry)}</div>
+            </div>
+            <div className="rounded-lg border border-rose-500/30 bg-rose-950/30 p-2.5">
+              <div className="text-[10px] uppercase tracking-wider text-rose-400">Stop-Loss</div>
+              <div className="mt-1 font-mono text-base font-bold text-rose-200">${fmtPrice(best.stopLoss)}</div>
+              <div className="font-mono text-[10px] text-rose-400">−{best.stopDistancePct.toFixed(2)}%</div>
+            </div>
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/30 p-2.5">
+              <div className="text-[10px] uppercase tracking-wider text-emerald-400">Ziel 1</div>
+              <div className="mt-1 font-mono text-base font-bold text-emerald-200">${fmtPrice(best.takeProfit1)}</div>
+              <div className="font-mono text-[10px] text-emerald-400">+{(best.stopDistancePct * best.rrTp1).toFixed(2)}%</div>
+            </div>
+            <div className="rounded-lg border border-emerald-400/40 bg-emerald-900/30 p-2.5">
+              <div className="text-[10px] uppercase tracking-wider text-emerald-300">Ziel 2</div>
+              <div className="mt-1 font-mono text-base font-bold text-emerald-100">${fmtPrice(best.takeProfit2)}</div>
+              <div className="font-mono text-[10px] text-emerald-300">+{(best.stopDistancePct * best.rrTp2).toFixed(2)}%</div>
+            </div>
           </div>
-          <div className="mt-3">
+
+          <div>
             <ChecklistBar passed={best.passedCount} total={best.totalCount} />
+            <p className="mt-2 text-[11px] leading-relaxed text-amber-200/80">
+              {`Position-Size halbieren oder vierteln bei diesem Konfidenz-Level. Stop religiös einhalten. Erst Trade wenn ≥7/12 Bestätigungen + Markt unterstützt — das ist der ehrliche Pfad. Was hier steht ist „falls du eh handeln musst", nicht „App-Empfehlung".`}
+            </p>
           </div>
         </div>
       )}
