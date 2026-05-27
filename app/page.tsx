@@ -33,6 +33,9 @@ export default async function HomePage() {
           </h1>
         </div>
         <div className="flex items-center gap-1.5 text-xs">
+          <Link href="/ideas" className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 transition hover:border-emerald-400/50 hover:bg-emerald-500/20">
+            Idee analysieren
+          </Link>
           <Link href="/history" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-400 transition hover:border-slate-700 hover:text-slate-200">
             History
           </Link>
