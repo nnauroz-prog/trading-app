@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { buildTopPlayReport } from '@/lib/analysis/top-play-engine';
 import { buildEventFeed } from '@/lib/analysis/event-feed';
+import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { TickerBar } from '@/components/ticker-bar';
 import { TopPlayCard, AlternatesList } from '@/components/top-play-card';
 import { LiveFeed } from '@/components/live-feed';
+import { TodayTradeCard } from '@/components/today-trade-card';
 import { AccountConfigBar } from '@/components/account-config-bar';
 import { PaperTradesPanel } from '@/components/paper-trades-panel';
 import { LiveClock } from '@/components/live-clock';
@@ -12,7 +14,10 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function HomePage() {
-  const report = await buildTopPlayReport();
+  const [report, masterSignal] = await Promise.all([
+    buildTopPlayReport(),
+    buildMasterSignal()
+  ]);
   const events = buildEventFeed(report);
 
   const latestPrices: Record<string, number | null> = {};
@@ -55,9 +60,18 @@ export default async function HomePage() {
 
       <AccountConfigBar />
 
-      <TopPlayCard play={report.topPlay} marketMood={marketMood} />
+      <TodayTradeCard report={masterSignal} />
 
       <LiveFeed events={events} />
+
+      <details className="rounded-xl border border-slate-800/80 bg-slate-900/40">
+        <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+          ▸ Alternative Setups + Tech-Confluence anzeigen
+        </summary>
+        <div className="space-y-4 p-4 pt-0">
+          <TopPlayCard play={report.topPlay} marketMood={marketMood} />
+        </div>
+      </details>
 
       <AlternatesList alternates={report.alternates} />
 
