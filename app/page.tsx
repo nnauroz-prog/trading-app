@@ -6,6 +6,7 @@ import { TickerBar } from '@/components/ticker-bar';
 import { TopPlayCard, AlternatesList } from '@/components/top-play-card';
 import { LiveFeed } from '@/components/live-feed';
 import { TodayTradeCard } from '@/components/today-trade-card';
+import { HeuteAufpassen } from '@/components/heute-aufpassen';
 import { AccountConfigBar } from '@/components/account-config-bar';
 import { PaperTradesPanel } from '@/components/paper-trades-panel';
 import { LiveClock } from '@/components/live-clock';
@@ -46,12 +47,18 @@ export default async function HomePage() {
           </div>
           <LiveClock />
         </div>
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
           <Link href="/ideas" className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 transition hover:border-emerald-400/50 hover:bg-emerald-500/20">
-            Idee analysieren
+            Idee
           </Link>
-          <Link href="/history" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-400 transition hover:border-slate-700 hover:text-slate-200">
-            History
+          <Link href="/positions" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">
+            Positionen
+          </Link>
+          <Link href="/warnings" className="rounded-md border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-rose-300 transition hover:border-rose-400/50 hover:bg-rose-500/20">
+            Warnung
+          </Link>
+          <Link href="/journal" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">
+            Journal
           </Link>
         </div>
       </header>
@@ -61,6 +68,15 @@ export default async function HomePage() {
       <AccountConfigBar />
 
       <TodayTradeCard report={masterSignal} />
+
+      <HeuteAufpassen
+        latestPrices={latestPrices}
+        marketContext={{
+          marketMood,
+          marketRegime: masterSignal.kind === 'trade' ? masterSignal.marketRegime : masterSignal.marketRegime,
+          todaysVerdict: masterSignal.kind === 'trade' ? 'trade' : 'no_trade'
+        }}
+      />
 
       <LiveFeed events={events} />
 
