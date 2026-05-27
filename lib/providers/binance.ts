@@ -19,11 +19,19 @@ interface BybitKlineResponse {
   };
 }
 
-function intervalToBybit(interval: '1h' | '4h'): string {
-  return interval === '1h' ? '60' : '240';
+function intervalToBybit(interval: string): string {
+  switch (interval) {
+    case '15m': return '15';
+    case '30m': return '30';
+    case '1h': return '60';
+    case '4h': return '240';
+    case '1d': return 'D';
+    case '1w': return 'W';
+    default: return '60';
+  }
 }
 
-async function fetchBybit(symbol: string, interval: '1h' | '4h', limit: number): Promise<Candle[] | null> {
+async function fetchBybit(symbol: string, interval: string, limit: number): Promise<Candle[] | null> {
   try {
     const url = `https://api.bybit.com/v5/market/kline?category=spot&symbol=${symbol}&interval=${intervalToBybit(interval)}&limit=${Math.min(limit, 1000)}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
@@ -45,7 +53,7 @@ async function fetchBybit(symbol: string, interval: '1h' | '4h', limit: number):
   }
 }
 
-async function fetchBinance(symbol: string, interval: '1h' | '4h', limit: number): Promise<Candle[] | null> {
+async function fetchBinance(symbol: string, interval: string, limit: number): Promise<Candle[] | null> {
   try {
     const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
     const res = await fetch(url, { next: { revalidate: 60 } });
@@ -65,9 +73,6 @@ async function fetchBinance(symbol: string, interval: '1h' | '4h', limit: number
 }
 
 export async function fetchKlinesBySymbol(symbol: string, interval: string, limit = 200): Promise<Candle[] | null> {
-  if (interval !== '1h' && interval !== '4h') {
-    return fetchBinance(symbol, interval as '1h' | '4h', limit);
-  }
   const bybit = await fetchBybit(symbol, interval, limit);
   if (bybit && bybit.length > 0) return bybit;
   return fetchBinance(symbol, interval, limit);

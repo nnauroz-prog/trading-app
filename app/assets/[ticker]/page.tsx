@@ -9,7 +9,7 @@ import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
 import { Asset, PriceSnapshot } from '@/lib/types/domain';
 import { HeadlinesList } from '@/components/headlines-list';
-import { PriceChart } from '@/components/price-chart';
+import { InteractiveChart } from '@/components/interactive-chart';
 
 export const dynamic = 'force-dynamic';
 
@@ -152,7 +152,12 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
       )}
 
       {hasBinance && candles && candles.length >= 50 && (
-        <PriceChart candles={candles} title={`${asset.ticker}/USDT · Technical View`} />
+        <InteractiveChart
+          assetId={asset.id}
+          initialCandles={candles}
+          initialInterval="1h"
+          title={`${asset.ticker}/USDT · Technical View`}
+        />
       )}
 
       {hasBinance && (!candles || candles.length < 50) && (
