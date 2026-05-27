@@ -51,10 +51,20 @@ export default async function HomePage() {
 
       <PaperTradesPanel latestPrices={latestPrices} />
 
-      <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
-        Scant {report.tickers.length} Coins · {report.analyzedCount} deep-analyzed · {report.dataSource === 'binance' ? 'Live Binance Spot Data' : 'Engine offline'}
-        <span className="ml-2 text-slate-700">·</span>
-        <span className="ml-2">Keine Finanzberatung. Top-Play ist die aktuell beste Konfluenz im Universum, kein Versprechen. Stop-Loss respektieren. Vergangenheit ≠ Zukunft.</span>
+      <footer className="space-y-2 border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="flex items-center gap-1.5">
+            <span className={`inline-block h-1.5 w-1.5 rounded-full ${report.dataSource === 'binance' ? 'animate-pulse bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.7)]' : 'bg-rose-500'}`} />
+            <span className={report.dataSource === 'binance' ? 'text-emerald-400/80' : 'text-rose-400/80'}>
+              {report.dataSource === 'binance' ? 'Live Spot Data' : 'Engine offline'}
+            </span>
+          </span>
+          <span className="text-slate-700">·</span>
+          <span>{report.tickers.length} Coins · {report.analyzedCount} deep-analyzed</span>
+          <span className="text-slate-700">·</span>
+          <span className="font-mono">{new Date(report.generatedAt).toLocaleTimeString('de-DE')}</span>
+        </div>
+        <div>Keine Finanzberatung. Top-Play ist die aktuell beste Konfluenz im Universum, kein Versprechen. Stop-Loss respektieren. Vergangenheit ≠ Zukunft.</div>
       </footer>
     </main>
   );

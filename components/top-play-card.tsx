@@ -3,6 +3,7 @@ import { TopPlay } from '@/lib/analysis/top-play-engine';
 import { TradeSignal } from '@/lib/types/domain';
 import { SignalSizing } from '@/components/signal-sizing';
 import { TakeSignalButton } from '@/components/take-signal-button';
+import { Sparkline } from '@/components/sparkline';
 
 function fmtPrice(value: number): string {
   if (value >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -127,6 +128,11 @@ export function TopPlayCard({ play }: { play: TopPlay | null }) {
         </div>
       </div>
 
+      <div className="relative mb-3 flex items-center justify-between gap-3 rounded-lg border border-slate-800/60 bg-slate-950/40 px-3 py-2">
+        <div className="text-[10px] uppercase tracking-widest text-slate-500">48h Verlauf</div>
+        <Sparkline candles={play.sparkline} width={220} height={36} />
+      </div>
+
       <div className="relative grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div className="rounded-lg border border-slate-700/60 bg-slate-900/70 p-3">
           <div className="text-[10px] uppercase tracking-wider text-slate-500">Entry</div>
@@ -195,6 +201,9 @@ export function AlternatesList({ alternates }: { alternates: TopPlay[] }) {
               </div>
               <div className={`rounded border px-1.5 py-0.5 text-[10px] font-bold ${style.chipBorder} ${style.chipBg} ${style.chipText}`}>
                 {style.bolts} {style.label}
+              </div>
+              <div className="hidden sm:block">
+                <Sparkline candles={p.sparkline} width={80} height={24} showFill={false} />
               </div>
               <div className="flex-1 truncate text-[11px] text-slate-400">{p.reasoning[0] ?? '—'}</div>
               <div className="font-mono text-[10px] text-slate-500 transition group-hover:text-emerald-300">Chart →</div>

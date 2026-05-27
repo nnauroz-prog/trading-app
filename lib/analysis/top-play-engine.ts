@@ -34,6 +34,7 @@ export interface TopPlay {
     volumeRatio: number;
     higherLows: boolean;
   };
+  sparkline: Candle[];
   generatedAt: string;
 }
 
@@ -181,6 +182,7 @@ async function analyzeCoin(coin: UniverseCoin, ticker: TickerSnapshot): Promise<
       volumeRatio: scored.volumeRatio,
       higherLows: scored.higherLows
     },
+    sparkline: c1h.slice(-48),
     generatedAt: new Date().toISOString()
   };
 }
