@@ -6,6 +6,7 @@ import { TopPlayCard, AlternatesList } from '@/components/top-play-card';
 import { LiveFeed } from '@/components/live-feed';
 import { AccountConfigBar } from '@/components/account-config-bar';
 import { PaperTradesPanel } from '@/components/paper-trades-panel';
+import { LiveClock } from '@/components/live-clock';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -20,6 +21,16 @@ export default async function HomePage() {
     latestPrices[symbol] = t.price;
   }
 
+  const tickerChanges = report.tickers.map((t) => t.priceChangePct);
+  const negativeCount = tickerChanges.filter((c) => c < -2).length;
+  const positiveCount = tickerChanges.filter((c) => c > 2).length;
+  const totalCount = tickerChanges.length || 1;
+  const negShare = negativeCount / totalCount;
+  const posShare = positiveCount / totalCount;
+  let marketMood: 'risk-on' | 'neutral' | 'risk-off' = 'neutral';
+  if (negShare > 0.6) marketMood = 'risk-off';
+  else if (posShare > 0.6) marketMood = 'risk-on';
+
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:space-y-6 md:p-6">
       <header className="flex items-baseline justify-between gap-2">
@@ -28,9 +39,7 @@ export default async function HomePage() {
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
             Trading Desk
           </div>
-          <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            {new Date().toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long' })}
-          </h1>
+          <LiveClock />
         </div>
         <div className="flex items-center gap-1.5 text-xs">
           <Link href="/ideas" className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 transition hover:border-emerald-400/50 hover:bg-emerald-500/20">
@@ -46,7 +55,7 @@ export default async function HomePage() {
 
       <AccountConfigBar />
 
-      <TopPlayCard play={report.topPlay} />
+      <TopPlayCard play={report.topPlay} marketMood={marketMood} />
 
       <LiveFeed events={events} />
 

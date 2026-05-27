@@ -80,7 +80,15 @@ function toTradeSignal(play: TopPlay): TradeSignal {
   };
 }
 
-export function TopPlayCard({ play }: { play: TopPlay | null }) {
+export function TopPlayCard({
+  play,
+  marketMood = 'neutral',
+  noTradeReason
+}: {
+  play: TopPlay | null;
+  marketMood?: 'risk-on' | 'neutral' | 'risk-off';
+  noTradeReason?: string | null;
+}) {
   if (!play) {
     return (
       <section className="rounded-2xl border border-slate-800 bg-slate-950 p-6">
@@ -88,6 +96,50 @@ export function TopPlayCard({ play }: { play: TopPlay | null }) {
           <span className="h-2 w-2 animate-pulse rounded-full bg-rose-400" />
           Top-Play-Engine offline · Krypto-Daten-Provider gerade nicht erreichbar
         </div>
+      </section>
+    );
+  }
+
+  const forceNoTrade =
+    !!noTradeReason ||
+    play.confidenceScore < 50 ||
+    (marketMood === 'risk-off' && play.confidence !== 'high');
+
+  if (forceNoTrade) {
+    const reason = noTradeReason
+      ?? (play.confidenceScore < 50
+        ? `Bestes verfügbares Setup hat nur Score ${play.confidenceScore}/100 — unter Trade-Schwelle (50). Keine valide Konfluenz im Markt.`
+        : `Markt aktuell defensiv (${marketMood === 'risk-off' ? 'Risk-off — Mehrheit der Coins negativ' : 'unklare Phase'}) und beobachtete Setups nur ${play.confidence}-Confidence.`);
+    return (
+      <section className="relative overflow-hidden rounded-2xl border-2 border-slate-700 bg-gradient-to-br from-slate-950 to-slate-900/40 p-5">
+        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-rose-500/5 blur-3xl" />
+        <div className="relative mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-400">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+          No Trade · Kapital schützen
+        </div>
+        <h2 className="relative text-2xl font-bold tracking-tight text-amber-100 sm:text-3xl">
+          Kein sauberer Trade — heute besser pausieren
+        </h2>
+        <p className="relative mt-2 max-w-2xl text-sm text-slate-300">{reason}</p>
+        <div className="relative mt-4 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+          <div className="text-[10px] uppercase tracking-widest text-slate-500">Was die Engine sieht</div>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
+            <span className="text-slate-400">Bester Score:</span>
+            <span className="font-mono text-base font-semibold text-amber-300">{play.confidenceScore}/100</span>
+            <span className="text-slate-500">({play.coin.symbol}, {play.confidence})</span>
+          </div>
+          <div className="mt-2 space-y-1">
+            {play.reasoning.map((r, i) => (
+              <div key={i} className="flex items-start gap-2 text-[11px] text-slate-400">
+                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-600" />
+                <span>{r}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="relative mt-3 rounded-lg border border-amber-500/20 bg-amber-950/15 p-3 text-[11px] leading-relaxed text-amber-200/85">
+          <strong className="text-amber-300">Trader-Regel:</strong> Wenn die Konfluenz nicht da ist, ist Cash-Quote die beste Position. Setze nur ein, wenn dein Setup-Score ≥70 ist und der Markt das Setup unterstützt. Nicht jeder Tag ist ein Trading-Tag.
+        </p>
       </section>
     );
   }
