@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MasterSignalReport, TradeRecommendation } from '@/lib/analysis/master-signal-engine';
+import { MasterSignalReport, SignalAction, TradeRecommendation, describeSignalAction } from '@/lib/analysis/master-signal-engine';
 import { AccountConfig, DEFAULT_CONFIG, computeSizing, loadConfig } from '@/lib/account-config';
 
 function fmtPrice(value: number): string {
@@ -40,7 +40,7 @@ function ChecklistBar({ passed, total }: { passed: number; total: number }) {
   );
 }
 
-function TradeReadyCard({ trade }: { trade: TradeRecommendation }) {
+function TradeReadyCard({ trade, action }: { trade: TradeRecommendation; action: SignalAction }) {
   const [showDetails, setShowDetails] = useState(false);
   const [config, setConfig] = useState<AccountConfig>(DEFAULT_CONFIG);
   const [mounted, setMounted] = useState(false);
@@ -77,6 +77,13 @@ function TradeReadyCard({ trade }: { trade: TradeRecommendation }) {
         {' · '}über <span className="font-semibold text-emerald-300">{trade.brokers[0]}</span>
         {trade.brokers.length > 1 && <span className="text-slate-500"> (oder {trade.brokers.slice(1).join(', ')})</span>}
       </p>
+
+      <div className="relative mt-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3">
+        <div className="text-sm font-bold text-emerald-100">{action.headline}</div>
+        {action.horizonText && (
+          <div className="mt-1 text-[11px] leading-relaxed text-emerald-100/80">{action.horizonText}</div>
+        )}
+      </div>
 
       <div className="relative mt-5 grid grid-cols-3 gap-2">
         <div className="rounded-xl border border-rose-500/30 bg-rose-950/30 p-3">
@@ -180,7 +187,7 @@ function TradeReadyCard({ trade }: { trade: TradeRecommendation }) {
   );
 }
 
-function NoTradeCard({ report }: { report: Exclude<MasterSignalReport, TradeRecommendation> }) {
+function NoTradeCard({ report, action }: { report: Exclude<MasterSignalReport, TradeRecommendation>; action: SignalAction }) {
   const best = report.bestCandidate;
   return (
     <section className="relative overflow-hidden rounded-3xl border-2 border-slate-700 bg-gradient-to-br from-slate-950 to-slate-900/40 p-6">
@@ -195,6 +202,11 @@ function NoTradeCard({ report }: { report: Exclude<MasterSignalReport, TradeReco
       <p className="relative mt-1 text-sm text-slate-300">
         Cash halten und auf besseren Setup warten. Markt-Regime: <span className="font-semibold text-slate-200">{report.marketRegime}</span> · Stimmung: <span className="font-semibold text-slate-200">{report.marketMood}</span>
       </p>
+
+      <div className="relative mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
+        <div className="text-sm font-bold text-amber-100">{action.headline}</div>
+        <div className="mt-1 text-[11px] leading-relaxed text-amber-100/80">{action.detail}</div>
+      </div>
 
       {best && (
         <div className="relative mt-5 space-y-3 rounded-xl border border-amber-500/30 bg-slate-950/60 p-4">
@@ -262,6 +274,7 @@ function NoTradeCard({ report }: { report: Exclude<MasterSignalReport, TradeReco
 }
 
 export function TodayTradeCard({ report }: { report: MasterSignalReport }) {
-  if (report.kind === 'trade') return <TradeReadyCard trade={report} />;
-  return <NoTradeCard report={report} />;
+  const action = describeSignalAction(report);
+  if (report.kind === 'trade') return <TradeReadyCard trade={report} action={action} />;
+  return <NoTradeCard report={report} action={action} />;
 }

@@ -48,10 +48,64 @@ export interface NoTradeReport {
 
 export type MasterSignalReport = TradeRecommendation | NoTradeReport;
 
-const MIN_PASSED_FOR_TRADE = 7;
+export const MIN_PASSED_FOR_TRADE = 7;
 const RISK_R = 1.5;
 const TP1_R = 2.5;
 const TP2_R = 5.0;
+
+// Strategy exits at the market price after this many hours if no target is hit.
+// Mirrors MAX_HOLD_BARS (72 × 1h) in the strategy backtest.
+export const MAX_HOLD_HOURS = 72;
+
+export interface SignalAction {
+  verdict: 'BUY_NOW' | 'WAIT' | 'NO_SETUP';
+  headline: string;
+  detail: string;
+  horizonText: string | null;
+}
+
+export function describeSignalAction(report: MasterSignalReport): SignalAction {
+  const horizonText =
+    `Zeithorizont: meist Stunden bis ~3 Tage. Wird Ziel 1 nicht erreicht, ` +
+    `schließt die Strategie spätestens nach ${MAX_HOLD_HOURS}h (3 Tagen) zum Marktpreis.`;
+
+  if (report.kind === 'trade') {
+    return {
+      verdict: 'BUY_NOW',
+      headline: `JETZT kaufen — ${report.coin.symbol} zum Marktpreis`,
+      detail:
+        `${report.passedCount}/${report.totalCount} Bestätigungen erfüllt ` +
+        `(Schwelle ≥${MIN_PASSED_FOR_TRADE}/12). Einstieg sofort zum Markt — ` +
+        `genau so misst es auch der Backtest. 50% bei Ziel 1 sichern, Stop nachziehen.`,
+      horizonText
+    };
+  }
+
+  const best = report.bestCandidate;
+  if (best) {
+    const missing = Math.max(0, MIN_PASSED_FOR_TRADE - best.passedCount);
+    return {
+      verdict: 'WAIT',
+      headline: `WARTEN — bestes Setup ${best.coin.symbol} (${best.passedCount}/${best.totalCount})`,
+      detail:
+        missing > 0
+          ? `Noch kein Kauf: es fehlen ${missing} Bestätigung${missing === 1 ? '' : 'en'} ` +
+            `bis zur Schwelle von ≥${MIN_PASSED_FOR_TRADE}/12. Beobachten — sobald erreicht, ` +
+            `wird daraus ein Kaufsignal.`
+          : `Schwelle erreicht, aber der Marktfilter (Regime/Stimmung) blockiert noch. Beobachten.`,
+      horizonText: null
+    };
+  }
+
+  return {
+    verdict: 'NO_SETUP',
+    headline: 'WARTEN — kein brauchbares Setup im Markt',
+    detail:
+      report.reasons[0] ??
+      'Aktuell bietet kein Coin im Universum ausreichende Konfluenz. Cash halten ist auch eine Position.',
+    horizonText: null
+  };
+}
 
 interface AnalyzedCoin {
   coin: UniverseCoin;

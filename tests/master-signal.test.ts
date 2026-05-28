@@ -1,6 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { buildChecks } from '@/lib/analysis/master-signal-engine';
+import {
+  MAX_HOLD_HOURS,
+  MIN_PASSED_FOR_TRADE,
+  MasterSignalReport,
+  TradeRecommendation,
+  buildChecks,
+  describeSignalAction
+} from '@/lib/analysis/master-signal-engine';
 import { Candle } from '@/lib/types/domain';
+
+function makeTrade(symbol: string, passed: number): TradeRecommendation {
+  return {
+    kind: 'trade',
+    coin: { symbol } as TradeRecommendation['coin'],
+    ticker: {} as TradeRecommendation['ticker'],
+    type: 'LONG',
+    entry: 100, stopLoss: 95, takeProfit1: 110, takeProfit2: 120,
+    stopDistancePct: 5, rrTp1: 2, rrTp2: 4, atr1h: 3,
+    confidence: 80, checks: [], passedCount: passed, totalCount: 12,
+    oneLineReason: 'test', brokers: ['X'], marketRegime: 'bull',
+    generatedAt: '2026-01-01T00:00:00Z'
+  };
+}
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -78,5 +99,46 @@ describe('buildChecks — volume spike detection', () => {
     const result = buildChecks(c1h, c4h, c1d);
     const volCheck = result.checks.find((c) => c.id === 'volume_spike');
     expect(volCheck?.passed).toBe(true);
+  });
+});
+
+describe('describeSignalAction', () => {
+  it('says BUY_NOW with a hold horizon when a trade fires', () => {
+    const a = describeSignalAction(makeTrade('SOL', 9));
+    expect(a.verdict).toBe('BUY_NOW');
+    expect(a.headline).toContain('SOL');
+    expect(a.headline.toLowerCase()).toContain('jetzt');
+    expect(a.horizonText).toContain(String(MAX_HOLD_HOURS));
+  });
+
+  it('says WAIT and names how many confluences are missing', () => {
+    const report: MasterSignalReport = {
+      kind: 'no_trade',
+      bestCandidate: makeTrade('BTC', 5),
+      marketRegime: 'sideways',
+      marketMood: 'neutral',
+      reasons: ['nur 5/12'],
+      generatedAt: '2026-01-01T00:00:00Z'
+    };
+    const a = describeSignalAction(report);
+    expect(a.verdict).toBe('WAIT');
+    expect(a.headline).toContain('BTC');
+    // needs MIN_PASSED_FOR_TRADE - 5 more
+    expect(a.detail).toContain(String(MIN_PASSED_FOR_TRADE - 5));
+    expect(a.horizonText).toBeNull();
+  });
+
+  it('falls back to NO_SETUP when there is no candidate', () => {
+    const report: MasterSignalReport = {
+      kind: 'no_trade',
+      bestCandidate: null,
+      marketRegime: 'bear',
+      marketMood: 'risk-off',
+      reasons: ['Markt schwach'],
+      generatedAt: '2026-01-01T00:00:00Z'
+    };
+    const a = describeSignalAction(report);
+    expect(a.verdict).toBe('NO_SETUP');
+    expect(a.detail).toContain('Markt schwach');
   });
 });
