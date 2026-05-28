@@ -12,6 +12,8 @@ import { TodayTradeCard } from '@/components/today-trade-card';
 import { CandidateList } from '@/components/candidate-list';
 import { TodoBox } from '@/components/todo-box';
 import { MarketBriefing } from '@/components/market-briefing';
+import { AdvancedOnly } from '@/components/advanced-only';
+import { ViewModeToggle } from '@/components/view-mode-toggle';
 import { HeuteAufpassen } from '@/components/heute-aufpassen';
 import { AccountConfigBar } from '@/components/account-config-bar';
 import { PaperTradesPanel } from '@/components/paper-trades-panel';
@@ -117,7 +119,13 @@ export default async function HomePage() {
 
       <TodoBox report={masterSignal} />
 
-      <MarketBriefing report={masterSignal} />
+      <div className="flex justify-end">
+        <ViewModeToggle />
+      </div>
+
+      <AdvancedOnly>
+        <MarketBriefing report={masterSignal} />
+      </AdvancedOnly>
 
       <TickerBar tickers={report.tickers} />
 
@@ -127,35 +135,37 @@ export default async function HomePage() {
 
       <TodayTradeCard report={masterSignal} />
 
-      <CandidateList candidates={masterSignal.candidates} />
+      <AdvancedOnly>
+        <CandidateList candidates={masterSignal.candidates} />
 
-      <HeuteAufpassen
-        latestPrices={latestPrices}
-        marketContext={{
-          marketMood,
-          marketRegime: masterSignal.kind === 'trade' ? masterSignal.marketRegime : masterSignal.marketRegime,
-          todaysVerdict: masterSignal.kind === 'trade' ? 'trade' : 'no_trade'
-        }}
-      />
+        <HeuteAufpassen
+          latestPrices={latestPrices}
+          marketContext={{
+            marketMood,
+            marketRegime: masterSignal.kind === 'trade' ? masterSignal.marketRegime : masterSignal.marketRegime,
+            todaysVerdict: masterSignal.kind === 'trade' ? 'trade' : 'no_trade'
+          }}
+        />
 
-      <MarketPulseTile fearGreed={fearGreed} btcDominance={btcDominance} />
+        <MarketPulseTile fearGreed={fearGreed} btcDominance={btcDominance} />
 
-      <CyclesTile halving={halving} fundingBtc={fundingBtc} fundingEth={fundingEth} />
+        <CyclesTile halving={halving} fundingBtc={fundingBtc} fundingEth={fundingEth} />
 
-      <LiveFeed events={events} />
+        <LiveFeed events={events} />
 
-      <details className="rounded-xl border border-slate-800/80 bg-slate-900/40">
-        <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
-          ▸ Alternative Setups + Tech-Confluence anzeigen
-        </summary>
-        <div className="space-y-4 p-4 pt-0">
-          <TopPlayCard play={report.topPlay} marketMood={marketMood} />
-        </div>
-      </details>
+        <details className="rounded-xl border border-slate-800/80 bg-slate-900/40">
+          <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+            ▸ Alternative Setups + Tech-Confluence anzeigen
+          </summary>
+          <div className="space-y-4 p-4 pt-0">
+            <TopPlayCard play={report.topPlay} marketMood={marketMood} />
+          </div>
+        </details>
 
-      <AlternatesList alternates={report.alternates} />
+        <AlternatesList alternates={report.alternates} />
 
-      <PaperTradesPanel latestPrices={latestPrices} />
+        <PaperTradesPanel latestPrices={latestPrices} />
+      </AdvancedOnly>
 
       <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
         Scant {report.tickers.length} Coins · {report.analyzedCount} deep-analyzed · {report.dataSource === 'binance' ? 'Live Binance Spot Data' : 'Engine offline'}
