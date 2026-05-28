@@ -14,6 +14,8 @@ interface FinnhubMetricBlock {
   '5DayPriceReturnDaily'?: number | null;
   'monthToDatePriceReturnDaily'?: number | null;
   '10DayAverageTradingVolume'?: number | null;
+  '52WeekHigh'?: number | null;
+  '52WeekLow'?: number | null;
   'peNormalizedAnnual'?: number | null;
   'peTTM'?: number | null;
   'pegRatio'?: number | null;
@@ -83,6 +85,38 @@ function extractMetrics(m: FinnhubMetricBlock): StockMetrics {
     epsGrowthYoy: m['epsGrowthQuarterlyYoy'] ?? null,
     revenueGrowthYoy: m['revenueGrowthQuarterlyYoy'] ?? m['revenueGrowthTTMYoy'] ?? null
   };
+}
+
+export interface StockQuote {
+  symbol: string;
+  price: number;
+  change24hPct: number;
+  high52: number | null;
+  low52: number | null;
+  source: 'finnhub';
+}
+
+export async function fetchStockQuoteBySymbol(symbol: string): Promise<StockQuote | null> {
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const [quote, metric] = await Promise.all([
+      fetchJson<FinnhubQuote>(`${BASE}/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`),
+      fetchJson<FinnhubMetricResponse>(metricUrl(symbol, apiKey))
+    ]);
+    if (!quote || quote.c === 0) return null;
+    const m = metric?.metric ?? {};
+    return {
+      symbol,
+      price: quote.c,
+      change24hPct: quote.dp ?? 0,
+      high52: m['52WeekHigh'] ?? null,
+      low52: m['52WeekLow'] ?? null,
+      source: 'finnhub'
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function fetchOne(assetId: string, symbol: string, apiKey: string): Promise<PriceSnapshot | null> {

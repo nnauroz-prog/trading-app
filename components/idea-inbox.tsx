@@ -9,6 +9,7 @@ import { DEFAULT_PROFILE, PROFILE_CHANGED_EVENT, loadUserProfile, profileLabel, 
 import { checkInstrumentAvailability } from '@/lib/data/brokers/manual-instrument-allowlist';
 import { addJournalEntry } from '@/lib/journal';
 import { buildPrefillFromIdea, savePrefill } from '@/lib/position-prefill';
+import { StockQuoteVerifier } from '@/components/stock-quote-verifier';
 
 const SAMPLE_BMW = `Tradingidee BMW-OS
 
@@ -386,6 +387,10 @@ export function IdeaInbox() {
             </button>
           </div>
         </section>
+      )}
+
+      {parsed && (parsed.ideaType === 'stock' || parsed.ideaType === 'optionsschein' || parsed.ideaType === 'knockout') && (
+        <StockQuoteVerifier underlying={parsed.underlying} mentionedPrice={parsed.currentPriceMentioned} />
       )}
 
       {parsed && <ParsedSummary parsed={parsed} />}
