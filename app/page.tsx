@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { buildTopPlayReport } from '@/lib/analysis/top-play-engine';
 import { buildEventFeed } from '@/lib/analysis/event-feed';
 import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
+import { fetchFearGreed, fetchBtcDominance } from '@/lib/providers/sentiment-indicators';
+import { fetchFundingRate } from '@/lib/providers/funding-rates';
+import { computeHalvingCyclePosition } from '@/lib/cycles/halving-cycle';
 import { TickerBar } from '@/components/ticker-bar';
 import { TopPlayCard, AlternatesList } from '@/components/top-play-card';
 import { LiveFeed } from '@/components/live-feed';
@@ -10,16 +13,23 @@ import { HeuteAufpassen } from '@/components/heute-aufpassen';
 import { AccountConfigBar } from '@/components/account-config-bar';
 import { PaperTradesPanel } from '@/components/paper-trades-panel';
 import { LiveClock } from '@/components/live-clock';
+import { MarketPulseTile } from '@/components/market-pulse-tile';
+import { CyclesTile } from '@/components/cycles-tile';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function HomePage() {
-  const [report, masterSignal] = await Promise.all([
+  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth] = await Promise.all([
     buildTopPlayReport(),
-    buildMasterSignal()
+    buildMasterSignal(),
+    fetchFearGreed(),
+    fetchBtcDominance(),
+    fetchFundingRate('BTCUSDT'),
+    fetchFundingRate('ETHUSDT')
   ]);
   const events = buildEventFeed(report);
+  const halving = computeHalvingCyclePosition();
 
   const latestPrices: Record<string, number | null> = {};
   for (const t of report.tickers) {
@@ -63,6 +73,9 @@ export default async function HomePage() {
           <Link href="/journal" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">
             Journal
           </Link>
+          <Link href="/performance" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">
+            Performance
+          </Link>
         </div>
       </header>
 
@@ -80,6 +93,10 @@ export default async function HomePage() {
           todaysVerdict: masterSignal.kind === 'trade' ? 'trade' : 'no_trade'
         }}
       />
+
+      <MarketPulseTile fearGreed={fearGreed} btcDominance={btcDominance} />
+
+      <CyclesTile halving={halving} fundingBtc={fundingBtc} fundingEth={fundingEth} />
 
       <LiveFeed events={events} />
 
