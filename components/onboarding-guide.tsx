@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { UserRiskProfile } from '@/lib/types/ideas';
 import { loadUserProfile, profileDescription, profileLabel, saveUserProfile } from '@/lib/user-profile';
 import { AccountConfig, loadConfig, saveConfig } from '@/lib/account-config';
@@ -21,6 +21,7 @@ export function OnboardingGuide() {
   const [profile, setProfile] = useState<UserRiskProfile>('intermediate');
   const [sizeInput, setSizeInput] = useState('');
   const [currency, setCurrency] = useState<'EUR' | 'USD'>('EUR');
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOnboardingDone()) {
@@ -49,11 +50,31 @@ export function OnboardingGuide() {
     setOpen(false);
   };
 
+  useEffect(() => {
+    if (!open) return;
+    dialogRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        markOnboardingDone();
+        setOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Setup-Assistent"
+        tabIndex={-1}
+        className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl outline-none"
+      >
         <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3">
           <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { PerformanceMetrics, computePerformanceMetrics } from '@/lib/performance-metrics';
 import { POSITIONS_CHANGED_EVENT, loadPositions } from '@/lib/positions';
 import { JOURNAL_CHANGED_EVENT, loadJournal } from '@/lib/journal';
+import { EmptyState } from '@/components/empty-state';
 
 function fmtMoney(v: number, currency: string): string {
   const symbol = currency === 'EUR' ? '€' : '$';
@@ -130,12 +131,17 @@ export function PerformanceDashboard() {
 
   if (metrics.totalTrades === 0) {
     return (
-      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Performance Dashboard</h2>
-        <p className="mt-2 text-sm text-slate-400">
-          Noch keine geschlossenen Trades. Erfasse Positionen unter <a href="/positions" className="text-emerald-300 underline">/positions</a> und schließe sie mit Exit-Preis — danach erscheinen hier Win-Rate, Sharpe, Drawdown und Equity-Curve.
-        </p>
-      </section>
+      <EmptyState
+        title="Noch keine geschlossenen Trades"
+        description="Sobald du Trades abschließt, wertet dieses Dashboard sie aus: Win-Rate, Sharpe, maximaler Drawdown und Equity-Curve."
+        steps={[
+          'Position unter /positions erfassen.',
+          'Position mit Exit-Preis schließen.',
+          'Kennzahlen und Equity-Curve erscheinen automatisch hier.'
+        ]}
+        actionLabel="Zu den Positionen"
+        onAction={() => { window.location.href = '/positions'; }}
+      />
     );
   }
 

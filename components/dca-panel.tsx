@@ -15,6 +15,7 @@ import {
   recordDcaExecution
 } from '@/lib/dca';
 import { TOP_50 } from '@/lib/coin-universe';
+import { EmptyState } from '@/components/empty-state';
 
 function fmtMoney(v: number, currency: string): string {
   const symbol = currency === 'EUR' ? '€' : '$';
@@ -211,9 +212,18 @@ export function DcaPanel({ latestPrices }: { latestPrices: Record<string, number
       {showForm && <AddPlanForm onClose={() => setShowForm(false)} />}
 
       {plans.length === 0 && !showForm && (
-        <div className="rounded-lg border border-dashed border-slate-800 bg-slate-950/40 p-4 text-center text-xs text-slate-500">
-          Noch kein DCA-Plan. <button onClick={() => setShowForm(true)} className="text-emerald-300 underline">Ersten Sparplan anlegen</button> — z.B. 50€/Woche in BTC.
-        </div>
+        <EmptyState
+          title="Noch kein DCA-Plan"
+          description="Sparpläne (Dollar-Cost-Averaging) glätten den Einstiegskurs über die Zeit. Erfasse hier deine regelmäßigen Käufe und sieh den Durchschnittskurs."
+          steps={[
+            'Sparplan anlegen: Asset, Betrag, Intervall (z.B. 50€/Woche in BTC).',
+            'Ausgeführte Käufe beim Broker hier eintragen.',
+            'Durchschnittskurs und Plan-Performance erscheinen automatisch.'
+          ]}
+          actionLabel="Ersten Sparplan anlegen"
+          onAction={() => setShowForm(true)}
+          hint="DCA garantiert keinen Gewinn — fällt ein Asset langfristig, verlierst du auch mit DCA. Keine Broker-Anbindung; Käufe selbst ausführen."
+        />
       )}
 
       <div className="space-y-3">
