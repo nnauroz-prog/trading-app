@@ -4,7 +4,7 @@ import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { fetchAllTickers, TickerSnapshot } from '@/lib/providers/binance-tickers';
 import { TOP_50, UniverseCoin } from '@/lib/coin-universe';
 import { isTickerOnCoinbase } from '@/lib/data/brokers/coinbase-assets';
-import { Structure, assessMarketStructure } from '@/lib/analysis/market-structure';
+import { Structure, StructureAssessment, assessMarketStructure } from '@/lib/analysis/market-structure';
 import { CrowdAssessment, NEUTRAL_CROWD, assessCrowd } from '@/lib/analysis/crowd';
 import { fetchFearGreed } from '@/lib/providers/sentiment-indicators';
 import { fetchFundingRate } from '@/lib/providers/funding-rates';
@@ -76,6 +76,10 @@ export interface RankedCandidate {
   tier: 'strong' | 'standard' | 'weak';
   oneLineReason: string;
   brokers: string[];
+  quoteVolume: number;
+  structure: Structure;
+  positionInRange: number | null;
+  nearSupport: boolean;
 }
 
 export type MasterSignalReport = TradeRecommendation | NoTradeReport;
@@ -234,6 +238,7 @@ interface AnalyzedCoin {
   stopDistancePct: number;
   atr1h: number;
   marketRegime: 'bull' | 'bear' | 'sideways';
+  structure: StructureAssessment;
 }
 
 export function buildChecks(c1h: Candle[], c4h: Candle[], c1d: Candle[]): { checks: ConfluenceCheck[]; entry: number; atr1h: number; marketRegime: 'bull' | 'bear' | 'sideways' } {
@@ -400,6 +405,7 @@ async function analyzeCoin(coin: UniverseCoin, ticker: TickerSnapshot, tf: ModeT
   const stopDistancePct = ((entry - stopLoss) / entry) * 100;
   const takeProfit1 = entry + TP1_R * atr1h;
   const takeProfit2 = entry + TP2_R * atr1h;
+  const structure = assessMarketStructure(c4h);
 
   return {
     coin,
@@ -418,7 +424,8 @@ async function analyzeCoin(coin: UniverseCoin, ticker: TickerSnapshot, tf: ModeT
     takeProfit2,
     stopDistancePct,
     atr1h,
-    marketRegime
+    marketRegime,
+    structure
   };
 }
 
@@ -498,7 +505,11 @@ function toRankedCandidate(a: AnalyzedCoin): RankedCandidate {
     rrTp1: TP1_R / RISK_R,
     tier: tierForConfluence(a.passedCount) ?? 'weak',
     oneLineReason: buildOneLineReason(a),
-    brokers: brokersFor(a.coin.symbol)
+    brokers: brokersFor(a.coin.symbol),
+    quoteVolume: a.ticker.quoteVolume,
+    structure: a.structure.structure,
+    positionInRange: a.structure.positionInRange,
+    nearSupport: a.structure.nearSupport
   };
 }
 
@@ -572,7 +583,7 @@ export async function buildMasterSignal(mode: TradeMode = 'swing', deepAnalyzeCo
     };
   }
 
-  const structure = assessMarketStructure(best.candles4h);
+  const structure = best.structure;
 
   const rrTp1 = TP1_R / RISK_R;
   const rrTp2 = TP2_R / RISK_R;
