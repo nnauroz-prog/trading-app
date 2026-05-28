@@ -15,6 +15,8 @@ import { PaperTradesPanel } from '@/components/paper-trades-panel';
 import { LiveClock } from '@/components/live-clock';
 import { MarketPulseTile } from '@/components/market-pulse-tile';
 import { CyclesTile } from '@/components/cycles-tile';
+import { DailyActionPlan } from '@/components/daily-action-plan';
+import { SignalSummary } from '@/lib/action-plan';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -30,6 +32,38 @@ export default async function HomePage() {
   ]);
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
+
+  const tickerChangesAll = report.tickers.map((t) => t.priceChangePct);
+  const negShareAll = tickerChangesAll.filter((c) => c < -2).length / (tickerChangesAll.length || 1);
+  const posShareAll = tickerChangesAll.filter((c) => c > 2).length / (tickerChangesAll.length || 1);
+  const moodForPlan: 'risk-on' | 'neutral' | 'risk-off' = negShareAll > 0.6 ? 'risk-off' : posShareAll > 0.6 ? 'risk-on' : 'neutral';
+  const signalSummary: SignalSummary = masterSignal.kind === 'trade'
+    ? {
+        kind: 'trade',
+        coinSymbol: masterSignal.coin.symbol,
+        entry: masterSignal.entry,
+        stopLoss: masterSignal.stopLoss,
+        takeProfit1: masterSignal.takeProfit1,
+        confidence: masterSignal.confidence,
+        passedCount: masterSignal.passedCount,
+        totalCount: masterSignal.totalCount,
+        brokers: masterSignal.brokers,
+        marketMood: moodForPlan,
+        marketRegime: masterSignal.marketRegime
+      }
+    : {
+        kind: 'no_trade',
+        coinSymbol: masterSignal.bestCandidate?.coin.symbol ?? null,
+        entry: masterSignal.bestCandidate?.entry ?? null,
+        stopLoss: masterSignal.bestCandidate?.stopLoss ?? null,
+        takeProfit1: masterSignal.bestCandidate?.takeProfit1 ?? null,
+        confidence: masterSignal.bestCandidate?.confidence ?? null,
+        passedCount: masterSignal.bestCandidate?.passedCount ?? null,
+        totalCount: masterSignal.bestCandidate?.totalCount ?? null,
+        brokers: masterSignal.bestCandidate?.brokers ?? [],
+        marketMood: moodForPlan,
+        marketRegime: masterSignal.marketRegime
+      };
 
   const latestPrices: Record<string, number | null> = {};
   for (const t of report.tickers) {
@@ -82,6 +116,8 @@ export default async function HomePage() {
       <TickerBar tickers={report.tickers} />
 
       <AccountConfigBar />
+
+      <DailyActionPlan signal={signalSummary} />
 
       <TodayTradeCard report={masterSignal} />
 
