@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Trading Desk">
+  <rect width="512" height="512" rx="96" fill="#020617"/>
+  <polyline points="104,356 200,276 296,316 408,160" fill="none" stroke="#34d399" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="408" cy="160" r="28" fill="#34d399"/>
+  <circle cx="104" cy="356" r="20" fill="#34d399" opacity="0.6"/>
+</svg>
