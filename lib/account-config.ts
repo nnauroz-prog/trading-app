@@ -24,8 +24,8 @@ export interface AccountConfig {
   // Minimum confluences (out of 12) before a candidate is labelled "Kaufbar".
   // Lower = more (but riskier) signals. Conservative default is 7.
   minConfluence: number;
-  // Beginner mode hides advanced blocks and shows only the essentials.
-  beginnerMode: boolean;
+  // Advanced mode shows all analytical blocks. Default off = clean buy-tip view.
+  advancedMode: boolean;
 }
 
 export const DEFAULT_CONFIG: AccountConfig = {
@@ -34,7 +34,7 @@ export const DEFAULT_CONFIG: AccountConfig = {
   currency: 'EUR',
   riskLimits: DEFAULT_RISK_LIMITS,
   minConfluence: 7,
-  beginnerMode: true
+  advancedMode: false
 };
 
 export const STORAGE_KEY = 'trading-app.account-config';
@@ -65,7 +65,7 @@ export function loadConfig(): AccountConfig {
       currency: parsed.currency === 'USD' ? 'USD' : 'EUR',
       riskLimits: parseRiskLimits(parsed.riskLimits),
       minConfluence: num(parsed.minConfluence, DEFAULT_CONFIG.minConfluence, 5, 9),
-      beginnerMode: typeof parsed.beginnerMode === 'boolean' ? parsed.beginnerMode : DEFAULT_CONFIG.beginnerMode
+      advancedMode: typeof parsed.advancedMode === 'boolean' ? parsed.advancedMode : DEFAULT_CONFIG.advancedMode
     };
   } catch {
     return DEFAULT_CONFIG;

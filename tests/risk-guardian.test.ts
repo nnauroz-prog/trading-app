@@ -3,7 +3,7 @@ import { runRiskGuardian, MarketContext } from '@/lib/risk/risk-guardian';
 import { AccountConfig, DEFAULT_RISK_LIMITS } from '@/lib/account-config';
 import { Position } from '@/lib/types/positions';
 
-const config: AccountConfig = { accountSize: 10000, maxRiskPct: 1, currency: 'EUR', riskLimits: DEFAULT_RISK_LIMITS, minConfluence: 7, beginnerMode: false };
+const config: AccountConfig = { accountSize: 10000, maxRiskPct: 1, currency: 'EUR', riskLimits: DEFAULT_RISK_LIMITS, minConfluence: 7, advancedMode: false };
 const neutralMarket: MarketContext = { marketMood: 'neutral', marketRegime: 'sideways', todaysVerdict: 'trade' };
 
 function basePosition(overrides: Partial<Position>): Position {
