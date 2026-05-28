@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { MasterSignalReport, SignalAction, TradeRecommendation, describeSignalAction } from '@/lib/analysis/master-signal-engine';
 import { AccountConfig, DEFAULT_CONFIG, computeSizing, loadConfig } from '@/lib/account-config';
+import { InfoTip } from '@/components/info-tip';
 
 function fmtPrice(value: number): string {
   if (value >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -30,7 +31,7 @@ function ChecklistBar({ passed, total }: { passed: number; total: number }) {
   return (
     <div className="space-y-1">
       <div className="flex items-baseline justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Bestätigungen</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400"><InfoTip term="confluence" /></span>
         <span className="font-mono text-sm font-bold text-slate-100">{passed}/{total}</span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-slate-800">
@@ -87,19 +88,19 @@ function TradeReadyCard({ trade, action }: { trade: TradeRecommendation; action:
 
       <div className="relative mt-5 grid grid-cols-3 gap-2">
         <div className="rounded-xl border border-rose-500/30 bg-rose-950/30 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-rose-400">Stop-Loss</div>
+          <div className="text-[10px] uppercase tracking-widest text-rose-400"><InfoTip term="stop_loss" /></div>
           <div className="mt-1 font-mono text-lg font-bold text-rose-200">${fmtPrice(trade.stopLoss)}</div>
           <div className="font-mono text-[10px] text-rose-400">−{trade.stopDistancePct.toFixed(2)}%</div>
           {sizing && <div className="mt-1 font-mono text-[10px] text-rose-300">Risk {fmtMoney(sizing.riskAmount, config.currency)}</div>}
         </div>
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/30 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-emerald-400">Ziel 1</div>
+          <div className="text-[10px] uppercase tracking-widest text-emerald-400"><InfoTip term="take_profit" /> 1</div>
           <div className="mt-1 font-mono text-lg font-bold text-emerald-200">${fmtPrice(trade.takeProfit1)}</div>
           <div className="font-mono text-[10px] text-emerald-400">+{(trade.stopDistancePct * trade.rrTp1).toFixed(2)}%</div>
           {sizing && <div className="mt-1 font-mono text-[10px] text-emerald-300">+{fmtMoney(sizing.reward1Amount, config.currency)}</div>}
         </div>
         <div className="rounded-xl border border-emerald-400/40 bg-emerald-900/30 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-emerald-300">Ziel 2</div>
+          <div className="text-[10px] uppercase tracking-widest text-emerald-300"><InfoTip term="take_profit" /> 2</div>
           <div className="mt-1 font-mono text-lg font-bold text-emerald-100">${fmtPrice(trade.takeProfit2)}</div>
           <div className="font-mono text-[10px] text-emerald-300">+{(trade.stopDistancePct * trade.rrTp2).toFixed(2)}%</div>
           {sizing && <div className="mt-1 font-mono text-[10px] text-emerald-200">+{fmtMoney(sizing.reward2Amount, config.currency)}</div>}
@@ -131,7 +132,7 @@ function TradeReadyCard({ trade, action }: { trade: TradeRecommendation; action:
       {showDetails && (
         <div className="relative mt-3 space-y-2 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
           <div className="text-[10px] uppercase tracking-widest text-slate-500">
-            Multi-Timeframe-Konfluenz · 1h + 4h + 1d · Market-Regime: <span className="text-slate-300">{trade.marketRegime}</span>
+            Multi-Timeframe-Konfluenz · 1h + 4h + 1d · <InfoTip term="market_regime" />: <span className="text-slate-300">{trade.marketRegime}</span>
           </div>
           {passed.length > 0 && (
             <div>
@@ -165,15 +166,15 @@ function TradeReadyCard({ trade, action }: { trade: TradeRecommendation; action:
               <div className="font-mono text-slate-200">1.5 × ATR(1h)</div>
             </div>
             <div>
-              <div className="text-slate-500">ATR(1h)</div>
+              <div className="text-slate-500"><InfoTip term="atr" /> (1h)</div>
               <div className="font-mono text-slate-200">${fmtPrice(trade.atr1h)}</div>
             </div>
             <div>
-              <div className="text-slate-500">R:R Ziel-1</div>
+              <div className="text-slate-500"><InfoTip term="rr" /> Ziel-1</div>
               <div className="font-mono text-emerald-300">1:{trade.rrTp1.toFixed(1)}</div>
             </div>
             <div>
-              <div className="text-slate-500">R:R Ziel-2</div>
+              <div className="text-slate-500"><InfoTip term="rr" /> Ziel-2</div>
               <div className="font-mono text-emerald-300">1:{trade.rrTp2.toFixed(1)}</div>
             </div>
           </div>
@@ -229,17 +230,17 @@ function NoTradeCard({ report, action }: { report: Exclude<MasterSignalReport, T
               <div className="mt-1 font-mono text-base font-bold text-white">${fmtPrice(best.entry)}</div>
             </div>
             <div className="rounded-lg border border-rose-500/30 bg-rose-950/30 p-2.5">
-              <div className="text-[10px] uppercase tracking-wider text-rose-400">Stop-Loss</div>
+              <div className="text-[10px] uppercase tracking-wider text-rose-400"><InfoTip term="stop_loss" /></div>
               <div className="mt-1 font-mono text-base font-bold text-rose-200">${fmtPrice(best.stopLoss)}</div>
               <div className="font-mono text-[10px] text-rose-400">−{best.stopDistancePct.toFixed(2)}%</div>
             </div>
             <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/30 p-2.5">
-              <div className="text-[10px] uppercase tracking-wider text-emerald-400">Ziel 1</div>
+              <div className="text-[10px] uppercase tracking-wider text-emerald-400"><InfoTip term="take_profit" /> 1</div>
               <div className="mt-1 font-mono text-base font-bold text-emerald-200">${fmtPrice(best.takeProfit1)}</div>
               <div className="font-mono text-[10px] text-emerald-400">+{(best.stopDistancePct * best.rrTp1).toFixed(2)}%</div>
             </div>
             <div className="rounded-lg border border-emerald-400/40 bg-emerald-900/30 p-2.5">
-              <div className="text-[10px] uppercase tracking-wider text-emerald-300">Ziel 2</div>
+              <div className="text-[10px] uppercase tracking-wider text-emerald-300"><InfoTip term="take_profit" /> 2</div>
               <div className="mt-1 font-mono text-base font-bold text-emerald-100">${fmtPrice(best.takeProfit2)}</div>
               <div className="font-mono text-[10px] text-emerald-300">+{(best.stopDistancePct * best.rrTp2).toFixed(2)}%</div>
             </div>
