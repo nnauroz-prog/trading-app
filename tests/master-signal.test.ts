@@ -24,6 +24,7 @@ function makeTrade(symbol: string, passed: number): TradeRecommendation {
     oneLineReason: 'test', brokers: ['X'], marketRegime: 'bull',
     btcRegime: 'bull',
     marketStructure: 'uptrend',
+    crowd: { state: 'neutral', cautious: false, detail: 'neutral' },
     candidates: [],
     generatedAt: '2026-01-01T00:00:00Z'
   };
@@ -124,6 +125,7 @@ describe('describeSignalAction', () => {
       marketRegime: 'sideways',
       btcRegime: 'sideways',
       marketStructure: 'range',
+      crowd: { state: 'neutral', cautious: false, detail: 'neutral' },
       marketMood: 'neutral',
       reasons: ['nur 5/12'],
       candidates: [],
@@ -144,6 +146,7 @@ describe('describeSignalAction', () => {
       marketRegime: 'bear',
       btcRegime: 'bear',
       marketStructure: 'downtrend',
+      crowd: { state: 'fear', cautious: false, detail: 'fear' },
       marketMood: 'risk-off',
       reasons: ['Markt schwach'],
       candidates: [],
@@ -168,7 +171,7 @@ describe('tierForConfluence', () => {
 });
 
 describe('shouldEmitTrade', () => {
-  const base = { threshold: 7, isBtc: false, marketMood: 'neutral' as const, btcRegime: 'bull' as const, structure: 'uptrend' as const };
+  const base = { threshold: 7, isBtc: false, marketMood: 'neutral' as const, btcRegime: 'bull' as const, structure: 'uptrend' as const, crowdCautious: false };
 
   it('blocks below the confluence threshold', () => {
     expect(shouldEmitTrade({ ...base, passedCount: 6 })).toEqual({ emit: false, blockedReason: 'confluence' });
@@ -195,6 +198,11 @@ describe('shouldEmitTrade', () => {
   it('blocks buying into a downtrend structure unless exceptional', () => {
     expect(shouldEmitTrade({ ...base, passedCount: 8, structure: 'downtrend' }).blockedReason).toBe('downtrend-structure');
     expect(shouldEmitTrade({ ...base, passedCount: 10, structure: 'downtrend' }).emit).toBe(true);
+  });
+
+  it('gets cautious in crowd euphoria unless the setup is strong', () => {
+    expect(shouldEmitTrade({ ...base, passedCount: 8, crowdCautious: true }).blockedReason).toBe('crowd-extreme');
+    expect(shouldEmitTrade({ ...base, passedCount: 9, crowdCautious: true }).emit).toBe(true);
   });
 });
 
