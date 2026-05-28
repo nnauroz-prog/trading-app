@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { AccountConfig, DEFAULT_CONFIG, computeSizing, loadConfig } from '@/lib/account-config';
 import { TradeSignal } from '@/lib/types/domain';
+import { computeKellySuggestion } from '@/lib/kelly-sizing';
+
+const BASELINE_WIN_RATE = 0.53;
 
 function formatMoney(value: number, currency: 'EUR' | 'USD'): string {
   const symbol = currency === 'EUR' ? '€' : '$';
@@ -74,6 +77,52 @@ export function SignalSizing({ signal }: { signal: TradeSignal }) {
         <span>Bei TP2: <span className="text-emerald-300">+{formatMoney(sizing.reward2Amount, config.currency)}</span></span>
         <span className="text-slate-600">Tip: nicht alles auf TP2 setzen — 50% bei TP1 schließen, Rest mit SL auf Entry trailen</span>
       </div>
+      <KellyHint signal={signal} config={config} fixedRiskPct={config.maxRiskPct} />
+    </div>
+  );
+}
+
+function KellyHint({ signal, config, fixedRiskPct }: { signal: TradeSignal; config: AccountConfig; fixedRiskPct: number }) {
+  const kelly = computeKellySuggestion(BASELINE_WIN_RATE, signal.riskRewardRatio, signal.confidence, fixedRiskPct);
+  const kellySizing = kelly.recommendedRiskPct > 0
+    ? computeSizing({ ...config, maxRiskPct: kelly.recommendedRiskPct }, signal.entry, signal.stopLoss, signal.takeProfit1, signal.takeProfit2)
+    : null;
+
+  return (
+    <div className="mt-2 border-t border-slate-800 pt-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-sky-300">
+          Confidence-Sizing (Quarter-Kelly)
+        </span>
+        <span className="font-mono text-[10px] text-slate-500">
+          Konfidenz {signal.confidence}% → Faktor {kelly.confidenceFactor.toFixed(2)}
+        </span>
+      </div>
+      {kelly.recommendedRiskPct > 0 ? (
+        <div className="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[11px]">
+          <span className="text-slate-400">
+            Empfohlenes Risiko: <span className="font-mono font-bold text-sky-200">{kelly.recommendedRiskPct.toFixed(2)}%</span>
+            <span className="text-slate-600"> (statt fix {fixedRiskPct}%)</span>
+          </span>
+          {kellySizing && (
+            <span className="text-slate-400">
+              = <span className="font-mono text-sky-200">{formatCoins(kellySizing.positionSizeCoins)} {signal.ticker}</span>
+              {' · '}<span className="font-mono text-slate-300">{formatMoney(kellySizing.positionSizeQuote, config.currency)}</span> Einsatz
+              {' · Risk '}<span className="font-mono text-rose-300">−{formatMoney(kellySizing.riskAmount, config.currency)}</span>
+            </span>
+          )}
+        </div>
+      ) : (
+        <p className="mt-1 text-[11px] text-rose-300/80">{kelly.warning}</p>
+      )}
+      <p className="mt-1 text-[10px] leading-relaxed text-slate-600">
+        {signal.confidence >= 70
+          ? 'Starkes Setup → volle Confidence-Größe vertretbar.'
+          : signal.confidence >= 50
+          ? 'Mittleres Setup → kleinere Position als bei High-Confidence.'
+          : 'Schwaches Setup → deutlich kleinere Position, oder ganz auslassen.'}
+        {' '}Quarter-Kelly + 2%-Hard-Cap. Annahme ~53% Trefferquote (konservativ).
+      </p>
     </div>
   );
 }
