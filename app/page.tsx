@@ -107,6 +107,9 @@ export default async function HomePage() {
           <Link href="/journal" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">
             Journal
           </Link>
+          <Link href="/dca" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">
+            DCA
+          </Link>
           <Link href="/performance" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">
             Performance
           </Link>
