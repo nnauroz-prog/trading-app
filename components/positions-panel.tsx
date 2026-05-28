@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Position } from '@/lib/types/positions';
 import { Broker, InstrumentType } from '@/lib/types/ideas';
 import { clearPrefill, loadPrefill } from '@/lib/position-prefill';
+import { EmptyState } from '@/components/empty-state';
 import {
   POSITIONS_CHANGED_EVENT,
   addPosition,
@@ -343,9 +344,18 @@ export function PositionsPanel({ latestPrices }: { latestPrices: Record<string, 
       {showForm && <AddPositionForm onClose={() => setShowForm(false)} />}
 
       {positions.length === 0 && !showForm && (
-        <div className="rounded-lg border border-dashed border-slate-800 bg-slate-950/40 p-4 text-center text-xs text-slate-500">
-          Noch keine Positionen. <button onClick={() => setShowForm(true)} className="text-emerald-300 underline">Erste Position erfassen</button>
-        </div>
+        <EmptyState
+          title="Noch keine Positionen"
+          description="Erfasse deine offenen Trades, damit der Risk-Guardian Stop-Abstände, Klumpenrisiken und Portfolio-Heat live überwachen kann."
+          steps={[
+            'Trade erfassen: Basiswert, Einstieg, Größe.',
+            'Stop-Loss und Take-Profit eintragen — damit Risiken berechenbar werden.',
+            'Live-P/L und Warnungen erscheinen automatisch.'
+          ]}
+          actionLabel="Erste Position erfassen"
+          onAction={() => setShowForm(true)}
+          hint="Tipp: Aus einer analysierten Idee (/ideas) lässt sich eine Position direkt vorbefüllen."
+        />
       )}
 
       {positions.length > 0 && (

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FAILURE_CATEGORY_LABELS, FailureCategory, IdeaJournalEntry, JournalOutcome } from '@/lib/types/positions';
 import { JOURNAL_CHANGED_EVENT, aggregateLessons, computeJournalStats, deleteJournalEntry, loadJournal, updateJournalEntry } from '@/lib/journal';
 import { AutoEvalSummary, evaluateAllPending } from '@/lib/journal-auto-evaluator';
+import { EmptyState } from '@/components/empty-state';
 
 function fmtDate(ms: number): string {
   const d = new Date(ms);
@@ -241,9 +242,17 @@ export function JournalPanel() {
       )}
 
       {entries.length === 0 && (
-        <div className="rounded-lg border border-dashed border-slate-800 bg-slate-950/40 p-4 text-center text-xs text-slate-500">
-          Noch keine Journal-Einträge. Im <a href="/ideas" className="text-emerald-300 underline">Idea-Validator</a> eine Idee analysieren → unten auf {`„Im Journal speichern"`} drücken.
-        </div>
+        <EmptyState
+          title="Noch keine Journal-Einträge"
+          description="Das Journal hält fest, was du gedacht hast — und wertet später automatisch aus, ob die These aufging. So findest du wiederkehrende Fehler."
+          steps={[
+            'Im Idea-Validator eine Trade-Idee analysieren.',
+            '„Im Journal speichern" drücken — These und Score werden festgehalten.',
+            'Nach 7 Tagen wird automatisch ausgewertet; Muster und Lehren erscheinen hier.'
+          ]}
+          actionLabel="Idee analysieren"
+          onAction={() => { window.location.href = '/ideas'; }}
+        />
       )}
 
       {entries.length > 0 && (

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { WATCHLIST_CHANGED_EVENT, WatchlistItem, loadWatchlist, removeFromWatchlist, setWatchNote, toggleWatch } from '@/lib/watchlist';
 import { TOP_50 } from '@/lib/coin-universe';
+import { EmptyState } from '@/components/empty-state';
 
 function fmtPrice(value: number): string {
   if (value >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -62,9 +63,17 @@ export function WatchlistPanel({ prices, changes }: { prices: Record<string, num
       )}
 
       {items.length === 0 && !adding && (
-        <div className="rounded-lg border border-dashed border-slate-800 bg-slate-950/40 p-4 text-center text-xs text-slate-500">
-          Noch keine Coins beobachtet. <button onClick={() => setAdding(true)} className="text-emerald-300 underline">Coin hinzufügen</button>
-        </div>
+        <EmptyState
+          title="Noch keine Coins beobachtet"
+          description="Sammle Coins, die du im Blick behalten willst — mit Notiz, warum sie interessant sind. So trennst du Beobachtung von echten Positionen."
+          steps={[
+            'Coin hinzufügen und optional eine kurze These notieren.',
+            'Kursentwicklung im Auge behalten, ohne Kapital zu binden.',
+            'Bei gutem Setup direkt zur Idee-Analyse oder Position übergehen.'
+          ]}
+          actionLabel="Coin hinzufügen"
+          onAction={() => setAdding(true)}
+        />
       )}
 
       {items.length > 0 && (
