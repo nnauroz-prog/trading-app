@@ -42,7 +42,7 @@ interface BybitTickerResponse {
 async function fetchBybitTickers(): Promise<Map<string, TickerSnapshot> | null> {
   try {
     const url = 'https://api.bybit.com/v5/market/tickers?category=spot';
-    const res = await fetch(url, { next: { revalidate: 30 } });
+    const res = await fetch(url, { next: { revalidate: 15 } });
     if (!res.ok) return null;
     const data = (await res.json()) as BybitTickerResponse;
     if (data.retCode !== 0 || !data.result?.list) return null;
@@ -70,7 +70,7 @@ async function fetchBybitTickers(): Promise<Map<string, TickerSnapshot> | null> 
 async function fetchBinanceTickers(): Promise<Map<string, TickerSnapshot> | null> {
   try {
     const url = `https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeURIComponent(JSON.stringify(TOP_50.map((c) => c.binanceSymbol)))}`;
-    const res = await fetch(url, { next: { revalidate: 30 } });
+    const res = await fetch(url, { next: { revalidate: 15 } });
     if (!res.ok) return null;
     const raw = (await res.json()) as RawBinanceTicker[];
     const map = new Map<string, TickerSnapshot>();

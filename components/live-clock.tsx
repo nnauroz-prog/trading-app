@@ -33,7 +33,7 @@ export function LiveClock() {
     <div>
       <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{DATE_FORMATTER.format(now)}</h1>
       <div className="mt-0.5 font-mono text-[11px] text-slate-500">
-        {TIME_FORMATTER.format(now)} · Europe/Berlin · 1s-refresh
+        {TIME_FORMATTER.format(now)} · Europe/Berlin · Auto-Refresh 20s
       </div>
     </div>
   );
