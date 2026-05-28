@@ -26,3 +26,12 @@ export function profileLabel(p: UserRiskProfile): string {
     case 'very_speculative': return 'Sehr spekulativ';
   }
 }
+
+export function profileDescription(p: UserRiskProfile): string {
+  switch (p) {
+    case 'beginner': return 'Kapitalerhalt zuerst. Strenge Warnungen, klare Stops, keine Hebelprodukte ohne deutlichen Hinweis.';
+    case 'intermediate': return 'Ausgewogen. Du kennst die Basics, willst aber weiter auf Risiko und Disziplin hingewiesen werden.';
+    case 'speculative': return 'Bewusst offensiv. Du akzeptierst höhere Schwankungen und Hebel, willst aber harte Risiken sehen.';
+    case 'very_speculative': return 'Maximales Risiko. Wenige Warnungen, du übernimmst volle Verantwortung für Totalverlust-Szenarien.';
+  }
+}

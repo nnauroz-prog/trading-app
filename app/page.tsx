@@ -16,6 +16,7 @@ import { LiveClock } from '@/components/live-clock';
 import { MarketPulseTile } from '@/components/market-pulse-tile';
 import { CyclesTile } from '@/components/cycles-tile';
 import { DailyActionPlan } from '@/components/daily-action-plan';
+import { OnboardingGuide } from '@/components/onboarding-guide';
 import { SignalSummary } from '@/lib/action-plan';
 
 export const dynamic = 'force-dynamic';
@@ -83,6 +84,7 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:space-y-6 md:p-6">
+      <OnboardingGuide />
       <header className="space-y-3">
         <div className="flex items-baseline justify-between gap-2">
           <div>

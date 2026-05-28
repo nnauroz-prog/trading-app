@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { DataBackupPanel } from '@/components/data-backup-panel';
 import { RiskLimitsPanel } from '@/components/risk-limits-panel';
+import { OnboardingReplay } from '@/components/onboarding-replay';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,7 @@ export default function SettingsPage() {
 
       <RiskLimitsPanel />
       <DataBackupPanel />
+      <OnboardingReplay />
     </main>
   );
 }
