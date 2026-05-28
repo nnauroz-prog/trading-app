@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { WatchlistPanel } from '@/components/watchlist-panel';
+import { PriceAlertsPanel } from '@/components/price-alerts-panel';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
 import { TOP_50 } from '@/lib/coin-universe';
 
@@ -35,6 +36,8 @@ export default async function WatchlistPage() {
       </header>
 
       <WatchlistPanel prices={prices} changes={changes} />
+
+      <PriceAlertsPanel prices={prices} />
     </main>
   );
 }
