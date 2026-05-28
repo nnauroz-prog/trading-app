@@ -21,13 +21,17 @@ export interface AccountConfig {
   maxRiskPct: number;
   currency: 'EUR' | 'USD';
   riskLimits: RiskLimits;
+  // Minimum confluences (out of 12) before a candidate is labelled "Kaufbar".
+  // Lower = more (but riskier) signals. Conservative default is 7.
+  minConfluence: number;
 }
 
 export const DEFAULT_CONFIG: AccountConfig = {
   accountSize: 0,
   maxRiskPct: 1,
   currency: 'EUR',
-  riskLimits: DEFAULT_RISK_LIMITS
+  riskLimits: DEFAULT_RISK_LIMITS,
+  minConfluence: 7
 };
 
 export const STORAGE_KEY = 'trading-app.account-config';
@@ -56,7 +60,8 @@ export function loadConfig(): AccountConfig {
       accountSize: typeof parsed.accountSize === 'number' && parsed.accountSize >= 0 ? parsed.accountSize : 0,
       maxRiskPct: typeof parsed.maxRiskPct === 'number' && parsed.maxRiskPct > 0 && parsed.maxRiskPct <= 10 ? parsed.maxRiskPct : 1,
       currency: parsed.currency === 'USD' ? 'USD' : 'EUR',
-      riskLimits: parseRiskLimits(parsed.riskLimits)
+      riskLimits: parseRiskLimits(parsed.riskLimits),
+      minConfluence: num(parsed.minConfluence, DEFAULT_CONFIG.minConfluence, 5, 9)
     };
   } catch {
     return DEFAULT_CONFIG;

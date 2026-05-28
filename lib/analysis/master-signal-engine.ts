@@ -34,6 +34,7 @@ export interface TradeRecommendation {
   oneLineReason: string;
   brokers: string[];
   marketRegime: 'bull' | 'bear' | 'sideways';
+  candidates: RankedCandidate[];
   generatedAt: string;
 }
 
@@ -43,7 +44,25 @@ export interface NoTradeReport {
   marketRegime: 'bull' | 'bear' | 'sideways';
   marketMood: 'risk-on' | 'risk-off' | 'neutral';
   reasons: string[];
+  candidates: RankedCandidate[];
   generatedAt: string;
+}
+
+export interface RankedCandidate {
+  symbol: string;
+  coinId: string;
+  passedCount: number;
+  totalCount: number;
+  confidence: number;
+  entry: number;
+  stopLoss: number;
+  takeProfit1: number;
+  takeProfit2: number;
+  stopDistancePct: number;
+  rrTp1: number;
+  tier: 'strong' | 'standard' | 'weak';
+  oneLineReason: string;
+  brokers: string[];
 }
 
 export type MasterSignalReport = TradeRecommendation | NoTradeReport;
@@ -327,6 +346,48 @@ function buildOneLineReason(analyzed: AnalyzedCoin): string {
   return parts.join(' · ');
 }
 
+export function tierForConfluence(passed: number): 'strong' | 'standard' | 'weak' | null {
+  if (passed >= 9) return 'strong';
+  if (passed >= MIN_PASSED_FOR_TRADE) return 'standard';
+  if (passed >= 5) return 'weak';
+  return null;
+}
+
+// Given a candidate's confluence and the user's chosen threshold, decide
+// whether it counts as actionable ("Kaufbar") or merely speculative.
+export function candidateStanding(passed: number, threshold: number): { actionable: boolean; label: string } {
+  return passed >= threshold
+    ? { actionable: true, label: 'Kaufbar' }
+    : { actionable: false, label: 'Spekulativ — kleiner sizen' };
+}
+
+function brokersFor(symbol: string): string[] {
+  const brokers: string[] = [];
+  if (isTickerOnCoinbase(symbol).available) brokers.push('Coinbase');
+  brokers.push('Bybit Spot');
+  brokers.push('Binance Spot');
+  return brokers;
+}
+
+function toRankedCandidate(a: AnalyzedCoin): RankedCandidate {
+  return {
+    symbol: a.coin.symbol,
+    coinId: a.coin.id,
+    passedCount: a.passedCount,
+    totalCount: a.totalCount,
+    confidence: Math.round((a.passedWeight / a.totalWeight) * 100),
+    entry: a.entry,
+    stopLoss: a.stopLoss,
+    takeProfit1: a.takeProfit1,
+    takeProfit2: a.takeProfit2,
+    stopDistancePct: a.stopDistancePct,
+    rrTp1: TP1_R / RISK_R,
+    tier: tierForConfluence(a.passedCount) ?? 'weak',
+    oneLineReason: buildOneLineReason(a),
+    brokers: brokersFor(a.coin.symbol)
+  };
+}
+
 export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSignalReport> {
   const tickerMap = await fetchAllTickers();
   if (!tickerMap) {
@@ -336,6 +397,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       marketRegime: 'sideways',
       marketMood: 'neutral',
       reasons: ['Daten-Provider gerade nicht erreichbar — keine valide Analyse möglich.'],
+      candidates: [],
       generatedAt: new Date().toISOString()
     };
   }
@@ -369,16 +431,19 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       marketRegime: 'sideways',
       marketMood,
       reasons: ['Keine Coins lieferten ausreichende Kline-Daten für eine Analyse.'],
+      candidates: [],
       generatedAt: new Date().toISOString()
     };
   }
 
   const rrTp1 = TP1_R / RISK_R;
   const rrTp2 = TP2_R / RISK_R;
-  const brokers: string[] = [];
-  if (isTickerOnCoinbase(best.coin.symbol).available) brokers.push('Coinbase');
-  brokers.push('Bybit Spot');
-  brokers.push('Binance Spot');
+  const brokers = brokersFor(best.coin.symbol);
+
+  const rankedCandidates = analyzed
+    .filter((a) => a.passedCount >= 5)
+    .slice(0, 6)
+    .map(toRankedCandidate);
 
   const tradable = best.passedCount >= MIN_PASSED_FOR_TRADE;
   const candidateRec: TradeRecommendation = {
@@ -401,11 +466,12 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
     oneLineReason: buildOneLineReason(best),
     brokers,
     marketRegime: best.marketRegime,
+    candidates: [],
     generatedAt: new Date().toISOString()
   };
 
   if (tradable && (marketMood !== 'risk-off' || best.passedCount >= 9)) {
-    return candidateRec;
+    return { ...candidateRec, candidates: rankedCandidates };
   }
 
   const failedChecks = best.checks.filter((c) => !c.passed);
@@ -420,6 +486,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       marketMood === 'risk-off' ? 'Markt aktuell Risk-off (>60% der Coins -2%+) — selbst gute Setups laufen oft schief.' : 'Markt-Kontext ist neutral, aber Konfluenz auf Coin-Ebene reicht nicht.',
       ...failedChecks.slice(0, 3).map((c) => `Fehlt: ${c.label} (${c.detail})`)
     ],
+    candidates: rankedCandidates,
     generatedAt: new Date().toISOString()
   };
 }

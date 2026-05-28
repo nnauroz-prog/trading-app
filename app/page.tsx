@@ -9,6 +9,7 @@ import { TickerBar } from '@/components/ticker-bar';
 import { TopPlayCard, AlternatesList } from '@/components/top-play-card';
 import { LiveFeed } from '@/components/live-feed';
 import { TodayTradeCard } from '@/components/today-trade-card';
+import { CandidateList } from '@/components/candidate-list';
 import { HeuteAufpassen } from '@/components/heute-aufpassen';
 import { AccountConfigBar } from '@/components/account-config-bar';
 import { PaperTradesPanel } from '@/components/paper-trades-panel';
@@ -117,6 +118,8 @@ export default async function HomePage() {
       <DailyActionPlan signal={signalSummary} />
 
       <TodayTradeCard report={masterSignal} />
+
+      <CandidateList candidates={masterSignal.candidates} />
 
       <HeuteAufpassen
         latestPrices={latestPrices}

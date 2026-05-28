@@ -5,7 +5,9 @@ import {
   MasterSignalReport,
   TradeRecommendation,
   buildChecks,
-  describeSignalAction
+  candidateStanding,
+  describeSignalAction,
+  tierForConfluence
 } from '@/lib/analysis/master-signal-engine';
 import { Candle } from '@/lib/types/domain';
 
@@ -19,6 +21,7 @@ function makeTrade(symbol: string, passed: number): TradeRecommendation {
     stopDistancePct: 5, rrTp1: 2, rrTp2: 4, atr1h: 3,
     confidence: 80, checks: [], passedCount: passed, totalCount: 12,
     oneLineReason: 'test', brokers: ['X'], marketRegime: 'bull',
+    candidates: [],
     generatedAt: '2026-01-01T00:00:00Z'
   };
 }
@@ -118,6 +121,7 @@ describe('describeSignalAction', () => {
       marketRegime: 'sideways',
       marketMood: 'neutral',
       reasons: ['nur 5/12'],
+      candidates: [],
       generatedAt: '2026-01-01T00:00:00Z'
     };
     const a = describeSignalAction(report);
@@ -135,10 +139,35 @@ describe('describeSignalAction', () => {
       marketRegime: 'bear',
       marketMood: 'risk-off',
       reasons: ['Markt schwach'],
+      candidates: [],
       generatedAt: '2026-01-01T00:00:00Z'
     };
     const a = describeSignalAction(report);
     expect(a.verdict).toBe('NO_SETUP');
     expect(a.detail).toContain('Markt schwach');
+  });
+});
+
+describe('tierForConfluence', () => {
+  it('grades 9+ as strong, 7-8 as standard, 5-6 as weak, below as null', () => {
+    expect(tierForConfluence(10)).toBe('strong');
+    expect(tierForConfluence(9)).toBe('strong');
+    expect(tierForConfluence(8)).toBe('standard');
+    expect(tierForConfluence(7)).toBe('standard');
+    expect(tierForConfluence(6)).toBe('weak');
+    expect(tierForConfluence(5)).toBe('weak');
+    expect(tierForConfluence(4)).toBeNull();
+  });
+});
+
+describe('candidateStanding', () => {
+  it('is actionable only at/above the chosen threshold', () => {
+    expect(candidateStanding(7, 7).actionable).toBe(true);
+    expect(candidateStanding(6, 7).actionable).toBe(false);
+    // lowering the threshold makes a 6/12 actionable (but still flagged elsewhere)
+    expect(candidateStanding(6, 5).actionable).toBe(true);
+  });
+  it('labels sub-threshold candidates as speculative', () => {
+    expect(candidateStanding(5, 7).label.toLowerCase()).toContain('spekulativ');
   });
 });
