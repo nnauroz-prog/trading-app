@@ -119,23 +119,21 @@ export default async function HomePage() {
 
       <TodoBox report={masterSignal} />
 
+      <AccountConfigBar />
+
       <div className="flex justify-end">
         <ViewModeToggle />
       </div>
 
       <AdvancedOnly>
         <MarketBriefing report={masterSignal} />
-      </AdvancedOnly>
 
-      <TickerBar tickers={report.tickers} />
+        <TickerBar tickers={report.tickers} />
 
-      <AccountConfigBar />
+        <DailyActionPlan signal={signalSummary} />
 
-      <DailyActionPlan signal={signalSummary} />
+        <TodayTradeCard report={masterSignal} />
 
-      <TodayTradeCard report={masterSignal} />
-
-      <AdvancedOnly>
         <CandidateList candidates={masterSignal.candidates} />
 
         <HeuteAufpassen

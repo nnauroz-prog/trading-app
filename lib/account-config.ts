@@ -34,7 +34,7 @@ export const DEFAULT_CONFIG: AccountConfig = {
   currency: 'EUR',
   riskLimits: DEFAULT_RISK_LIMITS,
   minConfluence: 7,
-  beginnerMode: false
+  beginnerMode: true
 };
 
 export const STORAGE_KEY = 'trading-app.account-config';

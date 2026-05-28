@@ -32,7 +32,7 @@ export function ViewModeToggle() {
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${beginner ? 'bg-emerald-400' : 'bg-slate-500'}`} />
-      {beginner ? 'Einfach-Modus an — alles anzeigen' : 'Einfach-Modus einschalten'}
+      {beginner ? '＋ Mehr anzeigen (Analyse & Details)' : '－ Nur Kauf-Tipp anzeigen'}
     </button>
   );
 }
