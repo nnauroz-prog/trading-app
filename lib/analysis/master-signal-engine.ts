@@ -34,6 +34,7 @@ export interface TradeRecommendation {
   oneLineReason: string;
   brokers: string[];
   marketRegime: 'bull' | 'bear' | 'sideways';
+  btcRegime: 'bull' | 'bear' | 'sideways';
   candidates: RankedCandidate[];
   generatedAt: string;
 }
@@ -42,6 +43,7 @@ export interface NoTradeReport {
   kind: 'no_trade';
   bestCandidate: TradeRecommendation | null;
   marketRegime: 'bull' | 'bear' | 'sideways';
+  btcRegime: 'bull' | 'bear' | 'sideways';
   marketMood: 'risk-on' | 'risk-off' | 'neutral';
   reasons: string[];
   candidates: RankedCandidate[];
@@ -361,6 +363,25 @@ export function candidateStanding(passed: number, threshold: number): { actionab
     : { actionable: false, label: 'Spekulativ — kleiner sizen' };
 }
 
+export type TradeBlock = 'confluence' | 'risk-off' | 'btc-bear' | null;
+
+// Pro-trader gate: a setup only becomes an actual buy if it clears the
+// confluence threshold AND the market context allows it. A weak broad market
+// (risk-off) or a bearish Bitcoin (the market leader) blocks all but the
+// strongest alt setups — pros don't fight the leader.
+export function shouldEmitTrade(p: {
+  passedCount: number;
+  threshold: number;
+  isBtc: boolean;
+  marketMood: 'risk-on' | 'risk-off' | 'neutral';
+  btcRegime: 'bull' | 'bear' | 'sideways';
+}): { emit: boolean; blockedReason: TradeBlock } {
+  if (p.passedCount < p.threshold) return { emit: false, blockedReason: 'confluence' };
+  if (p.marketMood === 'risk-off' && p.passedCount < 9) return { emit: false, blockedReason: 'risk-off' };
+  if (!p.isBtc && p.btcRegime === 'bear' && p.passedCount < 10) return { emit: false, blockedReason: 'btc-bear' };
+  return { emit: true, blockedReason: null };
+}
+
 function brokersFor(symbol: string): string[] {
   const brokers: string[] = [];
   if (isTickerOnCoinbase(symbol).available) brokers.push('Coinbase');
@@ -395,6 +416,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       kind: 'no_trade',
       bestCandidate: null,
       marketRegime: 'sideways',
+      btcRegime: 'sideways',
       marketMood: 'neutral',
       reasons: ['Daten-Provider gerade nicht erreichbar — keine valide Analyse möglich.'],
       candidates: [],
@@ -419,14 +441,17 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
     .sort((a, b) => b.interestScore - a.interestScore);
 
   const top = scored.slice(0, deepAnalyzeCount);
-  // Commodities (e.g. gold/PAXG) move slowly and rarely top the interest score,
-  // so always analyse them — otherwise gold would never produce a signal.
-  const forced = scored.filter((x) => x.coin.category === 'commodity' && !top.includes(x));
+  // Always analyse Bitcoin (the market leader, used as a filter below) and
+  // commodities (gold moves slowly and rarely tops the interest score).
+  const forced = scored.filter((x) => (x.coin.category === 'commodity' || x.coin.id === 'btc') && !top.includes(x));
   const candidates = [...top, ...forced];
 
   const analyzed = (await Promise.all(candidates.map((x) => analyzeCoin(x.coin, x.ticker))))
     .filter((a): a is AnalyzedCoin => a !== null)
     .sort((a, b) => b.passedWeight - a.passedWeight);
+
+  const btc = analyzed.find((a) => a.coin.id === 'btc');
+  const btcRegime: 'bull' | 'bear' | 'sideways' = btc?.marketRegime ?? 'sideways';
 
   const best = analyzed[0];
   if (!best) {
@@ -434,6 +459,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       kind: 'no_trade',
       bestCandidate: null,
       marketRegime: 'sideways',
+      btcRegime,
       marketMood,
       reasons: ['Keine Coins lieferten ausreichende Kline-Daten für eine Analyse.'],
       candidates: [],
@@ -471,24 +497,40 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
     oneLineReason: buildOneLineReason(best),
     brokers,
     marketRegime: best.marketRegime,
+    btcRegime,
     candidates: [],
     generatedAt: new Date().toISOString()
   };
 
-  if (tradable && (marketMood !== 'risk-off' || best.passedCount >= 9)) {
+  const gate = shouldEmitTrade({
+    passedCount: best.passedCount,
+    threshold: MIN_PASSED_FOR_TRADE,
+    isBtc: best.coin.id === 'btc',
+    marketMood,
+    btcRegime
+  });
+
+  if (gate.emit) {
     return { ...candidateRec, candidates: rankedCandidates };
   }
 
   const failedChecks = best.checks.filter((c) => !c.passed);
+  const contextReason =
+    gate.blockedReason === 'risk-off'
+      ? 'Markt aktuell Risk-off (>60% der Coins -2%+) — selbst gute Setups laufen oft schief.'
+      : gate.blockedReason === 'btc-bear'
+        ? 'Bitcoin (Leitmarkt) ist bärisch — gegen einen schwachen BTC kaufen Profis keine Alts. Erst wenn BTC dreht.'
+        : 'Markt-Kontext ist neutral, aber Konfluenz auf Coin-Ebene reicht nicht.';
   return {
     kind: 'no_trade',
     bestCandidate: candidateRec,
     marketRegime: best.marketRegime,
+    btcRegime,
     marketMood,
     reasons: [
       `Bestes Setup im 50-Coin-Universum (${best.coin.symbol}) erreicht nur ${best.passedCount}/${best.totalCount} Bestätigungen.`,
       `Trade-Schwelle: ≥${MIN_PASSED_FOR_TRADE} Bestätigungen.`,
-      marketMood === 'risk-off' ? 'Markt aktuell Risk-off (>60% der Coins -2%+) — selbst gute Setups laufen oft schief.' : 'Markt-Kontext ist neutral, aber Konfluenz auf Coin-Ebene reicht nicht.',
+      contextReason,
       ...failedChecks.slice(0, 3).map((c) => `Fehlt: ${c.label} (${c.detail})`)
     ],
     candidates: rankedCandidates,

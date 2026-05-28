@@ -7,6 +7,7 @@ import {
   buildChecks,
   candidateStanding,
   describeSignalAction,
+  shouldEmitTrade,
   tierForConfluence
 } from '@/lib/analysis/master-signal-engine';
 import { Candle } from '@/lib/types/domain';
@@ -21,6 +22,7 @@ function makeTrade(symbol: string, passed: number): TradeRecommendation {
     stopDistancePct: 5, rrTp1: 2, rrTp2: 4, atr1h: 3,
     confidence: 80, checks: [], passedCount: passed, totalCount: 12,
     oneLineReason: 'test', brokers: ['X'], marketRegime: 'bull',
+    btcRegime: 'bull',
     candidates: [],
     generatedAt: '2026-01-01T00:00:00Z'
   };
@@ -119,6 +121,7 @@ describe('describeSignalAction', () => {
       kind: 'no_trade',
       bestCandidate: makeTrade('BTC', 5),
       marketRegime: 'sideways',
+      btcRegime: 'sideways',
       marketMood: 'neutral',
       reasons: ['nur 5/12'],
       candidates: [],
@@ -137,6 +140,7 @@ describe('describeSignalAction', () => {
       kind: 'no_trade',
       bestCandidate: null,
       marketRegime: 'bear',
+      btcRegime: 'bear',
       marketMood: 'risk-off',
       reasons: ['Markt schwach'],
       candidates: [],
@@ -157,6 +161,32 @@ describe('tierForConfluence', () => {
     expect(tierForConfluence(6)).toBe('weak');
     expect(tierForConfluence(5)).toBe('weak');
     expect(tierForConfluence(4)).toBeNull();
+  });
+});
+
+describe('shouldEmitTrade', () => {
+  const base = { threshold: 7, isBtc: false, marketMood: 'neutral' as const, btcRegime: 'bull' as const };
+
+  it('blocks below the confluence threshold', () => {
+    expect(shouldEmitTrade({ ...base, passedCount: 6 })).toEqual({ emit: false, blockedReason: 'confluence' });
+  });
+
+  it('emits a clean setup in a healthy market', () => {
+    expect(shouldEmitTrade({ ...base, passedCount: 8 })).toEqual({ emit: true, blockedReason: null });
+  });
+
+  it('blocks an ordinary setup when the market is risk-off, but lets a very strong one through', () => {
+    expect(shouldEmitTrade({ ...base, passedCount: 8, marketMood: 'risk-off' }).blockedReason).toBe('risk-off');
+    expect(shouldEmitTrade({ ...base, passedCount: 9, marketMood: 'risk-off' }).emit).toBe(true);
+  });
+
+  it('blocks alts when Bitcoin is bearish unless the setup is exceptional', () => {
+    expect(shouldEmitTrade({ ...base, passedCount: 8, btcRegime: 'bear' }).blockedReason).toBe('btc-bear');
+    expect(shouldEmitTrade({ ...base, passedCount: 10, btcRegime: 'bear' }).emit).toBe(true);
+  });
+
+  it('does not block Bitcoin itself on a bearish BTC regime', () => {
+    expect(shouldEmitTrade({ ...base, passedCount: 8, isBtc: true, btcRegime: 'bear' }).emit).toBe(true);
   });
 });
 
