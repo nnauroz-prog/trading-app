@@ -42,6 +42,7 @@ export interface TradeRecommendation {
   marketStructure: Structure;
   marketMood: 'risk-on' | 'risk-off' | 'neutral';
   crowd: CrowdAssessment;
+  mode: TradeMode;
   candidates: RankedCandidate[];
   generatedAt: string;
 }
@@ -55,6 +56,7 @@ export interface NoTradeReport {
   crowd: CrowdAssessment;
   marketMood: 'risk-on' | 'risk-off' | 'neutral';
   reasons: string[];
+  mode: TradeMode;
   candidates: RankedCandidate[];
   generatedAt: string;
 }
@@ -84,8 +86,24 @@ const TP1_R = 2.5;
 const TP2_R = 5.0;
 
 // Strategy exits at the market price after this many hours if no target is hit.
-// Mirrors MAX_HOLD_BARS (72 × 1h) in the strategy backtest.
+// Mirrors MAX_HOLD_BARS (72 × 1h) in the strategy backtest (swing default).
 export const MAX_HOLD_HOURS = 72;
+
+export type TradeMode = 'swing' | 'daytrade';
+
+export interface ModeTimeframes {
+  fast: string;
+  mid: string;
+  slow: string;
+  maxHoldHours: number;
+}
+
+// Swing reads 1h/4h/1d (hold up to ~3 days); day-trade reads 5m/15m/1h for
+// intraday signals that are meant to be closed the same day (hold ~6h max).
+export const MODE_CONFIG: Record<TradeMode, ModeTimeframes> = {
+  swing: { fast: '1h', mid: '4h', slow: '1d', maxHoldHours: 72 },
+  daytrade: { fast: '5m', mid: '15m', slow: '1h', maxHoldHours: 6 }
+};
 
 export interface SignalAction {
   verdict: 'BUY_NOW' | 'WAIT' | 'NO_SETUP';
@@ -95,9 +113,11 @@ export interface SignalAction {
 }
 
 export function describeSignalAction(report: MasterSignalReport): SignalAction {
+  const maxHold = MODE_CONFIG[report.mode].maxHoldHours;
   const horizonText =
-    `Zeithorizont: meist Stunden bis ~3 Tage. Wird Ziel 1 nicht erreicht, ` +
-    `schließt die Strategie spätestens nach ${MAX_HOLD_HOURS}h (3 Tagen) zum Marktpreis.`;
+    report.mode === 'daytrade'
+      ? `Zeithorizont: Minuten bis wenige Stunden (Intraday). Ohne Ziel 1 schließt die Strategie spätestens nach ${maxHold}h zum Marktpreis.`
+      : `Zeithorizont: meist Stunden bis ~3 Tage. Wird Ziel 1 nicht erreicht, schließt die Strategie spätestens nach ${maxHold}h (3 Tagen) zum Marktpreis.`;
 
   if (report.kind === 'trade') {
     return {
@@ -362,11 +382,11 @@ export function buildChecks(c1h: Candle[], c4h: Candle[], c1d: Candle[]): { chec
   return { checks, entry, atr1h, marketRegime };
 }
 
-async function analyzeCoin(coin: UniverseCoin, ticker: TickerSnapshot): Promise<AnalyzedCoin | null> {
+async function analyzeCoin(coin: UniverseCoin, ticker: TickerSnapshot, tf: ModeTimeframes): Promise<AnalyzedCoin | null> {
   const [c1h, c4h, c1d] = await Promise.all([
-    fetchKlinesBySymbol(coin.binanceSymbol, '1h', 100),
-    fetchKlinesBySymbol(coin.binanceSymbol, '4h', 80),
-    fetchKlinesBySymbol(coin.binanceSymbol, '1d', 250)
+    fetchKlinesBySymbol(coin.binanceSymbol, tf.fast, 100),
+    fetchKlinesBySymbol(coin.binanceSymbol, tf.mid, 80),
+    fetchKlinesBySymbol(coin.binanceSymbol, tf.slow, 250)
   ]);
   if (!c1h || c1h.length < 50 || !c4h || c4h.length < 50 || !c1d || c1d.length < 30) return null;
 
@@ -482,7 +502,8 @@ function toRankedCandidate(a: AnalyzedCoin): RankedCandidate {
   };
 }
 
-export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSignalReport> {
+export async function buildMasterSignal(mode: TradeMode = 'swing', deepAnalyzeCount = 12): Promise<MasterSignalReport> {
+  const tf = MODE_CONFIG[mode];
   const [tickerMap, fearGreed, fundingBtc] = await Promise.all([
     fetchAllTickers(),
     fetchFearGreed(),
@@ -498,6 +519,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       marketStructure: 'range',
       crowd,
       marketMood: 'neutral',
+      mode,
       reasons: ['Daten-Provider gerade nicht erreichbar — keine valide Analyse möglich.'],
       candidates: [],
       generatedAt: new Date().toISOString()
@@ -526,7 +548,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
   const forced = scored.filter((x) => (x.coin.category === 'commodity' || x.coin.id === 'btc') && !top.includes(x));
   const candidates = [...top, ...forced];
 
-  const analyzed = (await Promise.all(candidates.map((x) => analyzeCoin(x.coin, x.ticker))))
+  const analyzed = (await Promise.all(candidates.map((x) => analyzeCoin(x.coin, x.ticker, tf))))
     .filter((a): a is AnalyzedCoin => a !== null)
     .sort((a, b) => b.passedWeight - a.passedWeight);
 
@@ -543,6 +565,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       marketStructure: 'range',
       crowd,
       marketMood,
+      mode,
       reasons: ['Keine Coins lieferten ausreichende Kline-Daten für eine Analyse.'],
       candidates: [],
       generatedAt: new Date().toISOString()
@@ -585,6 +608,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
     marketStructure: structure.structure,
     marketMood,
     crowd,
+    mode,
     candidates: [],
     generatedAt: new Date().toISOString()
   };
@@ -628,6 +652,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       contextReason,
       ...failedChecks.slice(0, 3).map((c) => `Fehlt: ${c.label} (${c.detail})`)
     ],
+    mode,
     candidates: rankedCandidates,
     generatedAt: new Date().toISOString()
   };

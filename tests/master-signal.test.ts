@@ -27,6 +27,7 @@ function makeTrade(symbol: string, passed: number): TradeRecommendation {
     marketStructure: 'uptrend',
     marketMood: 'neutral',
     crowd: { state: 'neutral', cautious: false, detail: 'neutral' },
+    mode: 'swing',
     candidates: [],
     generatedAt: '2026-01-01T00:00:00Z'
   };
@@ -112,6 +113,12 @@ describe('buildChecks — volume spike detection', () => {
 });
 
 describe('describeSignalAction', () => {
+  it('uses an intraday horizon in day-trade mode', () => {
+    const a = describeSignalAction({ ...makeTrade('SOL', 9), mode: 'daytrade' });
+    expect(a.horizonText).toContain('Intraday');
+    expect(a.horizonText).toContain('6');
+  });
+
   it('says BUY_NOW with a hold horizon when a trade fires', () => {
     const a = describeSignalAction(makeTrade('SOL', 9));
     expect(a.verdict).toBe('BUY_NOW');
@@ -130,6 +137,7 @@ describe('describeSignalAction', () => {
       crowd: { state: 'neutral', cautious: false, detail: 'neutral' },
       marketMood: 'neutral',
       reasons: ['nur 5/12'],
+      mode: 'swing',
       candidates: [],
       generatedAt: '2026-01-01T00:00:00Z'
     };
@@ -151,6 +159,7 @@ describe('describeSignalAction', () => {
       crowd: { state: 'fear', cautious: false, detail: 'fear' },
       marketMood: 'risk-off',
       reasons: ['Markt schwach'],
+      mode: 'swing',
       candidates: [],
       generatedAt: '2026-01-01T00:00:00Z'
     };
@@ -179,6 +188,7 @@ describe('buildMarketBriefing', () => {
       marketMood: 'risk-off',
       crowd: { state: 'greed', cautious: true, detail: 'Extreme Gier' },
       reasons: ['BTC ist bärisch'],
+      mode: 'swing',
       candidates: [],
       generatedAt: '2026-01-01T00:00:00Z'
     };

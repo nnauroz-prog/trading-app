@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { buildTopPlayReport } from '@/lib/analysis/top-play-engine';
 import { buildEventFeed } from '@/lib/analysis/event-feed';
+import { cookies } from 'next/headers';
 import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { fetchFearGreed, fetchBtcDominance } from '@/lib/providers/sentiment-indicators';
 import { fetchFundingRate } from '@/lib/providers/funding-rates';
@@ -14,6 +15,7 @@ import { TodoBox } from '@/components/todo-box';
 import { MarketBriefing } from '@/components/market-briefing';
 import { AdvancedOnly } from '@/components/advanced-only';
 import { ViewModeToggle } from '@/components/view-mode-toggle';
+import { TradeModeToggle } from '@/components/trade-mode-toggle';
 import { HeuteAufpassen } from '@/components/heute-aufpassen';
 import { AccountConfigBar } from '@/components/account-config-bar';
 import { PaperTradesPanel } from '@/components/paper-trades-panel';
@@ -29,9 +31,10 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function HomePage() {
+  const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
   const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth] = await Promise.all([
     buildTopPlayReport(),
-    buildMasterSignal(),
+    buildMasterSignal(tradeMode),
     fetchFearGreed(),
     fetchBtcDominance(),
     fetchFundingRate('BTCUSDT'),
@@ -116,6 +119,13 @@ export default async function HomePage() {
           <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Settings</Link>
         </nav>
       </header>
+
+      <div className="flex items-center justify-between gap-2">
+        <TradeModeToggle />
+        <span className="text-[10px] uppercase tracking-wider text-slate-500">
+          {tradeMode === 'daytrade' ? 'Intraday · 5m/15m/1h' : 'Swing · 1h/4h/1d'}
+        </span>
+      </div>
 
       <TodoBox report={masterSignal} />
 
