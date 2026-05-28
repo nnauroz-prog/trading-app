@@ -73,7 +73,7 @@ interface AnalyzedCoin {
   marketRegime: 'bull' | 'bear' | 'sideways';
 }
 
-function buildChecks(c1h: Candle[], c4h: Candle[], c1d: Candle[]): { checks: ConfluenceCheck[]; entry: number; atr1h: number; marketRegime: 'bull' | 'bear' | 'sideways' } {
+export function buildChecks(c1h: Candle[], c4h: Candle[], c1d: Candle[]): { checks: ConfluenceCheck[]; entry: number; atr1h: number; marketRegime: 'bull' | 'bear' | 'sideways' } {
   const closes1h = c1h.map((c) => c.close);
   const closes4h = c4h.map((c) => c.close);
   const closes1d = c1d.map((c) => c.close);

@@ -180,7 +180,10 @@ export function backtestAsset(assetId: string, ticker: string, candles1h: Candle
   const avgWinPct = winning.length > 0 ? winning.reduce((a, b) => a + b.netPnlPct, 0) / winning.length : 0;
   const avgLossPct = losing.length > 0 ? losing.reduce((a, b) => a + b.netPnlPct, 0) / losing.length : 0;
   const expectancy = winRate !== null ? winRate * avgWinPct + (1 - winRate) * avgLossPct : 0;
-  const periodDays = candles1h.length > 0 ? (candles1h[candles1h.length - 1].openTime - candles1h[startIdx].openTime) / (1000 * 60 * 60 * 24) : 0;
+  const safeStartIdx = Math.min(startIdx, candles1h.length - 1);
+  const periodDays = candles1h.length > 0 && safeStartIdx >= 0
+    ? (candles1h[candles1h.length - 1].openTime - candles1h[safeStartIdx].openTime) / (1000 * 60 * 60 * 24)
+    : 0;
 
   return {
     assetId,
