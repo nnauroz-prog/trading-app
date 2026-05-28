@@ -6,6 +6,12 @@ export interface AssetEdge {
   expectancyPct: number;
 }
 
+export interface TierStat {
+  trades: number;
+  winRatePct: number;
+  netReturnPct: number;
+}
+
 export interface BacktestSummary {
   available: boolean;
   trades: number;
@@ -13,9 +19,14 @@ export interface BacktestSummary {
   netReturnPct: number;
   periodDays: number;
   perAssetEdge: Record<string, AssetEdge>;
+  safeTier: TierStat | null;
 }
 
-const UNAVAILABLE: BacktestSummary = { available: false, trades: 0, winRatePct: null, netReturnPct: 0, periodDays: 0, perAssetEdge: {} };
+const UNAVAILABLE: BacktestSummary = { available: false, trades: 0, winRatePct: null, netReturnPct: 0, periodDays: 0, perAssetEdge: {}, safeTier: null };
+
+// Confluence threshold (within the backtest's own 12-check grid) that mirrors
+// the "safe" tier shown live (>=9/12).
+const SAFE_TIER_CONFLUENCE = 9;
 
 async function compute(): Promise<BacktestSummary> {
   try {
@@ -28,13 +39,26 @@ async function compute(): Promise<BacktestSummary> {
         expectancyPct: a.expectancyPct
       };
     }
+
+    const safeTrades = r.perAsset.flatMap((a) => a.trades).filter((t) => t.confluence >= SAFE_TIER_CONFLUENCE);
+    const safeWins = safeTrades.filter((t) => t.outcome === 'TP1').length;
+    const safeTier: TierStat | null =
+      safeTrades.length > 0
+        ? {
+            trades: safeTrades.length,
+            winRatePct: Math.round((safeWins / safeTrades.length) * 100),
+            netReturnPct: safeTrades.reduce((s, t) => s + t.netPnlPct, 0)
+          }
+        : null;
+
     return {
       available: true,
       trades: r.combined.totalSignals,
       winRatePct: r.combined.winRate !== null ? Math.round(r.combined.winRate * 100) : null,
       netReturnPct: r.combined.netReturnPct,
       periodDays: r.periodDays,
-      perAssetEdge
+      perAssetEdge,
+      safeTier
     };
   } catch {
     return UNAVAILABLE;

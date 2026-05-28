@@ -38,6 +38,18 @@ export function ProofCard({ summary }: { summary: BacktestSummary }) {
       <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
         Belegt am Backtest (BTC/ETH/SOL, echte historische Kerzen, Gebühren abgezogen, keine Slippage). Vergangenheit ≠ Zukunft.
       </p>
+
+      {summary.safeTier && (
+        <div className="mt-2 rounded-lg border border-emerald-500/25 bg-emerald-950/15 p-2.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Nur sichere Stufe (≥9/12)</span>
+          <span className="ml-2 text-[11px] text-slate-300">
+            {summary.safeTier.trades} Trades · <span className="font-mono font-bold text-emerald-200">{summary.safeTier.winRatePct}%</span> Treffer ·{' '}
+            <span className={`font-mono font-bold ${summary.safeTier.netReturnPct >= 0 ? 'text-emerald-200' : 'text-rose-300'}`}>
+              {summary.safeTier.netReturnPct >= 0 ? '+' : ''}{summary.safeTier.netReturnPct.toFixed(1)}%
+            </span>
+          </span>
+        </div>
+      )}
     </section>
   );
 }
