@@ -11,6 +11,7 @@ import { LiveFeed } from '@/components/live-feed';
 import { TodayTradeCard } from '@/components/today-trade-card';
 import { CandidateList } from '@/components/candidate-list';
 import { TodoBox } from '@/components/todo-box';
+import { MarketBriefing } from '@/components/market-briefing';
 import { HeuteAufpassen } from '@/components/heute-aufpassen';
 import { AccountConfigBar } from '@/components/account-config-bar';
 import { PaperTradesPanel } from '@/components/paper-trades-panel';
@@ -115,6 +116,8 @@ export default async function HomePage() {
       </header>
 
       <TodoBox report={masterSignal} />
+
+      <MarketBriefing report={masterSignal} />
 
       <TickerBar tickers={report.tickers} />
 

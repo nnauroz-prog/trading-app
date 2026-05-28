@@ -5,6 +5,7 @@ import {
   MasterSignalReport,
   TradeRecommendation,
   buildChecks,
+  buildMarketBriefing,
   candidateStanding,
   describeSignalAction,
   shouldEmitTrade,
@@ -24,6 +25,7 @@ function makeTrade(symbol: string, passed: number): TradeRecommendation {
     oneLineReason: 'test', brokers: ['X'], marketRegime: 'bull',
     btcRegime: 'bull',
     marketStructure: 'uptrend',
+    marketMood: 'neutral',
     crowd: { state: 'neutral', cautious: false, detail: 'neutral' },
     candidates: [],
     generatedAt: '2026-01-01T00:00:00Z'
@@ -155,6 +157,36 @@ describe('describeSignalAction', () => {
     const a = describeSignalAction(report);
     expect(a.verdict).toBe('NO_SETUP');
     expect(a.detail).toContain('Markt schwach');
+  });
+});
+
+describe('buildMarketBriefing', () => {
+  it('produces a 5-step top-down narrative ending in the decision', () => {
+    const steps = buildMarketBriefing(makeTrade('SOL', 9));
+    expect(steps).toHaveLength(5);
+    expect(steps.map((s) => s.label)).toEqual(['Gesamtmarkt', 'Bitcoin (Leitmarkt)', 'Struktur', 'Stimmung', 'Entscheidung']);
+    expect(steps[4].text).toContain('KAUFEN');
+    expect(steps[4].text).toContain('SOL');
+  });
+
+  it('ends in WAIT with the blocking reason for a no-trade report', () => {
+    const report: MasterSignalReport = {
+      kind: 'no_trade',
+      bestCandidate: makeTrade('BTC', 6),
+      marketRegime: 'bear',
+      btcRegime: 'bear',
+      marketStructure: 'downtrend',
+      marketMood: 'risk-off',
+      crowd: { state: 'greed', cautious: true, detail: 'Extreme Gier' },
+      reasons: ['BTC ist bärisch'],
+      candidates: [],
+      generatedAt: '2026-01-01T00:00:00Z'
+    };
+    const steps = buildMarketBriefing(report);
+    expect(steps[0].tone).toBe('bad'); // risk-off market
+    expect(steps[1].tone).toBe('bad'); // bearish BTC
+    expect(steps[3].tone).toBe('bad'); // crowd cautious
+    expect(steps[4].text).toContain('WARTEN');
   });
 });
 

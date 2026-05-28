@@ -40,6 +40,7 @@ export interface TradeRecommendation {
   marketRegime: 'bull' | 'bear' | 'sideways';
   btcRegime: 'bull' | 'bear' | 'sideways';
   marketStructure: Structure;
+  marketMood: 'risk-on' | 'risk-off' | 'neutral';
   crowd: CrowdAssessment;
   candidates: RankedCandidate[];
   generatedAt: string;
@@ -134,6 +135,65 @@ export function describeSignalAction(report: MasterSignalReport): SignalAction {
       'Aktuell bietet kein Coin im Universum ausreichende Konfluenz. Cash halten ist auch eine Position.',
     horizonText: null
   };
+}
+
+export interface BriefingStep {
+  label: string;
+  text: string;
+  tone: 'good' | 'bad' | 'neutral';
+}
+
+// Synthesises the engine's filters into a top-down narrative — the way a pro
+// reads the market: broad market -> Bitcoin (the leader) -> the best setup's
+// own structure -> crowd sentiment -> the resulting decision.
+export function buildMarketBriefing(report: MasterSignalReport): BriefingStep[] {
+  const steps: BriefingStep[] = [];
+
+  steps.push(
+    report.marketMood === 'risk-on'
+      ? { label: 'Gesamtmarkt', text: 'Die meisten Coins steigen — Rückenwind für Käufe.', tone: 'good' }
+      : report.marketMood === 'risk-off'
+        ? { label: 'Gesamtmarkt', text: 'Die meisten Coins fallen (Risk-off) — Gegenwind, Vorsicht.', tone: 'bad' }
+        : { label: 'Gesamtmarkt', text: 'Markt gemischt, kein klarer Trend in der Breite.', tone: 'neutral' }
+  );
+
+  steps.push(
+    report.btcRegime === 'bull'
+      ? { label: 'Bitcoin (Leitmarkt)', text: 'BTC ist bullisch — Alts haben grünes Licht.', tone: 'good' }
+      : report.btcRegime === 'bear'
+        ? { label: 'Bitcoin (Leitmarkt)', text: 'BTC ist bärisch — gegen den Leitmarkt kauft man keine Alts.', tone: 'bad' }
+        : { label: 'Bitcoin (Leitmarkt)', text: 'BTC läuft seitwärts — kein klarer Rückenwind.', tone: 'neutral' }
+  );
+
+  steps.push(
+    report.marketStructure === 'uptrend'
+      ? { label: 'Struktur', text: 'Bestes Setup zeigt höhere Hochs & Tiefs — gesunder Aufwärtstrend.', tone: 'good' }
+      : report.marketStructure === 'downtrend'
+        ? { label: 'Struktur', text: 'Bestes Setup zeigt tiefere Hochs & Tiefs — fallendes Messer, Finger weg.', tone: 'bad' }
+        : { label: 'Struktur', text: 'Bestes Setup in einer Seitwärts-Range — keine klare Richtung.', tone: 'neutral' }
+  );
+
+  steps.push({
+    label: 'Stimmung',
+    text: report.crowd.detail,
+    tone: report.crowd.cautious ? 'bad' : report.crowd.state === 'fear' ? 'good' : 'neutral'
+  });
+
+  if (report.kind === 'trade') {
+    steps.push({
+      label: 'Entscheidung',
+      text: `KAUFEN — ${report.coin.symbol}. Markt-Kontext passt und das Setup ist stark genug (${report.passedCount}/${report.totalCount}).`,
+      tone: 'good'
+    });
+  } else {
+    steps.push({
+      label: 'Entscheidung',
+      text: `WARTEN. ${report.reasons[0] ?? 'Kein ausreichendes Setup.'}`,
+      tone: 'neutral'
+    });
+  }
+
+  return steps;
 }
 
 interface AnalyzedCoin {
@@ -523,6 +583,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
     marketRegime: best.marketRegime,
     btcRegime,
     marketStructure: structure.structure,
+    marketMood,
     crowd,
     candidates: [],
     generatedAt: new Date().toISOString()
