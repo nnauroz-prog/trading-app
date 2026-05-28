@@ -95,6 +95,9 @@ export default async function HomePage() {
           <Link href="/heatmap" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">
             Markt
           </Link>
+          <Link href="/screener" className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">
+            Screener
+          </Link>
           <Link href="/ideas" className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 transition hover:border-emerald-400/50 hover:bg-emerald-500/20">
             Idee
           </Link>
