@@ -10,6 +10,7 @@ import { TopPlayCard, AlternatesList } from '@/components/top-play-card';
 import { LiveFeed } from '@/components/live-feed';
 import { TodayTradeCard } from '@/components/today-trade-card';
 import { CandidateList } from '@/components/candidate-list';
+import { TodoBox } from '@/components/todo-box';
 import { HeuteAufpassen } from '@/components/heute-aufpassen';
 import { AccountConfigBar } from '@/components/account-config-bar';
 import { PaperTradesPanel } from '@/components/paper-trades-panel';
@@ -112,6 +113,8 @@ export default async function HomePage() {
           <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Settings</Link>
         </nav>
       </header>
+
+      <TodoBox report={masterSignal} />
 
       <TickerBar tickers={report.tickers} />
 
