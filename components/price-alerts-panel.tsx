@@ -31,7 +31,22 @@ export function PriceAlertsPanel({ prices }: { prices: Record<string, number | n
   useEffect(() => {
     if (!mounted) return;
     const fired = evaluateAlerts(prices);
-    if (fired.length > 0) refresh();
+    if (fired.length > 0) {
+      refresh();
+      // Best-effort Telegram-Push (no-op if not configured server-side)
+      for (const a of fired) {
+        fetch('/api/notify-alert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            symbol: a.symbol,
+            direction: a.direction,
+            targetPrice: a.targetPrice,
+            currentPrice: prices[a.coinId] ?? undefined
+          })
+        }).catch(() => {});
+      }
+    }
   }, [mounted, prices, refresh]);
 
   if (!mounted) return null;
@@ -54,7 +69,7 @@ export function PriceAlertsPanel({ prices }: { prices: Record<string, number | n
       <div className="flex items-end justify-between">
         <div>
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Kurs-Alerts</h2>
-          <p className="mt-1 text-[11px] text-slate-500">Kursziele setzen — wird beim Öffnen der App gegen Live-Kurse geprüft und markiert wenn erreicht.</p>
+          <p className="mt-1 text-[11px] text-slate-500">Kursziele setzen — beim Öffnen der App gegen Live-Kurse geprüft, markiert wenn erreicht. Bei gesetztem Telegram-Bot zusätzlich Push aufs Handy (nur während App offen — echtes Background-Polling braucht Supabase + Cron).</p>
         </div>
         <button onClick={() => setAdding((a) => !a)} className="rounded-md border border-emerald-400/50 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/30">
           {adding ? '× Schließen' : '+ Alert'}
