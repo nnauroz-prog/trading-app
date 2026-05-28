@@ -4,6 +4,7 @@ import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { fetchAllTickers, TickerSnapshot } from '@/lib/providers/binance-tickers';
 import { TOP_50, UniverseCoin } from '@/lib/coin-universe';
 import { isTickerOnCoinbase } from '@/lib/data/brokers/coinbase-assets';
+import { Structure, assessMarketStructure } from '@/lib/analysis/market-structure';
 
 export interface ConfluenceCheck {
   id: string;
@@ -35,6 +36,7 @@ export interface TradeRecommendation {
   brokers: string[];
   marketRegime: 'bull' | 'bear' | 'sideways';
   btcRegime: 'bull' | 'bear' | 'sideways';
+  marketStructure: Structure;
   candidates: RankedCandidate[];
   generatedAt: string;
 }
@@ -44,6 +46,7 @@ export interface NoTradeReport {
   bestCandidate: TradeRecommendation | null;
   marketRegime: 'bull' | 'bear' | 'sideways';
   btcRegime: 'bull' | 'bear' | 'sideways';
+  marketStructure: Structure;
   marketMood: 'risk-on' | 'risk-off' | 'neutral';
   reasons: string[];
   candidates: RankedCandidate[];
@@ -363,22 +366,25 @@ export function candidateStanding(passed: number, threshold: number): { actionab
     : { actionable: false, label: 'Spekulativ — kleiner sizen' };
 }
 
-export type TradeBlock = 'confluence' | 'risk-off' | 'btc-bear' | null;
+export type TradeBlock = 'confluence' | 'risk-off' | 'btc-bear' | 'downtrend-structure' | null;
 
 // Pro-trader gate: a setup only becomes an actual buy if it clears the
 // confluence threshold AND the market context allows it. A weak broad market
-// (risk-off) or a bearish Bitcoin (the market leader) blocks all but the
-// strongest alt setups — pros don't fight the leader.
+// (risk-off), a bearish Bitcoin (the market leader) or a clear downtrend in the
+// coin's own structure blocks all but the strongest setups — pros don't fight
+// the leader and don't buy into a falling-knife structure.
 export function shouldEmitTrade(p: {
   passedCount: number;
   threshold: number;
   isBtc: boolean;
   marketMood: 'risk-on' | 'risk-off' | 'neutral';
   btcRegime: 'bull' | 'bear' | 'sideways';
+  structure: Structure;
 }): { emit: boolean; blockedReason: TradeBlock } {
   if (p.passedCount < p.threshold) return { emit: false, blockedReason: 'confluence' };
   if (p.marketMood === 'risk-off' && p.passedCount < 9) return { emit: false, blockedReason: 'risk-off' };
   if (!p.isBtc && p.btcRegime === 'bear' && p.passedCount < 10) return { emit: false, blockedReason: 'btc-bear' };
+  if (p.structure === 'downtrend' && p.passedCount < 10) return { emit: false, blockedReason: 'downtrend-structure' };
   return { emit: true, blockedReason: null };
 }
 
@@ -417,6 +423,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       bestCandidate: null,
       marketRegime: 'sideways',
       btcRegime: 'sideways',
+      marketStructure: 'range',
       marketMood: 'neutral',
       reasons: ['Daten-Provider gerade nicht erreichbar — keine valide Analyse möglich.'],
       candidates: [],
@@ -460,12 +467,15 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       bestCandidate: null,
       marketRegime: 'sideways',
       btcRegime,
+      marketStructure: 'range',
       marketMood,
       reasons: ['Keine Coins lieferten ausreichende Kline-Daten für eine Analyse.'],
       candidates: [],
       generatedAt: new Date().toISOString()
     };
   }
+
+  const structure = assessMarketStructure(best.candles4h);
 
   const rrTp1 = TP1_R / RISK_R;
   const rrTp2 = TP2_R / RISK_R;
@@ -498,6 +508,7 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
     brokers,
     marketRegime: best.marketRegime,
     btcRegime,
+    marketStructure: structure.structure,
     candidates: [],
     generatedAt: new Date().toISOString()
   };
@@ -507,7 +518,8 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
     threshold: MIN_PASSED_FOR_TRADE,
     isBtc: best.coin.id === 'btc',
     marketMood,
-    btcRegime
+    btcRegime,
+    structure: structure.structure
   });
 
   if (gate.emit) {
@@ -520,12 +532,15 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
       ? 'Markt aktuell Risk-off (>60% der Coins -2%+) — selbst gute Setups laufen oft schief.'
       : gate.blockedReason === 'btc-bear'
         ? 'Bitcoin (Leitmarkt) ist bärisch — gegen einen schwachen BTC kaufen Profis keine Alts. Erst wenn BTC dreht.'
-        : 'Markt-Kontext ist neutral, aber Konfluenz auf Coin-Ebene reicht nicht.';
+        : gate.blockedReason === 'downtrend-structure'
+          ? `Struktur von ${best.coin.symbol} zeigt nach unten (tiefere Hochs & Tiefs) — nicht ins fallende Messer greifen.`
+          : 'Markt-Kontext ist neutral, aber Konfluenz auf Coin-Ebene reicht nicht.';
   return {
     kind: 'no_trade',
     bestCandidate: candidateRec,
     marketRegime: best.marketRegime,
     btcRegime,
+    marketStructure: structure.structure,
     marketMood,
     reasons: [
       `Bestes Setup im 50-Coin-Universum (${best.coin.symbol}) erreicht nur ${best.passedCount}/${best.totalCount} Bestätigungen.`,

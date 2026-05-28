@@ -23,6 +23,7 @@ function makeTrade(symbol: string, passed: number): TradeRecommendation {
     confidence: 80, checks: [], passedCount: passed, totalCount: 12,
     oneLineReason: 'test', brokers: ['X'], marketRegime: 'bull',
     btcRegime: 'bull',
+    marketStructure: 'uptrend',
     candidates: [],
     generatedAt: '2026-01-01T00:00:00Z'
   };
@@ -122,6 +123,7 @@ describe('describeSignalAction', () => {
       bestCandidate: makeTrade('BTC', 5),
       marketRegime: 'sideways',
       btcRegime: 'sideways',
+      marketStructure: 'range',
       marketMood: 'neutral',
       reasons: ['nur 5/12'],
       candidates: [],
@@ -141,6 +143,7 @@ describe('describeSignalAction', () => {
       bestCandidate: null,
       marketRegime: 'bear',
       btcRegime: 'bear',
+      marketStructure: 'downtrend',
       marketMood: 'risk-off',
       reasons: ['Markt schwach'],
       candidates: [],
@@ -165,7 +168,7 @@ describe('tierForConfluence', () => {
 });
 
 describe('shouldEmitTrade', () => {
-  const base = { threshold: 7, isBtc: false, marketMood: 'neutral' as const, btcRegime: 'bull' as const };
+  const base = { threshold: 7, isBtc: false, marketMood: 'neutral' as const, btcRegime: 'bull' as const, structure: 'uptrend' as const };
 
   it('blocks below the confluence threshold', () => {
     expect(shouldEmitTrade({ ...base, passedCount: 6 })).toEqual({ emit: false, blockedReason: 'confluence' });
@@ -187,6 +190,11 @@ describe('shouldEmitTrade', () => {
 
   it('does not block Bitcoin itself on a bearish BTC regime', () => {
     expect(shouldEmitTrade({ ...base, passedCount: 8, isBtc: true, btcRegime: 'bear' }).emit).toBe(true);
+  });
+
+  it('blocks buying into a downtrend structure unless exceptional', () => {
+    expect(shouldEmitTrade({ ...base, passedCount: 8, structure: 'downtrend' }).blockedReason).toBe('downtrend-structure');
+    expect(shouldEmitTrade({ ...base, passedCount: 10, structure: 'downtrend' }).emit).toBe(true);
   });
 });
 
