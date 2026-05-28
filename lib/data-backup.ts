@@ -58,6 +58,21 @@ export interface ImportResult {
   error?: string;
 }
 
+// Identity for merge-dedup. Most stores key on `id`; the watchlist keys on
+// `coinId`. `id` is checked first so e.g. two alerts on the same coin stay
+// distinct. Anything without a known key falls back to deep-equality via JSON.
+const IDENTITY_KEYS = ['id', 'coinId'] as const;
+
+function identityOf(item: unknown): string {
+  if (typeof item === 'object' && item !== null) {
+    for (const k of IDENTITY_KEYS) {
+      const v = (item as Record<string, unknown>)[k];
+      if (v !== undefined && v !== null) return `${k}:${String(v)}`;
+    }
+  }
+  return JSON.stringify(item);
+}
+
 export function importData(json: string, mode: 'replace' | 'merge' = 'replace'): ImportResult {
   if (typeof window === 'undefined') return { ok: false, restoredKeys: [], error: 'no_window' };
   let parsed: BackupEnvelope;
@@ -85,11 +100,14 @@ export function importData(json: string, mode: 'replace' | 'merge' = 'replace'):
           /* ignore */
         }
       }
-      const seen = new Set(existing.map((x) => (typeof x === 'object' && x !== null && 'id' in x ? (x as { id: unknown }).id : JSON.stringify(x))));
+      const seen = new Set(existing.map(identityOf));
       const merged = [...existing];
       for (const item of incoming) {
-        const id = typeof item === 'object' && item !== null && 'id' in item ? (item as { id: unknown }).id : JSON.stringify(item);
-        if (!seen.has(id)) merged.push(item);
+        const id = identityOf(item);
+        if (!seen.has(id)) {
+          seen.add(id);
+          merged.push(item);
+        }
       }
       window.localStorage.setItem(key, JSON.stringify(merged));
     } else {

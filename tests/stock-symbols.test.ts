@@ -19,4 +19,8 @@ describe('resolveStockSymbol', () => {
   it('returns null for non-symbol garbage', () => {
     expect(resolveStockSymbol('das ist ein langer satz')).toBeNull();
   });
+  it('rejects pure-numeric tokens (must start with a letter)', () => {
+    expect(resolveStockSymbol('999')).toBeNull();
+    expect(resolveStockSymbol('12345')).toBeNull();
+  });
 });

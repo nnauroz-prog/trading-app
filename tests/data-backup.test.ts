@@ -46,6 +46,30 @@ describe('data-backup', () => {
     expect(JSON.parse(store.get('trading-app.positions')!)).toHaveLength(2);
   });
 
+  it('merge dedups watchlist by coinId (no id field)', () => {
+    store.set('trading-app.watchlist', JSON.stringify([{ coinId: 'btc', addedAt: 1000 }]));
+    const json = JSON.stringify({ app: 'trading-app', version: 1, exportedAt: '', data: { 'trading-app.watchlist': [{ coinId: 'btc', addedAt: 2000, note: 'x' }, { coinId: 'eth' }] } });
+    const result = importData(json, 'merge');
+    expect(result.ok).toBe(true);
+    const wl = JSON.parse(store.get('trading-app.watchlist')!);
+    expect(wl).toHaveLength(2); // btc kept once, eth added
+    expect(wl.filter((x: { coinId: string }) => x.coinId === 'btc')).toHaveLength(1);
+  });
+
+  it('merge keeps distinct alerts on the same coin (id-keyed)', () => {
+    store.set('trading-app.price-alerts', JSON.stringify([{ id: 'a1', coinId: 'btc', direction: 'above' }]));
+    const json = JSON.stringify({ app: 'trading-app', version: 1, exportedAt: '', data: { 'trading-app.price-alerts': [{ id: 'a2', coinId: 'btc', direction: 'below' }] } });
+    importData(json, 'merge');
+    expect(JSON.parse(store.get('trading-app.price-alerts')!)).toHaveLength(2);
+  });
+
+  it('merge dedups duplicate ids within the incoming array', () => {
+    store.set('trading-app.positions', JSON.stringify([]));
+    const json = JSON.stringify({ app: 'trading-app', version: 1, exportedAt: '', data: { 'trading-app.positions': [{ id: 'x' }, { id: 'x' }] } });
+    importData(json, 'merge');
+    expect(JSON.parse(store.get('trading-app.positions')!)).toHaveLength(1);
+  });
+
   it('rejects non-backup json', () => {
     expect(importData('{"foo":1}').ok).toBe(false);
     expect(importData('not json').ok).toBe(false);

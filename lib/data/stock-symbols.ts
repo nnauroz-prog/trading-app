@@ -34,7 +34,8 @@ export const STOCK_SYMBOL_MAP: Record<string, string> = {
 export function resolveStockSymbol(underlying: string): string | null {
   const key = underlying.toUpperCase().trim();
   if (STOCK_SYMBOL_MAP[key]) return STOCK_SYMBOL_MAP[key];
-  // Already looks like a Finnhub symbol (e.g. 'AAPL' or 'BMW.DE')
-  if (/^[A-Z0-9]{1,6}(\.[A-Z]{1,3})?$/.test(key)) return key;
+  // Already looks like a Finnhub symbol (e.g. 'AAPL' or 'BMW.DE'). Require a
+  // leading letter so pure-numeric tokens ('999') don't trigger bogus lookups.
+  if (/^[A-Z][A-Z0-9]{0,5}(\.[A-Z]{1,3})?$/.test(key)) return key;
   return null;
 }

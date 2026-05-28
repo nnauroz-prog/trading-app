@@ -56,7 +56,7 @@ export function StockQuoteVerifier({ underlying, mentionedPrice }: { underlying:
 
   const q = result.quote!;
   const diff = mentionedPrice !== null && mentionedPrice > 0 ? ((q.price - mentionedPrice) / mentionedPrice) * 100 : null;
-  const range52 = q.high52 !== null && q.low52 !== null ? ((q.price - q.low52) / (q.high52 - q.low52)) * 100 : null;
+  const range52 = q.high52 !== null && q.low52 !== null && q.high52 > q.low52 ? ((q.price - q.low52) / (q.high52 - q.low52)) * 100 : null;
 
   return (
     <div className="rounded-lg border border-emerald-500/20 bg-emerald-950/10 px-3 py-2 text-[11px]">

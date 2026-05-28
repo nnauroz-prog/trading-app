@@ -69,7 +69,7 @@ export function RiskLimitsPanel() {
   };
 
   const handleReset = () => {
-    const next: AccountConfig = { ...config, riskLimits: DEFAULT_RISK_LIMITS };
+    const next: AccountConfig = { ...config, riskLimits: { ...DEFAULT_RISK_LIMITS } };
     saveConfig(next);
     setConfig(next);
     setInputs({
