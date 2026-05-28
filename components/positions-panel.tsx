@@ -6,6 +6,14 @@ import { Broker, InstrumentType } from '@/lib/types/ideas';
 import { clearPrefill, loadPrefill } from '@/lib/position-prefill';
 import { EmptyState } from '@/components/empty-state';
 import { PanelSkeleton } from '@/components/skeleton';
+import { ExitSignal, evaluatePositionExit } from '@/lib/risk/position-exit';
+
+const EXIT_TONE: Record<ExitSignal['tone'], string> = {
+  sell: 'border-rose-500/50 bg-rose-950/40 text-rose-100',
+  trim: 'border-emerald-500/50 bg-emerald-950/40 text-emerald-100',
+  caution: 'border-amber-500/50 bg-amber-950/30 text-amber-100',
+  hold: 'border-slate-700 bg-slate-900/60 text-slate-200'
+};
 import {
   POSITIONS_CHANGED_EVENT,
   addPosition,
@@ -193,6 +201,7 @@ function PositionRow({ position, latestPrice, onDelete, onClose, onUpdateNotes }
   const pnl = isOpen ? unrealizedPnl : position.realizedPnl ?? 0;
   const pnlPct = isOpen ? unrealizedPct : position.realizedPnlPct ?? 0;
   const pnlColor = (pnl ?? 0) >= 0 ? 'text-emerald-300' : 'text-rose-300';
+  const exit = isOpen ? evaluatePositionExit(position, latestPrice) : null;
 
   return (
     <div className="rounded-lg border border-slate-800/80 bg-slate-950/60 p-3">
@@ -215,6 +224,12 @@ function PositionRow({ position, latestPrice, onDelete, onClose, onUpdateNotes }
           )}
         </div>
       </div>
+      {exit && (
+        <div className={`mb-2 rounded-lg border p-2.5 ${EXIT_TONE[exit.tone]}`}>
+          <div className="text-xs font-bold uppercase tracking-wider">{exit.action}</div>
+          <div className="mt-0.5 text-[11px] leading-relaxed opacity-90">{exit.detail}</div>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4">
         <div>
           <div className="text-slate-500">Entry</div>
