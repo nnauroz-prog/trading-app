@@ -15,8 +15,6 @@ const WKN_PATTERN = /\b([A-Z]{2}[A-Z0-9]{4})\b/g;
 const TICKER_PATTERN = /\b(BTC|ETH|SOL|XRP|ADA|DOGE|AVAX|LINK|DOT|BNB|MATIC|POL|PEPE|SHIB|WIF|BONK|FLOKI|BOME|MEW|NEAR|ATOM|SUI|TIA|APT|SEI|INJ|JTO|JUP|RENDER|AAVE|UNI|MKR|RUNE|CRV|FET|GRT)\b/gi;
 const STOCK_NAME_PATTERN = /\b(BMW|VW|VOLKSWAGEN|MERCEDES|DAIMLER|SAP|SIEMENS|ALLIANZ|DEUTSCHE\s+BANK|COMMERZBANK|TESLA|APPLE|NVIDIA|MICROSOFT|GOOGLE|ALPHABET|META|AMAZON|NETFLIX|INTEL|AMD|PORSCHE|ADIDAS|PUMA|BASF|BAYER|MUNICH\s+RE|ZALANDO|DELIVERY\s+HERO|HELLOFRESH)\b/gi;
 
-const INVALIDATION_PATTERN = /(?:setup\s+ungültig|invalidi(?:ert|erung)|stop|bricht|unter)\s+(?:bei\s+|wenn\s+(?:der\s+|die\s+)?(?:kurs\s+|preis\s+)?)?(?:[a-zA-Z]+\s+)?(?:unter|fällt|fall|brechen)?\s*(\d+(?:[.,]\d+)?)\s*€?/gi;
-const LEVEL_PATTERN = /(?:unter|über|bei|stop\s+(?:bei|auf))\s*(\d+(?:[.,]\d+)?)\s*€/gi;
 
 function parseNumber(s: string): number {
   return parseFloat(s.replace(',', '.'));

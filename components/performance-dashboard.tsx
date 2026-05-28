@@ -32,7 +32,7 @@ function EquityCurveChart({ data, currency }: { data: PerformanceMetrics['equity
   const minY = Math.min(0, ...ys);
   const maxY = Math.max(0, ...ys);
   const rangeY = maxY - minY || 1;
-  const points = data.map((d, i) => {
+  const points = data.map((d) => {
     const x = data.length === 1 ? width / 2 : ((d.time - minX) / (maxX - minX)) * width;
     const y = height - ((d.equity - minY) / rangeY) * height;
     return `${x.toFixed(1)},${y.toFixed(1)}`;

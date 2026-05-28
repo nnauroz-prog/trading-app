@@ -105,7 +105,6 @@ export function buildChecks(c1h: Candle[], c4h: Candle[], c1d: Candle[]): { chec
 
   const bb = bollinger(closes1h, 20, 2);
   const latestBbUpper = last(bb.upper) ?? entry * 1.05;
-  const latestBbMiddle = last(bb.middle) ?? entry;
   const distFromUpperBand = ((latestBbUpper - entry) / entry) * 100;
 
   const stoch1h = stochastic(c1h, 14, 3);

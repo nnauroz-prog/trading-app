@@ -110,7 +110,6 @@ export function InteractiveChart({
 
   const view = useMemo(() => candles.slice(-120), [candles]);
 
-  const closes = useMemo(() => view.map((c) => c.close), [view]);
   const fullCloses = useMemo(() => candles.map((c) => c.close), [candles]);
   const ema50Full = useMemo(() => ema(fullCloses, 50), [fullCloses]);
   const ema20Full = useMemo(() => ema(fullCloses, 20), [fullCloses]);
