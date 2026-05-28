@@ -179,6 +179,7 @@ export default async function HomePage() {
         Scant {report.tickers.length} Coins · {report.analyzedCount} deep-analyzed · {report.dataSource === 'binance' ? 'Live Binance Spot Data' : 'Engine offline'}
         <span className="ml-2 text-slate-700">·</span>
         <span className="ml-2">Keine Finanzberatung. Top-Play ist die aktuell beste Konfluenz im Universum, kein Versprechen. Stop-Loss respektieren. Vergangenheit ≠ Zukunft.</span>
+        <span className="ml-2 text-slate-700">· Build {(process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev').slice(0, 7)}</span>
       </footer>
     </main>
   );
