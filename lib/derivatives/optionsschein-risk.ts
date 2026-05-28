@@ -54,8 +54,8 @@ function classifyRisk(daysToExpiry: number | null, distancePct: number, directio
   const shortDated = daysToExpiry !== null && daysToExpiry < 180;
   const longDated = daysToExpiry !== null && daysToExpiry >= 540;
 
-  if (!inMoney && absDist > 25 && shortDated) return 'Sehr hohes Risiko';
-  if (!inMoney && absDist > 25) return 'Sehr hohes Risiko';
+  if (!inMoney && absDist >= 25 && shortDated) return 'Sehr hohes Risiko';
+  if (!inMoney && absDist >= 25) return 'Sehr hohes Risiko';
   if (!inMoney && absDist > 12) return 'Hohes Risiko';
   if (!inMoney && absDist > 5 && shortDated) return 'Hohes Risiko';
   if (!inMoney) return 'Mittleres Risiko';

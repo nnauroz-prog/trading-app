@@ -43,8 +43,14 @@ function detectTitle(text: string): string {
 }
 
 function detectUnderlyingFromTitle(title: string): { underlying: string; ideaType: InstrumentType; underlyingType: InstrumentType } {
-  const stripped = title.replace(/tradingidee\s+/i, '').replace(/trading[\s-]?idea\s+/i, '').replace(/idee[:\s]+/i, '');
-  const tokens = stripped.split(/[\s\-_/]+/).filter((t) => t.length > 0);
+  const cleaned = title
+    .replace(/tradingidee\s+/i, '')
+    .replace(/trading[\s-]?idea\s+/i, '')
+    .replace(/idee[:\s]+/i, '');
+  // Underlying steht am Anfang. Bei Satz-Trennern (— : , .) abschneiden,
+  // damit lange Beschreibungstexte nicht als Basiswert geparst werden.
+  const stripped = cleaned.split(/\s*[—:,.]\s*|\s{2,}/)[0].trim() || cleaned;
+  const tokens = stripped.split(/[\s\-_/]+/).filter((t) => t.length > 0).slice(0, 4);
 
   let ideaType: InstrumentType = 'unknown';
   let underlyingType: InstrumentType = 'unknown';

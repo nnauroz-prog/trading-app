@@ -21,7 +21,7 @@ export function classifyMoneyness(
   } else if (inMoney) {
     classification = 'itm';
     description = `Im Geld (Abstand ${distancePct.toFixed(1)}%)`;
-  } else if (absDist > 25) {
+  } else if (absDist >= 25) {
     classification = 'deep_otm';
     description = `Deutlich aus dem Geld (Strike ${absDist.toFixed(1)}% entfernt) — sehr spekulativ`;
   } else {
