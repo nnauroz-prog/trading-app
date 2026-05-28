@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { DataBackupPanel } from '@/components/data-backup-panel';
+import { RiskLimitsPanel } from '@/components/risk-limits-panel';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,7 @@ export default function SettingsPage() {
         </p>
       </header>
 
+      <RiskLimitsPanel />
       <DataBackupPanel />
     </main>
   );

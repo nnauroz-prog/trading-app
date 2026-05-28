@@ -1,5 +1,5 @@
 import { Position } from '@/lib/types/positions';
-import { AccountConfig } from '@/lib/account-config';
+import { AccountConfig, RiskLimits, DEFAULT_RISK_LIMITS } from '@/lib/account-config';
 import { UserRiskProfile } from '@/lib/types/ideas';
 
 export type RiskSeverity = 'info' | 'warning' | 'danger' | 'critical';
@@ -27,18 +27,18 @@ function pct(value: number, base: number): number {
   return (value / base) * 100;
 }
 
-function positionAlerts(position: Position, latestPrice: number | null, capital: number): RiskAlert[] {
+function positionAlerts(position: Position, latestPrice: number | null, capital: number, limits: RiskLimits): RiskAlert[] {
   const alerts: RiskAlert[] = [];
   if (position.status !== 'open') return alerts;
 
   if (capital > 0) {
     const exposurePct = (position.investmentQuote / capital) * 100;
-    if (exposurePct > 25) {
+    if (exposurePct > limits.maxPositionPct) {
       alerts.push({
         id: `${position.id}-exposure`,
-        severity: exposurePct > 50 ? 'critical' : 'danger',
+        severity: exposurePct > limits.maxPositionPct * 2 ? 'critical' : 'danger',
         title: `${position.underlying}: Position zu groß`,
-        message: `${exposurePct.toFixed(0)}% des Kapitals in einer Position. Bei einem Drawdown trifft das überproportional. 5-15% pro Trade ist eine konservativere Grenze.`,
+        message: `${exposurePct.toFixed(0)}% des Kapitals in einer Position (Limit: ${limits.maxPositionPct}%). Bei einem Drawdown trifft das überproportional. 5-15% pro Trade ist eine konservativere Grenze.`,
         relatedPositionId: position.id,
         actionLabel: 'Reduzieren prüfen',
         category: 'position'
@@ -146,13 +146,13 @@ function positionAlerts(position: Position, latestPrice: number | null, capital:
   return alerts;
 }
 
-function portfolioAlerts(positions: Position[], capital: number, profile: UserRiskProfile): RiskAlert[] {
+function portfolioAlerts(positions: Position[], capital: number, profile: UserRiskProfile, limits: RiskLimits): RiskAlert[] {
   const alerts: RiskAlert[] = [];
   const open = positions.filter((p) => p.status === 'open');
   if (open.length === 0) return alerts;
 
   const hebelCount = open.filter((p) => HEBEL_TYPES.has(p.instrumentType)).length;
-  if (hebelCount >= 3) {
+  if (hebelCount >= limits.maxHebelCount) {
     alerts.push({
       id: 'portfolio-hebel-concentration',
       severity: 'danger',
@@ -181,7 +181,7 @@ function portfolioAlerts(positions: Position[], capital: number, profile: UserRi
     }
   }
 
-  if (open.length >= 8 && profile !== 'very_speculative') {
+  if (open.length >= limits.maxOpenPositions && profile !== 'very_speculative') {
     alerts.push({
       id: 'portfolio-too-many',
       severity: 'info',
@@ -203,12 +203,12 @@ function portfolioAlerts(positions: Position[], capital: number, profile: UserRi
       }
     }
     const totalRiskPct = (totalRiskAtStop / capital) * 100;
-    if (totalRiskPct > 6) {
+    if (totalRiskPct > limits.maxPortfolioHeatPct) {
       alerts.push({
         id: 'portfolio-total-heat',
-        severity: totalRiskPct > 12 ? 'critical' : 'danger',
+        severity: totalRiskPct > limits.maxPortfolioHeatPct * 2 ? 'critical' : 'danger',
         title: `Portfolio-Heat: ${totalRiskPct.toFixed(1)}% Risk offen`,
-        message: `Summe der Stop-Risiken über alle offenen Positionen liegt bei ${totalRiskPct.toFixed(1)}% Kapital. Profi-Maximum: ~6%. Drawdowns korrelieren — ein schlechter Tag kann mehrere Stops gleichzeitig triggern.`,
+        message: `Summe der Stop-Risiken über alle offenen Positionen liegt bei ${totalRiskPct.toFixed(1)}% Kapital. Dein Limit: ${limits.maxPortfolioHeatPct}% (Profi-Maximum: ~6%). Drawdowns korrelieren — ein schlechter Tag kann mehrere Stops gleichzeitig triggern.`,
         category: 'portfolio'
       });
     }
@@ -271,14 +271,15 @@ export function runRiskGuardian(
 ): RiskGuardianReport {
   const open = positions.filter((p) => p.status === 'open');
   const capital = config.accountSize;
+  const limits = config.riskLimits ?? DEFAULT_RISK_LIMITS;
 
   const alerts: RiskAlert[] = [];
   for (const p of open) {
     const priceKey = (p.ticker ?? p.underlying).toLowerCase();
     const latest = latestPrices[priceKey] ?? null;
-    alerts.push(...positionAlerts(p, latest, capital));
+    alerts.push(...positionAlerts(p, latest, capital, limits));
   }
-  alerts.push(...portfolioAlerts(positions, capital, profile));
+  alerts.push(...portfolioAlerts(positions, capital, profile, limits));
   alerts.push(...marketAlerts(market, open.length));
 
   const severityWeight: Record<RiskSeverity, number> = { critical: 0, danger: 1, warning: 2, info: 3 };

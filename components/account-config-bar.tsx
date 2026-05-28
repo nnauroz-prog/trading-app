@@ -25,7 +25,7 @@ export function AccountConfigBar() {
     const risk = parseFloat(riskInput);
     if (!Number.isFinite(size) || size < 0) return;
     if (!Number.isFinite(risk) || risk <= 0 || risk > 10) return;
-    const next: AccountConfig = { accountSize: size, maxRiskPct: risk, currency };
+    const next: AccountConfig = { accountSize: size, maxRiskPct: risk, currency, riskLimits: config.riskLimits };
     saveConfig(next);
     setConfig(next);
     setEditing(false);

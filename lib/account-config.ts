@@ -1,16 +1,50 @@
+export interface RiskLimits {
+  // Einzelposition: ab diesem % des Kapitals → "danger", ab 2x → "critical"
+  maxPositionPct: number;
+  // Summe aller Stop-Risiken: ab diesem % → "danger", ab 2x → "critical"
+  maxPortfolioHeatPct: number;
+  // Anzahl gleichzeitiger Hebelprodukte, ab der gewarnt wird
+  maxHebelCount: number;
+  // Anzahl offener Positionen, ab der ein Hinweis kommt
+  maxOpenPositions: number;
+}
+
+export const DEFAULT_RISK_LIMITS: RiskLimits = {
+  maxPositionPct: 25,
+  maxPortfolioHeatPct: 6,
+  maxHebelCount: 3,
+  maxOpenPositions: 8
+};
+
 export interface AccountConfig {
   accountSize: number;
   maxRiskPct: number;
   currency: 'EUR' | 'USD';
+  riskLimits: RiskLimits;
 }
 
 export const DEFAULT_CONFIG: AccountConfig = {
   accountSize: 0,
   maxRiskPct: 1,
-  currency: 'EUR'
+  currency: 'EUR',
+  riskLimits: DEFAULT_RISK_LIMITS
 };
 
 export const STORAGE_KEY = 'trading-app.account-config';
+
+function num(value: unknown, fallback: number, min: number, max: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max ? value : fallback;
+}
+
+function parseRiskLimits(raw: unknown): RiskLimits {
+  const r = (raw ?? {}) as Partial<RiskLimits>;
+  return {
+    maxPositionPct: num(r.maxPositionPct, DEFAULT_RISK_LIMITS.maxPositionPct, 1, 100),
+    maxPortfolioHeatPct: num(r.maxPortfolioHeatPct, DEFAULT_RISK_LIMITS.maxPortfolioHeatPct, 0.5, 100),
+    maxHebelCount: num(r.maxHebelCount, DEFAULT_RISK_LIMITS.maxHebelCount, 1, 50),
+    maxOpenPositions: num(r.maxOpenPositions, DEFAULT_RISK_LIMITS.maxOpenPositions, 1, 100)
+  };
+}
 
 export function loadConfig(): AccountConfig {
   if (typeof window === 'undefined') return DEFAULT_CONFIG;
@@ -21,7 +55,8 @@ export function loadConfig(): AccountConfig {
     return {
       accountSize: typeof parsed.accountSize === 'number' && parsed.accountSize >= 0 ? parsed.accountSize : 0,
       maxRiskPct: typeof parsed.maxRiskPct === 'number' && parsed.maxRiskPct > 0 && parsed.maxRiskPct <= 10 ? parsed.maxRiskPct : 1,
-      currency: parsed.currency === 'USD' ? 'USD' : 'EUR'
+      currency: parsed.currency === 'USD' ? 'USD' : 'EUR',
+      riskLimits: parseRiskLimits(parsed.riskLimits)
     };
   } catch {
     return DEFAULT_CONFIG;
