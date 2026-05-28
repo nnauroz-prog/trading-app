@@ -411,13 +411,18 @@ export async function buildMasterSignal(deepAnalyzeCount = 12): Promise<MasterSi
     .map((c) => ({ coin: c, ticker: tickerMap.get(c.binanceSymbol) }))
     .filter((x): x is { coin: UniverseCoin; ticker: TickerSnapshot } => !!x.ticker);
 
-  const candidates = withTickers
+  const scored = withTickers
     .map((x) => ({
       ...x,
       interestScore: Math.abs(x.ticker.priceChangePct) + Math.log10(Math.max(x.ticker.quoteVolume, 1)) * 0.8
     }))
-    .sort((a, b) => b.interestScore - a.interestScore)
-    .slice(0, deepAnalyzeCount);
+    .sort((a, b) => b.interestScore - a.interestScore);
+
+  const top = scored.slice(0, deepAnalyzeCount);
+  // Commodities (e.g. gold/PAXG) move slowly and rarely top the interest score,
+  // so always analyse them — otherwise gold would never produce a signal.
+  const forced = scored.filter((x) => x.coin.category === 'commodity' && !top.includes(x));
+  const candidates = [...top, ...forced];
 
   const analyzed = (await Promise.all(candidates.map((x) => analyzeCoin(x.coin, x.ticker))))
     .filter((a): a is AnalyzedCoin => a !== null)

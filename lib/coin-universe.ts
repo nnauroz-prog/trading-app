@@ -1,4 +1,4 @@
-export type CoinCategory = 'major' | 'midcap' | 'meme' | 'defi' | 'l1' | 'ai';
+export type CoinCategory = 'major' | 'midcap' | 'meme' | 'defi' | 'l1' | 'ai' | 'commodity';
 
 export interface UniverseCoin {
   id: string;
@@ -58,7 +58,8 @@ export const TOP_50: UniverseCoin[] = [
   { id: 'algo', symbol: 'ALGO', binanceSymbol: 'ALGOUSDT', name: 'Algorand', category: 'midcap' },
   { id: 'ftm', symbol: 'FTM', binanceSymbol: 'FTMUSDT', name: 'Fantom', category: 'midcap' },
   { id: 'hbar', symbol: 'HBAR', binanceSymbol: 'HBARUSDT', name: 'Hedera', category: 'midcap' },
-  { id: 'pol', symbol: 'POL', binanceSymbol: 'POLUSDT', name: 'Polygon', category: 'midcap' }
+  { id: 'pol', symbol: 'POL', binanceSymbol: 'POLUSDT', name: 'Polygon', category: 'midcap' },
+  { id: 'paxg', symbol: 'PAXG', binanceSymbol: 'PAXGUSDT', name: 'PAX Gold (Gold 1:1)', category: 'commodity' }
 ];
 
 export function getCoinById(id: string): UniverseCoin | undefined {
