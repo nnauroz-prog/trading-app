@@ -133,7 +133,7 @@ function EntryRow({ entry, onUpdate, onDelete }: {
       )}
 
       <div className="mt-2 flex justify-end">
-        <button onClick={onDelete} className="rounded border border-slate-800 bg-slate-900 px-2 py-0.5 text-[10px] text-slate-500 hover:border-rose-500/40 hover:text-rose-300">Löschen</button>
+        <button onClick={() => { if (window.confirm('Journal-Eintrag wirklich löschen?')) onDelete(); }} className="rounded border border-slate-800 bg-slate-900 px-2 py-0.5 text-[10px] text-slate-500 hover:border-rose-500/40 hover:text-rose-300">Löschen</button>
       </div>
     </div>
   );

@@ -69,6 +69,7 @@ export function RiskLimitsPanel() {
   };
 
   const handleReset = () => {
+    if (!window.confirm('Risiko-Limits auf die Standardwerte zurücksetzen?')) return;
     const next: AccountConfig = { ...config, riskLimits: { ...DEFAULT_RISK_LIMITS } };
     saveConfig(next);
     setConfig(next);

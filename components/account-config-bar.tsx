@@ -32,6 +32,7 @@ export function AccountConfigBar() {
   };
 
   const handleClear = () => {
+    if (!window.confirm('Kapital- und Risiko-Einstellungen wirklich zurücksetzen?')) return;
     const next = DEFAULT_CONFIG;
     saveConfig(next);
     setConfig(next);

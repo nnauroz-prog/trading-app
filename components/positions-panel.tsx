@@ -94,6 +94,10 @@ function AddPositionForm({ onClose }: { onClose: () => void }) {
     clearPrefill();
   }, []);
 
+  const epNum = parseFloat(entryPrice);
+  const psNum = parseFloat(positionSize);
+  const canSave = !!underlying.trim() && Number.isFinite(epNum) && epNum > 0 && Number.isFinite(psNum) && psNum > 0;
+
   const handleSave = () => {
     const ep = parseFloat(entryPrice);
     const ps = parseFloat(positionSize);
@@ -177,9 +181,10 @@ function AddPositionForm({ onClose }: { onClose: () => void }) {
         <span className="text-slate-400">These / Begründung</span>
         <textarea value={thesis} onChange={(e) => setThesis(e.target.value)} rows={2} placeholder="Warum gekauft?" className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white" />
       </label>
-      <div className="mt-3 flex gap-2">
-        <button onClick={handleSave} className="rounded-md border border-emerald-400/50 bg-emerald-500/20 px-4 py-1.5 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30">Speichern</button>
+      <div className="mt-3 flex items-center gap-2">
+        <button onClick={handleSave} disabled={!canSave} className="rounded-md border border-emerald-400/50 bg-emerald-500/20 px-4 py-1.5 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:border-slate-700 disabled:bg-slate-800/50 disabled:text-slate-500">Speichern</button>
         <button onClick={onClose} className="rounded-md border border-slate-700 bg-slate-900 px-4 py-1.5 text-sm text-slate-400 hover:border-slate-600 hover:text-slate-200">Abbrechen</button>
+        {!canSave && <span className="text-[11px] text-amber-300/80">Name, Einstiegspreis &gt; 0 und Stückzahl &gt; 0 nötig.</span>}
       </div>
     </div>
   );
@@ -299,7 +304,7 @@ function PositionRow({ position, latestPrice, onDelete, onClose, onUpdateNotes }
           </button>
         )}
         <button onClick={() => setEditingNotes(true)} className="rounded border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] text-slate-400 hover:border-slate-600 hover:text-slate-200">Notiz</button>
-        <button onClick={onDelete} className="ml-auto rounded border border-slate-800 bg-slate-900 px-2 py-0.5 text-[10px] text-slate-500 hover:border-rose-500/40 hover:text-rose-300">Löschen</button>
+        <button onClick={() => { if (window.confirm('Position wirklich löschen? Das lässt sich nicht rückgängig machen.')) onDelete(); }} className="ml-auto rounded border border-slate-800 bg-slate-900 px-2 py-0.5 text-[10px] text-slate-500 hover:border-rose-500/40 hover:text-rose-300">Löschen</button>
       </div>
     </div>
   );

@@ -38,6 +38,7 @@ export function DataBackupPanel() {
 
   const handleImport = () => {
     if (!importText.trim()) return;
+    if (mode === 'replace' && !window.confirm('Im Modus „Ersetzen" werden deine aktuellen Daten überschrieben. Wirklich fortfahren?')) return;
     const result = importData(importText, mode);
     if (result.ok) {
       setStatus(`✓ Wiederhergestellt: ${result.restoredKeys.map((k) => k.replace('trading-app.', '')).join(', ')}`);

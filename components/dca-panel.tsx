@@ -109,7 +109,7 @@ function PlanCard({ plan, currentPrice }: { plan: DcaPlan; currentPrice: number 
           <span className="text-[11px] text-slate-500">{fmtPlain(plan.amountPerBuy, plan.currency)} {FREQ_LABEL[plan.frequency]}</span>
           {due && <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-300">Kauf fällig</span>}
         </div>
-        <button onClick={() => deleteDcaPlan(plan.id)} className="rounded border border-slate-800 bg-slate-900 px-2 py-0.5 text-[10px] text-slate-500 hover:border-rose-500/40 hover:text-rose-300">Plan löschen</button>
+        <button onClick={() => { if (window.confirm('Sparplan inkl. aller erfassten Käufe wirklich löschen?')) deleteDcaPlan(plan.id); }} className="rounded border border-slate-800 bg-slate-900 px-2 py-0.5 text-[10px] text-slate-500 hover:border-rose-500/40 hover:text-rose-300">Plan löschen</button>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">

@@ -314,7 +314,7 @@ export function PaperTradesPanel({ latestPrices }: { latestPrices: Record<string
                   closeTradeManual(t.id, price);
                 }
               }}
-              onDelete={() => deleteTrade(t.id)}
+              onDelete={() => { if (window.confirm('Paper-Trade löschen?')) deleteTrade(t.id); }}
             />
           ))}
         </div>
@@ -324,7 +324,7 @@ export function PaperTradesPanel({ latestPrices }: { latestPrices: Record<string
         <div className="space-y-1.5">
           <h4 className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Geschlossene Trades ({closedTrades.length})</h4>
           {closedTrades.map((t) => (
-            <ClosedTradeRow key={t.id} trade={t} onDelete={() => deleteTrade(t.id)} />
+            <ClosedTradeRow key={t.id} trade={t} onDelete={() => { if (window.confirm('Paper-Trade löschen?')) deleteTrade(t.id); }} />
           ))}
         </div>
       )}
