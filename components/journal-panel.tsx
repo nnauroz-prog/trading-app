@@ -5,6 +5,7 @@ import { FAILURE_CATEGORY_LABELS, FailureCategory, IdeaJournalEntry, JournalOutc
 import { JOURNAL_CHANGED_EVENT, aggregateLessons, computeJournalStats, deleteJournalEntry, loadJournal, updateJournalEntry } from '@/lib/journal';
 import { AutoEvalSummary, evaluateAllPending } from '@/lib/journal-auto-evaluator';
 import { EmptyState } from '@/components/empty-state';
+import { PanelSkeleton } from '@/components/skeleton';
 
 function fmtDate(ms: number): string {
   const d = new Date(ms);
@@ -212,7 +213,7 @@ export function JournalPanel() {
     if (hasPending) runAutoEval();
   }, [mounted, runAutoEval]);
 
-  if (!mounted) return null;
+  if (!mounted) return <PanelSkeleton />;
 
   const stats = computeJournalStats(entries);
   const sorted = [...entries].sort((a, b) => b.savedAt - a.savedAt);

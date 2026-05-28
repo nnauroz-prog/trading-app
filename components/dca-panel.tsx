@@ -16,6 +16,7 @@ import {
 } from '@/lib/dca';
 import { TOP_50 } from '@/lib/coin-universe';
 import { EmptyState } from '@/components/empty-state';
+import { PanelSkeleton } from '@/components/skeleton';
 
 function fmtMoney(v: number, currency: string): string {
   const symbol = currency === 'EUR' ? '€' : '$';
@@ -193,7 +194,7 @@ export function DcaPanel({ latestPrices }: { latestPrices: Record<string, number
     return () => window.removeEventListener(DCA_CHANGED_EVENT, refresh);
   }, [refresh]);
 
-  if (!mounted) return null;
+  if (!mounted) return <PanelSkeleton />;
 
   return (
     <section className="space-y-4 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">

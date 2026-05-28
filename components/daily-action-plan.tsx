@@ -6,6 +6,7 @@ import { POSITIONS_CHANGED_EVENT, loadPositions } from '@/lib/positions';
 import { runRiskGuardian } from '@/lib/risk/risk-guardian';
 import { AccountConfig, DEFAULT_CONFIG, loadConfig } from '@/lib/account-config';
 import { loadUserProfile } from '@/lib/user-profile';
+import { Skeleton } from '@/components/skeleton';
 
 function severityStyle(s: ActionSeverity): { icon: string; border: string; bg: string; text: string; badge: string } {
   switch (s) {
@@ -100,7 +101,23 @@ export function DailyActionPlan({ signal }: { signal: SignalSummary }) {
     };
   }, [signal]);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <section
+        role="status"
+        aria-busy="true"
+        className="space-y-3 rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-br from-slate-950 to-slate-900/40 p-5"
+      >
+        <Skeleton className="h-3 w-40 bg-emerald-500/15" />
+        <div className="space-y-2">
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+        </div>
+        <span className="sr-only">Plan wird geladen…</span>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-3 rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-br from-slate-950 to-slate-900/40 p-5">

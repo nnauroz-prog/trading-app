@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { WATCHLIST_CHANGED_EVENT, WatchlistItem, loadWatchlist, removeFromWatchlist, setWatchNote, toggleWatch } from '@/lib/watchlist';
 import { TOP_50 } from '@/lib/coin-universe';
 import { EmptyState } from '@/components/empty-state';
+import { PanelSkeleton } from '@/components/skeleton';
 
 function fmtPrice(value: number): string {
   if (value >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -31,7 +32,7 @@ export function WatchlistPanel({ prices, changes }: { prices: Record<string, num
     return () => window.removeEventListener(WATCHLIST_CHANGED_EVENT, refresh);
   }, [refresh]);
 
-  if (!mounted) return null;
+  if (!mounted) return <PanelSkeleton />;
 
   const watchedIds = new Set(items.map((i) => i.coinId));
   const available = TOP_50.filter((c) => !watchedIds.has(c.id));

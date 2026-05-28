@@ -10,6 +10,7 @@ import { checkInstrumentAvailability } from '@/lib/data/brokers/manual-instrumen
 import { addJournalEntry } from '@/lib/journal';
 import { buildPrefillFromIdea, savePrefill } from '@/lib/position-prefill';
 import { StockQuoteVerifier } from '@/components/stock-quote-verifier';
+import { PanelSkeleton } from '@/components/skeleton';
 
 const SAMPLE_BMW = `Tradingidee BMW-OS
 
@@ -285,7 +286,7 @@ export function IdeaInbox() {
     }
   }, [parsed]);
 
-  if (!mounted) return null;
+  if (!mounted) return <PanelSkeleton rows={4} />;
 
   const styles = validation ? decisionStyle(validation.decision) : null;
 

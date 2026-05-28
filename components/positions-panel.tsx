@@ -5,6 +5,7 @@ import { Position } from '@/lib/types/positions';
 import { Broker, InstrumentType } from '@/lib/types/ideas';
 import { clearPrefill, loadPrefill } from '@/lib/position-prefill';
 import { EmptyState } from '@/components/empty-state';
+import { PanelSkeleton } from '@/components/skeleton';
 import {
   POSITIONS_CHANGED_EVENT,
   addPosition,
@@ -304,7 +305,7 @@ export function PositionsPanel({ latestPrices }: { latestPrices: Record<string, 
     return () => window.removeEventListener(POSITIONS_CHANGED_EVENT, refresh);
   }, [refresh]);
 
-  if (!mounted) return null;
+  if (!mounted) return <PanelSkeleton rows={4} />;
 
   const priceForPosition = (p: Position): number | null => {
     const keys = [p.ticker?.toLowerCase(), p.underlying.toLowerCase()].filter(Boolean) as string[];
