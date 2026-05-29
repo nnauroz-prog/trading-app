@@ -66,12 +66,14 @@ export function InteractiveChart({
   assetId,
   initialCandles,
   initialInterval,
-  title
+  title,
+  signalLevels
 }: {
   assetId: string;
   initialCandles: Candle[];
   initialInterval: IntervalId;
   title: string;
+  signalLevels?: { entry: number; stopLoss: number; takeProfit1: number; takeProfit2: number };
 }) {
   const [candles, setCandles] = useState<Candle[]>(initialCandles);
   const [interval, setInterval] = useState<IntervalId>(initialInterval);
@@ -338,6 +340,26 @@ export function InteractiveChart({
 
         {show.ema20 && <path d={emaLinePath(ema20Tail)} stroke="#60a5fa" strokeWidth={1.1} fill="none" opacity={0.9} />}
         {show.ema50 && <path d={emaLinePath(ema50Tail)} stroke="#fbbf24" strokeWidth={1.2} fill="none" opacity={0.9} />}
+
+        {signalLevels && (
+          <>
+            {([
+              { v: signalLevels.takeProfit2, color: '#34d399', label: 'Ziel 2' },
+              { v: signalLevels.takeProfit1, color: '#10b981', label: 'Ziel 1' },
+              { v: signalLevels.entry, color: '#e2e8f0', label: 'Entry' },
+              { v: signalLevels.stopLoss, color: '#fb7185', label: 'Stop' }
+            ] as const).map((lv) => {
+              const y = yPrice(lv.v);
+              return (
+                <g key={lv.label}>
+                  <line x1={innerLeft} y1={y} x2={innerLeft + innerWidth} y2={y} stroke={lv.color} strokeWidth={1} strokeDasharray="4,3" opacity={0.85} />
+                  <rect x={innerLeft + innerWidth - 46} y={y - 6} width={44} height={12} fill="#020617" stroke={lv.color} strokeWidth={0.6} rx={2} />
+                  <text x={innerLeft + innerWidth - 24} y={y + 3} fontSize={8} fill={lv.color} textAnchor="middle" fontFamily="monospace">{lv.label}</text>
+                </g>
+              );
+            })}
+          </>
+        )}
 
         {show.volume && (
           <>
