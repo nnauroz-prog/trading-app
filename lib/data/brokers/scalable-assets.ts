@@ -9,7 +9,9 @@ export const SCALABLE_KNOWN_STOCKS_WKN: ReadonlySet<string> = new Set([
 
 export const SCALABLE_KNOWN_CRYPTO_TICKERS: ReadonlySet<string> = new Set([
   'BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'DOT', 'AVAX', 'LINK', 'LTC',
-  'BCH', 'MATIC', 'POL', 'UNI', 'AAVE', 'ATOM', 'NEAR', 'FIL', 'ALGO'
+  'BCH', 'MATIC', 'POL', 'UNI', 'AAVE', 'ATOM', 'NEAR', 'FIL', 'ALGO',
+  'DOGE', 'TRX', 'XLM', 'BNB', 'ARB', 'OP', 'SHIB', 'MKR', 'GRT',
+  'INJ', 'SUI', 'TIA', 'COMP', 'MANA', 'SAND', 'ETC', 'HBAR', 'PAXG'
 ]);
 
 export const SCALABLE_DERIVATIVE_ISSUERS = ['HSBC', 'Société Générale', 'BNP Paribas', 'UniCredit', 'Citi', 'DZ BANK'];
