@@ -7,6 +7,7 @@ import { getSnapshots } from '@/lib/providers';
 import { fetchAssetHeadlines } from '@/lib/providers/sentiment';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
+import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { Asset, PriceSnapshot } from '@/lib/types/domain';
 import { HeadlinesList } from '@/components/headlines-list';
 import { InteractiveChart } from '@/components/interactive-chart';
@@ -64,13 +65,24 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
   const hasBinance = !!(mockAsset ? binanceSymbolByAssetId[asset.id] : universeCoin);
   const binanceSymbol = mockAsset ? binanceSymbolByAssetId[asset.id] : universeCoin?.binanceSymbol;
 
-  const [snapshots, analysis, headlines, candles, tickers] = await Promise.all([
+  const [snapshots, analysis, headlines, candles, tickers, masterSignal] = await Promise.all([
     mockAsset ? getSnapshots() : Promise.resolve({} as Record<string, PriceSnapshot>),
     mockAsset ? runDailyAnalysis() : Promise.resolve({ recommendations: [] }),
     mockAsset ? fetchAssetHeadlines(asset.id) : Promise.resolve([]),
     hasBinance && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1h', 200) : Promise.resolve(null),
-    !mockAsset ? fetchAllTickers() : Promise.resolve(null)
+    !mockAsset ? fetchAllTickers() : Promise.resolve(null),
+    universeCoin ? buildMasterSignal('swing') : Promise.resolve(null)
   ]);
+
+  const signalForThisAsset = masterSignal?.candidates.find((c) => c.coinId === asset.id);
+  const signalLevels = signalForThisAsset
+    ? {
+        entry: signalForThisAsset.entry,
+        stopLoss: signalForThisAsset.stopLoss,
+        takeProfit1: signalForThisAsset.takeProfit1,
+        takeProfit2: signalForThisAsset.takeProfit2
+      }
+    : undefined;
 
   let snapshot: PriceSnapshot | undefined = snapshots[asset.id];
   if (!snapshot && tickers && binanceSymbol) {
@@ -157,6 +169,7 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
           initialCandles={candles}
           initialInterval="1h"
           title={`${asset.ticker}/USDT · Technical View`}
+          signalLevels={signalLevels}
         />
       )}
 
