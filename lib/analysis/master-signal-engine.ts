@@ -82,6 +82,7 @@ export interface RankedCandidate {
   positionInRange: number | null;
   nearSupport: boolean;
   confirmed: boolean;
+  relStrengthVsBtc: number;
 }
 
 export type MasterSignalReport = TradeRecommendation | NoTradeReport;
@@ -499,7 +500,7 @@ function brokersFor(symbol: string): string[] {
   return brokers;
 }
 
-function toRankedCandidate(a: AnalyzedCoin): RankedCandidate {
+function toRankedCandidate(a: AnalyzedCoin, btcPct: number): RankedCandidate {
   return {
     symbol: a.coin.symbol,
     coinId: a.coin.id,
@@ -519,7 +520,8 @@ function toRankedCandidate(a: AnalyzedCoin): RankedCandidate {
     structure: a.structure.structure,
     positionInRange: a.structure.positionInRange,
     nearSupport: a.structure.nearSupport,
-    confirmed: a.confirmed
+    confirmed: a.confirmed,
+    relStrengthVsBtc: a.ticker.priceChangePct - btcPct
   };
 }
 
@@ -599,10 +601,11 @@ export async function buildMasterSignal(mode: TradeMode = 'swing', deepAnalyzeCo
   const rrTp2 = TP2_R / RISK_R;
   const brokers = brokersFor(best.coin.symbol);
 
+  const btcPct = tickerMap.get('BTCUSDT')?.priceChangePct ?? 0;
   const rankedCandidates = analyzed
     .filter((a) => a.passedCount >= 5)
     .slice(0, 6)
-    .map(toRankedCandidate);
+    .map((a) => toRankedCandidate(a, btcPct));
 
   const tradable = best.passedCount >= MIN_PASSED_FOR_TRADE;
   const candidateRec: TradeRecommendation = {

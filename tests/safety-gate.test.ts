@@ -15,6 +15,7 @@ function safeInput(overrides: Partial<SafetyInput> = {}): SafetyInput {
     stopDistancePct: 3,
     confirmed: true,
     userBrokerAvailable: true,
+    relStrengthVsBtc: 2,
     backtestEdge: null,
     ...overrides
   };
@@ -69,6 +70,14 @@ describe('evaluateSafety', () => {
     const allPassEdge = evaluateSafety(safeInput({ backtestEdge: { winRatePct: 70, expectancyPct: 2 } }));
     expect(allPassEdge.maxSafety).toBe(true);
     expect(allPassEdge.score).toBe(100);
+  });
+
+  it('relative-strength vs BTC shifts score but never flips maxSafety', () => {
+    const positive = evaluateSafety(safeInput({ passedCount: 8, relStrengthVsBtc: 5 }));
+    const negative = evaluateSafety(safeInput({ passedCount: 8, relStrengthVsBtc: -5 }));
+    expect(positive.maxSafety).toBe(false);
+    expect(negative.maxSafety).toBe(false);
+    expect(positive.score).toBeGreaterThan(negative.score);
   });
 
   it('always carries a residual-risk note (never claims guaranteed safety)', () => {

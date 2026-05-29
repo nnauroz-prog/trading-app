@@ -31,6 +31,7 @@ export interface SafetyInput {
   stopDistancePct: number;
   confirmed: boolean;
   userBrokerAvailable: boolean;
+  relStrengthVsBtc?: number | null;
   backtestEdge?: { winRatePct: number | null; expectancyPct: number } | null;
 }
 
@@ -115,20 +116,35 @@ export function evaluateSafety(input: SafetyInput): SafetyAssessment {
 
   const edge = input.backtestEdge;
   const hasEdgeData = !!edge && edge.winRatePct !== null;
-  const bonusPassed = hasEdgeData && (edge!.winRatePct as number) >= 50;
+  const edgePassed = hasEdgeData && (edge!.winRatePct as number) >= 50;
+
+  const rel = input.relStrengthVsBtc;
+  const hasRelData = typeof rel === 'number' && Number.isFinite(rel);
+  const relPassed = hasRelData && (rel as number) >= 0;
 
   const criteria: SafetyCriterion[] = [...hard];
   if (hasEdgeData) {
     criteria.push({
       id: 'backtest-edge',
       label: 'Historischer Edge (Backtest)',
-      passed: bonusPassed,
-      detail: `${edge!.winRatePct}% Trefferquote im Backtest${bonusPassed ? '' : ' — unter 50%'}`
+      passed: edgePassed,
+      detail: `${edge!.winRatePct}% Trefferquote im Backtest${edgePassed ? '' : ' — unter 50%'}`
+    });
+  }
+  if (hasRelData) {
+    const r = rel as number;
+    criteria.push({
+      id: 'rel-strength',
+      label: 'Relative Stärke ggü. Bitcoin',
+      passed: relPassed,
+      detail: relPassed
+        ? `läuft ${r >= 0 ? '+' : ''}${r.toFixed(1)}% besser als BTC (24h) — echte Nachfrage`
+        : `läuft ${r.toFixed(1)}% schwächer als BTC (24h) — wahrscheinlich nur Mitläufer`
     });
   }
 
   const base = (passedHard / totalHard) * 100;
-  const bonus = bonusPassed ? 5 : 0;
+  const bonus = (edgePassed ? 5 : 0) + (relPassed ? 5 : 0);
   const score = Math.min(100, Math.round(base + bonus));
 
   const grade: SafetyAssessment['grade'] =
