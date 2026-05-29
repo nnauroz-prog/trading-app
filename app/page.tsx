@@ -15,7 +15,9 @@ import { TodoBox } from '@/components/todo-box';
 import { MarketBriefing } from '@/components/market-briefing';
 import { SafetyCheck } from '@/components/safety-check';
 import { ProofCard } from '@/components/proof-card';
+import { NewsFeed } from '@/components/news-feed';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
+import { getCryptoNews } from '@/lib/news/news-agent';
 import { AdvancedOnly } from '@/components/advanced-only';
 import { ViewModeToggle } from '@/components/view-mode-toggle';
 import { TradeModeToggle } from '@/components/trade-mode-toggle';
@@ -35,14 +37,15 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary] = await Promise.all([
+  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems] = await Promise.all([
     buildTopPlayReport(),
     buildMasterSignal(tradeMode),
     fetchFearGreed(),
     fetchBtcDominance(),
     fetchFundingRate('BTCUSDT'),
     fetchFundingRate('ETHUSDT'),
-    getBacktestSummary()
+    getBacktestSummary(),
+    getCryptoNews()
   ]);
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
@@ -136,6 +139,8 @@ export default async function HomePage() {
       <SafetyCheck report={masterSignal} backtest={backtestSummary} />
 
       <MarketBriefing report={masterSignal} />
+
+      <NewsFeed items={newsItems} />
 
       <ProofCard summary={backtestSummary} />
 
