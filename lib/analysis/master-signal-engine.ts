@@ -80,6 +80,7 @@ export interface RankedCandidate {
   structure: Structure;
   positionInRange: number | null;
   nearSupport: boolean;
+  confirmed: boolean;
 }
 
 export type MasterSignalReport = TradeRecommendation | NoTradeReport;
@@ -239,6 +240,7 @@ interface AnalyzedCoin {
   atr1h: number;
   marketRegime: 'bull' | 'bear' | 'sideways';
   structure: StructureAssessment;
+  confirmed: boolean;
 }
 
 export function buildChecks(c1h: Candle[], c4h: Candle[], c1d: Candle[]): { checks: ConfluenceCheck[]; entry: number; atr1h: number; marketRegime: 'bull' | 'bear' | 'sideways' } {
@@ -406,6 +408,10 @@ async function analyzeCoin(coin: UniverseCoin, ticker: TickerSnapshot, tf: ModeT
   const takeProfit1 = entry + TP1_R * atr1h;
   const takeProfit2 = entry + TP2_R * atr1h;
   const structure = assessMarketStructure(c4h);
+  // Multi-bar confirmation: the last 2 fast-timeframe closes are rising, so the
+  // move has held for several bars rather than being a single-candle fakeout.
+  const n = c1h.length;
+  const confirmed = c1h[n - 1].close > c1h[n - 2].close && c1h[n - 2].close > c1h[n - 3].close;
 
   return {
     coin,
@@ -425,7 +431,8 @@ async function analyzeCoin(coin: UniverseCoin, ticker: TickerSnapshot, tf: ModeT
     stopDistancePct,
     atr1h,
     marketRegime,
-    structure
+    structure,
+    confirmed
   };
 }
 
@@ -509,7 +516,8 @@ function toRankedCandidate(a: AnalyzedCoin): RankedCandidate {
     quoteVolume: a.ticker.quoteVolume,
     structure: a.structure.structure,
     positionInRange: a.structure.positionInRange,
-    nearSupport: a.structure.nearSupport
+    nearSupport: a.structure.nearSupport,
+    confirmed: a.confirmed
   };
 }
 
