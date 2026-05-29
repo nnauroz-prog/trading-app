@@ -43,7 +43,7 @@ export function TickerBar({ tickers }: { tickers: TickerSnapshot[] }) {
     <div className="overflow-hidden rounded-xl border border-slate-800/80 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-3">
       <div className="flex items-center gap-1.5 pb-2 text-[10px] uppercase tracking-widest text-slate-500">
         <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.7)]" />
-        Live · {new Date().toLocaleTimeString('de-DE')}
+        Live · {new Date().toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin' })}
       </div>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-7">
         {display.map((t) => {

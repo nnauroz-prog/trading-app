@@ -205,7 +205,7 @@ export function TopPlayCard({
         <span>R:R TP1 <span className="text-emerald-300">1:{play.riskRewardRatio.toFixed(1)}</span></span>
         <span>R:R TP2 <span className="text-emerald-300">1:3.0</span></span>
         <span className="text-slate-600">·</span>
-        <span>{new Date(play.generatedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>
+        <span>{new Date(play.generatedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' })}</span>
       </div>
 
       <div className="relative mt-4 space-y-1.5 border-t border-slate-800 pt-4">

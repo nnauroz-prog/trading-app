@@ -42,7 +42,7 @@ export function LiveFeed({ events }: { events: FeedEvent[] }) {
           <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
           Live Feed
         </h3>
-        <span className="font-mono text-[10px] text-slate-600">{new Date().toLocaleTimeString('de-DE')}</span>
+        <span className="font-mono text-[10px] text-slate-600">{new Date().toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin' })}</span>
       </div>
       <ul className="space-y-2">
         {events.map((e) => (
