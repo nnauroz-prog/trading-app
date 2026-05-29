@@ -78,6 +78,22 @@ export function SafetyCheck({ report, backtest }: { report: MasterSignalReport; 
         )}
       </p>
 
+      {a.maxSafety && backtest.safeTier && (() => {
+        const p = backtest.safeTier.winRatePct / 100;
+        const rr = target.rrTp1;
+        const evPerR = p * rr - (1 - p);
+        const positive = evPerR >= 0;
+        return (
+          <p className="rounded-lg border border-slate-700/60 bg-slate-950/40 p-2.5 text-[11px] leading-relaxed text-slate-300">
+            <span className="font-semibold text-slate-200">Erwartungswert pro Trade:</span>{' '}
+            <span className={`font-mono font-bold ${positive ? 'text-emerald-300' : 'text-rose-300'}`}>
+              {positive ? '+' : ''}{evPerR.toFixed(2)}R
+            </span>{' '}
+            (pro 1 € Risiko also {positive ? '+' : '−'}€{Math.abs(evPerR).toFixed(2)} im Schnitt). Basis: {backtest.safeTier.winRatePct}% Trefferquote der sicheren Stufe, R:R 1:{rr.toFixed(1)}. Über viele Trades, nicht für den einzelnen.
+          </p>
+        );
+      })()}
+
       <details className="rounded-lg border border-slate-800 bg-slate-950/40">
         <summary className="cursor-pointer p-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
           ▸ Alle Kriterien zeigen
