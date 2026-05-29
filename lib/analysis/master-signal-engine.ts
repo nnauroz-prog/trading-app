@@ -4,6 +4,7 @@ import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { fetchAllTickers, TickerSnapshot } from '@/lib/providers/binance-tickers';
 import { TOP_50, UniverseCoin } from '@/lib/coin-universe';
 import { isTickerOnCoinbase } from '@/lib/data/brokers/coinbase-assets';
+import { isTickerOnScalable } from '@/lib/data/brokers/scalable-assets';
 import { Structure, StructureAssessment, assessMarketStructure } from '@/lib/analysis/market-structure';
 import { CrowdAssessment, NEUTRAL_CROWD, assessCrowd } from '@/lib/analysis/crowd';
 import { fetchFearGreed } from '@/lib/providers/sentiment-indicators';
@@ -492,6 +493,7 @@ export function shouldEmitTrade(p: {
 function brokersFor(symbol: string): string[] {
   const brokers: string[] = [];
   if (isTickerOnCoinbase(symbol).available) brokers.push('Coinbase');
+  if (isTickerOnScalable(symbol).available) brokers.push('Scalable Capital');
   brokers.push('Bybit Spot');
   brokers.push('Binance Spot');
   return brokers;

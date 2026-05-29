@@ -21,3 +21,7 @@ export function isWknOnScalable(wkn: string): { available: boolean; verified: bo
   }
   return { available: false, verified: false, lastVerified: SCALABLE_LAST_VERIFIED };
 }
+
+export function isTickerOnScalable(symbol: string): { available: boolean } {
+  return { available: SCALABLE_KNOWN_CRYPTO_TICKERS.has(symbol.toUpperCase().trim()) };
+}

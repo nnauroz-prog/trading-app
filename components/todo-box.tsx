@@ -112,18 +112,30 @@ export function TodoBox({ report }: { report: MasterSignalReport }) {
           Erstes Ziel: <span className="font-mono font-semibold text-emerald-200">${fmtPrice(buyTarget.tp1)}</span>.
           {mode === 'spec-buy' && <span className="text-amber-200"> Spekulativ (nur {buyTarget.passed}/12) — kleiner sizen.</span>}
         </p>
-      ) : mode === 'blocked-buy' && buyTarget ? (
+      ) : null}
+
+      {(mode === 'app-buy' || mode === 'spec-buy') && action.horizonText && (
+        <p className="rounded-lg border border-slate-700/60 bg-slate-950/40 p-2.5 text-[11px] leading-relaxed text-slate-300">
+          ⏱ <span className="font-semibold">Haltedauer:</span> {action.horizonText}
+        </p>
+      )}
+
+      {mode === 'blocked-buy' && buyTarget && (
         <p className="mt-2 text-sm leading-relaxed text-slate-200">
           Nach deiner Schwelle (≥{userThreshold}/12) wäre <span className="font-bold text-white">{buyTarget.symbol}</span> ({buyTarget.passed}/12) kaufbar —
           <span className="font-semibold text-rose-100"> aber {blockReasonText(userGate?.blockedReason ?? null)}</span>.
           Profi-Empfehlung: warten. Wenn du trotzdem kaufst, dann klein und mit Stopp bei <span className="font-mono font-semibold text-rose-200">${fmtPrice(buyTarget.stopLoss)}</span>.
         </p>
-      ) : mode === 'risk-off-wait' ? (
+      )}
+
+      {mode === 'risk-off-wait' && (
         <p className="mt-2 text-sm leading-relaxed text-slate-200">
           Der Markt ist heute schwach — die meisten Coins fallen. Heute <span className="font-semibold text-rose-100">nichts kaufen</span>.
           An solchen Tagen verlieren auch gute Setups oft Geld. Abwarten ist die richtige Entscheidung.
         </p>
-      ) : (
+      )}
+
+      {mode === 'wait' && (
         <p className="mt-2 text-sm leading-relaxed text-slate-200">
           Heute gibt es <span className="font-semibold text-amber-100">kein gutes Kauf-Signal</span>. Am besten nichts kaufen und abwarten.
           Geduld kostet nichts — ein schlechter Trade schon.

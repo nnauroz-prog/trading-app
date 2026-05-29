@@ -14,6 +14,7 @@ function safeInput(overrides: Partial<SafetyInput> = {}): SafetyInput {
     quoteVolume: MIN_QUOTE_VOLUME * 2,
     stopDistancePct: 3,
     confirmed: true,
+    userBrokerAvailable: true,
     backtestEdge: null,
     ...overrides
   };
@@ -38,7 +39,8 @@ describe('evaluateSafety', () => {
     ['illiquid', { quoteVolume: MIN_QUOTE_VOLUME - 1 }],
     ['stop too tight', { stopDistancePct: 0.5 }],
     ['stop too wide', { stopDistancePct: 7 }],
-    ['not confirmed', { confirmed: false }]
+    ['not confirmed', { confirmed: false }],
+    ['not on user broker', { userBrokerAvailable: false }]
   ])('a single failing criterion (%s) flips maxSafety off', (_label, override) => {
     const a = evaluateSafety(safeInput(override));
     expect(a.maxSafety).toBe(false);

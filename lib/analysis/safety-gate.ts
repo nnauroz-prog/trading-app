@@ -30,6 +30,7 @@ export interface SafetyInput {
   quoteVolume: number;
   stopDistancePct: number;
   confirmed: boolean;
+  userBrokerAvailable: boolean;
   backtestEdge?: { winRatePct: number | null; expectancyPct: number } | null;
 }
 
@@ -99,6 +100,12 @@ export function evaluateSafety(input: SafetyInput): SafetyAssessment {
       label: 'Mehrfach-Bestätigung',
       passed: input.confirmed,
       detail: input.confirmed ? 'Momentum hält über mehrere Kerzen an' : 'kein bestätigter Aufwärts-Schub — möglicher Ein-Kerzen-Fehlausbruch'
+    },
+    {
+      id: 'broker-available',
+      label: 'Bei deinem Broker handelbar',
+      passed: input.userBrokerAvailable,
+      detail: input.userBrokerAvailable ? 'auf Coinbase oder Scalable Capital verfügbar' : 'nicht bei Coinbase/Scalable — nur über andere Börsen handelbar'
     }
   ];
 
