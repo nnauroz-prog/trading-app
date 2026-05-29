@@ -50,6 +50,10 @@ export function SafetyCheck({ report, backtest }: { report: MasterSignalReport; 
         </div>
       )}
 
+      <p className="text-[11px] leading-relaxed text-slate-300">
+        <span className="font-semibold text-slate-200">Warum gerade {target.symbol}?</span> {target.oneLineReason} — das stärkste Setup im 50-Coin-Universum ({target.passedCount}/12 Bestätigungen).
+      </p>
+
       <ul className="space-y-1.5">
         {a.criteria.map((c) => (
           <li key={c.id} className="flex items-start gap-2 text-[11px]">
