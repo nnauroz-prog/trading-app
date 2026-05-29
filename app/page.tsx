@@ -135,6 +135,8 @@ export default async function HomePage() {
 
       <SafetyCheck report={masterSignal} backtest={backtestSummary} />
 
+      <MarketBriefing report={masterSignal} />
+
       <ProofCard summary={backtestSummary} />
 
       <AccountConfigBar />
@@ -144,7 +146,6 @@ export default async function HomePage() {
       </div>
 
       <AdvancedOnly>
-        <MarketBriefing report={masterSignal} />
 
         <TickerBar tickers={report.tickers} />
 
