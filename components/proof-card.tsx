@@ -47,6 +47,9 @@ export function ProofCard({ summary }: { summary: BacktestSummary }) {
             <span className={`font-mono font-bold ${summary.safeTier.netReturnPct >= 0 ? 'text-emerald-200' : 'text-rose-300'}`}>
               {summary.safeTier.netReturnPct >= 0 ? '+' : ''}{summary.safeTier.netReturnPct.toFixed(1)}%
             </span>
+            {summary.safeTier.medianHoldHours !== null && (
+              <> · Haltedauer Ø <span className="font-mono font-bold text-slate-200">{summary.safeTier.medianHoldHours}h</span></>
+            )}
           </span>
         </div>
       )}

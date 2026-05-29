@@ -10,6 +10,7 @@ export interface TierStat {
   trades: number;
   winRatePct: number;
   netReturnPct: number;
+  medianHoldHours: number | null;
 }
 
 export interface BacktestSummary {
@@ -42,12 +43,15 @@ async function compute(): Promise<BacktestSummary> {
 
     const safeTrades = r.perAsset.flatMap((a) => a.trades).filter((t) => t.confluence >= SAFE_TIER_CONFLUENCE);
     const safeWins = safeTrades.filter((t) => t.outcome === 'TP1').length;
+    const holdBarsSorted = safeTrades.map((t) => t.holdBars).sort((a, b) => a - b);
+    const medianHoldHours = holdBarsSorted.length > 0 ? holdBarsSorted[Math.floor(holdBarsSorted.length / 2)] : null;
     const safeTier: TierStat | null =
       safeTrades.length > 0
         ? {
             trades: safeTrades.length,
             winRatePct: Math.round((safeWins / safeTrades.length) * 100),
-            netReturnPct: safeTrades.reduce((s, t) => s + t.netPnlPct, 0)
+            netReturnPct: safeTrades.reduce((s, t) => s + t.netPnlPct, 0),
+            medianHoldHours
           }
         : null;
 
