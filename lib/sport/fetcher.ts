@@ -1,5 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { FOOTBALL_LEAGUES, League } from '@/lib/sport/leagues';
+import { MatchPrediction, predictMatch } from '@/lib/sport/predictor';
 
 export interface Fixture {
   id: string;
@@ -14,9 +15,13 @@ export interface Fixture {
   status: 'upcoming' | 'finished';
 }
 
+export interface UpcomingFixture extends Fixture {
+  prediction: MatchPrediction | null;
+}
+
 export interface LeagueFixtures {
   league: League;
-  next: Fixture[];
+  next: UpcomingFixture[];
   last: Fixture[];
 }
 
@@ -69,11 +74,15 @@ async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<Fix
 async function compute(): Promise<LeagueFixtures[]> {
   const results = await Promise.all(
     FOOTBALL_LEAGUES.map(async (league) => {
-      const [next, last] = await Promise.all([fetchEvents(league.id, 'next'), fetchEvents(league.id, 'past')]);
+      const [next, past] = await Promise.all([fetchEvents(league.id, 'next'), fetchEvents(league.id, 'past')]);
+      const upcoming: UpcomingFixture[] = next.slice(0, 8).map((f) => ({
+        ...f,
+        prediction: predictMatch(f.homeTeam, f.awayTeam, past)
+      }));
       return {
         league,
-        next: next.slice(0, 8),
-        last: last.slice(0, 8)
+        next: upcoming,
+        last: past.slice(0, 8)
       };
     })
   );

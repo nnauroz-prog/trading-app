@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getFootballFixtures, Fixture } from '@/lib/sport/fetcher';
+import { getFootballFixtures, Fixture, UpcomingFixture } from '@/lib/sport/fetcher';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
@@ -41,6 +41,45 @@ function FixtureRow({ f }: { f: Fixture }) {
   );
 }
 
+function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
+  return (
+    <li className="rounded-lg border border-slate-800 bg-slate-950/40 p-2.5">
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+        <span className="font-mono text-[10px] text-slate-500">
+          {fmtDate(f.date)}
+          {f.time && <span className="ml-1 text-slate-600">{fmtLocalTime(f.date, f.time)}</span>}
+        </span>
+        <span className="text-[13px] text-slate-100">
+          <span className="font-semibold">{f.homeTeam}</span>
+          <span className="mx-2 text-slate-500">—</span>
+          <span className="font-semibold">{f.awayTeam}</span>
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-emerald-400">vs.</span>
+      </div>
+      {f.prediction ? (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800/60 pt-1.5 text-[11px]">
+          <span className="text-[10px] uppercase tracking-wider text-slate-500">Tipp</span>
+          <span className="font-mono text-sm font-bold text-slate-100">
+            {f.prediction.likelyScore.home} : {f.prediction.likelyScore.away}
+          </span>
+          <span className="text-slate-500">·</span>
+          <span className="text-slate-300">
+            Heim <span className="font-mono font-semibold text-emerald-300">{Math.round(f.prediction.pHome * 100)}%</span>
+            <span className="mx-1.5 text-slate-600">/</span>
+            Remis <span className="font-mono font-semibold text-slate-200">{Math.round(f.prediction.pDraw * 100)}%</span>
+            <span className="mx-1.5 text-slate-600">/</span>
+            Auswärts <span className="font-mono font-semibold text-emerald-300">{Math.round(f.prediction.pAway * 100)}%</span>
+          </span>
+        </div>
+      ) : (
+        <div className="mt-1.5 border-t border-slate-800/60 pt-1.5 text-[10px] text-slate-500">
+          Tipp: zu wenig Form-Daten in dieser Liga für eine Schätzung.
+        </div>
+      )}
+    </li>
+  );
+}
+
 export default async function SportPage() {
   const leagues = await getFootballFixtures();
   const anyData = leagues.some((l) => l.next.length > 0 || l.last.length > 0);
@@ -57,13 +96,12 @@ export default async function SportPage() {
         <p className="text-sm text-slate-400">Top-Ligen Europas — die nächsten und letzten Spiele.</p>
       </header>
 
-      <section className="rounded-2xl border-2 border-amber-500/40 bg-amber-950/20 p-4">
-        <div className="text-xs font-bold uppercase tracking-wider text-amber-200">Wichtig — bitte ernst nehmen</div>
-        <p className="mt-1 text-[12px] leading-relaxed text-amber-100/90">
-          Diese Seite zeigt <strong>nur Spielpläne und Ergebnisse</strong>. <strong>Keine Quoten, keine Wett-Tipps, keine Vorhersagen.</strong>
-          Sportwetten haben eine eingebaute Haus-Marge (üblich 5–10 %) — über viele Wetten verlierst du systematisch. Das ist
-          mathematisch, nicht meine Meinung. Wenn du wettest, dann nur mit Geld, das du komplett verlieren kannst, und niemals
-          aus dem Trading-Budget.
+      <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
+        <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Tipp-Spiel mit Freunden</div>
+        <p className="mt-1 text-[12px] leading-relaxed text-slate-300">
+          Die „Tipp“-Schätzungen unter jedem Spiel sind ein einfaches <strong>Statistik-Modell</strong> (Poisson auf den letzten
+          Liga-Spielen) — gedacht für Gespräche und Tipp-Spiele unter Freunden, <strong>nicht</strong> für Wetten. Verletzungen,
+          Sperren, Aufstellungen und Tagesform sind nicht modelliert; die echte Welt schlägt das Modell oft.
         </p>
       </section>
 
@@ -84,9 +122,9 @@ export default async function SportPage() {
               <div className="space-y-4 p-4 pt-0">
                 {lf.next.length > 0 && (
                   <div>
-                    <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Nächste Spiele</h3>
+                    <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Nächste Spiele · mit Tipp</h3>
                     <ul className="space-y-1.5">
-                      {lf.next.map((f) => <FixtureRow key={f.id} f={f} />)}
+                      {lf.next.map((f) => <UpcomingFixtureRow key={f.id} f={f} />)}
                     </ul>
                   </div>
                 )}
