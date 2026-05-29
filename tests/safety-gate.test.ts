@@ -13,6 +13,7 @@ function safeInput(overrides: Partial<SafetyInput> = {}): SafetyInput {
     crowdCautious: false,
     quoteVolume: MIN_QUOTE_VOLUME * 2,
     stopDistancePct: 3,
+    confirmed: true,
     backtestEdge: null,
     ...overrides
   };
@@ -36,7 +37,8 @@ describe('evaluateSafety', () => {
     ['crowd cautious', { crowdCautious: true }],
     ['illiquid', { quoteVolume: MIN_QUOTE_VOLUME - 1 }],
     ['stop too tight', { stopDistancePct: 0.5 }],
-    ['stop too wide', { stopDistancePct: 7 }]
+    ['stop too wide', { stopDistancePct: 7 }],
+    ['not confirmed', { confirmed: false }]
   ])('a single failing criterion (%s) flips maxSafety off', (_label, override) => {
     const a = evaluateSafety(safeInput(override));
     expect(a.maxSafety).toBe(false);

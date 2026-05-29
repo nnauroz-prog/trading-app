@@ -40,6 +40,7 @@ export async function checkSafeSignalAndAlert(): Promise<SafeSignalResult> {
     crowdCautious: report.crowd.cautious,
     quoteVolume: target.quoteVolume,
     stopDistancePct: target.stopDistancePct,
+    confirmed: target.confirmed,
     backtestEdge: backtest.perAssetEdge[target.coinId] ?? null
   });
 

@@ -29,6 +29,7 @@ export interface SafetyInput {
   crowdCautious: boolean;
   quoteVolume: number;
   stopDistancePct: number;
+  confirmed: boolean;
   backtestEdge?: { winRatePct: number | null; expectancyPct: number } | null;
 }
 
@@ -92,6 +93,12 @@ export function evaluateSafety(input: SafetyInput): SafetyAssessment {
       detail: stopOk
         ? `Stop ${input.stopDistancePct.toFixed(1)}% entfernt`
         : `Stop-Abstand ${input.stopDistancePct.toFixed(1)}% — ${input.stopDistancePct < 1 ? 'zu eng (Whipsaw-Gefahr)' : 'zu weit (zu viel Risiko)'}`
+    },
+    {
+      id: 'confirmation',
+      label: 'Mehrfach-Bestätigung',
+      passed: input.confirmed,
+      detail: input.confirmed ? 'Momentum hält über mehrere Kerzen an' : 'kein bestätigter Aufwärts-Schub — möglicher Ein-Kerzen-Fehlausbruch'
     }
   ];
 
