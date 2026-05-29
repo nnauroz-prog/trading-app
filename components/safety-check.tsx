@@ -10,26 +10,33 @@ const GRADE_STYLE: Record<SafetyAssessment['grade'], string> = {
 };
 
 export function SafetyCheck({ report, backtest }: { report: MasterSignalReport; backtest: BacktestSummary }) {
-  const target = report.candidates[0];
-  if (!target) return null;
+  if (report.candidates.length === 0) return null;
 
-  const userBrokerAvailable = target.brokers.includes('Coinbase') || target.brokers.includes('Scalable Capital');
-
-  const a = evaluateSafety({
-    passedCount: target.passedCount,
-    marketMood: report.marketMood,
-    btcRegime: report.btcRegime,
-    isBtc: target.coinId === 'btc',
-    structure: target.structure,
-    nearSupport: target.nearSupport,
-    crowdCautious: report.crowd.cautious,
-    quoteVolume: target.quoteVolume,
-    stopDistancePct: target.stopDistancePct,
-    confirmed: target.confirmed,
-    userBrokerAvailable,
-    relStrengthVsBtc: target.relStrengthVsBtc,
-    backtestEdge: backtest.perAssetEdge[target.coinId] ?? null
+  // Pro move: pick the candidate with the highest safety score, not just the
+  // raw-confluence leader. Ties broken by passedCount.
+  const scored = report.candidates.map((c) => {
+    const userBrokerAvailable = c.brokers.includes('Coinbase') || c.brokers.includes('Scalable Capital');
+    const safety = evaluateSafety({
+      passedCount: c.passedCount,
+      marketMood: report.marketMood,
+      btcRegime: report.btcRegime,
+      isBtc: c.coinId === 'btc',
+      structure: c.structure,
+      nearSupport: c.nearSupport,
+      crowdCautious: report.crowd.cautious,
+      quoteVolume: c.quoteVolume,
+      stopDistancePct: c.stopDistancePct,
+      confirmed: c.confirmed,
+      userBrokerAvailable,
+      relStrengthVsBtc: c.relStrengthVsBtc,
+      backtestEdge: backtest.perAssetEdge[c.coinId] ?? null
+    });
+    return { c, safety };
   });
+  scored.sort((x, y) => y.safety.score - x.safety.score || y.c.passedCount - x.c.passedCount);
+  const { c: target, safety: a } = scored[0];
+  const confluenceLeader = report.candidates[0];
+  const switched = target.coinId !== confluenceLeader.coinId;
 
   return (
     <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5" aria-label="Sicherheits-Check">
@@ -63,6 +70,11 @@ export function SafetyCheck({ report, backtest }: { report: MasterSignalReport; 
               {target.relStrengthVsBtc >= 0 ? '+' : ''}{target.relStrengthVsBtc.toFixed(1)}% ggü. BTC (24h)
             </span>.
           </>
+        )}
+        {switched && (
+          <span className="ml-1 text-[10px] text-slate-500">
+            (sicherer als der Konfluenz-Sieger {confluenceLeader.symbol})
+          </span>
         )}
       </p>
 
