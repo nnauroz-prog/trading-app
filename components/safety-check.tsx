@@ -27,6 +27,7 @@ export function SafetyCheck({ report, backtest }: { report: MasterSignalReport; 
     stopDistancePct: target.stopDistancePct,
     confirmed: target.confirmed,
     userBrokerAvailable,
+    relStrengthVsBtc: target.relStrengthVsBtc,
     backtestEdge: backtest.perAssetEdge[target.coinId] ?? null
   });
 
@@ -55,6 +56,14 @@ export function SafetyCheck({ report, backtest }: { report: MasterSignalReport; 
 
       <p className="text-[11px] leading-relaxed text-slate-300">
         <span className="font-semibold text-slate-200">Warum gerade {target.symbol}?</span> {target.oneLineReason}.
+        {Number.isFinite(target.relStrengthVsBtc) && (
+          <>
+            {' '}
+            <span className={target.relStrengthVsBtc >= 0 ? 'text-emerald-300' : 'text-rose-300'}>
+              {target.relStrengthVsBtc >= 0 ? '+' : ''}{target.relStrengthVsBtc.toFixed(1)}% ggü. BTC (24h)
+            </span>.
+          </>
+        )}
       </p>
 
       <details className="rounded-lg border border-slate-800 bg-slate-950/40">
