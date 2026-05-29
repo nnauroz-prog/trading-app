@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAndAlert } from '@/lib/alerts/signal-alerts';
-import { checkSafeSignalAndAlert } from '@/lib/alerts/safe-signal-alert';
 
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -14,11 +13,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const [result, safeSignal] = await Promise.all([checkAndAlert(), checkSafeSignalAndAlert()]);
+  const result = await checkAndAlert();
   return NextResponse.json({
     ok: true,
     ...result,
-    safeSignal,
     notice: result.configured
       ? null
       : 'TELEGRAM_BOT_TOKEN und TELEGRAM_CHAT_ID nicht gesetzt — Engine läuft, aber keine Nachrichten werden verschickt.'
