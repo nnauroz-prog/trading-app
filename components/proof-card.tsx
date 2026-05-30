@@ -57,9 +57,15 @@ export function ProofCard({ summary }: { summary: BacktestSummary }) {
 
       {summary.safeTier && (
         <div className="mt-2 space-y-2 rounded-lg border border-emerald-500/25 bg-emerald-950/15 p-2.5">
-          <div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Nur sichere Stufe (≥9/12)</span>
-            <span className="ml-2 text-[11px] text-slate-300">
+            <span className="flex items-center gap-2">
+              <HealthBadge health={summary.safeTier.health} />
+              <StreakBadge streak={summary.safeTier.currentStreak} />
+            </span>
+          </div>
+          <div>
+            <span className="text-[11px] text-slate-300">
               {summary.safeTier.trades} Trades · <span className="font-mono font-bold text-emerald-200">{summary.safeTier.winRatePct}%</span> Treffer ·{' '}
               <span className={`font-mono font-bold ${summary.safeTier.netReturnPct >= 0 ? 'text-emerald-200' : 'text-rose-300'}`}>
                 {summary.safeTier.netReturnPct >= 0 ? '+' : ''}{summary.safeTier.netReturnPct.toFixed(1)}%
@@ -109,6 +115,26 @@ export function ProofCard({ summary }: { summary: BacktestSummary }) {
         </div>
       )}
     </section>
+  );
+}
+
+function HealthBadge({ health }: { health: 'good' | 'ok' | 'poor' }) {
+  const map = {
+    good: { label: 'Strategie GUT', cls: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200' },
+    ok: { label: 'Strategie OK', cls: 'border-amber-400/50 bg-amber-500/15 text-amber-200' },
+    poor: { label: 'Strategie SCHWACH', cls: 'border-rose-500/50 bg-rose-500/15 text-rose-200' }
+  } as const;
+  const m = map[health];
+  return <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${m.cls}`}>{m.label}</span>;
+}
+
+function StreakBadge({ streak }: { streak: { kind: 'win' | 'loss' | null; count: number } }) {
+  if (!streak.kind || streak.count === 0) return null;
+  const isWin = streak.kind === 'win';
+  return (
+    <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${isWin ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200' : 'border-rose-500/50 bg-rose-500/15 text-rose-200'}`}>
+      Aktuell: {streak.count}× {isWin ? 'Gewinn' : 'Verlust'}
+    </span>
   );
 }
 

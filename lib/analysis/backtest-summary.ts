@@ -7,6 +7,8 @@ export interface AssetEdge {
   expectancyPct: number;
 }
 
+export type StrategyHealth = 'good' | 'ok' | 'poor';
+
 export interface TierStat {
   trades: number;
   winRatePct: number;
@@ -20,6 +22,8 @@ export interface TierStat {
   avgLossPct: number | null; // average % return of losing trades (<=0)
   bestTradePct: number | null;
   worstTradePct: number | null;
+  health: StrategyHealth;
+  currentStreak: { kind: 'win' | 'loss' | null; count: number };
 }
 
 export interface BacktestSummary {
@@ -89,6 +93,32 @@ async function compute(): Promise<BacktestSummary> {
     const returnValues = safeTrades.map((t) => t.netPnlPct);
     const bestTradePct = returnValues.length > 0 ? Math.max(...returnValues) : null;
     const worstTradePct = returnValues.length > 0 ? Math.min(...returnValues) : null;
+    // Composite health: green when Sharpe + profit-factor + net all healthy,
+    // amber when at least breaking even, red otherwise. Single at-a-glance signal.
+    let health: StrategyHealth;
+    if ((tradeSharpe ?? 0) >= 0.5 && (profitFactor ?? 0) >= 1.5 && eq >= 0) {
+      health = 'good';
+    } else if ((tradeSharpe ?? 0) >= 0 && (profitFactor ?? 0) >= 1 && eq >= 0) {
+      health = 'ok';
+    } else {
+      health = 'poor';
+    }
+    // Current streak: walk backwards through chronological trades, count
+    // consecutive same-outcome (TP1 = win, anything else = loss).
+    let streakKind: 'win' | 'loss' | null = null;
+    let streakCount = 0;
+    for (let i = safeTrades.length - 1; i >= 0; i--) {
+      const isWin = safeTrades[i].outcome === 'TP1';
+      const kind = isWin ? 'win' : 'loss';
+      if (streakKind === null) {
+        streakKind = kind;
+        streakCount = 1;
+      } else if (streakKind === kind) {
+        streakCount++;
+      } else {
+        break;
+      }
+    }
     const safeTier: TierStat | null =
       safeTrades.length > 0
         ? {
@@ -103,7 +133,9 @@ async function compute(): Promise<BacktestSummary> {
             avgWinPct,
             avgLossPct,
             bestTradePct,
-            worstTradePct
+            worstTradePct,
+            health,
+            currentStreak: { kind: streakKind, count: streakCount }
           }
         : null;
 
@@ -138,4 +170,4 @@ async function compute(): Promise<BacktestSummary> {
 
 // The backtest is heavy (thousands of candles) and only changes as new history
 // accrues, so cache it for 30 minutes rather than recomputing on every render.
-export const getBacktestSummary = unstable_cache(compute, ['backtest-summary-v2'], { revalidate: 1800 });
+export const getBacktestSummary = unstable_cache(compute, ['backtest-summary-v3'], { revalidate: 1800 });
