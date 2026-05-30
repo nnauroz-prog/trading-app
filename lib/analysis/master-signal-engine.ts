@@ -6,7 +6,7 @@ import { TOP_50, UniverseCoin } from '@/lib/coin-universe';
 import { isTickerOnCoinbase } from '@/lib/data/brokers/coinbase-assets';
 import { isTickerOnScalable } from '@/lib/data/brokers/scalable-assets';
 import { Structure, StructureAssessment, assessMarketStructure } from '@/lib/analysis/market-structure';
-import { CrowdAssessment, NEUTRAL_CROWD, assessCrowd } from '@/lib/analysis/crowd';
+import { CrowdAssessment, assessCrowd } from '@/lib/analysis/crowd';
 import { fetchFearGreed } from '@/lib/providers/sentiment-indicators';
 import { fetchFundingRate } from '@/lib/providers/funding-rates';
 
@@ -609,7 +609,6 @@ export async function buildMasterSignal(mode: TradeMode = 'swing', deepAnalyzeCo
     .slice(0, 6)
     .map((a) => toRankedCandidate(a, btcPct));
 
-  const tradable = best.passedCount >= MIN_PASSED_FOR_TRADE;
   const candidateRec: TradeRecommendation = {
     kind: 'trade',
     coin: best.coin,
