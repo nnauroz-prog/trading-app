@@ -159,7 +159,7 @@ export default async function HomePage() {
 
         <TodayTradeCard report={masterSignal} />
 
-        <CandidateList candidates={masterSignal.candidates} />
+        <CandidateList candidates={masterSignal.candidates} backtest={backtestSummary} />
 
         <HeuteAufpassen
           latestPrices={latestPrices}

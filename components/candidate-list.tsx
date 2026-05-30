@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { RankedCandidate, candidateStanding } from '@/lib/analysis/master-signal-engine';
 import { AccountConfig, DEFAULT_CONFIG, loadConfig, saveConfig } from '@/lib/account-config';
+import { BacktestSummary } from '@/lib/analysis/backtest-summary';
 
 function fmtPrice(value: number): string {
   if (value >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -18,7 +19,7 @@ const TIER_STYLE: Record<RankedCandidate['tier'], { label: string; chip: string 
   weak: { label: 'SCHWACH', chip: 'border-amber-400/50 bg-amber-500/15 text-amber-200' }
 };
 
-export function CandidateList({ candidates }: { candidates: RankedCandidate[] }) {
+export function CandidateList({ candidates, backtest }: { candidates: RankedCandidate[]; backtest?: BacktestSummary }) {
   const [config, setConfig] = useState<AccountConfig>(DEFAULT_CONFIG);
   const [mounted, setMounted] = useState(false);
 
@@ -86,6 +87,11 @@ export function CandidateList({ candidates }: { candidates: RankedCandidate[] })
                     }`}
                   >
                     {standing.label}
+                  </span>
+                )}
+                {backtest?.perAssetEdge[c.coinId]?.winRatePct !== undefined && backtest.perAssetEdge[c.coinId].winRatePct !== null && (
+                  <span className="font-mono text-[10px] text-slate-400">
+                    Backtest <span className="font-bold text-emerald-300">{backtest.perAssetEdge[c.coinId].winRatePct}%</span>
                   </span>
                 )}
                 <span className="ml-auto font-mono text-[11px] text-slate-500">{c.brokers[0]}</span>
