@@ -15,6 +15,8 @@ function safeInput(overrides: Partial<SafetyInput> = {}): SafetyInput {
     stopDistancePct: 3,
     confirmed: true,
     userBrokerAvailable: true,
+    priceChangePct24h: 3,
+    mode: 'swing',
     relStrengthVsBtc: 2,
     backtestEdge: null,
     ...overrides
@@ -41,7 +43,8 @@ describe('evaluateSafety', () => {
     ['stop too tight', { stopDistancePct: 0.5 }],
     ['stop too wide', { stopDistancePct: 7 }],
     ['not confirmed', { confirmed: false }],
-    ['not on user broker', { userBrokerAvailable: false }]
+    ['not on user broker', { userBrokerAvailable: false }],
+    ['overextended pump', { priceChangePct24h: 20 }]
   ])('a single failing criterion (%s) flips maxSafety off', (_label, override) => {
     const a = evaluateSafety(safeInput(override));
     expect(a.maxSafety).toBe(false);
@@ -78,6 +81,12 @@ describe('evaluateSafety', () => {
     expect(positive.maxSafety).toBe(false);
     expect(negative.maxSafety).toBe(false);
     expect(positive.score).toBeGreaterThan(negative.score);
+  });
+
+  it('daytrade mode requires more liquidity than swing', () => {
+    const vol = 70_000_000; // 70M: ok for swing, not for daytrade
+    expect(evaluateSafety(safeInput({ quoteVolume: vol, mode: 'swing' })).maxSafety).toBe(true);
+    expect(evaluateSafety(safeInput({ quoteVolume: vol, mode: 'daytrade' })).maxSafety).toBe(false);
   });
 
   it('always carries a residual-risk note (never claims guaranteed safety)', () => {

@@ -1,6 +1,10 @@
 import { Structure } from '@/lib/analysis/market-structure';
 
-export const MIN_QUOTE_VOLUME = 50_000_000;
+export const MIN_QUOTE_VOLUME_SWING = 50_000_000;
+export const MIN_QUOTE_VOLUME_DAYTRADE = 100_000_000;
+// Backwards-compatible alias used by older call-sites/tests.
+export const MIN_QUOTE_VOLUME = MIN_QUOTE_VOLUME_SWING;
+export const MAX_24H_CHANGE_PCT = 15;
 
 export interface SafetyCriterion {
   id: string;
@@ -31,6 +35,8 @@ export interface SafetyInput {
   stopDistancePct: number;
   confirmed: boolean;
   userBrokerAvailable: boolean;
+  priceChangePct24h?: number;
+  mode?: 'swing' | 'daytrade';
   relStrengthVsBtc?: number | null;
   backtestEdge?: { winRatePct: number | null; expectancyPct: number } | null;
 }
@@ -44,6 +50,9 @@ const RESIDUAL_RISK_NOTE =
 export function evaluateSafety(input: SafetyInput): SafetyAssessment {
   const btcOk = input.isBtc || input.btcRegime !== 'bear';
   const stopOk = input.stopDistancePct >= 1 && input.stopDistancePct <= 6;
+  const liquidityFloor = input.mode === 'daytrade' ? MIN_QUOTE_VOLUME_DAYTRADE : MIN_QUOTE_VOLUME_SWING;
+  const pumpPct = input.priceChangePct24h ?? 0;
+  const notPumped = pumpPct <= MAX_24H_CHANGE_PCT;
 
   const hard: SafetyCriterion[] = [
     {
@@ -85,8 +94,18 @@ export function evaluateSafety(input: SafetyInput): SafetyAssessment {
     {
       id: 'liquidity',
       label: 'Hohe Liquidität',
-      passed: input.quoteVolume >= MIN_QUOTE_VOLUME,
-      detail: input.quoteVolume >= MIN_QUOTE_VOLUME ? 'genug Handelsvolumen' : 'zu wenig Volumen — illiquide und riskant'
+      passed: input.quoteVolume >= liquidityFloor,
+      detail: input.quoteVolume >= liquidityFloor
+        ? `genug Handelsvolumen (≥${Math.round(liquidityFloor / 1_000_000)} Mio.)`
+        : `zu wenig Volumen (<${Math.round(liquidityFloor / 1_000_000)} Mio., ${input.mode === 'daytrade' ? 'Daytrading' : 'Swing'}) — illiquide und riskant`
+    },
+    {
+      id: 'not-overextended',
+      label: 'Nicht überdehnt (24h)',
+      passed: notPumped,
+      detail: notPumped
+        ? `24h-Bewegung ${pumpPct >= 0 ? '+' : ''}${pumpPct.toFixed(1)}% — kein FOMO-Sprung`
+        : `schon ${pumpPct >= 0 ? '+' : ''}${pumpPct.toFixed(1)}% in 24h — Pump, nicht hinterherjagen`
     },
     {
       id: 'stop-band',
