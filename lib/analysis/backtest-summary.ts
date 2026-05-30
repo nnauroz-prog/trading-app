@@ -5,6 +5,7 @@ import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 export interface AssetEdge {
   winRatePct: number | null;
   expectancyPct: number;
+  safeEquityCurve: number[]; // cumulative net % of this coin's safe-tier trades
 }
 
 export type StrategyHealth = 'good' | 'ok' | 'poor';
@@ -49,9 +50,19 @@ async function compute(): Promise<BacktestSummary> {
     if (r.dataSource === 'offline' || r.combined.totalSignals === 0) return UNAVAILABLE;
     const perAssetEdge: Record<string, AssetEdge> = {};
     for (const a of r.perAsset) {
+      const safeAssetTrades = a.trades
+        .filter((t) => t.confluence >= SAFE_TIER_CONFLUENCE)
+        .sort((x, y) => x.entryTime - y.entryTime);
+      let coinEq = 0;
+      const safeEquityCurve: number[] = [0];
+      for (const t of safeAssetTrades) {
+        coinEq += t.netPnlPct;
+        safeEquityCurve.push(coinEq);
+      }
       perAssetEdge[a.assetId] = {
         winRatePct: a.winRate !== null ? Math.round(a.winRate * 100) : null,
-        expectancyPct: a.expectancyPct
+        expectancyPct: a.expectancyPct,
+        safeEquityCurve
       };
     }
 
@@ -170,4 +181,4 @@ async function compute(): Promise<BacktestSummary> {
 
 // The backtest is heavy (thousands of candles) and only changes as new history
 // accrues, so cache it for 30 minutes rather than recomputing on every render.
-export const getBacktestSummary = unstable_cache(compute, ['backtest-summary-v3'], { revalidate: 1800 });
+export const getBacktestSummary = unstable_cache(compute, ['backtest-summary-v4'], { revalidate: 1800 });
