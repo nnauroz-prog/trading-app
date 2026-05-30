@@ -55,12 +55,42 @@ export function ProofCard({ summary }: { summary: BacktestSummary }) {
               {summary.safeTier.tradeSharpe !== null && (
                 <> · Sharpe <span className={`font-mono font-bold ${summary.safeTier.tradeSharpe >= 0.5 ? 'text-emerald-200' : summary.safeTier.tradeSharpe >= 0 ? 'text-slate-200' : 'text-rose-300'}`}>{summary.safeTier.tradeSharpe.toFixed(2)}</span></>
               )}
+              {summary.safeTier.profitFactor !== null && Number.isFinite(summary.safeTier.profitFactor) && (
+                <> · Profit-Faktor <span className={`font-mono font-bold ${summary.safeTier.profitFactor >= 1.5 ? 'text-emerald-200' : summary.safeTier.profitFactor >= 1 ? 'text-slate-200' : 'text-rose-300'}`}>{summary.safeTier.profitFactor.toFixed(2)}</span></>
+              )}
             </span>
           </div>
           {summary.safeTier.equityCurve.length > 1 && <EquityCurve curve={summary.safeTier.equityCurve} />}
+          {summary.safeTier.winRatePct > 0 && summary.safeTier.winRatePct < 100 && <LossStreakRisk winRatePct={summary.safeTier.winRatePct} />}
         </div>
       )}
     </section>
+  );
+}
+
+function LossStreakRisk({ winRatePct }: { winRatePct: number }) {
+  const p = winRatePct / 100;
+  const lossP = 1 - p;
+  const lengths = [3, 5, 10] as const;
+  return (
+    <div className="rounded-lg border border-rose-500/20 bg-rose-950/15 p-2.5">
+      <div className="text-[10px] uppercase tracking-wider text-rose-300">Verlustserien-Risiko</div>
+      <ul className="mt-1 grid grid-cols-3 gap-2 text-center text-[11px]">
+        {lengths.map((n) => {
+          const prob = Math.pow(lossP, n) * 100;
+          return (
+            <li key={n} className="rounded border border-slate-700/60 bg-slate-950/40 p-1.5">
+              <div className="font-mono text-[10px] text-slate-500">{n} Verluste in Folge</div>
+              <div className="font-mono text-sm font-bold text-rose-200">−{n}R</div>
+              <div className="font-mono text-[10px] text-slate-400">~{prob >= 1 ? prob.toFixed(1) : prob.toFixed(2)}%</div>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
+        1R = dein Risiko pro Trade (z.B. 1 % deines Kapitals = €1 bei €100). Eine 5er-Serie kostet ~5 % deines Kontos — kalkulier&apos;s ein, dann tut&apos;s nicht weh.
+      </p>
+    </div>
   );
 }
 
