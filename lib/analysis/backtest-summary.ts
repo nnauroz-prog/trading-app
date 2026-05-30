@@ -13,6 +13,7 @@ export interface TierStat {
   medianHoldHours: number | null;
   equityCurve: number[]; // cumulative net % return after each safe trade
   maxDrawdownPct: number; // largest peak-to-trough drop in the curve (<=0)
+  tradeSharpe: number | null; // per-trade mean/stdev of net returns
 }
 
 export interface BacktestSummary {
@@ -63,6 +64,14 @@ async function compute(): Promise<BacktestSummary> {
       const dd = v - peak;
       if (dd < maxDrawdownPct) maxDrawdownPct = dd;
     }
+    let tradeSharpe: number | null = null;
+    if (safeTrades.length >= 2) {
+      const returns = safeTrades.map((t) => t.netPnlPct);
+      const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
+      const variance = returns.reduce((s, r) => s + (r - mean) * (r - mean), 0) / (returns.length - 1);
+      const stdev = Math.sqrt(variance);
+      tradeSharpe = stdev > 0 ? mean / stdev : null;
+    }
     const safeTier: TierStat | null =
       safeTrades.length > 0
         ? {
@@ -71,7 +80,8 @@ async function compute(): Promise<BacktestSummary> {
             netReturnPct: eq,
             medianHoldHours,
             equityCurve,
-            maxDrawdownPct
+            maxDrawdownPct,
+            tradeSharpe
           }
         : null;
 
