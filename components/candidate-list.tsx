@@ -1,9 +1,38 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RankedCandidate, candidateStanding } from '@/lib/analysis/master-signal-engine';
+import { MasterSignalReport, RankedCandidate, candidateStanding } from '@/lib/analysis/master-signal-engine';
 import { AccountConfig, DEFAULT_CONFIG, loadConfig, saveConfig } from '@/lib/account-config';
 import { BacktestSummary } from '@/lib/analysis/backtest-summary';
+import { SafetyAssessment, evaluateSafety } from '@/lib/analysis/safety-gate';
+
+const GRADE_STYLE: Record<SafetyAssessment['grade'], string> = {
+  A: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200',
+  B: 'border-amber-400/50 bg-amber-500/15 text-amber-200',
+  C: 'border-rose-400/50 bg-rose-500/15 text-rose-200',
+  D: 'border-rose-500/60 bg-rose-600/20 text-rose-200'
+};
+
+function safetyFor(c: RankedCandidate, report: MasterSignalReport, backtest?: BacktestSummary): SafetyAssessment {
+  const userBrokerAvailable = c.brokers.includes('Coinbase') || c.brokers.includes('Scalable Capital');
+  return evaluateSafety({
+    passedCount: c.passedCount,
+    marketMood: report.marketMood,
+    btcRegime: report.btcRegime,
+    isBtc: c.coinId === 'btc',
+    structure: c.structure,
+    nearSupport: c.nearSupport,
+    crowdCautious: report.crowd.cautious,
+    quoteVolume: c.quoteVolume,
+    stopDistancePct: c.stopDistancePct,
+    confirmed: c.confirmed,
+    userBrokerAvailable,
+    priceChangePct24h: c.priceChangePct24h,
+    mode: report.mode,
+    relStrengthVsBtc: c.relStrengthVsBtc,
+    backtestEdge: backtest?.perAssetEdge[c.coinId] ?? null
+  });
+}
 
 function fmtPrice(value: number): string {
   if (value >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -19,7 +48,8 @@ const TIER_STYLE: Record<RankedCandidate['tier'], { label: string; chip: string 
   weak: { label: 'SCHWACH', chip: 'border-amber-400/50 bg-amber-500/15 text-amber-200' }
 };
 
-export function CandidateList({ candidates, backtest }: { candidates: RankedCandidate[]; backtest?: BacktestSummary }) {
+export function CandidateList({ report, backtest }: { report: MasterSignalReport; backtest?: BacktestSummary }) {
+  const candidates = report.candidates;
   const [config, setConfig] = useState<AccountConfig>(DEFAULT_CONFIG);
   const [mounted, setMounted] = useState(false);
 
@@ -71,12 +101,19 @@ export function CandidateList({ candidates, backtest }: { candidates: RankedCand
         {candidates.map((c) => {
           const t = TIER_STYLE[c.tier];
           const standing = candidateStanding(c.passedCount, threshold);
+          const safety = safetyFor(c, report, backtest);
           return (
             <li key={c.coinId} className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="font-mono text-base font-bold text-white">{c.symbol}</span>
                 <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${t.chip}`}>
                   {t.label} · {c.passedCount}/{c.totalCount}
+                </span>
+                <span
+                  className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${GRADE_STYLE[safety.grade]}`}
+                  title={`Sicherheits-Score ${safety.score}/100`}
+                >
+                  Note {safety.grade}
                 </span>
                 {mounted && (
                   <span
