@@ -35,6 +35,22 @@ export function ProofCard({ summary }: { summary: BacktestSummary }) {
           </div>
         </div>
       </div>
+      {summary.btcHodlReturnPct !== null && (
+        <div className="mt-2 rounded-lg border border-slate-700/60 bg-slate-950/40 p-2.5 text-[11px] text-slate-300">
+          <span className="font-semibold text-slate-200">vs. BTC Buy-and-Hold:</span>{' '}
+          Strategie <span className={`font-mono font-bold ${summary.netReturnPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{summary.netReturnPct >= 0 ? '+' : ''}{summary.netReturnPct.toFixed(1)}%</span>{' '}
+          gegen HODL <span className={`font-mono font-bold ${summary.btcHodlReturnPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{summary.btcHodlReturnPct >= 0 ? '+' : ''}{summary.btcHodlReturnPct.toFixed(1)}%</span>{' '}
+          {(() => {
+            const diff = summary.netReturnPct - summary.btcHodlReturnPct;
+            return (
+              <span className={`font-mono font-bold ${diff >= 0 ? 'text-emerald-200' : 'text-rose-300'}`}>
+                ({diff >= 0 ? '+' : ''}{diff.toFixed(1)}% {diff >= 0 ? 'geschlagen' : 'underperformed'})
+              </span>
+            );
+          })()}
+        </div>
+      )}
+
       <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
         Belegt am Backtest (BTC/ETH/SOL, echte historische Kerzen, Gebühren abgezogen, keine Slippage). Vergangenheit ≠ Zukunft.
       </p>
@@ -60,6 +76,34 @@ export function ProofCard({ summary }: { summary: BacktestSummary }) {
               )}
             </span>
           </div>
+          {(summary.safeTier.avgWinPct !== null || summary.safeTier.avgLossPct !== null) && (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {summary.safeTier.avgWinPct !== null && (
+                <div className="rounded border border-emerald-500/20 bg-emerald-950/15 p-1.5 text-center">
+                  <div className="text-[9px] uppercase tracking-wider text-emerald-300">Ø Gewinn</div>
+                  <div className="font-mono text-xs font-bold text-emerald-200">+{summary.safeTier.avgWinPct.toFixed(2)}%</div>
+                </div>
+              )}
+              {summary.safeTier.avgLossPct !== null && (
+                <div className="rounded border border-rose-500/20 bg-rose-950/15 p-1.5 text-center">
+                  <div className="text-[9px] uppercase tracking-wider text-rose-300">Ø Verlust</div>
+                  <div className="font-mono text-xs font-bold text-rose-200">{summary.safeTier.avgLossPct.toFixed(2)}%</div>
+                </div>
+              )}
+              {summary.safeTier.bestTradePct !== null && (
+                <div className="rounded border border-slate-700 bg-slate-950/40 p-1.5 text-center">
+                  <div className="text-[9px] uppercase tracking-wider text-slate-500">Bester</div>
+                  <div className="font-mono text-xs font-bold text-emerald-300">+{summary.safeTier.bestTradePct.toFixed(2)}%</div>
+                </div>
+              )}
+              {summary.safeTier.worstTradePct !== null && (
+                <div className="rounded border border-slate-700 bg-slate-950/40 p-1.5 text-center">
+                  <div className="text-[9px] uppercase tracking-wider text-slate-500">Schlechtester</div>
+                  <div className="font-mono text-xs font-bold text-rose-300">{summary.safeTier.worstTradePct.toFixed(2)}%</div>
+                </div>
+              )}
+            </div>
+          )}
           {summary.safeTier.equityCurve.length > 1 && <EquityCurve curve={summary.safeTier.equityCurve} />}
           {summary.safeTier.winRatePct > 0 && summary.safeTier.winRatePct < 100 && <LossStreakRisk winRatePct={summary.safeTier.winRatePct} />}
         </div>

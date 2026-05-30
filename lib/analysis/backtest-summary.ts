@@ -1,5 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { runStrategyBacktest } from '@/lib/analysis/strategy-backtest';
+import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 
 export interface AssetEdge {
   winRatePct: number | null;
@@ -15,6 +16,10 @@ export interface TierStat {
   maxDrawdownPct: number; // largest peak-to-trough drop in the curve (<=0)
   tradeSharpe: number | null; // per-trade mean/stdev of net returns
   profitFactor: number | null; // gross wins / gross losses (>=0)
+  avgWinPct: number | null; // average % return of winning trades
+  avgLossPct: number | null; // average % return of losing trades (<=0)
+  bestTradePct: number | null;
+  worstTradePct: number | null;
 }
 
 export interface BacktestSummary {
@@ -25,9 +30,10 @@ export interface BacktestSummary {
   periodDays: number;
   perAssetEdge: Record<string, AssetEdge>;
   safeTier: TierStat | null;
+  btcHodlReturnPct: number | null; // BTC buy-and-hold return over the period (benchmark)
 }
 
-const UNAVAILABLE: BacktestSummary = { available: false, trades: 0, winRatePct: null, netReturnPct: 0, periodDays: 0, perAssetEdge: {}, safeTier: null };
+const UNAVAILABLE: BacktestSummary = { available: false, trades: 0, winRatePct: null, netReturnPct: 0, periodDays: 0, perAssetEdge: {}, safeTier: null, btcHodlReturnPct: null };
 
 // Confluence threshold (within the backtest's own 12-check grid) that mirrors
 // the "safe" tier shown live (>=9/12).
@@ -73,9 +79,16 @@ async function compute(): Promise<BacktestSummary> {
       const stdev = Math.sqrt(variance);
       tradeSharpe = stdev > 0 ? mean / stdev : null;
     }
-    const grossWin = safeTrades.filter((t) => t.netPnlPct > 0).reduce((s, t) => s + t.netPnlPct, 0);
-    const grossLoss = -safeTrades.filter((t) => t.netPnlPct < 0).reduce((s, t) => s + t.netPnlPct, 0);
+    const winners = safeTrades.filter((t) => t.netPnlPct > 0);
+    const losers = safeTrades.filter((t) => t.netPnlPct < 0);
+    const grossWin = winners.reduce((s, t) => s + t.netPnlPct, 0);
+    const grossLoss = -losers.reduce((s, t) => s + t.netPnlPct, 0);
     const profitFactor = grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? Infinity : null;
+    const avgWinPct = winners.length > 0 ? grossWin / winners.length : null;
+    const avgLossPct = losers.length > 0 ? -grossLoss / losers.length : null;
+    const returnValues = safeTrades.map((t) => t.netPnlPct);
+    const bestTradePct = returnValues.length > 0 ? Math.max(...returnValues) : null;
+    const worstTradePct = returnValues.length > 0 ? Math.min(...returnValues) : null;
     const safeTier: TierStat | null =
       safeTrades.length > 0
         ? {
@@ -86,9 +99,27 @@ async function compute(): Promise<BacktestSummary> {
             equityCurve,
             maxDrawdownPct,
             tradeSharpe,
-            profitFactor
+            profitFactor,
+            avgWinPct,
+            avgLossPct,
+            bestTradePct,
+            worstTradePct
           }
         : null;
+
+    // BTC buy-and-hold over (roughly) the backtest period — the honest benchmark
+    // an active strategy has to beat to justify its existence.
+    let btcHodlReturnPct: number | null = null;
+    try {
+      const btcDailies = await fetchKlinesBySymbol('BTCUSDT', '1d', Math.max(30, Math.min(300, r.periodDays || 250)));
+      if (btcDailies && btcDailies.length >= 2) {
+        const first = btcDailies[0].close;
+        const last = btcDailies[btcDailies.length - 1].close;
+        if (first > 0) btcHodlReturnPct = ((last - first) / first) * 100;
+      }
+    } catch {
+      btcHodlReturnPct = null;
+    }
 
     return {
       available: true,
@@ -97,7 +128,8 @@ async function compute(): Promise<BacktestSummary> {
       netReturnPct: r.combined.netReturnPct,
       periodDays: r.periodDays,
       perAssetEdge,
-      safeTier
+      safeTier,
+      btcHodlReturnPct
     };
   } catch {
     return UNAVAILABLE;
@@ -106,4 +138,4 @@ async function compute(): Promise<BacktestSummary> {
 
 // The backtest is heavy (thousands of candles) and only changes as new history
 // accrues, so cache it for 30 minutes rather than recomputing on every render.
-export const getBacktestSummary = unstable_cache(compute, ['backtest-summary-v1'], { revalidate: 1800 });
+export const getBacktestSummary = unstable_cache(compute, ['backtest-summary-v2'], { revalidate: 1800 });
