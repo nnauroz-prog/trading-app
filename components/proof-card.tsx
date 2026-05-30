@@ -52,6 +52,9 @@ export function ProofCard({ summary }: { summary: BacktestSummary }) {
                 <> · Haltedauer Ø <span className="font-mono font-bold text-slate-200">{summary.safeTier.medianHoldHours}h</span></>
               )}
               <> · max DD <span className="font-mono font-bold text-rose-300">{summary.safeTier.maxDrawdownPct.toFixed(1)}%</span></>
+              {summary.safeTier.tradeSharpe !== null && (
+                <> · Sharpe <span className={`font-mono font-bold ${summary.safeTier.tradeSharpe >= 0.5 ? 'text-emerald-200' : summary.safeTier.tradeSharpe >= 0 ? 'text-slate-200' : 'text-rose-300'}`}>{summary.safeTier.tradeSharpe.toFixed(2)}</span></>
+              )}
             </span>
           </div>
           {summary.safeTier.equityCurve.length > 1 && <EquityCurve curve={summary.safeTier.equityCurve} />}
@@ -63,22 +66,37 @@ export function ProofCard({ summary }: { summary: BacktestSummary }) {
 
 function EquityCurve({ curve }: { curve: number[] }) {
   const W = 280;
-  const H = 48;
-  const min = Math.min(...curve);
-  const max = Math.max(...curve);
+  const H = 56;
+  // Build the underwater (drawdown) curve at every step.
+  let peak = -Infinity;
+  const underwater = curve.map((v) => {
+    if (v > peak) peak = v;
+    return v - peak; // <= 0
+  });
+  const allValues = [...curve, ...underwater];
+  const min = Math.min(...allValues);
+  const max = Math.max(...allValues);
   const range = Math.max(1e-6, max - min);
   const xs = (i: number) => (curve.length === 1 ? 0 : (i / (curve.length - 1)) * (W - 2)) + 1;
   const ys = (v: number) => H - 1 - ((v - min) / range) * (H - 2);
   const zeroY = ys(0);
-  const path = curve.map((v, i) => `${i === 0 ? 'M' : 'L'}${xs(i).toFixed(1)} ${ys(v).toFixed(1)}`).join(' ');
+  const equityPath = curve.map((v, i) => `${i === 0 ? 'M' : 'L'}${xs(i).toFixed(1)} ${ys(v).toFixed(1)}`).join(' ');
+  const ddPath = underwater.map((v, i) => `${i === 0 ? 'M' : 'L'}${xs(i).toFixed(1)} ${ys(v).toFixed(1)}`).join(' ');
   const positive = curve[curve.length - 1] >= 0;
-  const stroke = positive ? '#34d399' : '#fb7185';
+  const equityStroke = positive ? '#34d399' : '#fb7185';
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-slate-500">Konto-Verlauf (sichere Stufe, in % Risiko-Einheiten)</div>
+      <div className="flex items-baseline justify-between text-[10px] uppercase tracking-wider text-slate-500">
+        <span>Konto-Verlauf (sichere Stufe, in % Risiko-Einheiten)</span>
+        <span className="flex gap-2 normal-case tracking-normal">
+          <span className="text-emerald-300">— Equity</span>
+          <span className="text-rose-300/70">— Underwater (Drawdown)</span>
+        </span>
+      </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-1 block w-full" aria-label="Equity-Kurve der sicheren Stufe" role="img">
         <line x1={1} y1={zeroY} x2={W - 1} y2={zeroY} stroke="#475569" strokeWidth={0.4} strokeDasharray="2,3" />
-        <path d={path} stroke={stroke} strokeWidth={1.4} fill="none" />
+        <path d={ddPath} stroke="#fb7185" strokeWidth={1} fill="none" opacity={0.55} />
+        <path d={equityPath} stroke={equityStroke} strokeWidth={1.4} fill="none" />
       </svg>
     </div>
   );
