@@ -28,6 +28,8 @@ export function SafetyCheck({ report, backtest }: { report: MasterSignalReport; 
       stopDistancePct: c.stopDistancePct,
       confirmed: c.confirmed,
       userBrokerAvailable,
+      priceChangePct24h: c.priceChangePct24h,
+      mode: report.mode,
       relStrengthVsBtc: c.relStrengthVsBtc,
       backtestEdge: backtest.perAssetEdge[c.coinId] ?? null
     });
@@ -78,8 +80,16 @@ export function SafetyCheck({ report, backtest }: { report: MasterSignalReport; 
         )}
       </p>
 
-      {a.maxSafety && backtest.safeTier && (() => {
-        const p = backtest.safeTier.winRatePct / 100;
+      {a.maxSafety && (() => {
+        const coinEdge = backtest.perAssetEdge[target.coinId];
+        const hitRatePct = coinEdge && coinEdge.winRatePct !== null
+          ? coinEdge.winRatePct
+          : backtest.safeTier?.winRatePct ?? null;
+        if (hitRatePct === null) return null;
+        const source = coinEdge && coinEdge.winRatePct !== null
+          ? `historische Trefferquote von ${target.symbol} (${hitRatePct}%)`
+          : `Trefferquote der sicheren Stufe (${hitRatePct}%)`;
+        const p = hitRatePct / 100;
         const rr = target.rrTp1;
         const evPerR = p * rr - (1 - p);
         const positive = evPerR >= 0;
@@ -89,7 +99,19 @@ export function SafetyCheck({ report, backtest }: { report: MasterSignalReport; 
             <span className={`font-mono font-bold ${positive ? 'text-emerald-300' : 'text-rose-300'}`}>
               {positive ? '+' : ''}{evPerR.toFixed(2)}R
             </span>{' '}
-            (pro 1 € Risiko also {positive ? '+' : '−'}€{Math.abs(evPerR).toFixed(2)} im Schnitt). Basis: {backtest.safeTier.winRatePct}% Trefferquote der sicheren Stufe, R:R 1:{rr.toFixed(1)}. Über viele Trades, nicht für den einzelnen.
+            (pro 1 € Risiko also {positive ? '+' : '−'}€{Math.abs(evPerR).toFixed(2)} im Schnitt). Basis: {source}, R:R 1:{rr.toFixed(1)}. Über viele Trades, nicht für den einzelnen.
+          </p>
+        );
+      })()}
+
+      {!a.maxSafety && (() => {
+        const missing = a.criteria.filter((c) => !c.passed && c.id !== 'backtest-edge' && c.id !== 'rel-strength');
+        if (missing.length === 0) return null;
+        return (
+          <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-2.5 text-[11px] leading-relaxed text-amber-100/90">
+            <span className="font-semibold">Fehlt für Note A:</span>{' '}
+            {missing.slice(0, 3).map((c) => c.label).join(' · ')}
+            {missing.length > 3 && <span className="text-slate-500"> (+{missing.length - 3} weitere)</span>}
           </p>
         );
       })()}

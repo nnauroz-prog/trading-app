@@ -83,6 +83,7 @@ export interface RankedCandidate {
   nearSupport: boolean;
   confirmed: boolean;
   relStrengthVsBtc: number;
+  priceChangePct24h: number;
 }
 
 export type MasterSignalReport = TradeRecommendation | NoTradeReport;
@@ -521,7 +522,8 @@ function toRankedCandidate(a: AnalyzedCoin, btcPct: number): RankedCandidate {
     positionInRange: a.structure.positionInRange,
     nearSupport: a.structure.nearSupport,
     confirmed: a.confirmed,
-    relStrengthVsBtc: a.ticker.priceChangePct - btcPct
+    relStrengthVsBtc: a.ticker.priceChangePct - btcPct,
+    priceChangePct24h: a.ticker.priceChangePct
   };
 }
 
