@@ -11,6 +11,7 @@ export interface TierStat {
   winRatePct: number;
   netReturnPct: number;
   medianHoldHours: number | null;
+  equityCurve: number[]; // cumulative net % return after each safe trade
 }
 
 export interface BacktestSummary {
@@ -41,17 +42,27 @@ async function compute(): Promise<BacktestSummary> {
       };
     }
 
-    const safeTrades = r.perAsset.flatMap((a) => a.trades).filter((t) => t.confluence >= SAFE_TIER_CONFLUENCE);
+    const safeTrades = r.perAsset
+      .flatMap((a) => a.trades)
+      .filter((t) => t.confluence >= SAFE_TIER_CONFLUENCE)
+      .sort((a, b) => a.entryTime - b.entryTime);
     const safeWins = safeTrades.filter((t) => t.outcome === 'TP1').length;
     const holdBarsSorted = safeTrades.map((t) => t.holdBars).sort((a, b) => a - b);
     const medianHoldHours = holdBarsSorted.length > 0 ? holdBarsSorted[Math.floor(holdBarsSorted.length / 2)] : null;
+    let eq = 0;
+    const equityCurve: number[] = [0];
+    for (const t of safeTrades) {
+      eq += t.netPnlPct;
+      equityCurve.push(eq);
+    }
     const safeTier: TierStat | null =
       safeTrades.length > 0
         ? {
             trades: safeTrades.length,
             winRatePct: Math.round((safeWins / safeTrades.length) * 100),
-            netReturnPct: safeTrades.reduce((s, t) => s + t.netPnlPct, 0),
-            medianHoldHours
+            netReturnPct: eq,
+            medianHoldHours,
+            equityCurve
           }
         : null;
 
