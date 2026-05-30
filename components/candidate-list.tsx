@@ -48,6 +48,23 @@ const TIER_STYLE: Record<RankedCandidate['tier'], { label: string; chip: string 
   weak: { label: 'SCHWACH', chip: 'border-amber-400/50 bg-amber-500/15 text-amber-200' }
 };
 
+function MiniSpark({ curve }: { curve: number[] }) {
+  const W = 40;
+  const H = 12;
+  const min = Math.min(...curve);
+  const max = Math.max(...curve);
+  const range = Math.max(1e-6, max - min);
+  const xs = (i: number) => (curve.length === 1 ? 0 : (i / (curve.length - 1)) * (W - 2)) + 1;
+  const ys = (v: number) => H - 1 - ((v - min) / range) * (H - 2);
+  const path = curve.map((v, i) => `${i === 0 ? 'M' : 'L'}${xs(i).toFixed(1)} ${ys(v).toFixed(1)}`).join(' ');
+  const positive = curve[curve.length - 1] >= 0;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} aria-hidden="true">
+      <path d={path} stroke={positive ? '#34d399' : '#fb7185'} strokeWidth={1.1} fill="none" />
+    </svg>
+  );
+}
+
 export function CandidateList({ report, backtest }: { report: MasterSignalReport; backtest?: BacktestSummary }) {
   const candidates = report.candidates;
   const [config, setConfig] = useState<AccountConfig>(DEFAULT_CONFIG);
@@ -127,8 +144,11 @@ export function CandidateList({ report, backtest }: { report: MasterSignalReport
                   </span>
                 )}
                 {backtest?.perAssetEdge[c.coinId]?.winRatePct !== undefined && backtest.perAssetEdge[c.coinId].winRatePct !== null && (
-                  <span className="font-mono text-[10px] text-slate-400">
-                    Backtest <span className="font-bold text-emerald-300">{backtest.perAssetEdge[c.coinId].winRatePct}%</span>
+                  <span className="flex items-center gap-1.5 font-mono text-[10px] text-slate-400">
+                    <span>Backtest <span className="font-bold text-emerald-300">{backtest.perAssetEdge[c.coinId].winRatePct}%</span></span>
+                    {backtest.perAssetEdge[c.coinId].safeEquityCurve.length > 1 && (
+                      <MiniSpark curve={backtest.perAssetEdge[c.coinId].safeEquityCurve} />
+                    )}
                   </span>
                 )}
                 <span className="ml-auto font-mono text-[11px] text-slate-500">{c.brokers[0]}</span>
