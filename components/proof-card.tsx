@@ -51,6 +51,7 @@ export function ProofCard({ summary }: { summary: BacktestSummary }) {
               {summary.safeTier.medianHoldHours !== null && (
                 <> · Haltedauer Ø <span className="font-mono font-bold text-slate-200">{summary.safeTier.medianHoldHours}h</span></>
               )}
+              <> · max DD <span className="font-mono font-bold text-rose-300">{summary.safeTier.maxDrawdownPct.toFixed(1)}%</span></>
             </span>
           </div>
           {summary.safeTier.equityCurve.length > 1 && <EquityCurve curve={summary.safeTier.equityCurve} />}
