@@ -27,6 +27,19 @@ export interface TierStat {
   currentStreak: { kind: 'win' | 'loss' | null; count: number };
 }
 
+export interface SafeTradeRecord {
+  assetId: string;
+  ticker: string;
+  entryTime: number;
+  exitTime: number;
+  entry: number;
+  exit: number;
+  outcome: 'TP1' | 'SL' | 'TIMEOUT';
+  confluence: number;
+  netPnlPct: number;
+  holdBars: number;
+}
+
 export interface BacktestSummary {
   available: boolean;
   trades: number;
@@ -36,9 +49,10 @@ export interface BacktestSummary {
   perAssetEdge: Record<string, AssetEdge>;
   safeTier: TierStat | null;
   btcHodlReturnPct: number | null; // BTC buy-and-hold return over the period (benchmark)
+  safeTrades: SafeTradeRecord[]; // every safe-tier trade for the deep-dive page
 }
 
-const UNAVAILABLE: BacktestSummary = { available: false, trades: 0, winRatePct: null, netReturnPct: 0, periodDays: 0, perAssetEdge: {}, safeTier: null, btcHodlReturnPct: null };
+const UNAVAILABLE: BacktestSummary = { available: false, trades: 0, winRatePct: null, netReturnPct: 0, periodDays: 0, perAssetEdge: {}, safeTier: null, btcHodlReturnPct: null, safeTrades: [] };
 
 // Confluence threshold (within the backtest's own 12-check grid) that mirrors
 // the "safe" tier shown live (>=9/12).
@@ -164,6 +178,19 @@ async function compute(): Promise<BacktestSummary> {
       btcHodlReturnPct = null;
     }
 
+    const safeTradeRecords: SafeTradeRecord[] = safeTrades.map((t) => ({
+      assetId: t.assetId,
+      ticker: t.ticker,
+      entryTime: t.entryTime,
+      exitTime: t.exitTime,
+      entry: t.entry,
+      exit: t.exit,
+      outcome: t.outcome,
+      confluence: t.confluence,
+      netPnlPct: t.netPnlPct,
+      holdBars: t.holdBars
+    }));
+
     return {
       available: true,
       trades: r.combined.totalSignals,
@@ -172,7 +199,8 @@ async function compute(): Promise<BacktestSummary> {
       periodDays: r.periodDays,
       perAssetEdge,
       safeTier,
-      btcHodlReturnPct
+      btcHodlReturnPct,
+      safeTrades: safeTradeRecords
     };
   } catch {
     return UNAVAILABLE;
@@ -181,4 +209,4 @@ async function compute(): Promise<BacktestSummary> {
 
 // The backtest is heavy (thousands of candles) and only changes as new history
 // accrues, so cache it for 30 minutes rather than recomputing on every render.
-export const getBacktestSummary = unstable_cache(compute, ['backtest-summary-v4'], { revalidate: 1800 });
+export const getBacktestSummary = unstable_cache(compute, ['backtest-summary-v5'], { revalidate: 1800 });
