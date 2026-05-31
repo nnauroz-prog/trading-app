@@ -1,10 +1,10 @@
 import { PersonaId } from '@/lib/agents/personas';
-import { AnalystReport, RiskReport, ScoutReport, SubAgentReport } from '@/lib/agents/sub-agents';
+import { AnalystReport, NewsReport, RiskReport, ScoutReport, SubAgentReport } from '@/lib/agents/sub-agents';
 
 export interface InternalMessage {
-  from: 'analyst' | 'scout' | 'risk' | 'ceo';
+  from: 'analyst' | 'scout' | 'risk' | 'news' | 'ceo';
   fromTitle: string;
-  to: 'analyst' | 'scout' | 'risk' | 'ceo' | 'all';
+  to: 'analyst' | 'scout' | 'risk' | 'news' | 'ceo' | 'all';
   toTitle: string;
   body: string;
   tone: 'neutral' | 'warn' | 'agree';
@@ -19,6 +19,9 @@ function findScout(team: SubAgentReport[]): ScoutReport | null {
 function findRisk(team: SubAgentReport[]): RiskReport | null {
   return (team.find((m) => m.role === 'risk') as RiskReport | undefined) ?? null;
 }
+function findNews(team: SubAgentReport[]): NewsReport | null {
+  return (team.find((m) => m.role === 'news') as NewsReport | undefined) ?? null;
+}
 
 // Build a small dialog between the three sub-agents and the CEO. Order:
 // 1) Analyst opens with the macro picture, 2) Scout reacts about the setup,
@@ -32,6 +35,7 @@ export function buildInternalDialog(
   const analyst = findAnalyst(team);
   const scout = findScout(team);
   const risk = findRisk(team);
+  const news = findNews(team);
   if (!analyst || !scout || !risk) return [];
 
   const messages: InternalMessage[] = [];
@@ -73,8 +77,23 @@ export function buildInternalDialog(
     tone: risk.vote === 'OK' ? 'agree' : 'warn'
   });
 
+  if (news && news.vote !== 'KEINE_DATEN') {
+    const newsPrefix =
+      news.vote === 'NEGATIV' ? `Achtung — ${news.reason.toLowerCase()}` :
+      news.vote === 'POSITIV' ? `Rückenwind: ${news.reason.toLowerCase()}` :
+      news.reason;
+    messages.push({
+      from: 'news',
+      fromTitle: 'News-Watcher',
+      to: 'all',
+      toTitle: 'Team',
+      body: newsPrefix,
+      tone: news.vote === 'POSITIV' ? 'agree' : news.vote === 'NEGATIV' ? 'warn' : 'neutral'
+    });
+  }
+
   // CEO closes.
-  const ceoBody = composeCeoClose(persona, verdict, analyst, scout, risk);
+  const ceoBody = composeCeoClose(persona, verdict, analyst, scout, risk, news);
   messages.push({
     from: 'ceo',
     fromTitle: `CEO ${ceoName}`,
@@ -92,11 +111,15 @@ function composeCeoClose(
   verdict: 'BUY' | 'WAIT',
   analyst: AnalystReport,
   scout: ScoutReport,
-  risk: RiskReport
+  risk: RiskReport,
+  news: NewsReport | null
 ): string {
+  if (verdict === 'WAIT' && news && news.vote === 'NEGATIV' && persona === 'conservative') {
+    return `News-Watcher meldet bärische Headlines — Konservativ bleibt heute draußen.`;
+  }
   if (verdict === 'BUY') {
     if (persona === 'conservative') {
-      return `Entschieden — wir kaufen. Drei grüne Stimmen, das reicht mir.`;
+      return `Entschieden — wir kaufen. Vier grüne Stimmen, das reicht mir.`;
     }
     if (persona === 'aggressive') {
       return `Wir gehen rein. ${risk.vote === 'OK' ? 'Risiko ist sauber' : 'Mit reduzierter Größe'} — Position klein halten.`;

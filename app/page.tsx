@@ -57,8 +57,8 @@ export default async function HomePage() {
   ]);
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
-  const personas = evaluatePersonas(masterSignal, backtestSummary);
   const spaeherReport = runSpaeher(newsItems);
+  const personas = evaluatePersonas(masterSignal, backtestSummary, spaeherReport);
 
   const tickerChangesAll = report.tickers.map((t) => t.priceChangePct);
   const negShareAll = tickerChangesAll.filter((c) => c < -2).length / (tickerChangesAll.length || 1);

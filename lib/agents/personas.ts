@@ -1,7 +1,8 @@
 import { MasterSignalReport, RankedCandidate } from '@/lib/analysis/master-signal-engine';
 import { BacktestSummary } from '@/lib/analysis/backtest-summary';
 import { SafetyAssessment, evaluateSafety } from '@/lib/analysis/safety-gate';
-import { SubAgentReport, analystVote, scoutVote, riskVote } from '@/lib/agents/sub-agents';
+import { SubAgentReport, analystVote, scoutVote, riskVote, newsVote } from '@/lib/agents/sub-agents';
+import { SpaeherReport } from '@/lib/akademie/spaeher';
 
 export type PersonaId = 'conservative' | 'balanced' | 'aggressive';
 
@@ -54,7 +55,7 @@ function pickTarget(report: MasterSignalReport, backtest: BacktestSummary, perso
   return { target: scored[0].c, safety: scored[0].safety };
 }
 
-export function evaluatePersonas(report: MasterSignalReport, backtest: BacktestSummary): AgentVerdict[] {
+export function evaluatePersonas(report: MasterSignalReport, backtest: BacktestSummary, spaeher: SpaeherReport | null = null): AgentVerdict[] {
   const PERSONAS: { id: PersonaId; name: string; motto: string }[] = [
     { id: 'conservative', name: 'Konservativ', motto: 'Lieber gar nichts kaufen als zu früh' },
     { id: 'balanced', name: 'Balanciert', motto: 'Sicher, aber nicht überpingelig' },
@@ -66,44 +67,52 @@ export function evaluatePersonas(report: MasterSignalReport, backtest: BacktestS
     const analyst = analystVote(report);
     const scout = scoutVote(target);
     const risk = riskVote(target);
-    const team: SubAgentReport[] = [analyst, scout, risk];
+    const news = newsVote(target, spaeher);
+    const team: SubAgentReport[] = [analyst, scout, risk, news];
 
     let verdict: 'BUY' | 'WAIT' = 'WAIT';
     let rationale = 'Keine Setups vorhanden.';
 
     if (target && safety) {
       if (id === 'conservative') {
-        // Konservativ: nur kaufen, wenn Analyst nicht NEGATIV, Scout STARK, Risiko OK
-        // UND alle harten Safety-Kriterien erfüllt.
-        if (analyst.vote !== 'NEGATIV' && scout.vote === 'STARK' && risk.vote === 'OK' && safety.maxSafety) {
+        // Konservativ: nur kaufen, wenn Analyst nicht NEGATIV, Scout STARK,
+        // Risiko OK, News nicht NEGATIV UND alle harten Safety-Kriterien erfüllt.
+        if (analyst.vote !== 'NEGATIV' && scout.vote === 'STARK' && risk.vote === 'OK' && news.vote !== 'NEGATIV' && safety.maxSafety) {
           verdict = 'BUY';
-          rationale = `Team einstimmig grün: Analyst ${analyst.vote.toLowerCase()}, Scout sieht starkes Setup, Risiko-Manager gibt grünes Licht.`;
+          const newsHint = news.vote === 'POSITIV' ? ', News bullisch' : '';
+          rationale = `Team einstimmig grün: Analyst ${analyst.vote.toLowerCase()}, Scout sieht starkes Setup, Risiko-Manager gibt grünes Licht${newsHint}.`;
         } else {
           const blockers: string[] = [];
           if (analyst.vote === 'NEGATIV') blockers.push('Analyst sieht Markt negativ');
           if (scout.vote !== 'STARK') blockers.push(`Scout nur ${scout.vote.toLowerCase()}`);
           if (risk.vote === 'VETO') blockers.push('Risiko-Manager Veto');
+          if (news.vote === 'NEGATIV') blockers.push(`News-Watcher: ${target.symbol} bärisch`);
           if (!safety.maxSafety) blockers.push(`Note ${safety.grade}`);
           rationale = blockers.length > 0 ? `Ich warte: ${blockers.join(', ')}.` : 'Ich warte — nicht alle Kriterien erfüllt.';
         }
       } else if (id === 'balanced') {
         // Balanciert: Scout mindestens MITTEL, Risiko OK, Analyst nicht NEGATIV.
-        if (scout.vote !== 'SCHWACH' && risk.vote === 'OK' && analyst.vote !== 'NEGATIV' && target.passedCount >= 8) {
+        // News-Watcher kann nicht veto'en, aber NEGATIV verlangt zusätzliche Konfluenz (≥9).
+        const newsBlocksBalanced = news.vote === 'NEGATIV' && target.passedCount < 9;
+        if (scout.vote !== 'SCHWACH' && risk.vote === 'OK' && analyst.vote !== 'NEGATIV' && target.passedCount >= 8 && !newsBlocksBalanced) {
           verdict = 'BUY';
-          rationale = `Scout ${scout.vote.toLowerCase()}, Risiko ok, Markt nicht negativ — solide genug. Note ${safety.grade} (${safety.passedHard}/${safety.totalHard}).`;
+          const newsHint = news.vote === 'POSITIV' ? ', News bullisch' : news.vote === 'NEGATIV' ? ', trotz bärischer News' : '';
+          rationale = `Scout ${scout.vote.toLowerCase()}, Risiko ok, Markt nicht negativ — solide genug${newsHint}. Note ${safety.grade} (${safety.passedHard}/${safety.totalHard}).`;
         } else {
           const blockers: string[] = [];
           if (scout.vote === 'SCHWACH') blockers.push('Scout-Setup schwach');
           if (risk.vote === 'VETO') blockers.push('Risiko-Veto');
           if (analyst.vote === 'NEGATIV') blockers.push('Markt negativ');
           if (target.passedCount < 8) blockers.push(`nur ${target.passedCount}/12 Bestätigungen`);
+          if (newsBlocksBalanced) blockers.push('News-Watcher bärisch und Konfluenz < 9');
           rationale = blockers.length > 0 ? `Ich warte: ${blockers.join(', ')}.` : `Ich warte — Note ${safety.grade}.`;
         }
       } else {
-        // Aggressiv: Scout mindestens MITTEL UND Risiko OK reichen mir.
+        // Aggressiv: Scout mindestens MITTEL UND Risiko OK reichen mir. News informiert nur.
         if (scout.vote !== 'SCHWACH' && risk.vote === 'OK' && report.marketMood !== 'risk-off') {
           verdict = 'BUY';
-          rationale = `Scout ${scout.vote.toLowerCase()}, Risiko sauber — ich nehme den Trade (kleinere Position!). Analyst ist ${analyst.vote.toLowerCase()}.`;
+          const newsHint = news.vote === 'NEGATIV' ? ` News-Watcher warnt zwar (${target.symbol} bärisch), aber Setup zählt mehr.` : news.vote === 'POSITIV' ? ` News-Watcher bestätigt: ${target.symbol} bullisch.` : '';
+          rationale = `Scout ${scout.vote.toLowerCase()}, Risiko sauber — ich nehme den Trade (kleinere Position!). Analyst ist ${analyst.vote.toLowerCase()}.${newsHint}`;
         } else if (risk.vote === 'VETO') {
           rationale = `Sogar mir zu riskant: Risiko-Manager hat Veto eingelegt.`;
         } else if (report.marketMood === 'risk-off') {
