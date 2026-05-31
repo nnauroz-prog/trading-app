@@ -5,6 +5,7 @@ import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 import { buildInternalDialog, InternalMessage } from '@/lib/agents/internal-messages';
+import { vorstandMediation, VorstandVerdict } from '@/lib/agents/vorstand';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getCryptoNews } from '@/lib/news/news-agent';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
@@ -27,6 +28,20 @@ function fmtPrice(v: number): string {
 function toneClasses(tone: VoteTone): string {
   if (tone === 'good') return 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200';
   if (tone === 'bad') return 'border-rose-400/50 bg-rose-500/10 text-rose-200';
+  return 'border-slate-700 bg-slate-900 text-slate-300';
+}
+
+function vorstandClasses(v: VorstandVerdict): string {
+  if (v === 'KLARER_KAUF') return 'border-emerald-400/60 bg-emerald-950/30';
+  if (v === 'KAUFEN_VORSICHTIG') return 'border-emerald-400/40 bg-emerald-950/20';
+  if (v === 'WATCHLIST') return 'border-amber-400/40 bg-amber-950/20';
+  return 'border-slate-700 bg-slate-900/60';
+}
+
+function vorstandBadgeClasses(v: VorstandVerdict): string {
+  if (v === 'KLARER_KAUF') return 'border-emerald-400/60 bg-emerald-500/15 text-emerald-100';
+  if (v === 'KAUFEN_VORSICHTIG') return 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200';
+  if (v === 'WATCHLIST') return 'border-amber-400/50 bg-amber-500/15 text-amber-200';
   return 'border-slate-700 bg-slate-900 text-slate-300';
 }
 
@@ -85,6 +100,32 @@ export default async function AgentPage() {
         </details>
       </header>
 
+      {(() => {
+        const vorstand = vorstandMediation(personas);
+        const vorstandTone = vorstandClasses(vorstand.verdict);
+        const vorstandBadge = vorstandBadgeClasses(vorstand.verdict);
+        return (
+          <section className={`space-y-2 rounded-2xl border-2 p-5 ${vorstandTone}`}>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Vorstand</span>
+              <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${vorstandBadge}`}>
+                {vorstand.verdict.replace(/_/g, ' ')}
+              </span>
+            </div>
+            <h2 className="text-lg font-bold text-white">{vorstand.headline}</h2>
+            <p className="text-[13px] leading-relaxed text-slate-200">{vorstand.body}</p>
+            {vorstand.conflictNotes.length > 0 && (
+              <details className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[11px]">
+                <summary className="cursor-pointer text-slate-300">Wo das Gremium uneins ist ({vorstand.conflictNotes.length})</summary>
+                <ul className="mt-1.5 space-y-1 text-slate-400">
+                  {vorstand.conflictNotes.map((c, i) => <li key={i}>· {c}</li>)}
+                </ul>
+              </details>
+            )}
+          </section>
+        );
+      })()}
+
       <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {personas.map((p) => {
           const isBuy = p.verdict === 'BUY';
@@ -101,6 +142,11 @@ export default async function AgentPage() {
                 </span>
               </div>
               <p className="text-[11px] italic text-slate-400">„{p.motto}“</p>
+
+              <details className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[10px]">
+                <summary className="cursor-pointer text-slate-300">Firmen-Manifest</summary>
+                <p className="mt-1.5 leading-relaxed text-slate-400">{p.manifest}</p>
+              </details>
 
               {p.target && (
                 <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-2 text-[11px]">

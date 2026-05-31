@@ -16,6 +16,8 @@ import { DailyBriefing } from '@/components/daily-briefing';
 import { MarketBriefing } from '@/components/market-briefing';
 import { AgentRecorder } from '@/components/agent-recorder';
 import { FirmaStrip } from '@/components/firma-strip';
+import { VorstandStrip } from '@/components/vorstand-strip';
+import { vorstandMediation } from '@/lib/agents/vorstand';
 import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
 import { DiffVsYesterday } from '@/components/diff-vs-yesterday';
@@ -92,6 +94,7 @@ export default async function HomePage() {
   const upcomingMacroAll = listMacroEventsThisWeek();
   const eventWindow = computeEventWindow(upcomingMacroAll);
   const personas = evaluatePersonas(masterSignal, backtestSummary, spaeherReport, eventWindow);
+  const vorstandReport = vorstandMediation(personas);
   // Historical similarity for the headline coin (use the conservative firma's
   // pick if it BUYs, else the best-scoring candidate).
   const headlineFirma = personas.find((p) => p.verdict === 'BUY' && p.persona === 'conservative')
@@ -307,6 +310,8 @@ export default async function HomePage() {
           </p>
         </section>
       )}
+
+      <VorstandStrip report={vorstandReport} />
 
       {/* 3. Kapital-Schutz */}
       <KapitalSchutz latestPrices={latestPrices} />

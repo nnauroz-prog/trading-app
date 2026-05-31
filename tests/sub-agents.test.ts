@@ -156,3 +156,78 @@ describe('newsVote', () => {
     expect(r.vote).toBe('NEUTRAL');
   });
 });
+
+import { positionManagerVote, liquiditySpecialistVote, backtestAuditVote } from '@/lib/agents/sub-agents';
+import { SetupSimilarity } from '@/lib/analysis/setup-similarity';
+
+describe('positionManagerVote', () => {
+  it('KEINE_POSITION without target', () => {
+    expect(positionManagerVote(null, 'conservative').vote).toBe('KEINE_POSITION');
+  });
+  it('konservativ targets 1% risk for clean stops', () => {
+    const r = positionManagerVote(makeCandidate({ stopDistancePct: 3 }), 'conservative');
+    expect(r.suggestedAccountRiskPct).toBe(1);
+    expect(r.vote).toBe('NORMAL');
+  });
+  it('aggressiv targets higher risk', () => {
+    const r = positionManagerVote(makeCandidate({ stopDistancePct: 3 }), 'aggressive');
+    expect(r.suggestedAccountRiskPct).toBeGreaterThanOrEqual(3);
+  });
+  it('aggressiv goes bigger on max-confluence', () => {
+    const r = positionManagerVote(makeCandidate({ passedCount: 11, stopDistancePct: 3 }), 'aggressive');
+    expect(r.suggestedAccountRiskPct).toBeGreaterThanOrEqual(4);
+  });
+  it('all firmas reduce on very wide stop', () => {
+    const r = positionManagerVote(makeCandidate({ stopDistancePct: 7 }), 'balanced');
+    expect(r.suggestedAccountRiskPct).toBeLessThanOrEqual(1.5);
+  });
+});
+
+describe('liquiditySpecialistVote', () => {
+  it('TIEF for very deep markets', () => {
+    expect(liquiditySpecialistVote(makeCandidate({ quoteVolume: 600_000_000 }), 'conservative').vote).toBe('TIEF');
+  });
+  it('OK at konservativ minimum', () => {
+    expect(liquiditySpecialistVote(makeCandidate({ quoteVolume: 250_000_000 }), 'conservative').vote).toBe('OK');
+  });
+  it('DUENN for konservativ at 100M but OK for aggressiv', () => {
+    const c = makeCandidate({ quoteVolume: 100_000_000 });
+    expect(liquiditySpecialistVote(c, 'conservative').vote).toBe('DUENN');
+    expect(liquiditySpecialistVote(c, 'aggressive').vote).toBe('TIEF');
+  });
+  it('DUENN for all firmas at very low volume', () => {
+    const c = makeCandidate({ quoteVolume: 5_000_000 });
+    expect(liquiditySpecialistVote(c, 'aggressive').vote).toBe('DUENN');
+  });
+});
+
+function sim(over: Partial<SetupSimilarity> = {}): SetupSimilarity {
+  return {
+    coinId: 'eth', ticker: 'ETH', currentConfluence: 9,
+    matchCount: 12, tp1Hits: 8, slHits: 4, timeouts: 0,
+    hitRatePct: 67, avgWinPct: 2.5, avgLossPct: -1.5, expectancyPct: 1.2,
+    sampleSize: 'good', oneLineVerdict: '',
+    ...over
+  };
+}
+
+describe('backtestAuditVote', () => {
+  it('KEINE_DATEN without target', () => {
+    expect(backtestAuditVote(null, sim()).vote).toBe('KEINE_DATEN');
+  });
+  it('KEINE_DATEN without similarity', () => {
+    expect(backtestAuditVote(makeCandidate(), null).vote).toBe('KEINE_DATEN');
+  });
+  it('KEINE_DATEN for small sample', () => {
+    expect(backtestAuditVote(makeCandidate(), sim({ sampleSize: 'small', matchCount: 3 })).vote).toBe('KEINE_DATEN');
+  });
+  it('BESTÄTIGT for hit rate ≥ 60%', () => {
+    expect(backtestAuditVote(makeCandidate(), sim({ hitRatePct: 70 })).vote).toBe('BESTÄTIGT');
+  });
+  it('GEMISCHT for hit rate 45-59%', () => {
+    expect(backtestAuditVote(makeCandidate(), sim({ hitRatePct: 50 })).vote).toBe('GEMISCHT');
+  });
+  it('WIDERSPRUCH for hit rate < 45%', () => {
+    expect(backtestAuditVote(makeCandidate(), sim({ hitRatePct: 30 })).vote).toBe('WIDERSPRUCH');
+  });
+});
