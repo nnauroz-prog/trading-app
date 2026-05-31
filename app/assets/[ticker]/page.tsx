@@ -13,6 +13,7 @@ import { getCryptoNews } from '@/lib/news/news-agent';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
+import { detectChaseSignals, detectOpportunitySignals, PriceContext } from '@/lib/analysis/chase-detector';
 import { Asset, PriceSnapshot } from '@/lib/types/domain';
 import { HeadlinesList } from '@/components/headlines-list';
 import { InteractiveChart } from '@/components/interactive-chart';
@@ -143,6 +144,16 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
     return t.includes(asset.ticker.toUpperCase()) || t.includes(asset.name.toUpperCase());
   }).slice(0, 5);
 
+  // Chase / Opportunity status specific to this coin.
+  let chaseStatus: { kind: 'chase' | 'opportunity' | 'clean'; reason: string } = { kind: 'clean', reason: '' };
+  if (spaeher && snapshot) {
+    const prices: PriceContext[] = [{ symbol: asset.ticker, priceChangePct24h: snapshot.change24h }];
+    const chases = detectChaseSignals(spaeher.perCoin, prices);
+    const opps = detectOpportunitySignals(spaeher.perCoin, prices);
+    if (chases.length > 0) chaseStatus = { kind: 'chase', reason: chases[0].reason };
+    else if (opps.length > 0) chaseStatus = { kind: 'opportunity', reason: opps[0].reason };
+  }
+
   return (
     <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
       <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
@@ -206,6 +217,19 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
         <p className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-500">
           Keine Preisdaten verfügbar.
         </p>
+      )}
+
+      {chaseStatus.kind === 'chase' && (
+        <section className="rounded-2xl border-2 border-amber-400/50 bg-amber-950/20 p-4">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200">Schon gelaufen — nicht hinterherjagen</div>
+          <p className="mt-1 text-[12px] text-amber-100/90">{chaseStatus.reason}</p>
+        </section>
+      )}
+      {chaseStatus.kind === 'opportunity' && (
+        <section className="rounded-2xl border-2 border-sky-400/50 bg-sky-950/20 p-4">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-sky-200">Angst war übertrieben — Setup wird besser</div>
+          <p className="mt-1 text-[12px] text-sky-100/90">{chaseStatus.reason}</p>
+        </section>
       )}
 
       {hasBinance && candles && candles.length >= 50 && (
