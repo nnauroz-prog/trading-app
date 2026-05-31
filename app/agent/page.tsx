@@ -26,6 +26,7 @@ import { FirmaStandings } from '@/components/firma-standings';
 import { FirmaRankingPanel } from '@/components/firma-ranking';
 import { FirmaAccuracyPanel } from '@/components/firma-accuracy-panel';
 import { FirmaCoinHeatmap } from '@/components/firma-coin-heatmap';
+import { SubAgentAccuracyTable } from '@/components/sub-agent-accuracy-table';
 import { FirmaQuiz } from '@/components/firma-quiz';
 
 export const dynamic = 'force-dynamic';
@@ -267,6 +268,7 @@ export default async function AgentPage() {
 
       <FirmaBacktestTable report={firmaBacktest} />
       <FirmaAccuracyPanel />
+      <SubAgentAccuracyTable />
       <FirmaCoinHeatmap />
       <FirmaQuiz />
       <FirmaRankingPanel />

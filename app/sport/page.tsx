@@ -129,20 +129,15 @@ function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
         </div>
       )}
       {f.probabilities && f.tips ? (
-        <details className="mt-2">
-          <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-sky-300 hover:text-sky-200">
-            Wahrscheinlichkeiten + Tipp-Stufen anzeigen
-          </summary>
-          <div className="mt-2">
-            <ProbabilityCard
-              homeTeam={f.homeTeam}
-              awayTeam={f.awayTeam}
-              model={f.probabilities}
-              tips={f.tips}
-              saveContext={{ fixtureId: f.id, date: f.date, league: f.league }}
-            />
-          </div>
-        </details>
+        <div className="mt-3">
+          <ProbabilityCard
+            homeTeam={f.homeTeam}
+            awayTeam={f.awayTeam}
+            model={f.probabilities}
+            tips={f.tips}
+            saveContext={{ fixtureId: f.id, date: f.date, league: f.league }}
+          />
+        </div>
       ) : (
         <div className="mt-1.5 border-t border-slate-800/60 pt-1.5 text-[10px] text-slate-500">
           Wahrscheinlichkeits-Modell: zu wenig Spiele in dieser Liga — Saison gerade gestartet oder Pokal-Modus.
@@ -191,10 +186,12 @@ export default async function SportPage() {
       )}
 
       <div className="space-y-3">
-        {leagues.map((lf) => {
+        {leagues.map((lf, leagueIdx) => {
           if (lf.next.length === 0 && lf.last.length === 0) return null;
+          // First two leagues open by default so visitors see real content
+          // immediately. Remaining leagues stay collapsed to keep the page tight.
           return (
-            <details key={lf.league.id} className="rounded-2xl border border-slate-800/80 bg-slate-900/40">
+            <details key={lf.league.id} open={leagueIdx < 2} className="rounded-2xl border border-slate-800/80 bg-slate-900/40">
               <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-300 hover:text-slate-100">
                 ▸ {lf.league.name} <span className="text-slate-500">· {lf.league.country}</span>
               </summary>
