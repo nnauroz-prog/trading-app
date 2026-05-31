@@ -1,6 +1,7 @@
 import { MasterSignalReport, RankedCandidate } from '@/lib/analysis/master-signal-engine';
 import { BacktestSummary } from '@/lib/analysis/backtest-summary';
 import { SafetyAssessment, evaluateSafety } from '@/lib/analysis/safety-gate';
+import { SubAgentReport, analystVote, scoutVote, riskVote } from '@/lib/agents/sub-agents';
 
 export type PersonaId = 'conservative' | 'balanced' | 'aggressive';
 
@@ -12,6 +13,8 @@ export interface AgentVerdict {
   target: RankedCandidate | null;
   safety: SafetyAssessment | null;
   rationale: string;
+  team: SubAgentReport[];
+  ceoFinalWord: string;
 }
 
 function safetyForCandidate(c: RankedCandidate, report: MasterSignalReport, backtest: BacktestSummary): SafetyAssessment {
@@ -60,37 +63,79 @@ export function evaluatePersonas(report: MasterSignalReport, backtest: BacktestS
 
   return PERSONAS.map(({ id, name, motto }) => {
     const { target, safety } = pickTarget(report, backtest, id);
+    const analyst = analystVote(report);
+    const scout = scoutVote(target);
+    const risk = riskVote(target);
+    const team: SubAgentReport[] = [analyst, scout, risk];
+
     let verdict: 'BUY' | 'WAIT' = 'WAIT';
     let rationale = 'Keine Setups vorhanden.';
 
     if (target && safety) {
       if (id === 'conservative') {
-        if (safety.maxSafety) {
+        // Konservativ: nur kaufen, wenn Analyst nicht NEGATIV, Scout STARK, Risiko OK
+        // UND alle harten Safety-Kriterien erfüllt.
+        if (analyst.vote !== 'NEGATIV' && scout.vote === 'STARK' && risk.vote === 'OK' && safety.maxSafety) {
           verdict = 'BUY';
-          rationale = `Alle ${safety.totalHard} Sicherheits-Kriterien erfüllt — sicherer Kauf möglich.`;
+          rationale = `Team einstimmig grün: Analyst ${analyst.vote.toLowerCase()}, Scout sieht starkes Setup, Risiko-Manager gibt grünes Licht.`;
         } else {
-          rationale = `Note ${safety.grade} — nicht alle Kriterien erfüllt, also lieber warten.`;
+          const blockers: string[] = [];
+          if (analyst.vote === 'NEGATIV') blockers.push('Analyst sieht Markt negativ');
+          if (scout.vote !== 'STARK') blockers.push(`Scout nur ${scout.vote.toLowerCase()}`);
+          if (risk.vote === 'VETO') blockers.push('Risiko-Manager Veto');
+          if (!safety.maxSafety) blockers.push(`Note ${safety.grade}`);
+          rationale = blockers.length > 0 ? `Ich warte: ${blockers.join(', ')}.` : 'Ich warte — nicht alle Kriterien erfüllt.';
         }
       } else if (id === 'balanced') {
-        if (safety.passedHard >= safety.totalHard - 1 && target.passedCount >= 8) {
+        // Balanciert: Scout mindestens MITTEL, Risiko OK, Analyst nicht NEGATIV.
+        if (scout.vote !== 'SCHWACH' && risk.vote === 'OK' && analyst.vote !== 'NEGATIV' && target.passedCount >= 8) {
           verdict = 'BUY';
-          rationale = `Note ${safety.grade} (${safety.passedHard}/${safety.totalHard}) und ${target.passedCount}/12 Bestätigungen — solide genug für mich.`;
+          rationale = `Scout ${scout.vote.toLowerCase()}, Risiko ok, Markt nicht negativ — solide genug. Note ${safety.grade} (${safety.passedHard}/${safety.totalHard}).`;
         } else {
-          rationale = `Note ${safety.grade} und ${target.passedCount}/12 — noch nicht solide genug für mich.`;
+          const blockers: string[] = [];
+          if (scout.vote === 'SCHWACH') blockers.push('Scout-Setup schwach');
+          if (risk.vote === 'VETO') blockers.push('Risiko-Veto');
+          if (analyst.vote === 'NEGATIV') blockers.push('Markt negativ');
+          if (target.passedCount < 8) blockers.push(`nur ${target.passedCount}/12 Bestätigungen`);
+          rationale = blockers.length > 0 ? `Ich warte: ${blockers.join(', ')}.` : `Ich warte — Note ${safety.grade}.`;
         }
       } else {
-        // aggressive
-        if (target.passedCount >= 7 && report.marketMood !== 'risk-off') {
+        // Aggressiv: Scout mindestens MITTEL UND Risiko OK reichen mir.
+        if (scout.vote !== 'SCHWACH' && risk.vote === 'OK' && report.marketMood !== 'risk-off') {
           verdict = 'BUY';
-          rationale = `${target.passedCount}/12 Bestätigungen, Markt nicht im Abverkauf — ich nehme den Trade (kleinere Größe!).`;
-        } else if (target.passedCount >= 7 && report.marketMood === 'risk-off') {
-          rationale = `${target.passedCount}/12 Bestätigungen, aber Markt ist risk-off — sogar mir zu riskant.`;
+          rationale = `Scout ${scout.vote.toLowerCase()}, Risiko sauber — ich nehme den Trade (kleinere Position!). Analyst ist ${analyst.vote.toLowerCase()}.`;
+        } else if (risk.vote === 'VETO') {
+          rationale = `Sogar mir zu riskant: Risiko-Manager hat Veto eingelegt.`;
+        } else if (report.marketMood === 'risk-off') {
+          rationale = `${target.passedCount}/12 — aber Markt ist im Abverkauf, sogar mir zu riskant.`;
         } else {
-          rationale = `Nur ${target.passedCount}/12 — selbst mir zu wenig.`;
+          rationale = `Scout-Setup ist zu schwach — selbst mir zu wenig.`;
         }
       }
     }
 
-    return { persona: id, name, motto, verdict, target, safety, rationale };
+    const ceoFinalWord = composeCeoFinalWord(id, name, verdict, team, target, safety);
+
+    return { persona: id, name, motto, verdict, target, safety, rationale, team, ceoFinalWord };
   });
+}
+
+// CEO-Schlusswort: kurze Synthese der drei Sub-Agenten-Meinungen aus Sicht
+// des jeweiligen Firmenchefs.
+function composeCeoFinalWord(
+  id: PersonaId,
+  name: string,
+  verdict: 'BUY' | 'WAIT',
+  team: SubAgentReport[],
+  target: RankedCandidate | null,
+  safety: SafetyAssessment | null
+): string {
+  if (!target || !safety) {
+    return `Heute kein Setup zum Diskutieren — Firma „${name}“ bleibt zu.`;
+  }
+  const [analyst, scout, risk] = team;
+  if (verdict === 'BUY') {
+    return `Team hat gesprochen: ${analyst.vote.toLowerCase()} im Markt, Setup ${scout.vote.toLowerCase()}, Risiko ${risk.vote.toLowerCase()}. ${id === 'aggressive' ? 'Position klein halten' : id === 'balanced' ? 'Position wie geplant' : 'Volle Konfidenz im Stop'} — ${target.symbol} läuft.`;
+  }
+  return `Wir lassen es. Lieber kein Trade als ein schlechter — bei drei Stimmen müssen mindestens zwei klar grün sein, sonst bleibt die Firma „${name}“ in Cash.`;
 }
