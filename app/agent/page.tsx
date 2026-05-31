@@ -74,6 +74,12 @@ export default async function AgentPage() {
         <p className="text-sm text-slate-400">
           Jede der drei Firmen hat einen CEO mit eigener Risikoneigung und ein Team aus drei Sub-Agenten: ein Markt-Analyst (große Marktlage), ein Setup-Scout (das konkrete Setup) und ein Risiko-Manager (Stop, Liquidität, Broker, Pump-Schutz). Der CEO hört allen zu und entscheidet KAUFEN oder WARTEN. Ehrlich gesagt: alle drei Firmen nutzen dieselbe Daten-Engine — sie unterscheiden sich nur darin, wie streng der CEO ist.
         </p>
+        <details className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[11px] text-slate-400">
+          <summary className="cursor-pointer text-slate-300">Was bedeutet „X von 12 Häkchen“?</summary>
+          <p className="mt-2 leading-relaxed">
+            Die Engine prüft für jeden Coin 12 Dinge: Trend (EMA20/50/200), Momentum (RSI, MACD, Stochastik), Trendstärke (ADX), Volumen-Bestätigung, Volatilität (ATR), Marktstruktur, Position zwischen Unterstützung & Widerstand. Jedes erfüllte Kriterium ist ein Häkchen. Ab 7 grünen Häkchen schlägt der Aggressive Trade vor, ab 9 nennt es der Konservative ein „starkes Setup“.
+          </p>
+        </details>
       </header>
 
       <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -97,7 +103,7 @@ export default async function AgentPage() {
                 <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-2 text-[11px]">
                   <div className="flex items-baseline gap-2">
                     <span className="font-mono text-base font-bold text-white">{p.target.symbol}</span>
-                    <span className="font-mono text-[10px] text-slate-500">{p.target.passedCount}/12</span>
+                    <span className="font-mono text-[10px] text-slate-500" title="Anzahl erfüllter Kriterien (Trend, RSI, MACD, Volumen, Struktur usw.) von insgesamt 12.">{p.target.passedCount} von 12 Häkchen</span>
                     {p.safety && (
                       <span className={`rounded border px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider ${p.safety.grade === 'A' ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200' : p.safety.grade === 'B' ? 'border-amber-400/50 bg-amber-500/15 text-amber-200' : 'border-rose-400/50 bg-rose-500/15 text-rose-200'}`}>
                         Note {p.safety.grade}

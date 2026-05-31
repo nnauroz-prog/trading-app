@@ -45,7 +45,7 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
                 {p.target ? (
                   <>
                     <span className="font-mono text-sm font-bold text-white">{p.target.symbol}</span>
-                    <span className="font-mono text-[10px] text-slate-500">{p.target.passedCount}/12</span>
+                    <span className="font-mono text-[10px] text-slate-500" title="Anzahl erfüllter Kriterien von insgesamt 12.">{p.target.passedCount} Häkchen</span>
                     {p.safety && (
                       <span className={`rounded border px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider ${gradeClasses(p.safety.grade)}`}>
                         {p.safety.grade}
