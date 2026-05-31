@@ -13,6 +13,7 @@ function decision(over: Partial<FirmaDecision>): FirmaDecision {
     stopLoss: null,
     takeProfit1: null,
     safetyGrade: null,
+    passedCount: null,
     analystVote: 'NEUTRAL',
     scoutVote: 'SCHWACH',
     riskVote: 'VETO',
