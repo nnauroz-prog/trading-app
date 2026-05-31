@@ -6,6 +6,8 @@ import { evaluatePersonas } from '@/lib/agents/personas';
 import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 import { buildInternalDialog, InternalMessage } from '@/lib/agents/internal-messages';
 import { vorstandMediation, VorstandVerdict } from '@/lib/agents/vorstand';
+import { VorstandRecorder } from '@/components/vorstand-recorder';
+import { VorstandLog } from '@/components/vorstand-log';
 import { getFirmaBacktest } from '@/lib/agents/firma-backtest';
 import { FirmaBacktestTable } from '@/components/firma-backtest-table';
 import { generateTradeMemo } from '@/lib/agents/trade-memo';
@@ -199,6 +201,7 @@ export default async function AgentPage() {
       </section>
 
       <FirmaRecorder personas={personas} generatedAt={report.generatedAt} />
+      <VorstandRecorder report={vorstandMediation(personas)} generatedAt={report.generatedAt} />
 
       {(() => {
         const memos = personas.map(generateTradeMemo).filter((m): m is NonNullable<ReturnType<typeof generateTradeMemo>> => m !== null);
@@ -217,6 +220,7 @@ export default async function AgentPage() {
       <FirmaAccuracyPanel />
       <FirmaRankingPanel />
       <FirmaStandings />
+      <VorstandLog />
 
       <AgentLog />
 
