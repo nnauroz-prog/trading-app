@@ -8,6 +8,11 @@ import { fetchAssetHeadlines } from '@/lib/providers/sentiment';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
 import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
+import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
+import { getCryptoNews } from '@/lib/news/news-agent';
+import { runSpaeher } from '@/lib/akademie/spaeher';
+import { evaluatePersonas } from '@/lib/agents/personas';
+import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
 import { Asset, PriceSnapshot } from '@/lib/types/domain';
 import { HeadlinesList } from '@/components/headlines-list';
 import { InteractiveChart } from '@/components/interactive-chart';
@@ -65,13 +70,16 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
   const hasBinance = !!(mockAsset ? binanceSymbolByAssetId[asset.id] : universeCoin);
   const binanceSymbol = mockAsset ? binanceSymbolByAssetId[asset.id] : universeCoin?.binanceSymbol;
 
-  const [snapshots, analysis, headlines, candles, tickers, masterSignal] = await Promise.all([
+  const [snapshots, analysis, headlines, candles, dailyCandles, tickers, masterSignal, backtestSummary, newsItems] = await Promise.all([
     mockAsset ? getSnapshots() : Promise.resolve({} as Record<string, PriceSnapshot>),
     mockAsset ? runDailyAnalysis() : Promise.resolve({ recommendations: [] }),
     mockAsset ? fetchAssetHeadlines(asset.id) : Promise.resolve([]),
     hasBinance && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1h', 200) : Promise.resolve(null),
+    hasBinance && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1d', 35) : Promise.resolve(null),
     !mockAsset ? fetchAllTickers() : Promise.resolve(null),
-    universeCoin ? buildMasterSignal('swing') : Promise.resolve(null)
+    universeCoin ? buildMasterSignal('swing') : Promise.resolve(null),
+    universeCoin ? getBacktestSummary() : Promise.resolve(null),
+    universeCoin ? getCryptoNews() : Promise.resolve([])
   ]);
 
   const signalForThisAsset = masterSignal?.candidates.find((c) => c.coinId === asset.id);
@@ -88,18 +96,51 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
   if (!snapshot && tickers && binanceSymbol) {
     const tk = tickers.get(binanceSymbol);
     if (tk) {
+      // Compute real 7d / 30d returns from daily candles.
+      let change7d = 0;
+      let change30d = 0;
+      if (dailyCandles && dailyCandles.length >= 8) {
+        const last = dailyCandles[dailyCandles.length - 1].close;
+        const seven = dailyCandles[dailyCandles.length - 8]?.close;
+        if (seven) change7d = ((last - seven) / seven) * 100;
+        if (dailyCandles.length >= 31) {
+          const thirty = dailyCandles[dailyCandles.length - 31].close;
+          change30d = ((last - thirty) / thirty) * 100;
+        }
+      }
       snapshot = {
         assetId: asset.id,
         price: tk.price,
         change24h: tk.priceChangePct,
-        change7d: 0,
-        change30d: 0,
+        change7d,
+        change30d,
         volume: tk.quoteVolume,
         source: 'binance'
       };
     }
   }
   const recommendation = ('recommendations' in analysis ? analysis.recommendations : []).find((r) => r.assetId === asset.id);
+
+  // Cross-app intelligence for crypto coins.
+  const candidate = masterSignal?.candidates.find((c) => c.coinId === asset.id) ?? null;
+  const spaeher = newsItems.length > 0 ? runSpaeher(newsItems) : null;
+  const personas = (masterSignal && backtestSummary)
+    ? evaluatePersonas(masterSignal, backtestSummary, spaeher)
+    : [];
+  const personaTakesOnThisCoin = personas.map((p) => ({
+    persona: p,
+    isMyTarget: p.target?.coinId === asset.id
+  }));
+  const coinSentiment = spaeher?.perCoin.find((c) => c.coin.toUpperCase() === asset.ticker.toUpperCase()) ?? null;
+  const setupSimilarity = (candidate && backtestSummary)
+    ? computeSetupSimilarity(backtestSummary.safeTrades, {
+        coinId: candidate.coinId, ticker: candidate.symbol, passedCount: candidate.passedCount
+      })
+    : null;
+  const coinNews = newsItems.filter((n) => {
+    const t = n.title.toUpperCase();
+    return t.includes(asset.ticker.toUpperCase()) || t.includes(asset.name.toUpperCase());
+  }).slice(0, 5);
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
@@ -208,6 +249,122 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
               <strong className="text-amber-300">Gegenargumente:</strong> {recommendation.counterArguments.join(' · ')}
             </div>
           )}
+        </section>
+      )}
+
+      {/* Was die drei Firmen zu diesem Coin sagen */}
+      {personas.length > 0 && (
+        <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Was die drei Firmen sagen</h2>
+            <p className="mt-1 text-[11px] text-slate-500">
+              {candidate
+                ? `${asset.ticker} hat aktuell ${candidate.passedCount} von 12 Häkchen, Struktur ${candidate.structure === 'uptrend' ? 'aufwärts' : candidate.structure === 'downtrend' ? 'abwärts' : 'seitwärts'}${candidate.nearSupport ? ', nahe Unterstützung' : ''}.`
+                : `${asset.ticker} steht aktuell auf keiner Firma-Liste — kein erfülltes Mindest-Setup.`}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            {personaTakesOnThisCoin.map(({ persona: p, isMyTarget }) => {
+              const isBuyOnThis = p.verdict === 'BUY' && isMyTarget;
+              const tone = isBuyOnThis ? 'border-emerald-400/50 bg-emerald-950/30' : 'border-slate-700 bg-slate-900/40';
+              const status = isBuyOnThis
+                ? `kauft ${asset.ticker} heute`
+                : isMyTarget
+                ? `hat ${asset.ticker} im Visier, wartet aber`
+                : `schaut auf ${p.target?.symbol ?? '—'}, nicht auf ${asset.ticker}`;
+              return (
+                <div key={p.persona} className={`rounded-lg border-2 p-3 ${tone}`}>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-white">{p.name}</span>
+                    <span className={`text-[9px] font-bold uppercase tracking-wider ${isBuyOnThis ? 'text-emerald-300' : 'text-slate-500'}`}>
+                      {isBuyOnThis ? 'KAUFEN' : 'WARTEN'}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-300">{status}.</p>
+                  {isMyTarget && (
+                    <p className="mt-1 text-[10px] text-slate-500">{p.rationale}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Späher-Sentiment für diesen Coin */}
+      {coinSentiment && (
+        <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Späher-Sentiment für {asset.ticker}</h2>
+          <div className="flex flex-wrap items-baseline gap-2 text-[12px]">
+            <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+              coinSentiment.tilt === 'bullisch' ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200' :
+              coinSentiment.tilt === 'bärisch' ? 'border-rose-400/50 bg-rose-500/15 text-rose-200' :
+              'border-slate-700 bg-slate-900 text-slate-300'
+            }`}>
+              {coinSentiment.tilt}
+            </span>
+            <span className="text-slate-200">
+              {coinSentiment.bullishCount} bullische vs {coinSentiment.bearishCount} bärische Headlines heute
+            </span>
+            {coinSentiment.topItem && (
+              <Link href={`/news/${coinSentiment.topItem.id}`} className="text-[11px] text-sky-300 hover:text-sky-200">
+                Top-News lesen →
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Setup-Ähnlichkeit aus dem Backtest */}
+      {setupSimilarity && (
+        <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Vergleichbare {asset.ticker}-Setups historisch</h2>
+          <p className="text-[12px] text-slate-200">{setupSimilarity.oneLineVerdict}</p>
+          {setupSimilarity.matchCount > 0 && (
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-center">
+                <div className="text-[9px] uppercase tracking-wider text-slate-500">Matches</div>
+                <div className="font-mono text-sm font-bold text-slate-100">{setupSimilarity.matchCount}</div>
+              </div>
+              <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-center">
+                <div className="text-[9px] uppercase tracking-wider text-slate-500">Trefferquote</div>
+                <div className={`font-mono text-sm font-bold ${(setupSimilarity.hitRatePct ?? 0) >= 50 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                  {setupSimilarity.hitRatePct?.toFixed(0) ?? '—'}%
+                </div>
+              </div>
+              <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-center">
+                <div className="text-[9px] uppercase tracking-wider text-slate-500">Ø Gewinn</div>
+                <div className="font-mono text-sm font-bold text-emerald-300">
+                  +{setupSimilarity.avgWinPct?.toFixed(1) ?? '—'}%
+                </div>
+              </div>
+              <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-center">
+                <div className="text-[9px] uppercase tracking-wider text-slate-500">Ø Verlust</div>
+                <div className="font-mono text-sm font-bold text-rose-300">
+                  {setupSimilarity.avgLossPct?.toFixed(1) ?? '—'}%
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Deutsche News, gefiltert auf diesen Coin */}
+      {coinNews.length > 0 && (
+        <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">{asset.ticker} in den deutschen News</h2>
+          <ul className="space-y-1.5">
+            {coinNews.map((n) => (
+              <li key={n.id}>
+                <Link href={`/news/${n.id}`} className="block rounded-lg border border-slate-800 bg-slate-950/40 p-2.5 transition hover:border-emerald-500/40">
+                  <p className="text-[13px] font-semibold leading-snug text-slate-100">{n.title}</p>
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    <span className="text-slate-400">{n.source}</span> · {new Date(n.publishedAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' })}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
