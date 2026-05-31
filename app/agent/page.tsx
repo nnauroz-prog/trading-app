@@ -5,6 +5,8 @@ import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 import { buildInternalDialog, InternalMessage } from '@/lib/agents/internal-messages';
+import { runSpaeher } from '@/lib/akademie/spaeher';
+import { getCryptoNews } from '@/lib/news/news-agent';
 import { AgentLog } from '@/components/agent-log';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { FirmaStandings } from '@/components/firma-standings';
@@ -56,8 +58,9 @@ function MessageRow({ msg }: { msg: InternalMessage }) {
 
 export default async function AgentPage() {
   const tradeMode: TradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, backtest] = await Promise.all([buildMasterSignal(tradeMode), getBacktestSummary()]);
-  const personas = evaluatePersonas(report, backtest);
+  const [report, backtest, newsItems] = await Promise.all([buildMasterSignal(tradeMode), getBacktestSummary(), getCryptoNews()]);
+  const spaeher = runSpaeher(newsItems);
+  const personas = evaluatePersonas(report, backtest, spaeher);
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">

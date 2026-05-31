@@ -1,4 +1,5 @@
 import { MasterSignalReport, RankedCandidate } from '@/lib/analysis/master-signal-engine';
+import { SpaeherReport } from '@/lib/akademie/spaeher';
 
 export type VoteTone = 'good' | 'neutral' | 'bad';
 
@@ -26,7 +27,15 @@ export interface RiskReport {
   reason: string;
 }
 
-export type SubAgentReport = AnalystReport | ScoutReport | RiskReport;
+export interface NewsReport {
+  role: 'news';
+  title: 'News-Watcher';
+  vote: 'POSITIV' | 'NEUTRAL' | 'NEGATIV' | 'KEINE_DATEN';
+  voteTone: VoteTone;
+  reason: string;
+}
+
+export type SubAgentReport = AnalystReport | ScoutReport | RiskReport | NewsReport;
 
 // Markt-Analyst: liest die übergeordnete Marktlage (Stimmung, BTC, Crowd) und
 // votet positiv/neutral/negativ unabhängig vom konkreten Setup.
@@ -107,5 +116,43 @@ export function riskVote(target: RankedCandidate | null): RiskReport {
   return {
     role: 'risk', title: 'Risiko-Manager', vote: 'VETO', voteTone: 'bad',
     reason: `${issues.length === 1 ? 'Problem' : `${issues.length} Probleme`}: ${issues.join(' · ')}.`
+  };
+}
+
+// News-Watcher: prüft, was der Späher zum Ziel-Coin sagt. Hat KEIN Veto-Recht
+// (News allein soll keinen guten Trade kippen), aber die anderen Agenten
+// (vor allem der konservative CEO) ziehen sein Votum in die Entscheidung ein.
+export function newsVote(target: RankedCandidate | null, spaeher: SpaeherReport | null): NewsReport {
+  if (!target) {
+    return { role: 'news', title: 'News-Watcher', vote: 'KEINE_DATEN', voteTone: 'neutral', reason: 'Kein Ziel-Coin zum Prüfen.' };
+  }
+  if (!spaeher || spaeher.items.length === 0) {
+    return { role: 'news', title: 'News-Watcher', vote: 'KEINE_DATEN', voteTone: 'neutral', reason: 'Späher hat heute keine News zum Auswerten.' };
+  }
+  const symbolUpper = target.symbol.toUpperCase();
+  const coinNews = spaeher.perCoin.find((c) => c.coin === symbolUpper);
+  if (!coinNews) {
+    return {
+      role: 'news', title: 'News-Watcher', vote: 'NEUTRAL', voteTone: 'neutral',
+      reason: `Heute keine ${symbolUpper}-News im Späher — keine Auffälligkeiten.`
+    };
+  }
+  const bull = coinNews.bullishCount;
+  const bear = coinNews.bearishCount;
+  if (coinNews.tilt === 'bullisch') {
+    return {
+      role: 'news', title: 'News-Watcher', vote: 'POSITIV', voteTone: 'good',
+      reason: `${symbolUpper}-News bullisch (${bull} bullisch vs ${bear} bärisch).`
+    };
+  }
+  if (coinNews.tilt === 'bärisch') {
+    return {
+      role: 'news', title: 'News-Watcher', vote: 'NEGATIV', voteTone: 'bad',
+      reason: `${symbolUpper}-News bärisch (${bear} bärisch vs ${bull} bullisch) — Vorsicht.`
+    };
+  }
+  return {
+    role: 'news', title: 'News-Watcher', vote: 'NEUTRAL', voteTone: 'neutral',
+    reason: `${symbolUpper}-News gemischt (${bull}↑ / ${bear}↓) — keine klare Richtung.`
   };
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { analystVote, scoutVote, riskVote } from '@/lib/agents/sub-agents';
+import { analystVote, scoutVote, riskVote, newsVote } from '@/lib/agents/sub-agents';
 import { MasterSignalReport, RankedCandidate } from '@/lib/analysis/master-signal-engine';
+import { CoinSentiment, ScoredNews, SpaeherReport } from '@/lib/akademie/spaeher';
 
 function makeReport(overrides: Partial<MasterSignalReport> = {}): MasterSignalReport {
   const base: MasterSignalReport = {
@@ -115,5 +116,43 @@ describe('riskVote', () => {
   it('VETO when not confirmed across multiple candles', () => {
     const r = riskVote(makeCandidate({ confirmed: false }));
     expect(r.vote).toBe('VETO');
+  });
+});
+
+function makeSpaeher(perCoin: CoinSentiment[]): SpaeherReport {
+  const items: ScoredNews[] = perCoin.length > 0
+    ? [{ title: 'x', link: 'https://x', source: 'BTC-ECHO', publishedAt: Date.now(), score: 50, impact: 'neutral', mentionedCoins: perCoin.map((c) => c.coin), reasons: [] }]
+    : [];
+  return { items, topPick: items[0] ?? null, summary: '', perCoin };
+}
+
+describe('newsVote', () => {
+  it('KEINE_DATEN without target', () => {
+    const r = newsVote(null, makeSpaeher([]));
+    expect(r.vote).toBe('KEINE_DATEN');
+  });
+  it('KEINE_DATEN when Späher is empty', () => {
+    const r = newsVote(makeCandidate(), null);
+    expect(r.vote).toBe('KEINE_DATEN');
+  });
+  it('POSITIV when target coin tilt is bullish', () => {
+    const r = newsVote(makeCandidate({ symbol: 'ETH' }), makeSpaeher([
+      { coin: 'ETH', bullishCount: 3, bearishCount: 0, neutralCount: 0, netScore: 120, tilt: 'bullisch', topItem: null }
+    ]));
+    expect(r.vote).toBe('POSITIV');
+    expect(r.voteTone).toBe('good');
+  });
+  it('NEGATIV when target coin tilt is bearish', () => {
+    const r = newsVote(makeCandidate({ symbol: 'ETH' }), makeSpaeher([
+      { coin: 'ETH', bullishCount: 0, bearishCount: 3, neutralCount: 0, netScore: -120, tilt: 'bärisch', topItem: null }
+    ]));
+    expect(r.vote).toBe('NEGATIV');
+    expect(r.voteTone).toBe('bad');
+  });
+  it('NEUTRAL when coin not mentioned in news', () => {
+    const r = newsVote(makeCandidate({ symbol: 'SOL' }), makeSpaeher([
+      { coin: 'BTC', bullishCount: 2, bearishCount: 0, neutralCount: 0, netScore: 80, tilt: 'bullisch', topItem: null }
+    ]));
+    expect(r.vote).toBe('NEUTRAL');
   });
 });
