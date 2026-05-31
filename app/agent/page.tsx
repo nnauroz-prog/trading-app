@@ -22,6 +22,7 @@ import { FirmaStandings } from '@/components/firma-standings';
 import { FirmaRankingPanel } from '@/components/firma-ranking';
 import { FirmaAccuracyPanel } from '@/components/firma-accuracy-panel';
 import { FirmaCoinHeatmap } from '@/components/firma-coin-heatmap';
+import { FirmaQuiz } from '@/components/firma-quiz';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -220,6 +221,7 @@ export default async function AgentPage() {
       <FirmaBacktestTable report={firmaBacktest} />
       <FirmaAccuracyPanel />
       <FirmaCoinHeatmap />
+      <FirmaQuiz />
       <FirmaRankingPanel />
       <FirmaStandings />
       <VorstandLog />
