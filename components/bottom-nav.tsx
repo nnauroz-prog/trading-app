@@ -28,7 +28,7 @@ export function BottomNav() {
           </Link>
         </li>
         <li>
-          <Link href="/warnings" className="flex flex-col items-center gap-0.5 py-2 text-slate-300 hover:text-rose-300">
+          <Link href="/risk" className="flex flex-col items-center gap-0.5 py-2 text-slate-300 hover:text-rose-300">
             <span aria-hidden className="text-base leading-none">⚠️</span>
             <span>Risiko</span>
           </Link>

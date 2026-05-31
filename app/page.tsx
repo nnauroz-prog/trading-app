@@ -21,6 +21,7 @@ import { WatchlistStrip } from '@/components/watchlist-strip';
 import { DiffVsYesterday } from '@/components/diff-vs-yesterday';
 import { FirstVisitHint } from '@/components/first-visit-hint';
 import { TriggeredAlertsStrip } from '@/components/triggered-alerts-strip';
+import { InstallPrompt } from '@/components/install-prompt';
 import { DailyCommandCenter } from '@/components/daily-command-center';
 import { AssetClassRadar, AssetClassCard } from '@/components/asset-class-radar';
 import { KapitalSchutz } from '@/components/kapital-schutz';
@@ -281,6 +282,8 @@ export default async function HomePage() {
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
       <FirstVisitHint />
+
+      <InstallPrompt />
 
       <TriggeredAlertsStrip latestPrices={latestPrices} />
 
