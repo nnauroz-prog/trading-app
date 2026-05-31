@@ -5,6 +5,8 @@ import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 import { AgentLog } from '@/components/agent-log';
+import { FirmaRecorder } from '@/components/firma-recorder';
+import { FirmaStandings } from '@/components/firma-standings';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -112,6 +114,9 @@ export default async function AgentPage() {
           );
         })}
       </section>
+
+      <FirmaRecorder personas={personas} generatedAt={report.generatedAt} />
+      <FirmaStandings />
 
       <AgentLog />
 
