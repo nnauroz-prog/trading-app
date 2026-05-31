@@ -1,5 +1,9 @@
+'use client';
+
 import Link from 'next/link';
-import { AgentVerdict } from '@/lib/agents/personas';
+import { useEffect, useState } from 'react';
+import { AgentVerdict, PersonaId } from '@/lib/agents/personas';
+import { FIRMA_PREFERENCE_CHANGED_EVENT, loadFirmaPreference } from '@/lib/firma-preference';
 
 function fmtPrice(v: number): string {
   if (v >= 1000) return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -18,6 +22,13 @@ function gradeClasses(g: 'A' | 'B' | 'C' | 'D' | null | undefined): string {
 // Compact strip showing today's three CEO verdicts at a glance on the home page.
 // Each tile links to /agent for the full team view.
 export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
+  const [preferred, setPreferred] = useState<PersonaId | null>(null);
+  useEffect(() => {
+    setPreferred(loadFirmaPreference());
+    const sync = () => setPreferred(loadFirmaPreference());
+    window.addEventListener(FIRMA_PREFERENCE_CHANGED_EVENT, sync);
+    return () => window.removeEventListener(FIRMA_PREFERENCE_CHANGED_EVENT, sync);
+  }, []);
   const buyCount = personas.filter((p) => p.verdict === 'BUY').length;
   return (
     <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3">
@@ -32,11 +43,17 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
       <div className="grid grid-cols-3 gap-2">
         {personas.map((p) => {
           const isBuy = p.verdict === 'BUY';
-          const tone = isBuy ? 'border-emerald-400/60 bg-emerald-950/30' : 'border-slate-700 bg-slate-900/60';
+          const isFav = preferred === p.persona;
+          const tone = isFav
+            ? (isBuy ? 'border-amber-400/70 bg-emerald-950/30 ring-2 ring-amber-400/50' : 'border-amber-400/70 bg-slate-900/60 ring-2 ring-amber-400/50')
+            : (isBuy ? 'border-emerald-400/60 bg-emerald-950/30' : 'border-slate-700 bg-slate-900/60');
           return (
             <Link key={p.persona} href="/agent" className={`block space-y-1 rounded-lg border-2 p-2 transition hover:border-sky-400/60 ${tone}`}>
               <div className="flex items-baseline justify-between gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-white">{p.name}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white">
+                  {isFav && <span className="mr-0.5 text-amber-300" title="Deine Lieblings-Firma">★</span>}
+                  {p.name}
+                </span>
                 <span className={`rounded border px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider ${isBuy ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-100' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
                   {isBuy ? 'KAUFEN' : 'WARTEN'}
                 </span>
