@@ -20,6 +20,7 @@ import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
 import { DiffVsYesterday } from '@/components/diff-vs-yesterday';
 import { FirstVisitHint } from '@/components/first-visit-hint';
+import { TriggeredAlertsStrip } from '@/components/triggered-alerts-strip';
 import { DailyCommandCenter } from '@/components/daily-command-center';
 import { AssetClassRadar, AssetClassCard } from '@/components/asset-class-radar';
 import { KapitalSchutz } from '@/components/kapital-schutz';
@@ -263,6 +264,7 @@ export default async function HomePage() {
       <header className="space-y-3">
         <nav className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link href="/chancen" className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 transition hover:border-emerald-400/50">Chancen</Link>
+          <Link href="/compare" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Vergleich</Link>
           <Link href="/agent" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Firmen</Link>
           <Link href="/intel" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Recherche</Link>
           <Link href="/news" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">News</Link>
@@ -277,6 +279,8 @@ export default async function HomePage() {
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
       <FirstVisitHint />
+
+      <TriggeredAlertsStrip latestPrices={latestPrices} />
 
       {/* 1. Daily Command Center */}
       <DailyCommandCenter report={commandCenter} />

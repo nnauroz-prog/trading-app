@@ -20,6 +20,7 @@ import { InteractiveChart } from '@/components/interactive-chart';
 import { WatchlistToggle } from '@/components/watchlist-toggle';
 import { DataQualityBadge } from '@/components/data-quality-badge';
 import { QuickPositionButton } from '@/components/quick-position-button';
+import { CoinAlertForm } from '@/components/coin-alert-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -230,6 +231,10 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
         <p className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-500">
           Keine Preisdaten verfügbar.
         </p>
+      )}
+
+      {snapshot && (
+        <CoinAlertForm coinId={asset.id} symbol={asset.ticker} currentPrice={snapshot.price} />
       )}
 
       {chaseStatus.kind === 'chase' && (
