@@ -28,9 +28,9 @@ function NewsRow({ item }: { item: ScoredNews }) {
   return (
     <li className="space-y-1 rounded-lg border border-slate-800 bg-slate-950/40 p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-[13px] font-medium text-slate-100 hover:text-emerald-300">
+        <Link href={`/news/${item.id}`} className="text-[13px] font-medium text-slate-100 hover:text-emerald-300">
           {item.title}
-        </a>
+        </Link>
         <div className="flex items-center gap-1.5 shrink-0">
           <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${impactClasses(item.impact)}`}>
             {impactLabel(item.impact)}

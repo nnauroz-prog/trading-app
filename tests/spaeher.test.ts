@@ -5,11 +5,14 @@ import { NewsItem } from '@/lib/news/news-agent';
 const now = new Date('2026-05-31T12:00:00Z').getTime();
 
 function news(over: Partial<NewsItem>): NewsItem {
+  const link = over.link ?? ('https://example.com/' + Math.random());
   return {
+    id: Buffer.from(link).toString('base64url'),
     title: 'Generic news',
-    link: 'https://example.com/' + Math.random(),
+    link,
     source: 'BTC-ECHO',
     publishedAt: now - 1000 * 60 * 60, // 1h old
+    description: null,
     ...over
   };
 }

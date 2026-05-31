@@ -1,10 +1,22 @@
 import { unstable_cache } from 'next/cache';
 
 export interface NewsItem {
+  id: string; // stable hash of link, used for in-app routing
   title: string;
-  link: string;
+  link: string; // original article URL (external)
   source: string;
   publishedAt: number;
+  description: string | null; // RSS-provided summary, plain text
+}
+
+// Stable, URL-safe identifier derived from the article link. base64url so it
+// fits cleanly into a Next.js dynamic route segment.
+export function newsIdFromLink(link: string): string {
+  return Buffer.from(link).toString('base64url');
+}
+
+export function linkFromNewsId(id: string): string {
+  return Buffer.from(id, 'base64url').toString();
 }
 
 // Deutsche Krypto-Newsquellen (öffentliche RSS-Feeds, keine API-Keys).
@@ -25,6 +37,18 @@ function decodeEntities(s: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&apos;/g, "'")
+    .trim();
+}
+
+// Strip HTML tags from RSS description payloads. Many feeds embed
+// <p>, <a>, image tags etc. — we want plain text only.
+function stripHtml(s: string): string {
+  return s
+    .replace(/<br\s*\/?>(?!$)/gi, '\n')
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
@@ -50,7 +74,9 @@ function parseRss(xml: string, sourceName: string): NewsItem[] {
     if (!title || !link) continue;
     const ts = pubRaw ? new Date(pubRaw).getTime() : Date.now();
     if (!Number.isFinite(ts)) continue;
-    items.push({ title, link, source: sourceName, publishedAt: ts });
+    const descRaw = getTag(block, 'description') ?? getTag(block, 'summary') ?? getTag(block, 'content');
+    const description = descRaw ? stripHtml(descRaw) : null;
+    items.push({ id: newsIdFromLink(link), title, link, source: sourceName, publishedAt: ts, description });
   }
   return items;
 }
@@ -84,4 +110,4 @@ async function compute(): Promise<NewsItem[]> {
 
 // Cached at 10 minutes — news doesn't change that fast and we don't want to
 // hammer the feeds on every page render.
-export const getCryptoNews = unstable_cache(compute, ['crypto-news-de-v1'], { revalidate: 600 });
+export const getCryptoNews = unstable_cache(compute, ['crypto-news-de-v2'], { revalidate: 600 });
