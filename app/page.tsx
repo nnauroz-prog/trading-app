@@ -12,6 +12,7 @@ import { LiveFeed } from '@/components/live-feed';
 import { TodayTradeCard } from '@/components/today-trade-card';
 import { CandidateList } from '@/components/candidate-list';
 import { TodoBox } from '@/components/todo-box';
+import { DailyBriefing } from '@/components/daily-briefing';
 import { MarketBriefing } from '@/components/market-briefing';
 import { SafetyCheck } from '@/components/safety-check';
 import { ProofCard } from '@/components/proof-card';
@@ -136,6 +137,8 @@ export default async function HomePage() {
           {tradeMode === 'daytrade' ? 'Intraday · 5m/15m/1h' : 'Swing · 1h/4h/1d'}
         </span>
       </div>
+
+      <DailyBriefing report={masterSignal} backtest={backtestSummary} />
 
       <TodoBox report={masterSignal} />
 

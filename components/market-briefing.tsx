@@ -10,9 +10,9 @@ export function MarketBriefing({ report }: { report: MasterSignalReport }) {
   const steps = buildMarketBriefing(report);
 
   return (
-    <details className="rounded-2xl border border-slate-800/80 bg-slate-900/40">
+    <details open className="rounded-2xl border border-slate-800/80 bg-slate-900/40">
       <summary className="cursor-pointer p-5 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
-        ▸ So lese ich den Markt heute (Profi-Analyse, Schritt für Schritt)
+        So lese ich den Markt heute (Profi-Analyse, Schritt für Schritt)
       </summary>
       <ol className="space-y-2 px-5 pb-5">
         {steps.map((s, i) => (
