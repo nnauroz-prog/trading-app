@@ -262,6 +262,7 @@ export default async function HomePage() {
       <AutoRefresh intervalMs={20000} />
       <header className="space-y-3">
         <nav className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Link href="/chancen" className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 transition hover:border-emerald-400/50">Chancen</Link>
           <Link href="/agent" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Firmen</Link>
           <Link href="/intel" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Recherche</Link>
           <Link href="/news" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">News</Link>
