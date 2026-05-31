@@ -12,6 +12,9 @@ export interface FirmaDecision {
   stopLoss: number | null;
   takeProfit1: number | null;
   safetyGrade: 'A' | 'B' | 'C' | 'D' | null;
+  // Häkchen (Konfluenz-Anzahl) of the target setup on this day. Used by
+  // the persistence detector to grade how strong a multi-day setup is.
+  passedCount: number | null;
   // Snapshot of the three sub-agent votes — useful for later audit.
   analystVote: 'POSITIV' | 'NEUTRAL' | 'NEGATIV';
   scoutVote: 'STARK' | 'MITTEL' | 'SCHWACH';
@@ -19,7 +22,7 @@ export interface FirmaDecision {
   ceoFinalWord: string;
 }
 
-const STORAGE_KEY = 'trading-app.firma-decisions-v1';
+const STORAGE_KEY = 'trading-app.firma-decisions-v2';
 const MAX_ENTRIES = 365 * 3; // ~3 firmas × 1 year
 
 export const FIRMA_DECISIONS_CHANGED_EVENT = 'trading-app:firma-decisions-changed';
@@ -124,7 +127,7 @@ export function buildFirmaDecisions(
     persona: PersonaId;
     name: string;
     verdict: 'BUY' | 'WAIT';
-    target: { symbol: string; entry: number; stopLoss: number; takeProfit1: number } | null;
+    target: { symbol: string; entry: number; stopLoss: number; takeProfit1: number; passedCount?: number } | null;
     safety: { grade: 'A' | 'B' | 'C' | 'D' } | null;
     team: Array<{ role: string; vote: string }>;
     ceoFinalWord: string;
@@ -146,6 +149,7 @@ export function buildFirmaDecisions(
       entry: p.target?.entry ?? null,
       stopLoss: p.target?.stopLoss ?? null,
       takeProfit1: p.target?.takeProfit1 ?? null,
+      passedCount: p.target?.passedCount ?? null,
       safetyGrade: p.safety?.grade ?? null,
       analystVote: analyst as FirmaDecision['analystVote'],
       scoutVote: scout as FirmaDecision['scoutVote'],
