@@ -6,6 +6,7 @@ import { evaluatePersonas } from '@/lib/agents/personas';
 import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 import { buildInternalDialog, InternalMessage } from '@/lib/agents/internal-messages';
 import { vorstandMediation, VorstandVerdict } from '@/lib/agents/vorstand';
+import { CEO_BIOS, SUBAGENT_BIOS } from '@/lib/agents/personalities';
 import { VorstandRecorder } from '@/components/vorstand-recorder';
 import { VorstandLog } from '@/components/vorstand-log';
 import { getFirmaBacktest } from '@/lib/agents/firma-backtest';
@@ -155,6 +156,23 @@ export default async function AgentPage() {
               <details className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[10px]">
                 <summary className="cursor-pointer text-slate-300">Firmen-Manifest</summary>
                 <p className="mt-1.5 leading-relaxed text-slate-400">{p.manifest}</p>
+                <div className="mt-2 border-t border-slate-800 pt-2">
+                  <div className="text-[9px] uppercase tracking-wider text-slate-500">CEO</div>
+                  <div className="text-[11px] font-semibold text-slate-200">{CEO_BIOS[p.persona].name}</div>
+                  <p className="text-[10px] italic text-slate-400">{CEO_BIOS[p.persona].bio}</p>
+                  <p className="mt-1 text-[10px] text-emerald-300">„{CEO_BIOS[p.persona].quote}“</p>
+                </div>
+                <div className="mt-2 border-t border-slate-800 pt-2">
+                  <div className="text-[9px] uppercase tracking-wider text-slate-500">Team</div>
+                  <ul className="mt-1 space-y-1">
+                    {Object.entries(SUBAGENT_BIOS[p.persona]).map(([role, bio]) => (
+                      <li key={role} className="text-[10px]">
+                        <span className="font-semibold text-slate-300">{bio.name}</span>
+                        <span className="text-slate-500"> · {bio.role}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </details>
 
               {p.target && (
