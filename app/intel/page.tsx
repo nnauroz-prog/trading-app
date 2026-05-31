@@ -14,6 +14,9 @@ import { runAllEmployees } from '@/lib/intel/employees';
 import { chefredakteurSynthesis } from '@/lib/intel/chefredakteur';
 import { EmployeeReport, IntelSignal } from '@/lib/intel/types';
 import { IntelHistoriker } from '@/components/intel-historiker';
+import { IntelRecorder } from '@/components/intel-recorder';
+import { IntelLog } from '@/components/intel-log';
+import { fetchAllTickers } from '@/lib/providers/binance-tickers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -60,15 +63,17 @@ function EmployeeCard({ r }: { r: EmployeeReport }) {
 
 export default async function IntelPage() {
   const tradeMode: TradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [masterSignal, backtest, newsItems, fearGreed, btcDominance, fundingBtc, fundingEth] = await Promise.all([
+  const [masterSignal, backtest, newsItems, fearGreed, btcDominance, fundingBtc, fundingEth, tickers] = await Promise.all([
     buildMasterSignal(tradeMode),
     getBacktestSummary(),
     getCryptoNews(),
     fetchFearGreed(),
     fetchBtcDominance(),
     fetchFundingRate('BTCUSDT'),
-    fetchFundingRate('ETHUSDT')
+    fetchFundingRate('ETHUSDT'),
+    fetchAllTickers()
   ]);
+  const btcPrice = tickers?.get('BTCUSDT')?.price ?? null;
   const spaeher = runSpaeher(newsItems);
   const eventWindow = computeEventWindow(listMacroEventsThisWeek());
   const cycle = computeHalvingCyclePosition();
@@ -155,6 +160,9 @@ export default async function IntelPage() {
           </div>
         </section>
       ))}
+
+      <IntelRecorder reports={reports} ceo={ceo} btcPrice={btcPrice} generatedAt={masterSignal.generatedAt} />
+      <IntelLog />
 
       <p className="rounded-xl border border-slate-700/60 bg-slate-950/40 p-3 text-[10px] leading-relaxed text-slate-500">
         Alle zwölf Mitarbeiter rechnen mit echten Datenquellen — Binance/Bybit-Preise, Bybit-Funding, Alternative.me-Fear&Greed, CoinGecko-Dominanz, deutsche Krypto-RSS, eigene Backtest-Ergebnisse, FOMC/CPI-Termin-Plan, Bitcoin-Halving-Position. Wer keine Daten kriegt, schreibt das ehrlich.

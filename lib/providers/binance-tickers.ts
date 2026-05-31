@@ -102,3 +102,10 @@ export async function fetchAllTickers(): Promise<Map<string, TickerSnapshot> | n
   if (binance && binance.size > 0) return binance;
   return fetchBybitTickers();
 }
+
+// Fetches both Binance and Bybit ticker maps in parallel — used by the
+// cross-exchange sanity check.
+export async function fetchBothTickerSources(): Promise<{ binance: Map<string, TickerSnapshot> | null; bybit: Map<string, TickerSnapshot> | null }> {
+  const [binance, bybit] = await Promise.all([fetchBinanceTickers(), fetchBybitTickers()]);
+  return { binance, bybit };
+}

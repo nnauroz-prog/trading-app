@@ -24,6 +24,10 @@ import { getLehrlingReport } from '@/lib/akademie/lehrling';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
 import { detectChaseSignals, detectOpportunitySignals, PriceContext } from '@/lib/analysis/chase-detector';
 import { ChaseWarning } from '@/components/chase-warning';
+import { fetchBothTickerSources } from '@/lib/providers/binance-tickers';
+import { checkCrossExchangePrices } from '@/lib/analysis/cross-exchange-check';
+import { CrossExchangeWarning } from '@/components/cross-exchange-warning';
+import { EhrlicheGrenzen } from '@/components/ehrliche-grenzen';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import { computeEventWindow } from '@/lib/calendar/event-window';
 import { WocheVoraus } from '@/components/woche-voraus';
@@ -55,7 +59,7 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport] = await Promise.all([
+  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources] = await Promise.all([
     buildTopPlayReport(),
     buildMasterSignal(tradeMode),
     fetchFearGreed(),
@@ -64,8 +68,10 @@ export default async function HomePage() {
     fetchFundingRate('ETHUSDT'),
     getBacktestSummary(),
     getCryptoNews(),
-    getLehrlingReport()
+    getLehrlingReport(),
+    fetchBothTickerSources()
   ]);
+  const crossExchange = checkCrossExchangePrices(exchangeSources.binance, exchangeSources.bybit);
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
   const spaeherReport = runSpaeher(newsItems);
@@ -174,6 +180,8 @@ export default async function HomePage() {
 
       <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} eventWindow={eventWindow} intelSignal={intelCeo.netSignal} />
 
+      <CrossExchangeWarning report={crossExchange} />
+
       <IntelStrip ceo={intelCeo} />
 
       <ChaseWarning chase={chaseSignals} opportunity={opportunitySignals} />
@@ -248,6 +256,8 @@ export default async function HomePage() {
 
         <PaperTradesPanel latestPrices={latestPrices} />
       </AdvancedOnly>
+
+      <EhrlicheGrenzen />
 
       <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
         Keine Finanzberatung. Stop-Loss respektieren. Vergangenheit ≠ Zukunft.
