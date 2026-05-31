@@ -75,6 +75,41 @@ export interface KellyResult {
   warning?: string;
 }
 
+export interface CompoundResult {
+  finalValue: number;
+  totalContributions: number;
+  totalGrowth: number;
+  yearlyValues: number[]; // index 0 = start, 1 = after year 1, ...
+}
+
+// Simple compound interest with optional annual contributions added at the
+// end of each year.
+export function compound(args: {
+  startAmount: number;
+  annualReturnPct: number;
+  years: number;
+  yearlyContribution: number;
+}): CompoundResult {
+  const { startAmount, annualReturnPct, years, yearlyContribution } = args;
+  if (startAmount < 0 || years <= 0) {
+    return { finalValue: startAmount, totalContributions: 0, totalGrowth: 0, yearlyValues: [startAmount] };
+  }
+  const r = annualReturnPct / 100;
+  let value = startAmount;
+  const yearlyValues: number[] = [Math.round(value * 100) / 100];
+  for (let y = 1; y <= years; y++) {
+    value = value * (1 + r) + yearlyContribution;
+    yearlyValues.push(Math.round(value * 100) / 100);
+  }
+  const totalContributions = startAmount + yearlyContribution * years;
+  return {
+    finalValue: Math.round(value * 100) / 100,
+    totalContributions,
+    totalGrowth: Math.round((value - totalContributions) * 100) / 100,
+    yearlyValues
+  };
+}
+
 // Kelly: f* = (p * b - (1 - p)) / b, where p = win rate, b = win/loss ratio
 export function kellyFraction(args: { winRatePct: number; avgWinPct: number; avgLossPct: number }): KellyResult {
   const { winRatePct, avgWinPct, avgLossPct } = args;
