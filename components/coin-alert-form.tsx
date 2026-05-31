@@ -20,6 +20,10 @@ export function CoinAlertForm({ coinId, symbol, currentPrice }: Props) {
     const t = parseFloat(target);
     if (!Number.isFinite(t) || t <= 0) return;
     addAlert(coinId, symbol, direction, t, note || undefined);
+    // Beim ersten Alert nach Erlaubnis für Browser-Benachrichtigungen fragen.
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => undefined);
+    }
     setAdded(true);
     setTimeout(() => { setAdded(false); setOpen(false); }, 1500);
   };
