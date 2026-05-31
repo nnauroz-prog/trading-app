@@ -14,6 +14,7 @@ import { CandidateList } from '@/components/candidate-list';
 import { TodoBox } from '@/components/todo-box';
 import { DailyBriefing } from '@/components/daily-briefing';
 import { MarketBriefing } from '@/components/market-briefing';
+import { AgentRecorder } from '@/components/agent-recorder';
 import { SafetyCheck } from '@/components/safety-check';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
@@ -125,6 +126,7 @@ export default async function HomePage() {
           <Link href="/backtest" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Backtest</Link>
           <Link href="/performance" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Performance</Link>
           <Link href="/strategie" className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 transition hover:border-emerald-400/50">Strategie</Link>
+          <Link href="/agent" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Agent</Link>
           <Link href="/gold" className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-200 transition hover:border-amber-400/50">Gold</Link>
           <Link href="/sport" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Sport</Link>
           <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Settings</Link>
@@ -138,19 +140,23 @@ export default async function HomePage() {
         </span>
       </div>
 
-      <DailyBriefing report={masterSignal} backtest={backtestSummary} />
+      <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
       <TodoBox report={masterSignal} />
 
-      <SafetyCheck report={masterSignal} backtest={backtestSummary} />
-
-      <MarketBriefing report={masterSignal} />
-
-      <NewsFeed items={newsItems} />
-
-      <ProofCard summary={backtestSummary} />
-
       <AccountConfigBar />
+
+      <AdvancedOnly>
+        <DailyBriefing report={masterSignal} backtest={backtestSummary} />
+
+        <SafetyCheck report={masterSignal} backtest={backtestSummary} />
+
+        <MarketBriefing report={masterSignal} />
+
+        <NewsFeed items={newsItems} />
+
+        <ProofCard summary={backtestSummary} />
+      </AdvancedOnly>
 
       <div className="flex justify-end">
         <ViewModeToggle />
