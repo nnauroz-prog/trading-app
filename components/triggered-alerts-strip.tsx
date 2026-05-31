@@ -3,6 +3,20 @@
 import { useEffect, useState } from 'react';
 import { ALERTS_CHANGED_EVENT, PriceAlert, deleteAlert, evaluateAlerts, loadAlerts } from '@/lib/price-alerts';
 
+function maybeFireNotification(alert: PriceAlert): void {
+  if (typeof window === 'undefined' || !('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    new Notification(`${alert.symbol} ${alert.direction === 'above' ? 'über' : 'unter'} $${alert.targetPrice}`, {
+      body: alert.note ?? 'Preis-Alert ausgelöst.',
+      icon: '/icon.svg',
+      tag: alert.id
+    });
+  } catch {
+    // ignore — notification permission can be revoked between checks
+  }
+}
+
 interface Props {
   latestPrices: Record<string, number | null>;
 }
@@ -24,7 +38,8 @@ export function TriggeredAlertsStrip({ latestPrices }: Props) {
 
   useEffect(() => {
     if (!mounted) return;
-    evaluateAlerts(latestPrices);
+    const newlyTriggered = evaluateAlerts(latestPrices);
+    for (const a of newlyTriggered) maybeFireNotification(a);
     setAlerts(loadAlerts());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted, JSON.stringify(latestPrices)]);
