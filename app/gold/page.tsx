@@ -65,10 +65,38 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
   const closes = hasData ? candles!.map((c) => c.close) : [];
   const highs = hasData ? candles!.map((c) => c.high) : [];
   const lows = hasData ? candles!.map((c) => c.low) : [];
-  const ema50 = hasData && closes.length >= 50 ? ema(closes, 50)[closes.length - 1] ?? null : null;
-  const ema200 = hasData && closes.length >= 200 ? ema(closes, 200)[closes.length - 1] ?? null : null;
+  const times = hasData ? candles!.map((c) => c.openTime) : [];
+  const ema50Series = hasData && closes.length >= 50 ? ema(closes, 50) : [];
+  const ema200Series = hasData && closes.length >= 200 ? ema(closes, 200) : [];
+  const ema50 = ema50Series.length > 0 ? ema50Series[ema50Series.length - 1] ?? null : null;
+  const ema200 = ema200Series.length > 0 ? ema200Series[ema200Series.length - 1] ?? null : null;
   const high52w = hasData ? Math.max(...highs.slice(-365)) : 0;
   const low52w = hasData ? Math.min(...lows.slice(-365)) : 0;
+
+  function nDayChange(n: number): number | null {
+    if (!hasData || closes.length < n + 1 || currentPrice === null) return null;
+    const past = closes[closes.length - 1 - n];
+    return past > 0 ? ((currentPrice - past) / past) * 100 : null;
+  }
+  const change30 = nDayChange(30);
+  const change90 = nDayChange(90);
+  const change180 = nDayChange(180);
+
+  function monthlyBreakdown(): { label: string; pct: number }[] {
+    if (!hasData) return [];
+    const byMonth = new Map<string, { first: number; last: number }>();
+    for (const c of candles!) {
+      const d = new Date(c.openTime);
+      const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+      const cur = byMonth.get(key);
+      if (!cur) byMonth.set(key, { first: c.close, last: c.close });
+      else cur.last = c.close;
+    }
+    return Array.from(byMonth.entries())
+      .map(([key, v]) => ({ label: key, pct: v.first > 0 ? ((v.last - v.first) / v.first) * 100 : 0 }))
+      .slice(-12);
+  }
+  const months = monthlyBreakdown();
 
   const todayIso = hasData ? isoFromMs(candles![candles!.length - 1].openTime) : '';
   const dateRaw = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : '';
@@ -164,7 +192,7 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
       )}
 
       {hasData && currentPrice !== null && (
-        <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
+        <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div>
               <div className="text-[10px] uppercase tracking-wider text-slate-500">Aktuell</div>
@@ -182,6 +210,46 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
               <div className="text-[10px] uppercase tracking-wider text-slate-500">200-Tage-Linie</div>
               <div className="font-mono text-lg font-bold text-slate-200">{ema200 !== null ? `$${ema200.toFixed(0)}` : '—'}</div>
             </div>
+          </div>
+
+          <GoldChart
+            times={times}
+            closes={closes}
+            ema50={ema50Series}
+            ema200={ema200Series}
+            purchaseDateIso={purchaseDateIso}
+            purchasePrice={purchasePrice}
+          />
+
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {[
+              { label: '30 Tage', v: change30 },
+              { label: '90 Tage', v: change90 },
+              { label: '180 Tage', v: change180 }
+            ].map((p) => (
+              <div key={p.label} className="rounded-lg border border-slate-700/60 bg-slate-950/40 p-2">
+                <div className="text-[10px] uppercase tracking-wider text-slate-500">{p.label}</div>
+                <div className={`font-mono text-sm font-bold ${p.v === null ? 'text-slate-500' : p.v >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                  {p.v === null ? '—' : `${p.v >= 0 ? '+' : ''}${p.v.toFixed(1)}%`}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {months.length > 0 && (
+        <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Monatliche Performance (letzte 12 Monate)</h2>
+          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-6">
+            {months.map((m) => (
+              <div key={m.label} className={`rounded-md border p-1.5 text-center ${m.pct >= 0 ? 'border-emerald-500/30 bg-emerald-950/15' : 'border-rose-500/30 bg-rose-950/15'}`}>
+                <div className="text-[9px] font-mono text-slate-500">{m.label}</div>
+                <div className={`font-mono text-xs font-bold ${m.pct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                  {m.pct >= 0 ? '+' : ''}{m.pct.toFixed(1)}%
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       )}
@@ -227,5 +295,89 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
         Daten: PAXG (Pax Gold, 1:1 gedeckt) über Binance/Bybit · Tagesdaten · max. 365 Tage Historie · keine Anlageberatung.
       </footer>
     </main>
+  );
+}
+
+function GoldChart({
+  times,
+  closes,
+  ema50,
+  ema200,
+  purchaseDateIso,
+  purchasePrice
+}: {
+  times: number[];
+  closes: number[];
+  ema50: number[];
+  ema200: number[];
+  purchaseDateIso: string | null;
+  purchasePrice: number | null;
+}) {
+  if (closes.length < 2) return null;
+  const W = 640;
+  const H = 180;
+  const padL = 36;
+  const padR = 8;
+  const padT = 6;
+  const padB = 16;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const allValues: number[] = [...closes, ...ema50.filter((v) => Number.isFinite(v)), ...ema200.filter((v) => Number.isFinite(v))];
+  if (purchasePrice !== null) allValues.push(purchasePrice);
+  const min = Math.min(...allValues);
+  const max = Math.max(...allValues);
+  const range = Math.max(1e-6, max - min);
+  const xs = (i: number) => padL + (i / (closes.length - 1)) * innerW;
+  const ys = (v: number) => padT + innerH - ((v - min) / range) * innerH;
+  const linePath = (series: number[]): string =>
+    series
+      .map((v, i) => (i === 0 ? `M${xs(i).toFixed(1)} ${ys(v).toFixed(1)}` : `L${xs(i).toFixed(1)} ${ys(v).toFixed(1)}`))
+      .join(' ');
+
+  let purchaseX: number | null = null;
+  if (purchaseDateIso) {
+    const target = new Date(purchaseDateIso + 'T00:00:00').getTime();
+    let bestIdx = 0;
+    let bestDiff = Infinity;
+    for (let i = 0; i < times.length; i++) {
+      const d = Math.abs(times[i] - target);
+      if (d < bestDiff) { bestDiff = d; bestIdx = i; }
+    }
+    purchaseX = xs(bestIdx);
+  }
+
+  const ticks = 4;
+  const yTicks = Array.from({ length: ticks + 1 }, (_, i) => min + (range * i) / ticks);
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between text-[10px] uppercase tracking-wider text-slate-500">
+        <span>Gold-Preis (PAXG, 1 Jahr)</span>
+        <span className="flex gap-2 normal-case tracking-normal">
+          <span className="text-amber-300">— Preis</span>
+          {ema50.length > 0 && <span className="text-blue-300">— 50 T</span>}
+          {ema200.length > 0 && <span className="text-emerald-300">— 200 T</span>}
+          {purchasePrice !== null && <span className="text-rose-300">— Kauf</span>}
+        </span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-1 block w-full" role="img" aria-label="Gold-Preis-Chart">
+        {yTicks.map((v, i) => (
+          <g key={i}>
+            <line x1={padL} y1={ys(v)} x2={padL + innerW} y2={ys(v)} stroke="#1e293b" strokeWidth={0.5} strokeDasharray="2,3" />
+            <text x={padL - 4} y={ys(v) + 3} fontSize={9} fill="#64748b" textAnchor="end" fontFamily="monospace">${v.toFixed(0)}</text>
+          </g>
+        ))}
+        {ema200.length > 0 && <path d={linePath(ema200)} stroke="#34d399" strokeWidth={1.2} fill="none" opacity={0.9} />}
+        {ema50.length > 0 && <path d={linePath(ema50)} stroke="#60a5fa" strokeWidth={1.1} fill="none" opacity={0.9} />}
+        <path d={linePath(closes)} stroke="#fbbf24" strokeWidth={1.3} fill="none" />
+        {purchaseX !== null && purchasePrice !== null && (
+          <g>
+            <line x1={purchaseX} y1={padT} x2={purchaseX} y2={padT + innerH} stroke="#fb7185" strokeWidth={1} strokeDasharray="3,3" opacity={0.7} />
+            <line x1={padL} y1={ys(purchasePrice)} x2={padL + innerW} y2={ys(purchasePrice)} stroke="#fb7185" strokeWidth={1} strokeDasharray="3,3" opacity={0.7} />
+            <circle cx={purchaseX} cy={ys(purchasePrice)} r={3.5} fill="#fb7185" />
+          </g>
+        )}
+      </svg>
+    </div>
   );
 }
