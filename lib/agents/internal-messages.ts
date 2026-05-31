@@ -1,10 +1,19 @@
 import { PersonaId } from '@/lib/agents/personas';
-import { AnalystReport, NewsReport, RiskReport, ScoutReport, SubAgentReport } from '@/lib/agents/sub-agents';
+import {
+  AnalystReport,
+  BacktestAuditReport,
+  LiquidityReport,
+  NewsReport,
+  PositionManagerReport,
+  RiskReport,
+  ScoutReport,
+  SubAgentReport
+} from '@/lib/agents/sub-agents';
 
 export interface InternalMessage {
-  from: 'analyst' | 'scout' | 'risk' | 'news' | 'ceo';
+  from: 'analyst' | 'scout' | 'risk' | 'news' | 'position' | 'liquidity' | 'backtest' | 'ceo';
   fromTitle: string;
-  to: 'analyst' | 'scout' | 'risk' | 'news' | 'ceo' | 'all';
+  to: 'analyst' | 'scout' | 'risk' | 'news' | 'position' | 'liquidity' | 'backtest' | 'ceo' | 'all';
   toTitle: string;
   body: string;
   tone: 'neutral' | 'warn' | 'agree';
@@ -22,6 +31,15 @@ function findRisk(team: SubAgentReport[]): RiskReport | null {
 function findNews(team: SubAgentReport[]): NewsReport | null {
   return (team.find((m) => m.role === 'news') as NewsReport | undefined) ?? null;
 }
+function findPosition(team: SubAgentReport[]): PositionManagerReport | null {
+  return (team.find((m) => m.role === 'position') as PositionManagerReport | undefined) ?? null;
+}
+function findLiquidity(team: SubAgentReport[]): LiquidityReport | null {
+  return (team.find((m) => m.role === 'liquidity') as LiquidityReport | undefined) ?? null;
+}
+function findBacktest(team: SubAgentReport[]): BacktestAuditReport | null {
+  return (team.find((m) => m.role === 'backtest') as BacktestAuditReport | undefined) ?? null;
+}
 
 // Build a small dialog between the three sub-agents and the CEO. Order:
 // 1) Analyst opens with the macro picture, 2) Scout reacts about the setup,
@@ -36,6 +54,9 @@ export function buildInternalDialog(
   const scout = findScout(team);
   const risk = findRisk(team);
   const news = findNews(team);
+  const position = findPosition(team);
+  const liquidity = findLiquidity(team);
+  const backtest = findBacktest(team);
   if (!analyst || !scout || !risk) return [];
 
   const messages: InternalMessage[] = [];
@@ -89,6 +110,36 @@ export function buildInternalDialog(
       toTitle: 'Team',
       body: newsPrefix,
       tone: news.vote === 'POSITIV' ? 'agree' : news.vote === 'NEGATIV' ? 'warn' : 'neutral'
+    });
+  }
+
+  if (liquidity && liquidity.vote !== 'KEINE_DATEN') {
+    messages.push({
+      from: 'liquidity',
+      fromTitle: 'Liquiditäts-Spezialist',
+      to: 'all', toTitle: 'Team',
+      body: liquidity.reason,
+      tone: liquidity.vote === 'TIEF' ? 'agree' : liquidity.vote === 'DUENN' ? 'warn' : 'neutral'
+    });
+  }
+
+  if (backtest && backtest.vote !== 'KEINE_DATEN') {
+    messages.push({
+      from: 'backtest',
+      fromTitle: 'Backtest-Auditor',
+      to: 'all', toTitle: 'Team',
+      body: backtest.reason,
+      tone: backtest.vote === 'BESTÄTIGT' ? 'agree' : backtest.vote === 'WIDERSPRUCH' ? 'warn' : 'neutral'
+    });
+  }
+
+  if (position && position.vote !== 'KEINE_POSITION' && verdict === 'BUY') {
+    messages.push({
+      from: 'position',
+      fromTitle: 'Position-Manager',
+      to: 'all', toTitle: 'Team',
+      body: position.reason,
+      tone: position.vote === 'KLEIN' ? 'neutral' : 'agree'
     });
   }
 
