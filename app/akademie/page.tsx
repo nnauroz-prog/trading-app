@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { getCryptoNews } from '@/lib/news/news-agent';
 import { runSpaeher, ScoredNews } from '@/lib/akademie/spaeher';
 import { getLehrlingReport, VariantResult } from '@/lib/akademie/lehrling';
+import { AkademieRecorder } from '@/components/akademie-recorder';
+import { AkademieLog } from '@/components/akademie-log';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -169,6 +171,9 @@ export default async function AkademiePage() {
           Vergangenheit ≠ Zukunft. Selbst die beste Variante hat keine Garantie — sie ist nur die, die in den letzten {lehrling.periodDays} Tagen den höchsten Erwartungswert gehabt hätte. Neuauswertung stündlich.
         </p>
       </section>
+
+      <AkademieRecorder lehrling={lehrling} spaeher={spaeher} />
+      <AkademieLog />
 
       <p className="rounded-xl border border-slate-700/60 bg-slate-950/40 p-3 text-[10px] leading-relaxed text-slate-500">
         Honesty-Check: keiner der beiden Agenten ist „schlauer als jeder Trader“. Der Späher folgt einer Stichwortliste, der Lehrling testet ein 18-Varianten-Raster. Was sie aber wirklich tun: konsistent, transparent, ohne Emotion. Genau dafür ist eine Spielwiese da.
