@@ -42,7 +42,14 @@ export function AkademieStrip({ spaeher, lehrling }: { spaeher: SpaeherReport; l
         </div>
 
         <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-2">
-          <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Lehrling-Empfehlung</div>
+          <div className="flex items-baseline justify-between">
+            <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Lehrling-Empfehlung</div>
+            {lehrling.best && (
+              <span className={`rounded border px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider ${lehrling.best.isRobust ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
+                {lehrling.best.isRobust ? 'ROBUST' : 'FRAGIL'}
+              </span>
+            )}
+          </div>
           {lehrling.best ? (
             <>
               <div className="mt-1 font-mono text-[11px] text-slate-200">
