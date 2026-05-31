@@ -16,7 +16,10 @@ import { DailyBriefing } from '@/components/daily-briefing';
 import { MarketBriefing } from '@/components/market-briefing';
 import { AgentRecorder } from '@/components/agent-recorder';
 import { FirmaStrip } from '@/components/firma-strip';
+import { AkademieStrip } from '@/components/akademie-strip';
 import { evaluatePersonas } from '@/lib/agents/personas';
+import { runSpaeher } from '@/lib/akademie/spaeher';
+import { getLehrlingReport } from '@/lib/akademie/lehrling';
 import { SafetyCheck } from '@/components/safety-check';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
@@ -41,7 +44,7 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems] = await Promise.all([
+  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport] = await Promise.all([
     buildTopPlayReport(),
     buildMasterSignal(tradeMode),
     fetchFearGreed(),
@@ -49,11 +52,13 @@ export default async function HomePage() {
     fetchFundingRate('BTCUSDT'),
     fetchFundingRate('ETHUSDT'),
     getBacktestSummary(),
-    getCryptoNews()
+    getCryptoNews(),
+    getLehrlingReport()
   ]);
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
   const personas = evaluatePersonas(masterSignal, backtestSummary);
+  const spaeherReport = runSpaeher(newsItems);
 
   const tickerChangesAll = report.tickers.map((t) => t.priceChangePct);
   const negShareAll = tickerChangesAll.filter((c) => c < -2).length / (tickerChangesAll.length || 1);
@@ -149,6 +154,8 @@ export default async function HomePage() {
       <TodoBox report={masterSignal} />
 
       <FirmaStrip personas={personas} />
+
+      <AkademieStrip spaeher={spaeherReport} lehrling={lehrlingReport} />
 
       <AccountConfigBar />
 
