@@ -19,6 +19,7 @@ import { FirmaStrip } from '@/components/firma-strip';
 import { VorstandStrip } from '@/components/vorstand-strip';
 import { vorstandMediation } from '@/lib/agents/vorstand';
 import { StreitBanner } from '@/components/streit-banner';
+import { KonsensStreakCard } from '@/components/konsens-streak-card';
 import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
 import { DiffVsYesterday } from '@/components/diff-vs-yesterday';
@@ -316,6 +317,7 @@ export default async function HomePage() {
       )}
 
       <VorstandStrip report={vorstandReport} />
+      <KonsensStreakCard />
       <StreitBanner />
 
       {/* 3. Kapital-Schutz */}
