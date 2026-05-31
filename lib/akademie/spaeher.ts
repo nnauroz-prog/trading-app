@@ -83,10 +83,50 @@ export function scoreNewsItem(item: NewsItem, now: number = Date.now()): ScoredN
   return { ...item, score, impact, mentionedCoins, reasons };
 }
 
+export interface CoinSentiment {
+  coin: string; // display ticker, e.g. 'BTC'
+  bullishCount: number;
+  bearishCount: number;
+  neutralCount: number;
+  netScore: number; // sum of (impact-signed) item scores; positive = bullish lean
+  tilt: 'bullisch' | 'bärisch' | 'neutral';
+  topItem: ScoredNews | null;
+}
+
 export interface SpaeherReport {
   items: ScoredNews[];
   topPick: ScoredNews | null;
   summary: string;
+  perCoin: CoinSentiment[]; // sorted by net-score absolute value (most opinionated first)
+}
+
+function aggregatePerCoin(items: ScoredNews[]): CoinSentiment[] {
+  const map = new Map<string, CoinSentiment>();
+  for (const item of items) {
+    for (const coin of item.mentionedCoins) {
+      if (!map.has(coin)) {
+        map.set(coin, { coin, bullishCount: 0, bearishCount: 0, neutralCount: 0, netScore: 0, tilt: 'neutral', topItem: null });
+      }
+      const entry = map.get(coin)!;
+      if (item.impact === 'bullish') {
+        entry.bullishCount++;
+        entry.netScore += item.score;
+      } else if (item.impact === 'bearish') {
+        entry.bearishCount++;
+        entry.netScore -= item.score;
+      } else {
+        entry.neutralCount++;
+      }
+      if (!entry.topItem || item.score > entry.topItem.score) entry.topItem = item;
+    }
+  }
+  const out: CoinSentiment[] = [];
+  for (const entry of map.values()) {
+    entry.tilt = entry.netScore > 25 ? 'bullisch' : entry.netScore < -25 ? 'bärisch' : 'neutral';
+    out.push(entry);
+  }
+  out.sort((a, b) => Math.abs(b.netScore) - Math.abs(a.netScore));
+  return out;
 }
 
 export function runSpaeher(items: NewsItem[], now: number = Date.now()): SpaeherReport {
@@ -104,5 +144,5 @@ export function runSpaeher(items: NewsItem[], now: number = Date.now()): Spaeher
   } else {
     summary = `Späher sieht gemischte Nachrichtenlage (${bullishCount} bullisch, ${bearishCount} bärisch, ${scored.length - bullishCount - bearishCount} neutral).`;
   }
-  return { items: scored, topPick: top, summary };
+  return { items: scored, topPick: top, summary, perCoin: aggregatePerCoin(scored) };
 }

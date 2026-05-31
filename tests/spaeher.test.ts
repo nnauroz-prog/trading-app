@@ -67,5 +67,22 @@ describe('runSpaeher', () => {
     const report = runSpaeher([], now);
     expect(report.items).toHaveLength(0);
     expect(report.topPick).toBeNull();
+    expect(report.perCoin).toEqual([]);
+  });
+
+  it('aggregates per-coin sentiment with a tilt label', () => {
+    const items: NewsItem[] = [
+      news({ title: 'Bitcoin Rallye treibt BTC auf Allzeithoch' }),
+      news({ title: 'BTC steigt weiter, bullisch' }),
+      news({ title: 'ETH stürzt ab — SEC-Klage' }),
+      news({ title: 'ETH Crash setzt sich fort' })
+    ];
+    const report = runSpaeher(items, now);
+    const btc = report.perCoin.find((c) => c.coin === 'BTC');
+    const eth = report.perCoin.find((c) => c.coin === 'ETH');
+    expect(btc?.tilt).toBe('bullisch');
+    expect(btc?.bullishCount).toBeGreaterThanOrEqual(1);
+    expect(eth?.tilt).toBe('bärisch');
+    expect(eth?.bearishCount).toBeGreaterThanOrEqual(1);
   });
 });
