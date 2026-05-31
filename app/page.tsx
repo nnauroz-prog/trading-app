@@ -17,6 +17,7 @@ import { MarketBriefing } from '@/components/market-briefing';
 import { AgentRecorder } from '@/components/agent-recorder';
 import { FirmaStrip } from '@/components/firma-strip';
 import { AkademieStrip } from '@/components/akademie-strip';
+import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getLehrlingReport } from '@/lib/akademie/lehrling';
@@ -31,7 +32,6 @@ import { TradeModeToggle } from '@/components/trade-mode-toggle';
 import { HeuteAufpassen } from '@/components/heute-aufpassen';
 import { AccountConfigBar } from '@/components/account-config-bar';
 import { PaperTradesPanel } from '@/components/paper-trades-panel';
-import { LiveClock } from '@/components/live-clock';
 import { MarketPulseTile } from '@/components/market-pulse-tile';
 import { CyclesTile } from '@/components/cycles-tile';
 import { DailyActionPlan } from '@/components/daily-action-plan';
@@ -113,53 +113,39 @@ export default async function HomePage() {
       <OnboardingGuide />
       <AutoRefresh intervalMs={20000} />
       <header className="space-y-3">
-        <div className="flex items-baseline justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-              Trading Desk
-            </div>
-            <LiveClock />
-          </div>
-        </div>
         <nav className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <Link href="/ideas" className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 transition hover:border-emerald-400/50">Idee</Link>
-          <Link href="/screener" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Screener</Link>
-          <Link href="/heatmap" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Markt</Link>
-          <Link href="/watchlist" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Watchlist</Link>
-          <Link href="/positions" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Positionen</Link>
-          <Link href="/warnings" className="shrink-0 rounded-md border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-rose-300 transition hover:border-rose-400/50">Warnung</Link>
-          <Link href="/journal" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Journal</Link>
-          <Link href="/dca" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">DCA</Link>
-          <Link href="/backtest" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Backtest</Link>
-          <Link href="/performance" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Performance</Link>
-          <Link href="/strategie" className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 transition hover:border-emerald-400/50">Strategie</Link>
-          <Link href="/agent" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Agent</Link>
+          <Link href="/agent" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Firmen</Link>
           <Link href="/akademie" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Akademie</Link>
+          <Link href="/positions" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Positionen</Link>
           <Link href="/gold" className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-200 transition hover:border-amber-400/50">Gold</Link>
           <Link href="/sport" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Sport</Link>
-          <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Settings</Link>
+          <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Mehr</Link>
         </nav>
       </header>
 
-      <div className="flex items-center justify-between gap-2">
-        <TradeModeToggle />
-        <span className="text-[10px] uppercase tracking-wider text-slate-500">
-          {tradeMode === 'daytrade' ? 'Intraday · 5m/15m/1h' : 'Swing · 1h/4h/1d'}
-        </span>
-      </div>
-
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
-      <TodoBox report={masterSignal} />
+      <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} />
 
-      <FirmaStrip personas={personas} />
-
-      <AkademieStrip spaeher={spaeherReport} lehrling={lehrlingReport} />
-
-      <AccountConfigBar />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <TradeModeToggle />
+          <span className="text-[10px] uppercase tracking-wider text-slate-500">
+            {tradeMode === 'daytrade' ? 'Intraday' : 'Swing'}
+          </span>
+        </div>
+        <ViewModeToggle />
+      </div>
 
       <AdvancedOnly>
+        <AccountConfigBar />
+
+        <TodoBox report={masterSignal} />
+
+        <FirmaStrip personas={personas} />
+
+        <AkademieStrip spaeher={spaeherReport} lehrling={lehrlingReport} />
+
         <DailyBriefing report={masterSignal} backtest={backtestSummary} />
 
         <SafetyCheck report={masterSignal} backtest={backtestSummary} />
@@ -170,10 +156,6 @@ export default async function HomePage() {
 
         <ProofCard summary={backtestSummary} />
       </AdvancedOnly>
-
-      <div className="flex justify-end">
-        <ViewModeToggle />
-      </div>
 
       <AdvancedOnly>
 
@@ -215,10 +197,8 @@ export default async function HomePage() {
       </AdvancedOnly>
 
       <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
-        Scant {report.tickers.length} Coins · {report.analyzedCount} deep-analyzed · {report.dataSource === 'binance' ? 'Live Binance Spot Data' : 'Engine offline'}
-        <span className="ml-2 text-slate-700">·</span>
-        <span className="ml-2">Keine Finanzberatung. Top-Play ist die aktuell beste Konfluenz im Universum, kein Versprechen. Stop-Loss respektieren. Vergangenheit ≠ Zukunft.</span>
-        <span className="ml-2 text-slate-700">· Build {(process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev').slice(0, 7)}</span>
+        Keine Finanzberatung. Stop-Loss respektieren. Vergangenheit ≠ Zukunft.
+        <span className="ml-2 text-slate-800">· Build {(process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev').slice(0, 7)}</span>
       </footer>
     </main>
   );
