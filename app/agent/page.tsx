@@ -7,6 +7,8 @@ import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 import { buildInternalDialog, InternalMessage } from '@/lib/agents/internal-messages';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getCryptoNews } from '@/lib/news/news-agent';
+import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
+import { computeEventWindow } from '@/lib/calendar/event-window';
 import { AgentLog } from '@/components/agent-log';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { FirmaStandings } from '@/components/firma-standings';
@@ -60,7 +62,8 @@ export default async function AgentPage() {
   const tradeMode: TradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
   const [report, backtest, newsItems] = await Promise.all([buildMasterSignal(tradeMode), getBacktestSummary(), getCryptoNews()]);
   const spaeher = runSpaeher(newsItems);
-  const personas = evaluatePersonas(report, backtest, spaeher);
+  const eventWindow = computeEventWindow(listMacroEventsThisWeek());
+  const personas = evaluatePersonas(report, backtest, spaeher, eventWindow);
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">

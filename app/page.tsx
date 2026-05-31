@@ -25,6 +25,7 @@ import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
 import { detectChaseSignals, detectOpportunitySignals, PriceContext } from '@/lib/analysis/chase-detector';
 import { ChaseWarning } from '@/components/chase-warning';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
+import { computeEventWindow } from '@/lib/calendar/event-window';
 import { WocheVoraus } from '@/components/woche-voraus';
 import { todayIsoBerlin } from '@/lib/agent-memory';
 import { SafetyCheck } from '@/components/safety-check';
@@ -64,7 +65,9 @@ export default async function HomePage() {
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
   const spaeherReport = runSpaeher(newsItems);
-  const personas = evaluatePersonas(masterSignal, backtestSummary, spaeherReport);
+  const upcomingMacroAll = listMacroEventsThisWeek();
+  const eventWindow = computeEventWindow(upcomingMacroAll);
+  const personas = evaluatePersonas(masterSignal, backtestSummary, spaeherReport, eventWindow);
   // Historical similarity for the headline coin (use the conservative firma's
   // pick if it BUYs, else the best-scoring candidate).
   const headlineFirma = personas.find((p) => p.verdict === 'BUY' && p.persona === 'conservative')
@@ -81,7 +84,7 @@ export default async function HomePage() {
   }));
   const chaseSignals = detectChaseSignals(spaeherReport.perCoin, priceCtx);
   const opportunitySignals = detectOpportunitySignals(spaeherReport.perCoin, priceCtx);
-  const upcomingMacro = listMacroEventsThisWeek();
+  const upcomingMacro = upcomingMacroAll;
   const todayIso = todayIsoBerlin();
 
   const tickerChangesAll = report.tickers.map((t) => t.priceChangePct);
@@ -149,7 +152,7 @@ export default async function HomePage() {
 
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
-      <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} />
+      <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} eventWindow={eventWindow} />
 
       <ChaseWarning chase={chaseSignals} opportunity={opportunitySignals} />
 
