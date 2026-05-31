@@ -90,7 +90,7 @@ export function AgentLog() {
                     <span className="font-mono font-bold text-white">{d.coin}</span>
                     {d.entry !== null && <span className="ml-2 font-mono text-[10px] text-slate-500">@${d.entry.toFixed(2)}</span>}
                     {d.passedCount !== null && d.totalCount !== null && (
-                      <span className="ml-2 font-mono text-[10px] text-slate-500">{d.passedCount}/{d.totalCount}</span>
+                      <span className="ml-2 font-mono text-[10px] text-slate-500" title="Erfüllte von 12 Kriterien">{d.passedCount} Häkchen</span>
                     )}
                   </>
                 ) : (

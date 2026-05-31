@@ -88,7 +88,7 @@ export function scoutVote(target: RankedCandidate | null): ScoutReport {
     title: 'Setup-Scout',
     vote,
     voteTone,
-    reason: `${target.symbol} hat ${target.passedCount}/12 Bestätigungen, Kurs ${structureNote}${supportNote}.`
+    reason: `${target.symbol} hat ${target.passedCount} von 12 Häkchen, Kurs ${structureNote}${supportNote}.`
   };
 }
 

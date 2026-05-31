@@ -116,7 +116,7 @@ export function evaluatePersonas(report: MasterSignalReport, backtest: BacktestS
         } else if (risk.vote === 'VETO') {
           rationale = `Sogar mir zu riskant: Risiko-Manager hat Veto eingelegt.`;
         } else if (report.marketMood === 'risk-off') {
-          rationale = `${target.passedCount}/12 — aber Markt ist im Abverkauf, sogar mir zu riskant.`;
+          rationale = `${target.passedCount} von 12 Häkchen — aber Markt ist im Abverkauf, sogar mir zu riskant.`;
         } else {
           rationale = `Scout-Setup ist zu schwach — selbst mir zu wenig.`;
         }
