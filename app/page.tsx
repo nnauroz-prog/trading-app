@@ -21,6 +21,7 @@ import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getLehrlingReport } from '@/lib/akademie/lehrling';
+import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
 import { SafetyCheck } from '@/components/safety-check';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
@@ -59,6 +60,15 @@ export default async function HomePage() {
   const halving = computeHalvingCyclePosition();
   const spaeherReport = runSpaeher(newsItems);
   const personas = evaluatePersonas(masterSignal, backtestSummary, spaeherReport);
+  // Historical similarity for the headline coin (use the conservative firma's
+  // pick if it BUYs, else the best-scoring candidate).
+  const headlineFirma = personas.find((p) => p.verdict === 'BUY' && p.persona === 'conservative')
+    ?? personas.find((p) => p.verdict === 'BUY')
+    ?? personas.find((p) => p.target !== null);
+  const setupSimilarity = computeSetupSimilarity(
+    backtestSummary.safeTrades,
+    headlineFirma?.target ? { coinId: headlineFirma.target.coinId, ticker: headlineFirma.target.symbol, passedCount: headlineFirma.target.passedCount } : null
+  );
 
   const tickerChangesAll = report.tickers.map((t) => t.priceChangePct);
   const negShareAll = tickerChangesAll.filter((c) => c < -2).length / (tickerChangesAll.length || 1);
@@ -125,7 +135,7 @@ export default async function HomePage() {
 
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
-      <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} />
+      <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
