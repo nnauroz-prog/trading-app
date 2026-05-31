@@ -30,6 +30,7 @@ import { fetchBothTickerSources } from '@/lib/providers/binance-tickers';
 import { checkCrossExchangePrices } from '@/lib/analysis/cross-exchange-check';
 import { CrossExchangeWarning } from '@/components/cross-exchange-warning';
 import { EhrlicheGrenzen } from '@/components/ehrliche-grenzen';
+import { MorningBriefingExport } from '@/components/morning-briefing-export';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import { computeEventWindow } from '@/lib/calendar/event-window';
 import { WocheVoraus } from '@/components/woche-voraus';
@@ -170,6 +171,7 @@ export default async function HomePage() {
         <nav className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link href="/agent" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Firmen</Link>
           <Link href="/intel" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Recherche</Link>
+          <Link href="/news" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">News</Link>
           <Link href="/akademie" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Akademie</Link>
           <Link href="/positions" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Positionen</Link>
           <Link href="/gold" className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-200 transition hover:border-amber-400/50">Gold</Link>
@@ -268,6 +270,18 @@ export default async function HomePage() {
 
         <PaperTradesPanel latestPrices={latestPrices} />
       </AdvancedOnly>
+
+      <MorningBriefingExport
+        date={todayIso}
+        firmasBuyingCount={personas.filter((p) => p.verdict === 'BUY').length}
+        firmaBuyTargets={personas.filter((p) => p.verdict === 'BUY' && p.target).map((p) => ({ name: p.name, coin: p.target!.symbol }))}
+        ceoLagebericht={intelCeo.lagebericht}
+        ceoSignal={intelCeo.netSignal}
+        topNews={spaeherReport.items.slice(0, 5).map((n) => ({ title: n.title, impact: n.impact, source: n.source }))}
+        macroNext={eventWindow?.nextHighImpact && eventWindow.hoursUntilNextHighImpact !== null
+          ? { title: eventWindow.nextHighImpact.title, hoursUntil: eventWindow.hoursUntilNextHighImpact }
+          : null}
+      />
 
       <EhrlicheGrenzen />
 

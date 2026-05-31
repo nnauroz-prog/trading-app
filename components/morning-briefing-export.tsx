@@ -1,0 +1,78 @@
+'use client';
+
+import { useState } from 'react';
+
+interface Props {
+  date: string;
+  firmasBuyingCount: number;
+  firmaBuyTargets: Array<{ name: string; coin: string }>;
+  ceoLagebericht: string;
+  ceoSignal: string;
+  topNews: Array<{ title: string; impact: string; source: string }>;
+  macroNext: { title: string; hoursUntil: number } | null;
+}
+
+// Generates a copy-able plain-text morning briefing for sharing or journaling.
+export function MorningBriefingExport(props: Props) {
+  const [copied, setCopied] = useState(false);
+  const text = buildText(props);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <details className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
+      <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+        Morgen-Briefing als Text kopieren
+      </summary>
+      <div className="mt-3 space-y-2">
+        <pre className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-950/60 p-3 font-mono text-[11px] leading-relaxed text-slate-200">{text}</pre>
+        <button
+          onClick={handleCopy}
+          className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-slate-300 hover:border-emerald-400/40 hover:text-emerald-300"
+        >
+          {copied ? '✓ Kopiert' : 'In Zwischenablage kopieren'}
+        </button>
+      </div>
+    </details>
+  );
+}
+
+function buildText(p: Props): string {
+  const lines: string[] = [];
+  lines.push(`MORGEN-BRIEFING · ${p.date}`);
+  lines.push('===============================');
+  lines.push('');
+  if (p.firmasBuyingCount === 0) {
+    lines.push('FIRMEN: Heute will keine kaufen.');
+  } else if (p.firmasBuyingCount === 3) {
+    lines.push(`FIRMEN: Alle drei wollen kaufen — ${p.firmaBuyTargets.map((t) => `${t.name}:${t.coin}`).join(', ')}.`);
+  } else {
+    lines.push(`FIRMEN: ${p.firmasBuyingCount}/3 wollen kaufen — ${p.firmaBuyTargets.map((t) => `${t.name}:${t.coin}`).join(', ')}.`);
+  }
+  lines.push('');
+  if (p.macroNext) {
+    lines.push(`MAKRO-VORSCHAU: ${p.macroNext.title} in ca. ${p.macroNext.hoursUntil}h.`);
+    lines.push('');
+  }
+  lines.push(`RECHERCHE-CHEFREDAKTEUR (Tendenz: ${p.ceoSignal})`);
+  lines.push(p.ceoLagebericht);
+  lines.push('');
+  if (p.topNews.length > 0) {
+    lines.push('TOP-SCHLAGZEILEN:');
+    for (const n of p.topNews.slice(0, 5)) {
+      lines.push(`· [${n.impact}] ${n.title} (${n.source})`);
+    }
+    lines.push('');
+  }
+  lines.push('---');
+  lines.push('Keine Finanzberatung. Vergangenheit ≠ Zukunft.');
+  return lines.join('\n');
+}
