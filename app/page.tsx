@@ -16,6 +16,8 @@ import { DailyBriefing } from '@/components/daily-briefing';
 import { MarketBriefing } from '@/components/market-briefing';
 import { AgentRecorder } from '@/components/agent-recorder';
 import { FirmaStrip } from '@/components/firma-strip';
+import { SetupTrend } from '@/components/setup-trend';
+import { WatchlistStrip } from '@/components/watchlist-strip';
 import { AkademieStrip } from '@/components/akademie-strip';
 import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
@@ -182,6 +184,14 @@ export default async function HomePage() {
 
       <CrossExchangeWarning report={crossExchange} />
 
+      <WatchlistStrip candidates={masterSignal.candidates.map((c) => ({
+        coinId: c.coinId,
+        passedCount: c.passedCount,
+        priceChangePct24h: c.priceChangePct24h,
+        structure: c.structure,
+        nearSupport: c.nearSupport
+      }))} />
+
       <IntelStrip ceo={intelCeo} />
 
       <ChaseWarning chase={chaseSignals} opportunity={opportunitySignals} />
@@ -204,6 +214,8 @@ export default async function HomePage() {
         <TodoBox report={masterSignal} />
 
         <FirmaStrip personas={personas} />
+
+        <SetupTrend />
 
         <AkademieStrip spaeher={spaeherReport} lehrling={lehrlingReport} />
 
