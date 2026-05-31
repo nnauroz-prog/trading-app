@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getFootballFixtures, Fixture, UpcomingFixture, LeagueFixtures } from '@/lib/sport/fetcher';
 import { TeamForm5 } from '@/lib/sport/predictor';
+import { ProbabilityCard } from '@/components/probability-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
@@ -118,26 +119,24 @@ function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
         </span>
         <span className="font-mono text-[10px] uppercase tracking-wider text-emerald-400">vs.</span>
       </div>
-      {f.prediction ? (
-        <div className="mt-1.5 space-y-1 border-t border-slate-800/60 pt-1.5 text-[11px]">
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${pickConfidenceClass(f.prediction.pickLabel)}`}>
-              {f.prediction.pickLabel}
-            </span>
-            <span className="text-slate-200">{f.prediction.pickPlain}</span>
-            <span className="font-mono text-[11px] text-slate-100">{f.prediction.likelyScore.home} : {f.prediction.likelyScore.away}</span>
-            <span className="text-[10px] text-slate-500">
-              {Math.round(f.prediction.pHome * 100)} / {Math.round(f.prediction.pDraw * 100)} / {Math.round(f.prediction.pAway * 100)} (H/U/A)
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-500">
-            <span>Form Heim: <FormChips form={f.prediction.homeForm} /></span>
-            <span>Form Auswärts: <FormChips form={f.prediction.awayForm} /></span>
-          </div>
+      {f.prediction && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800/60 pt-1.5 text-[10px] text-slate-500">
+          <span>Form Heim: <FormChips form={f.prediction.homeForm} /></span>
+          <span>Form Auswärts: <FormChips form={f.prediction.awayForm} /></span>
         </div>
+      )}
+      {f.probabilities && f.tips ? (
+        <details className="mt-2">
+          <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-sky-300 hover:text-sky-200">
+            Wahrscheinlichkeiten + Tipp-Stufen anzeigen
+          </summary>
+          <div className="mt-2">
+            <ProbabilityCard homeTeam={f.homeTeam} awayTeam={f.awayTeam} model={f.probabilities} tips={f.tips} />
+          </div>
+        </details>
       ) : (
         <div className="mt-1.5 border-t border-slate-800/60 pt-1.5 text-[10px] text-slate-500">
-          Tipp: zu wenig Spiele in dieser Liga für eine Schätzung — Saison gerade gestartet oder Pokal-Modus.
+          Wahrscheinlichkeits-Modell: zu wenig Spiele in dieser Liga — Saison gerade gestartet oder Pokal-Modus.
         </div>
       )}
     </li>

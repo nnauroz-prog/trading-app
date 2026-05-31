@@ -1,6 +1,8 @@
 import { unstable_cache } from 'next/cache';
 import { FOOTBALL_LEAGUES, League } from '@/lib/sport/leagues';
 import { MatchPrediction, predictMatch } from '@/lib/sport/predictor';
+import { FootballProbabilityModel, computeFootballProbabilities } from '@/lib/sport/probabilities';
+import { AllTips, generateTips } from '@/lib/sport/tip-selection';
 
 export interface Fixture {
   id: string;
@@ -17,6 +19,8 @@ export interface Fixture {
 
 export interface UpcomingFixture extends Fixture {
   prediction: MatchPrediction | null;
+  probabilities: FootballProbabilityModel | null;
+  tips: AllTips | null;
 }
 
 export interface LeagueFixtures {
@@ -75,10 +79,16 @@ async function compute(): Promise<LeagueFixtures[]> {
   const results = await Promise.all(
     FOOTBALL_LEAGUES.map(async (league) => {
       const [next, past] = await Promise.all([fetchEvents(league.id, 'next'), fetchEvents(league.id, 'past')]);
-      const upcoming: UpcomingFixture[] = next.slice(0, 8).map((f) => ({
-        ...f,
-        prediction: predictMatch(f.homeTeam, f.awayTeam, past)
-      }));
+      const upcoming: UpcomingFixture[] = next.slice(0, 8).map((f) => {
+        const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, past);
+        const tips = probabilities ? generateTips(probabilities, f.homeTeam, f.awayTeam) : null;
+        return {
+          ...f,
+          prediction: predictMatch(f.homeTeam, f.awayTeam, past),
+          probabilities,
+          tips
+        };
+      });
       return {
         league,
         next: upcoming,
@@ -90,4 +100,5 @@ async function compute(): Promise<LeagueFixtures[]> {
 }
 
 // Fixtures don't change minute-to-minute; cache for an hour.
-export const getFootballFixtures = unstable_cache(compute, ['football-fixtures-v1'], { revalidate: 3600 });
+// Bumped cache key to v2: response schema gained probability + tip fields.
+export const getFootballFixtures = unstable_cache(compute, ['football-fixtures-v2'], { revalidate: 3600 });
