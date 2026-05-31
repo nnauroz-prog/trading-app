@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { kellyFraction, positionSizing, rewardRisk } from '@/lib/calculators';
+import { compound, kellyFraction, positionSizing, rewardRisk } from '@/lib/calculators';
 
 function Input({ label, value, onChange, placeholder, suffix }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; suffix?: string }) {
   return (
@@ -27,8 +27,44 @@ export function Calculators() {
     <div className="space-y-5">
       <PositionSizer />
       <RrCalc />
+      <CompoundCalc />
       <KellyCalc />
     </div>
+  );
+}
+
+function CompoundCalc() {
+  const [start, setStart] = useState('5000');
+  const [annual, setAnnual] = useState('8');
+  const [years, setYears] = useState('10');
+  const [contrib, setContrib] = useState('1200');
+
+  const result = compound({
+    startAmount: parseFloat(start) || 0,
+    annualReturnPct: parseFloat(annual) || 0,
+    years: parseInt(years) || 0,
+    yearlyContribution: parseFloat(contrib) || 0
+  });
+
+  return (
+    <section className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+      <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">Zinseszins / Compound</h2>
+      <p className="text-[11px] text-slate-500">Was wird aus deinem Geld bei X% jährlich plus monatlichen Einzahlungen? Realitäts-Check: 8% ist langfristiger Aktien-Durchschnitt, mehr ist optimistisch.</p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Input label="Startbetrag" value={start} onChange={setStart} suffix="€" />
+        <Input label="Ø Rendite p.a." value={annual} onChange={setAnnual} suffix="%" />
+        <Input label="Laufzeit" value={years} onChange={setYears} suffix="Jahre" />
+        <Input label="Pro Jahr drauflegen" value={contrib} onChange={setContrib} suffix="€" />
+      </div>
+      {result.yearlyValues.length > 1 && (
+        <div className="space-y-1 rounded-md border border-slate-700 bg-slate-950/40 p-2.5 text-[12px]">
+          <div className="flex justify-between"><span className="text-slate-400">Endwert</span><span className="font-mono font-bold text-emerald-300">{result.finalValue.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €</span></div>
+          <div className="flex justify-between"><span className="text-slate-400">Eingezahlt insgesamt</span><span className="font-mono text-slate-100">{result.totalContributions.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €</span></div>
+          <div className="flex justify-between"><span className="text-slate-400">Wachstum (vor Steuer)</span><span className={`font-mono ${result.totalGrowth > 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{result.totalGrowth >= 0 ? '+' : ''}{result.totalGrowth.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €</span></div>
+          <p className="mt-1 text-[10px] italic text-slate-500">Vereinfacht: keine Steuern, keine Inflation, keine Schwankungen. Realer Markt hat Drawdowns — die Durchschnittsrendite kommt nur, wenn man Krisen durchhält.</p>
+        </div>
+      )}
+    </section>
   );
 }
 

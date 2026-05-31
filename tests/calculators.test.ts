@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { kellyFraction, positionSizing, rewardRisk } from '@/lib/calculators';
+import { compound, kellyFraction, positionSizing, rewardRisk } from '@/lib/calculators';
 
 describe('positionSizing', () => {
   it('computes risk-based size for a clean setup', () => {
@@ -41,6 +41,27 @@ describe('rewardRisk', () => {
   it('handles optional target 2', () => {
     const r = rewardRisk({ entry: 100, stop: 95, target1: 110, target2: 120 });
     expect(r.rrTp2).toBe(4);
+  });
+});
+
+describe('compound', () => {
+  it('zero years returns start amount', () => {
+    const r = compound({ startAmount: 1000, annualReturnPct: 8, years: 0, yearlyContribution: 100 });
+    expect(r.finalValue).toBe(1000);
+  });
+  it('grows by the annual return rate', () => {
+    const r = compound({ startAmount: 1000, annualReturnPct: 10, years: 1, yearlyContribution: 0 });
+    expect(r.finalValue).toBe(1100);
+  });
+  it('aggregates contributions', () => {
+    const r = compound({ startAmount: 0, annualReturnPct: 0, years: 10, yearlyContribution: 1000 });
+    expect(r.finalValue).toBe(10000);
+    expect(r.totalContributions).toBe(10000);
+    expect(r.totalGrowth).toBe(0);
+  });
+  it('yearlyValues array length matches years+1', () => {
+    const r = compound({ startAmount: 1000, annualReturnPct: 5, years: 7, yearlyContribution: 0 });
+    expect(r.yearlyValues.length).toBe(8);
   });
 });
 
