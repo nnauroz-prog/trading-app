@@ -3,10 +3,20 @@ import { adx, atr, bollinger, ema, macd, rsi, sma } from '@/lib/analysis/indicat
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { TOP_50 } from '@/lib/coin-universe';
 
-const MIN_CONFLUENCE = 7;
-const STOP_ATR_MULT = 1.5;
-const TP1_ATR_MULT = 2.5;
-const MAX_HOLD_BARS = 72;
+export interface StrategyParams {
+  minConfluence: number;
+  stopAtrMult: number;
+  tp1AtrMult: number;
+  maxHoldBars: number;
+}
+
+export const DEFAULT_STRATEGY_PARAMS: StrategyParams = {
+  minConfluence: 7,
+  stopAtrMult: 1.5,
+  tp1AtrMult: 2.5,
+  maxHoldBars: 72
+};
+
 const TRADING_FEE_PCT = 0.001;
 
 type Outcome = 'TP1' | 'SL' | 'TIMEOUT';
@@ -73,10 +83,10 @@ function alignedIndexAt(times: number[], target: number): number {
   return res;
 }
 
-function simulateForward(candles: Candle[], startIdx: number, entry: number, atrValue: number): { outcome: Outcome; exit: number; exitIdx: number } {
-  const sl = entry - STOP_ATR_MULT * atrValue;
-  const tp1 = entry + TP1_ATR_MULT * atrValue;
-  const end = Math.min(candles.length, startIdx + 1 + MAX_HOLD_BARS);
+function simulateForward(candles: Candle[], startIdx: number, entry: number, atrValue: number, params: StrategyParams): { outcome: Outcome; exit: number; exitIdx: number } {
+  const sl = entry - params.stopAtrMult * atrValue;
+  const tp1 = entry + params.tp1AtrMult * atrValue;
+  const end = Math.min(candles.length, startIdx + 1 + params.maxHoldBars);
   for (let i = startIdx + 1; i < end; i++) {
     const c = candles[i];
     if (c.low <= sl) return { outcome: 'SL', exit: sl, exitIdx: i };
@@ -86,7 +96,7 @@ function simulateForward(candles: Candle[], startIdx: number, entry: number, atr
   return { outcome: 'TIMEOUT', exit: candles[lastIdx].close, exitIdx: lastIdx };
 }
 
-export function backtestStrategy(assetId: string, ticker: string, c1h: Candle[], c4h: Candle[], c1d: Candle[]): StrategyBacktestStats {
+export function backtestStrategy(assetId: string, ticker: string, c1h: Candle[], c4h: Candle[], c1d: Candle[], params: StrategyParams = DEFAULT_STRATEGY_PARAMS): StrategyBacktestStats {
   const empty: StrategyBacktestStats = {
     assetId, ticker, totalSignals: 0, wins: 0, losses: 0, timeouts: 0,
     winRate: null, netReturnPct: 0, expectancyPct: 0, equityCurve: [0], periodDays: 0, trades: []
@@ -202,9 +212,9 @@ export function backtestStrategy(assetId: string, ticker: string, c1h: Candle[],
     if (stochK < 80) confluence++;
     if (atrVal > 0) confluence++; // stop-level always identifiable via ATR
 
-    if (confluence < MIN_CONFLUENCE) continue;
+    if (confluence < params.minConfluence) continue;
 
-    const sim = simulateForward(c1h, i, entry, atrVal);
+    const sim = simulateForward(c1h, i, entry, atrVal, params);
     const grossPct = ((sim.exit - entry) / entry) * 100;
     const netPct = grossPct - TRADING_FEE_PCT * 100 * 2;
     trades.push({
@@ -234,11 +244,19 @@ export function backtestStrategy(assetId: string, ticker: string, c1h: Candle[],
   };
 }
 
-export async function runStrategyBacktest(assetIds: string[] = ['btc', 'eth', 'sol']): Promise<StrategyBacktestReport> {
-  const coins = TOP_50.filter((c) => assetIds.includes(c.id));
-  const perAsset: StrategyBacktestStats[] = [];
-  let anyData = false;
+export interface AssetCandles {
+  assetId: string;
+  ticker: string;
+  c1h: Candle[];
+  c4h: Candle[];
+  c1d: Candle[];
+}
 
+// Fetches the candles needed for a backtest run. Separated so callers
+// (like the Lehrling) can run multiple parameter sweeps without re-fetching.
+export async function fetchBacktestCandles(assetIds: string[] = ['btc', 'eth', 'sol']): Promise<AssetCandles[]> {
+  const coins = TOP_50.filter((c) => assetIds.includes(c.id));
+  const out: AssetCandles[] = [];
   for (const coin of coins) {
     const [c1h, c4h, c1d] = await Promise.all([
       fetchKlinesBySymbol(coin.binanceSymbol, '1h', 1000),
@@ -246,10 +264,15 @@ export async function runStrategyBacktest(assetIds: string[] = ['btc', 'eth', 's
       fetchKlinesBySymbol(coin.binanceSymbol, '1d', 300)
     ]);
     if (!c1h || !c4h || !c1d) continue;
-    anyData = true;
-    perAsset.push(backtestStrategy(coin.id, coin.symbol, c1h, c4h, c1d));
+    out.push({ assetId: coin.id, ticker: coin.symbol, c1h, c4h, c1d });
   }
+  return out;
+}
 
+export function runStrategyBacktestOnCandles(candles: AssetCandles[], params: StrategyParams = DEFAULT_STRATEGY_PARAMS): StrategyBacktestReport {
+  const perAsset: StrategyBacktestStats[] = candles.map((a) =>
+    backtestStrategy(a.assetId, a.ticker, a.c1h, a.c4h, a.c1d, params)
+  );
   const allTrades = perAsset.flatMap((s) => s.trades).sort((a, b) => a.entryTime - b.entryTime);
   const wins = allTrades.filter((t) => t.outcome === 'TP1').length;
   const losses = allTrades.filter((t) => t.outcome === 'SL').length;
@@ -264,13 +287,17 @@ export async function runStrategyBacktest(assetIds: string[] = ['btc', 'eth', 's
   const avgLoss = losing.length > 0 ? losing.reduce((a, b) => a + b.netPnlPct, 0) / losing.length : 0;
   const expectancy = winRate !== null ? winRate * avgWin + (1 - winRate) * avgLoss : 0;
   const periodDays = perAsset.length > 0 ? Math.max(...perAsset.map((s) => s.periodDays)) : 0;
-
   return {
     perAsset,
     combined: { totalSignals: allTrades.length, wins, losses, timeouts, winRate, netReturnPct: eq, expectancyPct: expectancy, equityCurve: curve },
     periodDays,
-    minConfluence: MIN_CONFLUENCE,
+    minConfluence: params.minConfluence,
     generatedAt: new Date().toISOString(),
-    dataSource: anyData ? 'binance' : 'offline'
+    dataSource: candles.length > 0 ? 'binance' : 'offline'
   };
+}
+
+export async function runStrategyBacktest(assetIds: string[] = ['btc', 'eth', 'sol']): Promise<StrategyBacktestReport> {
+  const candles = await fetchBacktestCandles(assetIds);
+  return runStrategyBacktestOnCandles(candles);
 }
