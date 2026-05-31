@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { AgentVerdict } from '@/lib/agents/personas';
 import { CoinSentiment } from '@/lib/akademie/spaeher';
 import { SetupSimilarity } from '@/lib/analysis/setup-similarity';
+import { EventWindowState } from '@/lib/calendar/event-window';
 import { HeuteStreak } from '@/components/heute-streak';
 
 function fmtPrice(v: number): string {
@@ -15,6 +16,7 @@ interface Props {
   personas: AgentVerdict[];
   perCoinSentiment: CoinSentiment[];
   setupSimilarity: SetupSimilarity | null;
+  eventWindow: EventWindowState | null;
 }
 
 // One-glance verdict for the home page. Synthesises the three firma decisions
@@ -25,7 +27,8 @@ interface Props {
 function computeConfidence(
   buyCount: number,
   newsTilt: 'bullisch' | 'bärisch' | 'neutral' | 'none',
-  similarity: SetupSimilarity | null
+  similarity: SetupSimilarity | null,
+  eventWindow: EventWindowState | null
 ): { score: number; label: string; toneClass: string } {
   // Base from firma agreement: 0/1/2/3 → 10/35/65/85.
   let score =
@@ -49,6 +52,10 @@ function computeConfidence(
       score -= 5;
     }
   }
+  // Hoch-impact Makro-Event imminent → harter Abschlag.
+  if (eventWindow?.veryImminent) score -= 20;
+  else if (eventWindow?.imminent) score -= 10;
+
   score = Math.max(0, Math.min(100, score));
 
   const label =
@@ -63,7 +70,7 @@ function computeConfidence(
   return { score, label, toneClass };
 }
 
-export function HeuteEntscheidung({ personas, perCoinSentiment, setupSimilarity }: Props) {
+export function HeuteEntscheidung({ personas, perCoinSentiment, setupSimilarity, eventWindow }: Props) {
   const buys = personas.filter((p) => p.verdict === 'BUY');
   const buyCount = buys.length;
 
@@ -133,7 +140,7 @@ export function HeuteEntscheidung({ personas, perCoinSentiment, setupSimilarity 
     }
   }
 
-  const confidence = computeConfidence(buyCount, newsTilt, setupSimilarity);
+  const confidence = computeConfidence(buyCount, newsTilt, setupSimilarity, eventWindow);
 
   void verdict;
   void conservative;
@@ -145,6 +152,12 @@ export function HeuteEntscheidung({ personas, perCoinSentiment, setupSimilarity 
         <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Heute</span>
         <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${badgeClass}`}>{badgeText}</span>
       </div>
+      {eventWindow?.imminent && eventWindow.nextHighImpact && (
+        <div className={`rounded-lg border px-3 py-2 text-[12px] ${eventWindow.veryImminent ? 'border-rose-400/60 bg-rose-950/40 text-rose-100' : 'border-amber-400/60 bg-amber-950/30 text-amber-100'}`}>
+          <span className="font-bold">{eventWindow.veryImminent ? 'Achtung — Termin sehr nah' : 'Termin in Sicht'}:</span>{' '}
+          {eventWindow.nextHighImpact.title} in ca. {eventWindow.hoursUntilNextHighImpact} Stunden ({eventWindow.nextHighImpact.region}, {eventWindow.nextHighImpact.time} Uhr). {eventWindow.veryImminent ? 'Konservativ und Balanciert warten — Volatilität nach Release kann jeden Stop überspringen.' : 'Konservativ wartet bis nach dem Termin. Andere Firmen schauen noch normal aufs Setup.'}
+        </div>
+      )}
       <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{headline}</h1>
       {target && (verdict === 'STRONG_BUY' || verdict === 'BUY' || verdict === 'CAREFUL_BUY') && (
         <div className="grid grid-cols-3 gap-2 rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-center">
