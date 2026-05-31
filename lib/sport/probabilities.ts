@@ -3,6 +3,14 @@ import { Fixture } from '@/lib/sport/fetcher';
 export type ModelConfidence = 'low' | 'medium' | 'high';
 export type DataQuality = 'weak' | 'medium' | 'good';
 
+export interface HeadToHead {
+  totalGames: number;
+  homeWins: number;
+  draws: number;
+  awayWins: number;
+  recentResults: Array<{ date: string; score: string; winner: 'home' | 'draw' | 'away' }>;
+}
+
 export interface FootballProbabilityModel {
   // 1X2
   homeWin: number;
@@ -26,6 +34,7 @@ export interface FootballProbabilityModel {
   modelConfidence: ModelConfidence;
   dataQuality: DataQuality;
   explanation: string;
+  headToHead: HeadToHead;
 }
 
 const HOME_ADVANTAGE = 1.15;
@@ -74,6 +83,36 @@ function leagueAverageGoals(finished: Fixture[]): number {
   }
   if (games < 5) return FALLBACK_LEAGUE_AVG * 2; // home+away combined fallback
   return totalGoals / games;
+}
+
+function computeHeadToHead(homeTeam: string, awayTeam: string, finished: Fixture[]): HeadToHead {
+  const meetings = finished
+    .filter((e) => e.status === 'finished' && e.homeScore !== null && e.awayScore !== null)
+    .filter((e) => (e.homeTeam === homeTeam && e.awayTeam === awayTeam) || (e.homeTeam === awayTeam && e.awayTeam === homeTeam))
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  let homeWins = 0;
+  let draws = 0;
+  let awayWins = 0;
+  const recentResults: HeadToHead['recentResults'] = [];
+  for (const m of meetings) {
+    const isHomeHome = m.homeTeam === homeTeam;
+    const myGoals = isHomeHome ? (m.homeScore ?? 0) : (m.awayScore ?? 0);
+    const oppGoals = isHomeHome ? (m.awayScore ?? 0) : (m.homeScore ?? 0);
+    let winner: 'home' | 'draw' | 'away';
+    if (myGoals > oppGoals) { homeWins++; winner = 'home'; }
+    else if (myGoals < oppGoals) { awayWins++; winner = 'away'; }
+    else { draws++; winner = 'draw'; }
+    if (recentResults.length < 5) {
+      recentResults.push({
+        date: m.date,
+        score: `${m.homeScore}:${m.awayScore}`,
+        winner: isHomeHome ? winner : (winner === 'home' ? 'away' : winner === 'away' ? 'home' : 'draw')
+      });
+    }
+  }
+
+  return { totalGames: meetings.length, homeWins, draws, awayWins, recentResults };
 }
 
 function classifyDataQuality(homeGames: number, awayGames: number): DataQuality {
@@ -179,7 +218,8 @@ export function computeFootballProbabilities(
     awayGamesUsed: away.games,
     modelConfidence,
     dataQuality,
-    explanation
+    explanation,
+    headToHead: computeHeadToHead(homeTeam, awayTeam, finishedLeagueEvents)
   };
 }
 
