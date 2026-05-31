@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { buildMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { evaluatePersonas } from '@/lib/agents/personas';
+import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 import { AgentLog } from '@/components/agent-log';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,26 @@ function fmtPrice(v: number): string {
   if (v >= 1) return v.toFixed(2);
   if (v >= 0.01) return v.toFixed(4);
   return v.toFixed(7);
+}
+
+function toneClasses(tone: VoteTone): string {
+  if (tone === 'good') return 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200';
+  if (tone === 'bad') return 'border-rose-400/50 bg-rose-500/10 text-rose-200';
+  return 'border-slate-700 bg-slate-900 text-slate-300';
+}
+
+function TeamRow({ report }: { report: SubAgentReport }) {
+  return (
+    <li className="flex flex-col gap-1 rounded-md border border-slate-800 bg-slate-950/40 p-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{report.title}</span>
+        <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${toneClasses(report.voteTone)}`}>
+          {report.vote}
+        </span>
+      </div>
+      <p className="text-[11px] leading-snug text-slate-300">{report.reason}</p>
+    </li>
+  );
 }
 
 export default async function AgentPage() {
@@ -28,9 +49,9 @@ export default async function AgentPage() {
 
       <header className="space-y-2">
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Agent-Spielwiese</div>
-        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Mehrere Agenten, eine Wahrheit</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Drei Firmen, drei Teams, eine Entscheidung pro Tag</h1>
         <p className="text-sm text-slate-400">
-          Drei Persona-Agenten schauen sich dieselben Marktdaten an und entscheiden mit unterschiedlicher Strenge. Ehrlich gesagt: alle drei nutzen dieselbe Engine — sie unterscheiden sich nur darin, wie viel Risiko sie akzeptieren. Keiner ist „smarter als jeder Trader der Welt“. Aber zusammen geben sie dir ein Spektrum, nicht nur eine Meinung.
+          Jede der drei Firmen hat einen CEO mit eigener Risikoneigung und ein Team aus drei Sub-Agenten: ein Markt-Analyst (große Marktlage), ein Setup-Scout (das konkrete Setup) und ein Risiko-Manager (Stop, Liquidität, Broker, Pump-Schutz). Der CEO hört allen zu und entscheidet KAUFEN oder WARTEN. Ehrlich gesagt: alle drei Firmen nutzen dieselbe Daten-Engine — sie unterscheiden sich nur darin, wie streng der CEO ist.
         </p>
       </header>
 
@@ -39,11 +60,14 @@ export default async function AgentPage() {
           const isBuy = p.verdict === 'BUY';
           const tone = isBuy ? 'border-emerald-400/60 bg-emerald-950/30' : 'border-slate-700 bg-slate-900/40';
           return (
-            <div key={p.persona} className={`space-y-2 rounded-2xl border-2 p-4 ${tone}`}>
+            <div key={p.persona} className={`space-y-3 rounded-2xl border-2 p-4 ${tone}`}>
               <div className="flex items-baseline justify-between">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-white">{p.name}</h2>
+                <div>
+                  <div className="text-[9px] uppercase tracking-[0.2em] text-slate-500">Firma</div>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-white">{p.name}</h2>
+                </div>
                 <span className={`rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${isBuy ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-100' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
-                  {isBuy ? 'KAUFEN' : 'WARTEN'}
+                  CEO: {isBuy ? 'KAUFEN' : 'WARTEN'}
                 </span>
               </div>
               <p className="text-[11px] italic text-slate-400">„{p.motto}“</p>
@@ -68,6 +92,20 @@ export default async function AgentPage() {
                   )}
                 </div>
               )}
+
+              <div className="space-y-1.5">
+                <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Team</div>
+                <ul className="space-y-1.5">
+                  {p.team.map((member) => (
+                    <TeamRow key={member.role} report={member} />
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-md border border-slate-800 bg-slate-950/60 p-2">
+                <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">CEO-Schlusswort</div>
+                <p className="mt-1 text-[11px] leading-snug text-slate-200">{p.ceoFinalWord}</p>
+              </div>
 
               <p className="text-[11px] leading-relaxed text-slate-300">{p.rationale}</p>
             </div>
