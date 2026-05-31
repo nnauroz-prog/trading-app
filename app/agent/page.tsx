@@ -9,6 +9,7 @@ import { vorstandMediation, VorstandVerdict } from '@/lib/agents/vorstand';
 import { CEO_BIOS, SUBAGENT_BIOS } from '@/lib/agents/personalities';
 import { CeoQuote } from '@/components/ceo-quote';
 import { KonsensStreakCard } from '@/components/konsens-streak-card';
+import { DailyNotes } from '@/components/daily-notes';
 import { VorstandRecorder } from '@/components/vorstand-recorder';
 import { VorstandLog } from '@/components/vorstand-log';
 import { getFirmaBacktest } from '@/lib/agents/firma-backtest';
@@ -136,6 +137,7 @@ export default async function AgentPage() {
 
       <CeoQuote />
       <KonsensStreakCard />
+      <DailyNotes personas={personas} />
 
       {(() => {
         const vorstand = vorstandMediation(personas);
