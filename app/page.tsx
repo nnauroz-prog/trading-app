@@ -22,6 +22,11 @@ import { evaluatePersonas } from '@/lib/agents/personas';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getLehrlingReport } from '@/lib/akademie/lehrling';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
+import { detectChaseSignals, detectOpportunitySignals, PriceContext } from '@/lib/analysis/chase-detector';
+import { ChaseWarning } from '@/components/chase-warning';
+import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
+import { WocheVoraus } from '@/components/woche-voraus';
+import { todayIsoBerlin } from '@/lib/agent-memory';
 import { SafetyCheck } from '@/components/safety-check';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
@@ -69,6 +74,15 @@ export default async function HomePage() {
     backtestSummary.safeTrades,
     headlineFirma?.target ? { coinId: headlineFirma.target.coinId, ticker: headlineFirma.target.symbol, passedCount: headlineFirma.target.passedCount } : null
   );
+  // Chase / opportunity warnings: cross news sentiment with 24h price moves.
+  const priceCtx: PriceContext[] = report.tickers.map((t) => ({
+    symbol: t.symbol.replace('USDT', ''),
+    priceChangePct24h: t.priceChangePct
+  }));
+  const chaseSignals = detectChaseSignals(spaeherReport.perCoin, priceCtx);
+  const opportunitySignals = detectOpportunitySignals(spaeherReport.perCoin, priceCtx);
+  const upcomingMacro = listMacroEventsThisWeek();
+  const todayIso = todayIsoBerlin();
 
   const tickerChangesAll = report.tickers.map((t) => t.priceChangePct);
   const negShareAll = tickerChangesAll.filter((c) => c < -2).length / (tickerChangesAll.length || 1);
@@ -136,6 +150,10 @@ export default async function HomePage() {
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
       <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} />
+
+      <ChaseWarning chase={chaseSignals} opportunity={opportunitySignals} />
+
+      <WocheVoraus events={upcomingMacro} today={todayIso} />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
