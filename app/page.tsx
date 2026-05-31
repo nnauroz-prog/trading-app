@@ -26,6 +26,7 @@ import { WelcomeBack } from '@/components/welcome-back';
 import { DailyCommandCenter } from '@/components/daily-command-center';
 import { AssetClassRadar, AssetClassCard } from '@/components/asset-class-radar';
 import { KapitalSchutz } from '@/components/kapital-schutz';
+import { PnlSummary } from '@/components/pnl-summary';
 import { buildCommandCenter } from '@/lib/command-center';
 import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 import { AkademieStrip } from '@/components/akademie-strip';
@@ -309,6 +310,8 @@ export default async function HomePage() {
 
       {/* 3. Kapital-Schutz */}
       <KapitalSchutz latestPrices={latestPrices} />
+
+      <PnlSummary latestPrices={latestPrices} />
 
       {/* 4. Multi-Asset-Radar */}
       <AssetClassRadar cards={radarCards} />
