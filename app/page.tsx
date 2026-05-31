@@ -15,6 +15,8 @@ import { TodoBox } from '@/components/todo-box';
 import { DailyBriefing } from '@/components/daily-briefing';
 import { MarketBriefing } from '@/components/market-briefing';
 import { AgentRecorder } from '@/components/agent-recorder';
+import { FirmaStrip } from '@/components/firma-strip';
+import { evaluatePersonas } from '@/lib/agents/personas';
 import { SafetyCheck } from '@/components/safety-check';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
@@ -51,6 +53,7 @@ export default async function HomePage() {
   ]);
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
+  const personas = evaluatePersonas(masterSignal, backtestSummary);
 
   const tickerChangesAll = report.tickers.map((t) => t.priceChangePct);
   const negShareAll = tickerChangesAll.filter((c) => c < -2).length / (tickerChangesAll.length || 1);
@@ -143,6 +146,8 @@ export default async function HomePage() {
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
       <TodoBox report={masterSignal} />
+
+      <FirmaStrip personas={personas} />
 
       <AccountConfigBar />
 
