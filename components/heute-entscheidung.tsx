@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { AgentVerdict } from '@/lib/agents/personas';
 import { CoinSentiment } from '@/lib/akademie/spaeher';
+import { SetupSimilarity } from '@/lib/analysis/setup-similarity';
+import { HeuteStreak } from '@/components/heute-streak';
 
 function fmtPrice(v: number): string {
   if (v >= 1000) return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -12,12 +14,56 @@ function fmtPrice(v: number): string {
 interface Props {
   personas: AgentVerdict[];
   perCoinSentiment: CoinSentiment[];
+  setupSimilarity: SetupSimilarity | null;
 }
 
 // One-glance verdict for the home page. Synthesises the three firma decisions
 // into a single headline plus the most important reason. Anything deeper sits
 // in the details below.
-export function HeuteEntscheidung({ personas, perCoinSentiment }: Props) {
+// Compose a 0–100 confidence score from the four pillars: firma agreement,
+// news tilt, historical hit rate of similar setups, and sample-size honesty.
+function computeConfidence(
+  buyCount: number,
+  newsTilt: 'bullisch' | 'bärisch' | 'neutral' | 'none',
+  similarity: SetupSimilarity | null
+): { score: number; label: string; toneClass: string } {
+  // Base from firma agreement: 0/1/2/3 → 10/35/65/85.
+  let score =
+    buyCount === 3 ? 85 :
+    buyCount === 2 ? 65 :
+    buyCount === 1 ? 35 :
+    10;
+
+  if (newsTilt === 'bullisch') score += 5;
+  else if (newsTilt === 'bärisch') score -= 10;
+
+  if (similarity) {
+    if (similarity.sampleSize === 'good' || similarity.sampleSize === 'ok') {
+      if (similarity.hitRatePct !== null) {
+        if (similarity.hitRatePct >= 60) score += 10;
+        else if (similarity.hitRatePct >= 45) score += 3;
+        else if (similarity.hitRatePct < 35) score -= 8;
+      }
+    } else if (similarity.sampleSize === 'too_small' || similarity.sampleSize === 'small') {
+      // Penalise: we have no historical leg to stand on.
+      score -= 5;
+    }
+  }
+  score = Math.max(0, Math.min(100, score));
+
+  const label =
+    score >= 75 ? 'hoch' :
+    score >= 55 ? 'mittel' :
+    score >= 35 ? 'niedrig' :
+    'sehr niedrig';
+  const toneClass =
+    score >= 75 ? 'text-emerald-300' :
+    score >= 55 ? 'text-amber-300' :
+    'text-rose-300';
+  return { score, label, toneClass };
+}
+
+export function HeuteEntscheidung({ personas, perCoinSentiment, setupSimilarity }: Props) {
   const buys = personas.filter((p) => p.verdict === 'BUY');
   const buyCount = buys.length;
 
@@ -74,14 +120,20 @@ export function HeuteEntscheidung({ personas, perCoinSentiment }: Props) {
 
   // Optional: a sentiment hint if the headline coin has clear news tilt.
   let newsHint: string | null = null;
+  let newsTilt: 'bullisch' | 'bärisch' | 'neutral' | 'none' = 'none';
   if (target) {
     const sentiment = perCoinSentiment.find((c) => c.coin === target.symbol.toUpperCase());
-    if (sentiment && sentiment.tilt !== 'neutral') {
-      newsHint = sentiment.tilt === 'bullisch'
-        ? `Späher: ${target.symbol} hat heute bullische News (${sentiment.bullishCount} ↑ / ${sentiment.bearishCount} ↓).`
-        : `Späher: ${target.symbol} hat heute bärische News (${sentiment.bearishCount} ↓ / ${sentiment.bullishCount} ↑) — kritisch prüfen.`;
+    if (sentiment) {
+      newsTilt = sentiment.tilt;
+      if (sentiment.tilt !== 'neutral') {
+        newsHint = sentiment.tilt === 'bullisch'
+          ? `Späher: ${target.symbol} hat heute bullische News (${sentiment.bullishCount} ↑ / ${sentiment.bearishCount} ↓).`
+          : `Späher: ${target.symbol} hat heute bärische News (${sentiment.bearishCount} ↓ / ${sentiment.bullishCount} ↑) — kritisch prüfen.`;
+      }
     }
   }
+
+  const confidence = computeConfidence(buyCount, newsTilt, setupSimilarity);
 
   void verdict;
   void conservative;
@@ -111,11 +163,32 @@ export function HeuteEntscheidung({ personas, perCoinSentiment }: Props) {
         </div>
       )}
       <p className="text-sm leading-relaxed text-slate-200">{subline}</p>
-      {newsHint && (
-        <p className="text-[12px] leading-relaxed text-slate-400">{newsHint}</p>
-      )}
+
+      <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Konfidenz</span>
+          <span className={`font-mono text-sm font-bold ${confidence.toneClass}`}>
+            {confidence.score}/100 · {confidence.label}
+          </span>
+        </div>
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-800">
+          <div
+            className={`h-full ${confidence.score >= 75 ? 'bg-emerald-400/80' : confidence.score >= 55 ? 'bg-amber-400/80' : 'bg-rose-400/80'}`}
+            style={{ width: `${confidence.score}%` }}
+          />
+        </div>
+        <div className="mt-2 space-y-1 text-[11px] text-slate-400">
+          <div>· Firma-Mehrheit: {buyCount}/3 wollen kaufen</div>
+          {setupSimilarity && (
+            <div>· Vergangenheit: {setupSimilarity.oneLineVerdict}</div>
+          )}
+          {newsHint && <div>· {newsHint}</div>}
+        </div>
+      </div>
+
+      <HeuteStreak />
+
       <div className="flex flex-wrap items-baseline gap-3 text-[10px] uppercase tracking-wider text-slate-500">
-        <span>{buyCount}/3 Firmen wollen kaufen</span>
         <Link href="/agent" className="text-sky-300 hover:text-sky-200 normal-case tracking-normal">Wer und warum →</Link>
       </div>
     </section>
