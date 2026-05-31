@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { loadFirmaPreference, saveFirmaPreference } from '@/lib/firma-preference';
 
 interface Question {
   id: string;
@@ -72,6 +73,8 @@ const PROFILE_NOTES = {
 export function FirmaQuiz() {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [done, setDone] = useState(false);
+  const [savedFirma, setSavedFirma] = useState<'conservative' | 'balanced' | 'aggressive' | null>(null);
+  useEffect(() => { setSavedFirma(loadFirmaPreference()); }, []);
 
   const answer = (q: string, optionIdx: number) => {
     const next = { ...answers, [q]: optionIdx };
@@ -139,8 +142,14 @@ export function FirmaQuiz() {
             <div><div className="uppercase tracking-wider text-slate-500">Balanciert</div><div className="font-mono text-sm text-slate-200">{result.totals.balanced}</div></div>
             <div><div className="uppercase tracking-wider text-slate-500">Aggressiv</div><div className="font-mono text-sm text-slate-200">{result.totals.aggressive}</div></div>
           </div>
-          <div className="flex items-baseline gap-3">
+          <div className="flex flex-wrap items-baseline gap-3">
             <button onClick={reset} className="rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1 text-[11px] text-slate-300 hover:border-slate-600">Nochmal</button>
+            <button
+              onClick={() => { saveFirmaPreference(result.winner); setSavedFirma(result.winner); }}
+              className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold ${savedFirma === result.winner ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-100' : 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200 hover:border-emerald-300'}`}
+            >
+              {savedFirma === result.winner ? '✓ als Lieblings-Firma gespeichert' : 'Als Lieblings-Firma speichern'}
+            </button>
             <Link href="/agent" className="text-[11px] text-sky-300 hover:text-sky-200">→ deine Firma auf /agent ansehen</Link>
           </div>
         </div>
