@@ -18,6 +18,7 @@ import { AgentLog } from '@/components/agent-log';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { FirmaStandings } from '@/components/firma-standings';
 import { FirmaRankingPanel } from '@/components/firma-ranking';
+import { FirmaAccuracyPanel } from '@/components/firma-accuracy-panel';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -213,6 +214,7 @@ export default async function AgentPage() {
       })()}
 
       <FirmaBacktestTable report={firmaBacktest} />
+      <FirmaAccuracyPanel />
       <FirmaRankingPanel />
       <FirmaStandings />
 
