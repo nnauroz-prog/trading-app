@@ -70,8 +70,11 @@ export function AkademieLog() {
           tone={lehrStab.daysStable >= 3 ? 'good' : lehrStab.daysStable === 0 ? 'bad' : 'neutral'}
         />
         <Stat label="Wechsel" value={String(lehrStab.totalSwitches)} tone={lehrStab.totalSwitches === 0 ? 'good' : lehrStab.totalSwitches > 5 ? 'bad' : 'neutral'} />
-        <Stat label="Bester Lauf" value={`${lehrStab.bestEverNetReturnPct >= 0 ? '+' : ''}${lehrStab.bestEverNetReturnPct}%`} tone={lehrStab.bestEverNetReturnPct > 0 ? 'good' : 'neutral'} />
+        <Stat label="Bester Sim-Lauf" value={`${lehrStab.bestEverNetReturnPct >= 0 ? '+' : ''}${lehrStab.bestEverNetReturnPct}%`} tone={lehrStab.bestEverNetReturnPct > 0 ? 'good' : 'neutral'} />
       </div>
+      <p className="text-[10px] text-slate-500">
+        „Bester Sim-Lauf“ ist das beste historische Simulations-Ergebnis aller bisher gespeicherten Tage. <span className="text-slate-400">Kein realer Gewinn oder Verlust — die App handelt nichts automatisch.</span> Wenn die Zahl rot ist, hatten alle bisherigen Sweeps Mühe, eine profitable Konfiguration zu finden — das ist eine Aussage über die aktuelle Marktphase, nicht über dein Depot.
+      </p>
 
       {log.length >= 2 && (
         <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
