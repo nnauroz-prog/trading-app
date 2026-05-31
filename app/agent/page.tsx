@@ -7,6 +7,7 @@ import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 import { buildInternalDialog, InternalMessage } from '@/lib/agents/internal-messages';
 import { vorstandMediation, VorstandVerdict } from '@/lib/agents/vorstand';
 import { CEO_BIOS, SUBAGENT_BIOS } from '@/lib/agents/personalities';
+import { CeoQuote } from '@/components/ceo-quote';
 import { VorstandRecorder } from '@/components/vorstand-recorder';
 import { VorstandLog } from '@/components/vorstand-log';
 import { getFirmaBacktest } from '@/lib/agents/firma-backtest';
@@ -131,6 +132,8 @@ export default async function AgentPage() {
           </p>
         </details>
       </header>
+
+      <CeoQuote />
 
       {(() => {
         const vorstand = vorstandMediation(personas);
