@@ -10,6 +10,7 @@ export interface TickerSnapshot {
   low: number;
   volume: number;
   quoteVolume: number;
+  source?: 'binance' | 'bybit';
 }
 
 interface RawBinanceTicker {
@@ -58,7 +59,8 @@ async function fetchBybitTickers(): Promise<Map<string, TickerSnapshot> | null> 
         high: parseFloat(t.highPrice24h),
         low: parseFloat(t.lowPrice24h),
         volume: parseFloat(t.volume24h),
-        quoteVolume: parseFloat(t.turnover24h)
+        quoteVolume: parseFloat(t.turnover24h),
+        source: 'bybit'
       });
     }
     return map.size > 0 ? map : null;
@@ -83,7 +85,8 @@ async function fetchBinanceTickers(): Promise<Map<string, TickerSnapshot> | null
         high: parseFloat(t.highPrice),
         low: parseFloat(t.lowPrice),
         volume: parseFloat(t.volume),
-        quoteVolume: parseFloat(t.quoteVolume)
+        quoteVolume: parseFloat(t.quoteVolume),
+        source: 'binance'
       });
     }
     return map.size > 0 ? map : null;
@@ -92,8 +95,10 @@ async function fetchBinanceTickers(): Promise<Map<string, TickerSnapshot> | null
   }
 }
 
+// Binance is the canonical source for the major USDT pairs we follow; prefer
+// it when reachable from the deploy region, fall back to Bybit otherwise.
 export async function fetchAllTickers(): Promise<Map<string, TickerSnapshot> | null> {
-  const bybit = await fetchBybitTickers();
-  if (bybit && bybit.size > 0) return bybit;
-  return fetchBinanceTickers();
+  const binance = await fetchBinanceTickers();
+  if (binance && binance.size > 0) return binance;
+  return fetchBybitTickers();
 }
