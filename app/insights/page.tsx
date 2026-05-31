@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { PersonalInsights } from '@/components/personal-insights';
+import { DataExport } from '@/components/data-export';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -20,6 +21,8 @@ export default function InsightsPage() {
       </header>
 
       <PersonalInsights />
+
+      <DataExport />
 
       <p className="rounded-xl border border-slate-700/60 bg-slate-950/40 p-3 text-[10px] leading-relaxed text-slate-500">
         Alle Daten liegen ausschließlich in deinem Browser — kein Server, keine Cloud-Synchronisation. Wenn du den Browser-Speicher leerst, sind sie weg.
