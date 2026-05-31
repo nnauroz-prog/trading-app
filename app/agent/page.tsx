@@ -8,6 +8,8 @@ import { buildInternalDialog, InternalMessage } from '@/lib/agents/internal-mess
 import { vorstandMediation, VorstandVerdict } from '@/lib/agents/vorstand';
 import { getFirmaBacktest } from '@/lib/agents/firma-backtest';
 import { FirmaBacktestTable } from '@/components/firma-backtest-table';
+import { generateTradeMemo } from '@/lib/agents/trade-memo';
+import { TradeMemoCard } from '@/components/trade-memo-card';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getCryptoNews } from '@/lib/news/news-agent';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
@@ -196,6 +198,20 @@ export default async function AgentPage() {
       </section>
 
       <FirmaRecorder personas={personas} generatedAt={report.generatedAt} />
+
+      {(() => {
+        const memos = personas.map(generateTradeMemo).filter((m): m is NonNullable<ReturnType<typeof generateTradeMemo>> => m !== null);
+        if (memos.length === 0) return null;
+        return (
+          <section className="space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Trade-Memos der kaufenden Firmen</h2>
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              {memos.map((m) => <TradeMemoCard key={m.firma} memo={m} />)}
+            </div>
+          </section>
+        );
+      })()}
+
       <FirmaBacktestTable report={firmaBacktest} />
       <FirmaRankingPanel />
       <FirmaStandings />
