@@ -15,10 +15,16 @@ export interface FirmaDecision {
   // Häkchen (Konfluenz-Anzahl) of the target setup on this day. Used by
   // the persistence detector to grade how strong a multi-day setup is.
   passedCount: number | null;
-  // Snapshot of the three sub-agent votes — useful for later audit.
+  // Snapshot of the sub-agent votes — useful for later audit & accuracy
+  // tracking. Optional fields are newer additions; older diary entries
+  // may not have them.
   analystVote: 'POSITIV' | 'NEUTRAL' | 'NEGATIV';
   scoutVote: 'STARK' | 'MITTEL' | 'SCHWACH';
   riskVote: 'OK' | 'VETO';
+  newsVote?: 'POSITIV' | 'NEUTRAL' | 'NEGATIV' | 'KEINE_DATEN';
+  positionVote?: 'KLEIN' | 'NORMAL' | 'GROSS' | 'KEINE_POSITION';
+  liquidityVote?: 'TIEF' | 'OK' | 'DUENN' | 'KEINE_DATEN';
+  backtestVote?: 'BESTÄTIGT' | 'GEMISCHT' | 'WIDERSPRUCH' | 'KEINE_DATEN';
   ceoFinalWord: string;
 }
 
@@ -139,6 +145,10 @@ export function buildFirmaDecisions(
     const analyst = p.team.find((t) => t.role === 'analyst')?.vote ?? 'NEUTRAL';
     const scout = p.team.find((t) => t.role === 'scout')?.vote ?? 'SCHWACH';
     const risk = p.team.find((t) => t.role === 'risk')?.vote ?? 'VETO';
+    const news = p.team.find((t) => t.role === 'news')?.vote;
+    const position = p.team.find((t) => t.role === 'position')?.vote;
+    const liquidity = p.team.find((t) => t.role === 'liquidity')?.vote;
+    const backtest = p.team.find((t) => t.role === 'backtest')?.vote;
     return {
       date,
       recordedAt,
@@ -154,6 +164,10 @@ export function buildFirmaDecisions(
       analystVote: analyst as FirmaDecision['analystVote'],
       scoutVote: scout as FirmaDecision['scoutVote'],
       riskVote: risk as FirmaDecision['riskVote'],
+      newsVote: news as FirmaDecision['newsVote'],
+      positionVote: position as FirmaDecision['positionVote'],
+      liquidityVote: liquidity as FirmaDecision['liquidityVote'],
+      backtestVote: backtest as FirmaDecision['backtestVote'],
       ceoFinalWord: p.ceoFinalWord
     };
   });
