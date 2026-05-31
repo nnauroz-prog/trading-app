@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
+import { BottomNav } from '@/components/bottom-nav';
 
 export const metadata: Metadata = {
   title: 'Market Decision Support',
@@ -25,7 +26,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen pb-14 md:pb-0">
+        {children}
+        <BottomNav />
+      </body>
     </html>
   );
 }

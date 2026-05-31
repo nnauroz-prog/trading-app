@@ -20,6 +20,11 @@ import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
 import { DiffVsYesterday } from '@/components/diff-vs-yesterday';
 import { FirstVisitHint } from '@/components/first-visit-hint';
+import { DailyCommandCenter } from '@/components/daily-command-center';
+import { AssetClassRadar, AssetClassCard } from '@/components/asset-class-radar';
+import { KapitalSchutz } from '@/components/kapital-schutz';
+import { buildCommandCenter } from '@/lib/command-center';
+import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 import { AkademieStrip } from '@/components/akademie-strip';
 import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
@@ -117,6 +122,92 @@ export default async function HomePage() {
   const intelReports = runAllEmployees(intelCtx);
   const intelCeo = chefredakteurSynthesis(intelReports);
 
+  // Unified Opportunity-Scores for crypto candidates.
+  const scoredCrypto = masterSignal.candidates.slice(0, 10).map((c) => {
+    const userBroker = c.brokers.includes('Coinbase') || c.brokers.includes('Scalable Capital');
+    return {
+      candidate: c,
+      score: scoreCryptoCandidate({
+        passedCount: c.passedCount,
+        totalCount: c.totalCount,
+        structure: c.structure,
+        nearSupport: c.nearSupport,
+        rrTp1: c.rrTp1,
+        quoteVolume: c.quoteVolume,
+        priceChangePct24h: c.priceChangePct24h,
+        marketMood: masterSignal.marketMood,
+        userBrokerAvailable: userBroker,
+        isOnWatchlist: false
+      })
+    };
+  });
+  const cryptoBest = scoredCrypto.length > 0
+    ? scoredCrypto.reduce((a, b) => a.score.score > b.score.score ? a : b)
+    : null;
+  const cryptoTradeableCount = scoredCrypto.filter((s) => s.score.score >= 70).length;
+  const cryptoStrongCount = scoredCrypto.filter((s) => s.score.score >= 80).length;
+
+  const commandCenter = buildCommandCenter({
+    marketMood: masterSignal.marketMood,
+    cryptoBestScore: cryptoBest?.score.score ?? 0,
+    stocksAvailable: false,        // Finnhub key currently not wired
+    stocksBestScore: null,
+    goldTrendOk: true,             // PAXG is part of the universe; treat as defensively-stable
+    openPositionsCount: 0,         // client-side data, not server-known
+    positionsNeedingAttention: 0,
+    hasHighImpactEventWithin24h: !!eventWindow?.imminent
+  });
+
+  const radarCards: AssetClassCard[] = [
+    {
+      klass: 'crypto',
+      label: 'Krypto',
+      status: cryptoStrongCount > 0 ? 'stark' : cryptoTradeableCount > 0 ? 'neutral' : 'schwach',
+      topCandidate: cryptoBest?.candidate.symbol ?? null,
+      goodSetupsCount: cryptoTradeableCount,
+      riskLevel: masterSignal.marketMood === 'risk-off' ? 'hoch' : 'mittel',
+      action: cryptoStrongCount > 0
+        ? 'Selektiv aktiv. Nur Setups mit Score ≥ 70 und klarem Stop.'
+        : cryptoTradeableCount > 0
+        ? 'Watchlist-Modus — auf bestätigten Einstieg warten.'
+        : 'Heute kein sauberes Setup — Cash bleibt eine valide Position.',
+      href: '/screener'
+    },
+    {
+      klass: 'stocks',
+      label: 'Aktien',
+      status: 'keine_daten',
+      topCandidate: null,
+      goodSetupsCount: 0,
+      riskLevel: 'mittel',
+      action: 'Aktien-Daten nicht angebunden (Finnhub-API-Key fehlt).',
+      href: null,
+      note: 'Sobald ein Daten-Provider verbunden ist, erscheinen hier Setups.'
+    },
+    {
+      klass: 'gold',
+      label: 'Gold',
+      status: 'neutral',
+      topCandidate: 'PAXG',
+      goodSetupsCount: 0,
+      riskLevel: 'niedrig',
+      action: 'Defensiv stabil — eher Kapital-Erhalt als schnelle Gewinne.',
+      href: '/gold'
+    },
+    {
+      klass: 'cash',
+      label: 'Cash',
+      status: commandCenter.bestAssetClass === 'cash' ? 'stark' : 'neutral',
+      topCandidate: null,
+      goodSetupsCount: 0,
+      riskLevel: 'niedrig',
+      action: commandCenter.bestAssetClass === 'cash'
+        ? 'Aktuell die beste Position — kein Setup über 70.'
+        : 'Reserve für besseres Setup, jederzeit einsetzbar.',
+      href: null
+    }
+  ];
+
   const tickerChangesAll = report.tickers.map((t) => t.priceChangePct);
   const negShareAll = tickerChangesAll.filter((c) => c < -2).length / (tickerChangesAll.length || 1);
   const posShareAll = tickerChangesAll.filter((c) => c > 2).length / (tickerChangesAll.length || 1);
@@ -186,12 +277,31 @@ export default async function HomePage() {
 
       <FirstVisitHint />
 
-      <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} eventWindow={eventWindow} intelSignal={intelCeo.netSignal} />
+      {/* 1. Daily Command Center */}
+      <DailyCommandCenter report={commandCenter} />
 
+      {/* 2. Beste Chance heute — nur wenn Konfidenz hoch genug */}
+      {cryptoBest && cryptoBest.score.score >= 60 && (
+        <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} eventWindow={eventWindow} intelSignal={intelCeo.netSignal} />
+      )}
+      {(!cryptoBest || cryptoBest.score.score < 60) && (
+        <section className="rounded-2xl border-2 border-slate-700 bg-slate-900/60 p-5">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Beste Chance heute</div>
+          <h2 className="mt-2 text-lg font-bold text-white">Keine saubere Chance — Kapital schützen</h2>
+          <p className="mt-2 text-[13px] text-slate-300">
+            Aktuelles bestes Setup liegt unter Score 60. Heute ist Watchlist-Pflege und Cash-Halten die bessere Entscheidung als ein erzwungener Trade.
+          </p>
+        </section>
+      )}
+
+      {/* 3. Kapital-Schutz */}
+      <KapitalSchutz latestPrices={latestPrices} />
+
+      {/* 4. Multi-Asset-Radar */}
+      <AssetClassRadar cards={radarCards} />
+
+      {/* 5. Watchlist + Diff vs Gestern */}
       <DiffVsYesterday />
-
-      <CrossExchangeWarning report={crossExchange} />
-
       <WatchlistStrip candidates={masterSignal.candidates.map((c) => ({
         coinId: c.coinId,
         passedCount: c.passedCount,
@@ -200,10 +310,11 @@ export default async function HomePage() {
         nearSupport: c.nearSupport
       }))} />
 
+      <CrossExchangeWarning report={crossExchange} />
+
+      {/* 6. Chefredakteur-Lagebericht + Pump/Panik + Makro */}
       <IntelStrip ceo={intelCeo} />
-
       <ChaseWarning chase={chaseSignals} opportunity={opportunitySignals} />
-
       <WocheVoraus events={upcomingMacro} today={todayIso} />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
