@@ -6,6 +6,8 @@ import { evaluatePersonas } from '@/lib/agents/personas';
 import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 import { buildInternalDialog, InternalMessage } from '@/lib/agents/internal-messages';
 import { vorstandMediation, VorstandVerdict } from '@/lib/agents/vorstand';
+import { getFirmaBacktest } from '@/lib/agents/firma-backtest';
+import { FirmaBacktestTable } from '@/components/firma-backtest-table';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getCryptoNews } from '@/lib/news/news-agent';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
@@ -75,7 +77,7 @@ function MessageRow({ msg }: { msg: InternalMessage }) {
 
 export default async function AgentPage() {
   const tradeMode: TradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, backtest, newsItems] = await Promise.all([buildMasterSignal(tradeMode), getBacktestSummary(), getCryptoNews()]);
+  const [report, backtest, newsItems, firmaBacktest] = await Promise.all([buildMasterSignal(tradeMode), getBacktestSummary(), getCryptoNews(), getFirmaBacktest()]);
   const spaeher = runSpaeher(newsItems);
   const eventWindow = computeEventWindow(listMacroEventsThisWeek());
   const personas = evaluatePersonas(report, backtest, spaeher, eventWindow);
@@ -194,6 +196,7 @@ export default async function AgentPage() {
       </section>
 
       <FirmaRecorder personas={personas} generatedAt={report.generatedAt} />
+      <FirmaBacktestTable report={firmaBacktest} />
       <FirmaRankingPanel />
       <FirmaStandings />
 
