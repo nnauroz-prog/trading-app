@@ -9,6 +9,12 @@ import {
   ScoutReport,
   SubAgentReport
 } from '@/lib/agents/sub-agents';
+import { CEO_BIOS, SUBAGENT_BIOS } from '@/lib/agents/personalities';
+
+function speakerTitle(persona: PersonaId, role: keyof typeof SUBAGENT_BIOS['conservative'], fallback: string): string {
+  const bio = SUBAGENT_BIOS[persona]?.[role];
+  return bio ? `${bio.name} (${bio.role})` : fallback;
+}
 
 export interface InternalMessage {
   from: 'analyst' | 'scout' | 'risk' | 'news' | 'position' | 'liquidity' | 'backtest' | 'ceo';
@@ -63,7 +69,7 @@ export function buildInternalDialog(
 
   messages.push({
     from: 'analyst',
-    fromTitle: 'Markt-Analyst',
+    fromTitle: speakerTitle(persona, 'analyst', 'Markt-Analyst'),
     to: 'all',
     toTitle: 'Team',
     body: `Marktlage: ${analyst.vote.toLowerCase()}. ${analyst.reason}`,
@@ -77,7 +83,7 @@ export function buildInternalDialog(
     scout.reason;
   messages.push({
     from: 'scout',
-    fromTitle: 'Setup-Scout',
+    fromTitle: speakerTitle(persona, 'scout', 'Setup-Scout'),
     to: 'all',
     toTitle: 'Team',
     body: scoutPrefix,
@@ -91,7 +97,7 @@ export function buildInternalDialog(
     risk.reason;
   messages.push({
     from: 'risk',
-    fromTitle: 'Risiko-Manager',
+    fromTitle: speakerTitle(persona, 'risk', 'Risiko-Manager'),
     to: 'all',
     toTitle: 'Team',
     body: riskPrefix,
@@ -105,7 +111,7 @@ export function buildInternalDialog(
       news.reason;
     messages.push({
       from: 'news',
-      fromTitle: 'News-Watcher',
+      fromTitle: speakerTitle(persona, 'news', 'News-Watcher'),
       to: 'all',
       toTitle: 'Team',
       body: newsPrefix,
@@ -116,7 +122,7 @@ export function buildInternalDialog(
   if (liquidity && liquidity.vote !== 'KEINE_DATEN') {
     messages.push({
       from: 'liquidity',
-      fromTitle: 'Liquiditäts-Spezialist',
+      fromTitle: speakerTitle(persona, 'liquidity', 'Liquiditäts-Spezialist'),
       to: 'all', toTitle: 'Team',
       body: liquidity.reason,
       tone: liquidity.vote === 'TIEF' ? 'agree' : liquidity.vote === 'DUENN' ? 'warn' : 'neutral'
@@ -126,7 +132,7 @@ export function buildInternalDialog(
   if (backtest && backtest.vote !== 'KEINE_DATEN') {
     messages.push({
       from: 'backtest',
-      fromTitle: 'Backtest-Auditor',
+      fromTitle: speakerTitle(persona, 'backtest', 'Backtest-Auditor'),
       to: 'all', toTitle: 'Team',
       body: backtest.reason,
       tone: backtest.vote === 'BESTÄTIGT' ? 'agree' : backtest.vote === 'WIDERSPRUCH' ? 'warn' : 'neutral'
@@ -136,7 +142,7 @@ export function buildInternalDialog(
   if (position && position.vote !== 'KEINE_POSITION' && verdict === 'BUY') {
     messages.push({
       from: 'position',
-      fromTitle: 'Position-Manager',
+      fromTitle: speakerTitle(persona, 'position', 'Position-Manager'),
       to: 'all', toTitle: 'Team',
       body: position.reason,
       tone: position.vote === 'KLEIN' ? 'neutral' : 'agree'
@@ -145,9 +151,10 @@ export function buildInternalDialog(
 
   // CEO closes.
   const ceoBody = composeCeoClose(persona, verdict, analyst, scout, risk, news);
+  const ceoBio = CEO_BIOS[persona];
   messages.push({
     from: 'ceo',
-    fromTitle: `CEO ${ceoName}`,
+    fromTitle: ceoBio ? `${ceoBio.name} (CEO ${ceoName})` : `CEO ${ceoName}`,
     to: 'all',
     toTitle: 'Team',
     body: ceoBody,
