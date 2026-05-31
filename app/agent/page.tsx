@@ -4,9 +4,11 @@ import { buildMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engin
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
+import { buildInternalDialog, InternalMessage } from '@/lib/agents/internal-messages';
 import { AgentLog } from '@/components/agent-log';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { FirmaStandings } from '@/components/firma-standings';
+import { FirmaRankingPanel } from '@/components/firma-ranking';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -34,6 +36,20 @@ function TeamRow({ report }: { report: SubAgentReport }) {
         </span>
       </div>
       <p className="text-[11px] leading-snug text-slate-300">{report.reason}</p>
+    </li>
+  );
+}
+
+function MessageRow({ msg }: { msg: InternalMessage }) {
+  const accent =
+    msg.tone === 'warn' ? 'border-l-rose-400/60' :
+    msg.tone === 'agree' ? 'border-l-emerald-400/60' :
+    'border-l-slate-600';
+  const speaker = msg.from === 'ceo' ? 'text-emerald-200' : 'text-slate-300';
+  return (
+    <li className={`border-l-2 ${accent} pl-2`}>
+      <div className={`text-[10px] font-semibold uppercase tracking-wider ${speaker}`}>{msg.fromTitle}</div>
+      <p className="text-[11px] leading-snug text-slate-300">„{msg.body}“</p>
     </li>
   );
 }
@@ -104,9 +120,13 @@ export default async function AgentPage() {
                 </ul>
               </div>
 
-              <div className="rounded-md border border-slate-800 bg-slate-950/60 p-2">
-                <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">CEO-Schlusswort</div>
-                <p className="mt-1 text-[11px] leading-snug text-slate-200">{p.ceoFinalWord}</p>
+              <div className="space-y-1.5">
+                <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Interne Diskussion</div>
+                <ul className="space-y-1.5 rounded-md border border-slate-800 bg-slate-950/60 p-2">
+                  {buildInternalDialog(p.persona, p.name, p.team, p.verdict).map((msg, i) => (
+                    <MessageRow key={`${msg.from}-${i}`} msg={msg} />
+                  ))}
+                </ul>
               </div>
 
               <p className="text-[11px] leading-relaxed text-slate-300">{p.rationale}</p>
@@ -116,6 +136,7 @@ export default async function AgentPage() {
       </section>
 
       <FirmaRecorder personas={personas} generatedAt={report.generatedAt} />
+      <FirmaRankingPanel />
       <FirmaStandings />
 
       <AgentLog />
