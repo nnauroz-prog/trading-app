@@ -69,6 +69,23 @@ function TeamRow({ report }: { report: SubAgentReport }) {
   );
 }
 
+function initials(fromTitle: string): string {
+  // Pulls the first letters of the first two real words of the name —
+  // "Erik Nordmann (Markt-Analyst)" → "EN"
+  const name = fromTitle.replace(/\(.*?\)/g, '').trim();
+  const parts = name.split(/\s+/).filter((p) => p.length > 0);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function avatarTone(from: InternalMessage['from'], tone: InternalMessage['tone']): string {
+  if (from === 'ceo') return 'bg-emerald-500 text-emerald-50';
+  if (tone === 'warn') return 'bg-rose-500/80 text-rose-50';
+  if (tone === 'agree') return 'bg-emerald-500/70 text-emerald-50';
+  return 'bg-slate-700 text-slate-100';
+}
+
 function MessageRow({ msg }: { msg: InternalMessage }) {
   const accent =
     msg.tone === 'warn' ? 'border-l-rose-400/60' :
@@ -76,9 +93,14 @@ function MessageRow({ msg }: { msg: InternalMessage }) {
     'border-l-slate-600';
   const speaker = msg.from === 'ceo' ? 'text-emerald-200' : 'text-slate-300';
   return (
-    <li className={`border-l-2 ${accent} pl-2`}>
-      <div className={`text-[10px] font-semibold uppercase tracking-wider ${speaker}`}>{msg.fromTitle}</div>
-      <p className="text-[11px] leading-snug text-slate-300">„{msg.body}“</p>
+    <li className={`grid grid-cols-[auto_1fr] items-start gap-2 border-l-2 ${accent} pl-2`}>
+      <span className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold ${avatarTone(msg.from, msg.tone)}`}>
+        {initials(msg.fromTitle)}
+      </span>
+      <div>
+        <div className={`text-[10px] font-semibold ${speaker}`}>{msg.fromTitle}</div>
+        <p className="text-[11px] leading-snug text-slate-300">„{msg.body}“</p>
+      </div>
     </li>
   );
 }
