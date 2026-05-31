@@ -136,6 +136,36 @@ export function ProbabilityCard({ homeTeam, awayTeam, model, tips, saveContext }
         </ul>
       </div>
 
+      {/* Head-to-Head */}
+      {model.headToHead.totalGames > 0 && (
+        <div className="space-y-1">
+          <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Direkte Aufeinandertreffen</div>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[11px] text-slate-300">
+            <span>{model.headToHead.totalGames} Spiele im Feed</span>
+            <span className="font-mono">
+              <span className="text-emerald-300">{model.headToHead.homeWins}</span>
+              <span className="mx-0.5 text-slate-500">/</span>
+              <span className="text-slate-400">{model.headToHead.draws}</span>
+              <span className="mx-0.5 text-slate-500">/</span>
+              <span className="text-rose-300">{model.headToHead.awayWins}</span>
+            </span>
+            <span className="text-[10px] text-slate-500">(Heim/U/Auswärts aus {homeTeam}-Sicht)</span>
+          </div>
+          {model.headToHead.recentResults.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {model.headToHead.recentResults.map((r, i) => (
+                <span key={i} className="rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 font-mono text-[10px]">
+                  <span className="text-slate-500">{r.date.slice(5)} </span>
+                  <span className={r.winner === 'home' ? 'text-emerald-300' : r.winner === 'away' ? 'text-rose-300' : 'text-slate-300'}>
+                    {r.score}
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Drei Tipp-Stufen */}
       <div className="space-y-1.5">
         <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tipp-Vorschläge</div>
