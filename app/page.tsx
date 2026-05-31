@@ -28,6 +28,7 @@ import { TriggeredAlertsStrip } from '@/components/triggered-alerts-strip';
 import { InstallPrompt } from '@/components/install-prompt';
 import { WelcomeBack } from '@/components/welcome-back';
 import { FavoriteFirmaHero } from '@/components/favorite-firma-hero';
+import { FavoriteFirmaDivergence } from '@/components/favorite-firma-divergence';
 import { DailyCommandCenter } from '@/components/daily-command-center';
 import { AssetClassRadar, AssetClassCard } from '@/components/asset-class-radar';
 import { KapitalSchutz } from '@/components/kapital-schutz';
@@ -295,6 +296,7 @@ export default async function HomePage() {
       <WelcomeBack />
 
       <FavoriteFirmaHero personas={personas} />
+      <FavoriteFirmaDivergence personas={personas} />
 
       <InstallPrompt />
 
