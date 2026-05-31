@@ -21,6 +21,8 @@ import { WatchlistToggle } from '@/components/watchlist-toggle';
 import { DataQualityBadge } from '@/components/data-quality-badge';
 import { QuickPositionButton } from '@/components/quick-position-button';
 import { CoinAlertForm } from '@/components/coin-alert-form';
+import { deriveCoinAction } from '@/lib/coin-action';
+import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 
 export const dynamic = 'force-dynamic';
 
@@ -147,6 +149,28 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
     return t.includes(asset.ticker.toUpperCase()) || t.includes(asset.name.toUpperCase());
   }).slice(0, 5);
 
+  // Coin-Action card — direct recommendation from the assembled signals.
+  const candidateOppScore = candidate ? scoreCryptoCandidate({
+    passedCount: candidate.passedCount,
+    totalCount: candidate.totalCount,
+    structure: candidate.structure,
+    nearSupport: candidate.nearSupport,
+    rrTp1: candidate.rrTp1,
+    quoteVolume: candidate.quoteVolume,
+    priceChangePct24h: candidate.priceChangePct24h,
+    marketMood: masterSignal!.marketMood,
+    userBrokerAvailable: candidate.brokers.includes('Coinbase') || candidate.brokers.includes('Scalable Capital'),
+    isOnWatchlist: false
+  }).score : 0;
+  const coinAction = deriveCoinAction({
+    hasCandidate: !!candidate,
+    opportunityScore: candidateOppScore,
+    structure: candidate?.structure ?? null,
+    priceChange24h: snapshot?.change24h ?? 0,
+    nearSupport: candidate?.nearSupport ?? false,
+    marketMoodRiskOff: masterSignal?.marketMood === 'risk-off'
+  });
+
   // Chase / Opportunity status specific to this coin.
   let chaseStatus: { kind: 'chase' | 'opportunity' | 'clean'; reason: string } = { kind: 'clean', reason: '' };
   if (spaeher && snapshot) {
@@ -188,6 +212,19 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
           </div>
         </div>
       </header>
+
+      {universeCoin && (
+        <section className={`space-y-2 rounded-2xl border-2 p-5 ${coinAction.toneClass}`}>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Aktion</span>
+            <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${coinAction.labelClass}`}>
+              {coinAction.kind.replace(/_/g, ' ')}
+            </span>
+          </div>
+          <h2 className="text-lg font-bold text-white sm:text-xl">{coinAction.headline}</h2>
+          <p className="text-[13px] leading-relaxed text-slate-200">{coinAction.body}</p>
+        </section>
+      )}
 
       {snapshot ? (
         <section className="rounded-2xl border border-slate-800/80 bg-gradient-to-br from-slate-950 to-slate-900/40 p-5">
