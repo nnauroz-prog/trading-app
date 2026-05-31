@@ -18,6 +18,8 @@ import { AgentRecorder } from '@/components/agent-recorder';
 import { FirmaStrip } from '@/components/firma-strip';
 import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
+import { DiffVsYesterday } from '@/components/diff-vs-yesterday';
+import { FirstVisitHint } from '@/components/first-visit-hint';
 import { AkademieStrip } from '@/components/akademie-strip';
 import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
@@ -182,7 +184,11 @@ export default async function HomePage() {
 
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
+      <FirstVisitHint />
+
       <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} eventWindow={eventWindow} intelSignal={intelCeo.netSignal} />
+
+      <DiffVsYesterday />
 
       <CrossExchangeWarning report={crossExchange} />
 
