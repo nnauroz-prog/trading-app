@@ -60,32 +60,46 @@ function NewsRow({ item }: { item: ScoredNews }) {
 
 function VariantRow({ v }: { v: VariantResult }) {
   const tone =
-    v.isBest ? 'border-emerald-400/60 bg-emerald-950/30' :
-    v.isDefault ? 'border-amber-400/40 bg-amber-950/20' :
+    v.isBest && v.isRobust ? 'border-emerald-400/60 bg-emerald-950/30' :
+    v.isBest ? 'border-amber-400/60 bg-amber-950/20' :
+    v.isDefault ? 'border-amber-400/40 bg-amber-950/10' :
     'border-slate-800 bg-slate-950/40';
   return (
-    <li className={`grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-3 rounded-lg border px-3 py-2 text-[11px] ${tone}`}>
-      <div className="flex flex-col">
-        {v.isBest && <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-300">BESTE</span>}
-        {v.isDefault && <span className="text-[9px] font-bold uppercase tracking-wider text-amber-300">AKTIV</span>}
+    <li className={`space-y-1.5 rounded-lg border p-3 text-[11px] ${tone}`}>
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="flex items-baseline gap-2">
+          {v.isBest && <span className="rounded border border-emerald-400/50 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200">BESTE</span>}
+          {v.isDefault && <span className="rounded border border-amber-400/50 bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-200">AKTIV</span>}
+          {v.isRobust && <span className="rounded border border-emerald-400/50 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200">ROBUST</span>}
+          {!v.isRobust && <span className="rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">FRAGIL</span>}
+        </div>
+        <div className="font-mono text-slate-300">
+          <span className="text-slate-500">Konfluenz </span>{v.params.minConfluence}
+          <span className="ml-2 text-slate-500">Stop </span>{v.params.stopAtrMult.toFixed(1)}×
+          <span className="ml-2 text-slate-500">Ziel </span>{v.params.tp1AtrMult.toFixed(1)}×
+        </div>
       </div>
-      <div className="font-mono text-slate-200">
-        <span className="text-slate-500">Konfluenz </span>{v.params.minConfluence}
-        <span className="ml-2 text-slate-500">Stop </span>{v.params.stopAtrMult.toFixed(1)}×ATR
-        <span className="ml-2 text-slate-500">Ziel </span>{v.params.tp1AtrMult.toFixed(1)}×ATR
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-md border border-slate-800 bg-slate-950/60 p-2">
+          <div className="text-[9px] uppercase tracking-wider text-slate-500">Train (älterer Halbjahr)</div>
+          <div className="mt-0.5 flex items-baseline gap-2">
+            <span className={`font-mono ${v.train.netReturnPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+              {v.train.netReturnPct >= 0 ? '+' : ''}{v.train.netReturnPct.toFixed(1)}%
+            </span>
+            <span className="font-mono text-slate-500">{v.train.totalTrades} Trades · {v.train.winRatePct.toFixed(0)}%</span>
+          </div>
+        </div>
+        <div className="rounded-md border border-slate-800 bg-slate-950/60 p-2">
+          <div className="text-[9px] uppercase tracking-wider text-slate-500">Test (neuerer Halbjahr, Out-of-Sample)</div>
+          <div className="mt-0.5 flex items-baseline gap-2">
+            <span className={`font-mono ${v.test.netReturnPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+              {v.test.netReturnPct >= 0 ? '+' : ''}{v.test.netReturnPct.toFixed(1)}%
+            </span>
+            <span className="font-mono text-slate-500">{v.test.totalTrades} Trades · {v.test.winRatePct.toFixed(0)}%</span>
+          </div>
+        </div>
       </div>
-      <div className="text-right">
-        <div className="text-[9px] uppercase tracking-wider text-slate-500">Trades</div>
-        <div className="font-mono text-slate-100">{v.totalTrades}</div>
-      </div>
-      <div className="text-right">
-        <div className="text-[9px] uppercase tracking-wider text-slate-500">Treffer</div>
-        <div className="font-mono text-slate-100">{v.winRatePct.toFixed(1)}%</div>
-      </div>
-      <div className="text-right">
-        <div className="text-[9px] uppercase tracking-wider text-slate-500">Netto</div>
-        <div className={`font-mono ${v.netReturnPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{v.netReturnPct >= 0 ? '+' : ''}{v.netReturnPct.toFixed(1)}%</div>
-      </div>
+      <p className="text-[10px] text-slate-500">{v.robustnessReason}</p>
     </li>
   );
 }
@@ -137,21 +151,23 @@ export default async function AkademiePage() {
       <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
         <div className="flex items-baseline justify-between gap-2">
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Lehrling — Strategie-Sweep</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Lehrling — Walk-Forward-Sweep</h2>
             <p className="mt-1 text-[11px] text-slate-500">
-              Probiert {lehrling.totalVariantsTried} Parameter-Varianten (Konfluenz-Schwelle, Stop-Abstand, Ziel-Abstand) gegen {lehrling.periodDays} Tage BTC/ETH/SOL-Geschichte. Sortiert nach Erwartungswert pro Trade.
+              Probiert {lehrling.totalVariantsTried} Parameter-Varianten gegen die letzten {lehrling.periodDays} Tage BTC/ETH/SOL. Die Daten werden in zwei Hälften geteilt: <span className="text-slate-300">Train</span> (älter, {lehrling.trainDays}d) und <span className="text-slate-300">Test</span> (neuer, {lehrling.testDays}d, Out-of-Sample). Nur Varianten, die im Test-Zeitraum nicht zusammengebrochen sind, gelten als <span className="text-emerald-300">robust</span>.
             </p>
           </div>
-          {lehrling.best && (
-            <span className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-200">
-              Beste: {lehrling.best.netReturnPct >= 0 ? '+' : ''}{lehrling.best.netReturnPct.toFixed(1)}%
-            </span>
-          )}
+          <span className={`rounded border px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${lehrling.robustCount > 0 ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200' : 'border-rose-500/40 bg-rose-500/10 text-rose-200'}`}>
+            {lehrling.robustCount}/{lehrling.totalVariantsTried} robust
+          </span>
         </div>
 
-        {lehrling.best && lehrling.baseline && lehrling.best.id !== lehrling.baseline.id && (
+        <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-200">
+          <span className="font-bold">Lehrling-Erkenntnis:</span> {lehrling.honestNote}
+        </div>
+
+        {lehrling.best && lehrling.best.isRobust && lehrling.baseline && lehrling.best.id !== lehrling.baseline.id && (
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/30 p-3 text-[11px] text-emerald-100">
-            <span className="font-bold">Lehrling-Erkenntnis:</span> die beste Variante hätte {(lehrling.best.netReturnPct - lehrling.baseline.netReturnPct).toFixed(1)}%-Punkte mehr gebracht als die aktuell aktive Konfiguration ({lehrling.best.totalTrades} vs {lehrling.baseline.totalTrades} Trades).
+            <span className="font-bold">Empfehlung:</span> die robusteste Variante hat im Test-Zeitraum +{lehrling.best.test.expectancyPct.toFixed(2)}% Erwartungswert pro Trade — {(lehrling.best.test.netReturnPct - lehrling.baseline.test.netReturnPct).toFixed(1)}%-Punkte besser als die Default-Konfiguration im selben Zeitraum.
           </div>
         )}
 
