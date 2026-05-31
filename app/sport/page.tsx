@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { getFootballFixtures, Fixture, UpcomingFixture } from '@/lib/sport/fetcher';
+import { getFootballFixtures, Fixture, UpcomingFixture, LeagueFixtures } from '@/lib/sport/fetcher';
+import { TeamForm5 } from '@/lib/sport/predictor';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
@@ -41,6 +42,67 @@ function FixtureRow({ f }: { f: Fixture }) {
   );
 }
 
+function FormChips({ form }: { form: TeamForm5 }) {
+  if (form.results.length === 0) return <span className="text-[10px] text-slate-600">noch keine Form</span>;
+  return (
+    <span className="inline-flex gap-0.5">
+      {form.results.map((r, i) => (
+        <span
+          key={i}
+          className={`inline-block h-3 w-3 rounded-full text-center text-[8px] font-bold leading-3 ${r === 'W' ? 'bg-emerald-500/80 text-emerald-50' : r === 'L' ? 'bg-rose-500/80 text-rose-50' : 'bg-slate-600 text-slate-100'}`}
+          title={r === 'W' ? 'Sieg' : r === 'L' ? 'Niederlage' : 'Unentschieden'}
+        >
+          {r === 'W' ? 'S' : r === 'L' ? 'N' : 'U'}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function pickConfidenceClass(label: 'klar' | 'leicht' | 'offen'): string {
+  if (label === 'klar') return 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200';
+  if (label === 'leicht') return 'border-amber-400/50 bg-amber-500/15 text-amber-200';
+  return 'border-slate-700 bg-slate-900 text-slate-300';
+}
+
+function TopTipp({ leagues }: { leagues: LeagueFixtures[] }) {
+  let best: { fixture: UpcomingFixture; league: string } | null = null;
+  for (const lf of leagues) {
+    for (const f of lf.next) {
+      if (!f.prediction) continue;
+      if (!best || f.prediction.pickConfidence > (best.fixture.prediction?.pickConfidence ?? 0)) {
+        best = { fixture: f, league: lf.league.name };
+      }
+    }
+  }
+  if (!best || !best.fixture.prediction) return null;
+  const p = best.fixture.prediction;
+  const conf = Math.round(p.pickConfidence * 100);
+  return (
+    <section className="space-y-2 rounded-2xl border-2 border-emerald-400/40 bg-emerald-950/20 p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-300">Tipp der Woche</span>
+        <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${pickConfidenceClass(p.pickLabel)}`}>
+          {p.pickLabel} · {conf}%
+        </span>
+      </div>
+      <h2 className="text-lg font-bold text-white">
+        {best.fixture.homeTeam} <span className="text-slate-500">vs.</span> {best.fixture.awayTeam}
+      </h2>
+      <div className="text-[11px] text-slate-400">
+        {best.league} · {fmtDate(best.fixture.date)}{best.fixture.time ? ` · ${fmtLocalTime(best.fixture.date, best.fixture.time)}` : ''}
+      </div>
+      <p className="text-[13px] text-slate-100">
+        <span className="font-bold">{p.pickPlain}</span> — wahrscheinlichstes Ergebnis: <span className="font-mono">{p.likelyScore.home} : {p.likelyScore.away}</span>.
+      </p>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[11px] text-slate-400">
+        <span>Form {best.fixture.homeTeam}: <FormChips form={p.homeForm} /></span>
+        <span>Form {best.fixture.awayTeam}: <FormChips form={p.awayForm} /></span>
+      </div>
+    </section>
+  );
+}
+
 function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
   return (
     <li className="rounded-lg border border-slate-800 bg-slate-950/40 p-2.5">
@@ -57,23 +119,25 @@ function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
         <span className="font-mono text-[10px] uppercase tracking-wider text-emerald-400">vs.</span>
       </div>
       {f.prediction ? (
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800/60 pt-1.5 text-[11px]">
-          <span className="text-[10px] uppercase tracking-wider text-slate-500">Tipp</span>
-          <span className="font-mono text-sm font-bold text-slate-100">
-            {f.prediction.likelyScore.home} : {f.prediction.likelyScore.away}
-          </span>
-          <span className="text-slate-500">·</span>
-          <span className="text-slate-300">
-            Heim <span className="font-mono font-semibold text-emerald-300">{Math.round(f.prediction.pHome * 100)}%</span>
-            <span className="mx-1.5 text-slate-600">/</span>
-            Remis <span className="font-mono font-semibold text-slate-200">{Math.round(f.prediction.pDraw * 100)}%</span>
-            <span className="mx-1.5 text-slate-600">/</span>
-            Auswärts <span className="font-mono font-semibold text-emerald-300">{Math.round(f.prediction.pAway * 100)}%</span>
-          </span>
+        <div className="mt-1.5 space-y-1 border-t border-slate-800/60 pt-1.5 text-[11px]">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${pickConfidenceClass(f.prediction.pickLabel)}`}>
+              {f.prediction.pickLabel}
+            </span>
+            <span className="text-slate-200">{f.prediction.pickPlain}</span>
+            <span className="font-mono text-[11px] text-slate-100">{f.prediction.likelyScore.home} : {f.prediction.likelyScore.away}</span>
+            <span className="text-[10px] text-slate-500">
+              {Math.round(f.prediction.pHome * 100)} / {Math.round(f.prediction.pDraw * 100)} / {Math.round(f.prediction.pAway * 100)} (H/U/A)
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-500">
+            <span>Form Heim: <FormChips form={f.prediction.homeForm} /></span>
+            <span>Form Auswärts: <FormChips form={f.prediction.awayForm} /></span>
+          </div>
         </div>
       ) : (
         <div className="mt-1.5 border-t border-slate-800/60 pt-1.5 text-[10px] text-slate-500">
-          Tipp: zu wenig Form-Daten in dieser Liga für eine Schätzung.
+          Tipp: zu wenig Spiele in dieser Liga für eine Schätzung — Saison gerade gestartet oder Pokal-Modus.
         </div>
       )}
     </li>
@@ -95,6 +159,8 @@ export default async function SportPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Spielpläne &amp; Ergebnisse</h1>
         <p className="text-sm text-slate-400">Top-Ligen Europas — die nächsten und letzten Spiele.</p>
       </header>
+
+      <TopTipp leagues={leagues} />
 
       <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
         <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Tipp-Spiel mit Freunden</div>

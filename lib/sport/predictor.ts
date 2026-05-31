@@ -9,6 +9,19 @@ export interface MatchPrediction {
   likelyScore: { home: number; away: number };
   homeGames: number;
   awayGames: number;
+  // Plain-language interpretation, computed once on the server.
+  pickSide: 'home' | 'away' | 'draw';
+  pickConfidence: number; // share of the winning side, 0..1
+  pickLabel: 'klar' | 'leicht' | 'offen';
+  pickPlain: string; // e.g. "klar Bayern" or "offen, leicht Bayer"
+  homeForm: TeamForm5;
+  awayForm: TeamForm5;
+}
+
+export interface TeamForm5 {
+  results: ('W' | 'D' | 'L')[]; // up to last 5, oldest first
+  goalsFor: number;
+  goalsAgainst: number;
 }
 
 const HOME_ADVANTAGE = 1.15;
@@ -45,6 +58,46 @@ function formFor(team: string, finished: Fixture[]): TeamForm {
     }
   }
   return { goalsScored, goalsConceded, games };
+}
+
+// Most recent N finished games' results from the team's perspective,
+// ordered oldest → newest so the UI can render left-to-right.
+function recentResults(team: string, finished: Fixture[], n = 5): TeamForm5 {
+  const games = finished
+    .filter((e) => e.status === 'finished' && e.homeScore !== null && e.awayScore !== null && (e.homeTeam === team || e.awayTeam === team))
+    .sort((a, b) => b.date.localeCompare(a.date)) // newest first
+    .slice(0, n)
+    .reverse(); // oldest first for display
+  const results: ('W' | 'D' | 'L')[] = [];
+  let goalsFor = 0;
+  let goalsAgainst = 0;
+  for (const g of games) {
+    const isHome = g.homeTeam === team;
+    const myGoals = isHome ? (g.homeScore ?? 0) : (g.awayScore ?? 0);
+    const oppGoals = isHome ? (g.awayScore ?? 0) : (g.homeScore ?? 0);
+    goalsFor += myGoals;
+    goalsAgainst += oppGoals;
+    results.push(myGoals > oppGoals ? 'W' : myGoals < oppGoals ? 'L' : 'D');
+  }
+  return { results, goalsFor, goalsAgainst };
+}
+
+function plainLabel(pHome: number, pDraw: number, pAway: number, homeTeam: string, awayTeam: string): { side: 'home' | 'away' | 'draw'; label: 'klar' | 'leicht' | 'offen'; plain: string; confidence: number } {
+  const max = Math.max(pHome, pDraw, pAway);
+  const side: 'home' | 'away' | 'draw' = pHome === max ? 'home' : pAway === max ? 'away' : 'draw';
+  const sideName = side === 'home' ? homeTeam : side === 'away' ? awayTeam : 'Remis';
+
+  const label: 'klar' | 'leicht' | 'offen' =
+    max >= 0.55 ? 'klar' :
+    max >= 0.42 ? 'leicht' :
+    'offen';
+
+  const plain =
+    label === 'klar' ? `klar ${sideName}` :
+    label === 'leicht' ? `leicht ${sideName}` :
+    `offen, leichter Tipp ${sideName}`;
+
+  return { side, label, plain, confidence: max };
 }
 
 // Predict an upcoming match using a simple Poisson model fed by each team's
@@ -84,14 +137,25 @@ export function predictMatch(homeTeam: string, awayTeam: string, finishedLeagueE
   }
 
   const total = pH + pD + pA;
+  const pHomeNorm = pH / total;
+  const pDrawNorm = pD / total;
+  const pAwayNorm = pA / total;
+  const plain = plainLabel(pHomeNorm, pDrawNorm, pAwayNorm, homeTeam, awayTeam);
+
   return {
     lambdaHome,
     lambdaAway,
-    pHome: pH / total,
-    pDraw: pD / total,
-    pAway: pA / total,
+    pHome: pHomeNorm,
+    pDraw: pDrawNorm,
+    pAway: pAwayNorm,
     likelyScore,
     homeGames: homeForm.games,
-    awayGames: awayForm.games
+    awayGames: awayForm.games,
+    pickSide: plain.side,
+    pickConfidence: plain.confidence,
+    pickLabel: plain.label,
+    pickPlain: plain.plain,
+    homeForm: recentResults(homeTeam, finishedLeagueEvents),
+    awayForm: recentResults(awayTeam, finishedLeagueEvents)
   };
 }

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { NewsItem } from '@/lib/news/news-agent';
 
 function timeAgo(ms: number): string {
@@ -28,18 +29,16 @@ export function NewsFeed({ items }: { items: NewsItem[] }) {
       </div>
       <ul className="space-y-1.5">
         {items.map((n) => (
-          <li key={n.link}>
-            <a
-              href={n.link}
-              target="_blank"
-              rel="noopener noreferrer"
+          <li key={n.id}>
+            <Link
+              href={`/news/${n.id}`}
               className="block rounded-lg border border-slate-800 bg-slate-950/40 p-2.5 transition hover:border-emerald-500/40"
             >
               <p className="text-[13px] font-semibold leading-snug text-slate-100">{n.title}</p>
               <p className="mt-1 text-[10px] text-slate-500">
                 <span className="text-slate-400">{n.source}</span> · {timeAgo(n.publishedAt)}
               </p>
-            </a>
+            </Link>
           </li>
         ))}
       </ul>

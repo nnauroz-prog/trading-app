@@ -121,7 +121,7 @@ describe('riskVote', () => {
 
 function makeSpaeher(perCoin: CoinSentiment[]): SpaeherReport {
   const items: ScoredNews[] = perCoin.length > 0
-    ? [{ title: 'x', link: 'https://x', source: 'BTC-ECHO', publishedAt: Date.now(), score: 50, impact: 'neutral', mentionedCoins: perCoin.map((c) => c.coin), reasons: [] }]
+    ? [{ id: 'x', title: 'x', link: 'https://x', source: 'BTC-ECHO', publishedAt: Date.now(), description: null, score: 50, impact: 'neutral', mentionedCoins: perCoin.map((c) => c.coin), reasons: [] }]
     : [];
   return { items, topPick: items[0] ?? null, summary: '', perCoin };
 }

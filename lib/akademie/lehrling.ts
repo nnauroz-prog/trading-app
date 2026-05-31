@@ -71,14 +71,14 @@ function statsFromTrades(trades: StrategyTrade[]): WindowStats {
 // same sign as the train-window expectancy, and the test result is no
 // worse than half the train result. Anything else is overfit-prone.
 function judgeRobustness(train: WindowStats, test: WindowStats): { robust: boolean; reason: string } {
-  if (train.totalTrades < 3) return { robust: false, reason: 'Train zu wenig Trades' };
-  if (test.totalTrades < 3) return { robust: false, reason: 'Test zu wenig Trades' };
+  if (train.totalTrades < 3) return { robust: false, reason: 'Im Üb-Zeitraum kaum Trades — zu wenig Daten für eine Aussage.' };
+  if (test.totalTrades < 3) return { robust: false, reason: 'Im Prüf-Zeitraum kaum Trades — zu wenig Daten für eine Aussage.' };
   const trainExp = train.expectancyPct;
   const testExp = test.expectancyPct;
-  if (trainExp <= 0) return { robust: false, reason: 'Train ohne Edge' };
-  if (testExp <= 0) return { robust: false, reason: 'Test wurde unprofitabel — überangepasst' };
-  if (testExp < trainExp * 0.5) return { robust: false, reason: 'Test deutlich schwächer als Train — Edge instabil' };
-  return { robust: true, reason: `Edge hält im Out-of-Sample (Train ${trainExp.toFixed(2)} → Test ${testExp.toFixed(2)})` };
+  if (trainExp <= 0) return { robust: false, reason: 'Hat schon im Üb-Zeitraum kein Geld gemacht — keine Basis für einen Test.' };
+  if (testExp <= 0) return { robust: false, reason: 'Im Üben hat es geklappt, im Prüfen ist es ins Minus gelaufen — klassisches Überanpassen.' };
+  if (testExp < trainExp * 0.5) return { robust: false, reason: `Im Prüfen weniger als die Hälfte vom Üb-Ergebnis (${trainExp.toFixed(2)} → ${testExp.toFixed(2)}) — der Vorsprung bröckelt.` };
+  return { robust: true, reason: `Hält im Prüfen (Üben ${trainExp.toFixed(2)} → Prüfen ${testExp.toFixed(2)}).` };
 }
 
 // Robust variants are preferred. Among them, rank by TEST expectancy (the
@@ -151,10 +151,10 @@ async function compute(): Promise<LehrlingReport> {
   const robustCount = variants.filter((v) => v.isRobust).length;
 
   const honestNote =
-    candles.length === 0 ? 'Lehrling offline — keine Backtest-Daten verfügbar.' :
-    robustCount === 0 ? `Keine der ${variants.length} Varianten besteht den Out-of-Sample-Test. Heißt: was im Train-Zeitraum funktionierte, brach im Test-Zeitraum ein. Lehrling rät zur Default-Konfiguration und mehr Zeit zum Reifen.` :
-    robustCount === 1 ? `Genau eine Variante besteht den Out-of-Sample-Test — schmale Basis, aber konsistent.` :
-    `${robustCount} von ${variants.length} Varianten bestehen den Out-of-Sample-Test. Lehrling empfiehlt die robusteste — sie hat den Test-Zeitraum überlebt, nicht nur den Train-Zeitraum.`;
+    candles.length === 0 ? 'Lehrling kommt gerade nicht an die Backtest-Daten ran.' :
+    robustCount === 0 ? `Keine der ${variants.length} ausprobierten Einstellungen hat den ehrlichen Prüf-Test bestanden. Heißt: was in der älteren Hälfte gut aussah, ist in der neueren Hälfte eingebrochen. Das ist eine Aussage über den aktuellen Markt, nicht über die App. Lehrling rät: bei der Standard-Einstellung bleiben und ein paar Tage abwarten.` :
+    robustCount === 1 ? `Genau eine Einstellung hat das Prüfen überstanden — schmale Basis, aber immerhin konsistent.` :
+    `${robustCount} von ${variants.length} Einstellungen haben in beiden Hälften funktioniert. Lehrling empfiehlt die beste davon — sie hat sich auf neuen Daten bewährt, nicht nur auf den geübten.`;
 
   return {
     variants,
