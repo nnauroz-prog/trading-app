@@ -1,9 +1,10 @@
 import { MasterSignalReport, RankedCandidate } from '@/lib/analysis/master-signal-engine';
 import { BacktestSummary } from '@/lib/analysis/backtest-summary';
 import { SafetyAssessment, evaluateSafety } from '@/lib/analysis/safety-gate';
-import { SubAgentReport, analystVote, scoutVote, riskVote, newsVote } from '@/lib/agents/sub-agents';
+import { SubAgentReport, analystVote, scoutVote, riskVote, newsVote, positionManagerVote, liquiditySpecialistVote, backtestAuditVote } from '@/lib/agents/sub-agents';
 import { SpaeherReport } from '@/lib/akademie/spaeher';
 import { EventWindowState } from '@/lib/calendar/event-window';
+import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
 
 export type PersonaId = 'conservative' | 'balanced' | 'aggressive';
 
@@ -11,6 +12,7 @@ export interface AgentVerdict {
   persona: PersonaId;
   name: string;
   motto: string;
+  manifest: string;
   verdict: 'BUY' | 'WAIT';
   target: RankedCandidate | null;
   safety: SafetyAssessment | null;
@@ -62,19 +64,32 @@ export function evaluatePersonas(
   spaeher: SpaeherReport | null = null,
   eventWindow: EventWindowState | null = null
 ): AgentVerdict[] {
-  const PERSONAS: { id: PersonaId; name: string; motto: string }[] = [
-    { id: 'conservative', name: 'Konservativ', motto: 'Lieber gar nichts kaufen als zu früh' },
-    { id: 'balanced', name: 'Balanciert', motto: 'Sicher, aber nicht überpingelig' },
-    { id: 'aggressive', name: 'Aggressiv', motto: 'Mehr Signale, kleinere Größen' }
+  const PERSONAS: { id: PersonaId; name: string; motto: string; manifest: string }[] = [
+    {
+      id: 'conservative', name: 'Konservativ', motto: 'Lieber gar nichts kaufen als zu früh',
+      manifest: 'Erhalt des Kapitals geht vor Rendite. Ich kaufe nur, wenn alle harten Sicherheits-Kriterien erfüllt sind, die Liquidität tief ist, der Backtest das Setup bestätigt und kein hoch-impact Termin in den nächsten 24h liegt. Lieber wochenlang in Cash als ein zweifelhafter Trade.'
+    },
+    {
+      id: 'balanced', name: 'Balanciert', motto: 'Sicher, aber nicht überpingelig',
+      manifest: 'Solider Setup mit klarem Stop ist genug — ich brauche nicht jede Sterne aligned. Häkchen ≥ 8 plus saubere Konfluenz: Position auf. Eine Negativ-Stimme einzelner Sub-Agenten kippt mich nicht, aber zwei zusammen bremsen.'
+    },
+    {
+      id: 'aggressive', name: 'Aggressiv', motto: 'Mehr Signale, kleinere Größen',
+      manifest: 'Wer wartet, verpasst Bewegung. Ich nehme Setups schon ab 7 Häkchen mit, aber dann mit kleinerer Position. Auch bei dünneren Märkten — solange Risiko-Manager kein Veto einlegt. Sogar mir zu riskant ist nur: risk-off-Markt oder Risiko-Veto.'
+    }
   ];
 
-  return PERSONAS.map(({ id, name, motto }) => {
+  return PERSONAS.map(({ id, name, motto, manifest }) => {
     const { target, safety } = pickTarget(report, backtest, id);
     const analyst = analystVote(report);
     const scout = scoutVote(target);
     const risk = riskVote(target);
     const news = newsVote(target, spaeher);
-    const team: SubAgentReport[] = [analyst, scout, risk, news];
+    const position = positionManagerVote(target, id);
+    const liquidity = liquiditySpecialistVote(target, id);
+    const similarity = target ? computeSetupSimilarity(backtest.safeTrades, { coinId: target.coinId, ticker: target.symbol, passedCount: target.passedCount }) : null;
+    const backtestAudit = backtestAuditVote(target, similarity);
+    const team: SubAgentReport[] = [analyst, scout, risk, news, position, liquidity, backtestAudit];
 
     let verdict: 'BUY' | 'WAIT' = 'WAIT';
     let rationale = 'Keine Setups vorhanden.';
@@ -88,20 +103,24 @@ export function evaluatePersonas(
       const eventBlocksBalanced = !!eventWindow?.veryImminent;
 
       if (id === 'conservative') {
-        // Konservativ: nur kaufen, wenn Analyst nicht NEGATIV, Scout STARK,
-        // Risiko OK, News nicht NEGATIV, alle harten Safety-Kriterien erfüllt
-        // UND kein hoch-impact Makro-Termin innerhalb von 24h.
+        // Konservativ: braucht jetzt zusätzlich tiefe Liquidität und keine
+        // historische Widerlegung des Setups.
+        const liquidityBlocksConservative = liquidity.vote === 'DUENN';
+        const backtestBlocksConservative = backtestAudit.vote === 'WIDERSPRUCH';
         if (
           analyst.vote !== 'NEGATIV' &&
           scout.vote === 'STARK' &&
           risk.vote === 'OK' &&
           news.vote !== 'NEGATIV' &&
           safety.maxSafety &&
-          !eventBlocksConservative
+          !eventBlocksConservative &&
+          !liquidityBlocksConservative &&
+          !backtestBlocksConservative
         ) {
           verdict = 'BUY';
           const newsHint = news.vote === 'POSITIV' ? ', News bullisch' : '';
-          rationale = `Team einstimmig grün: Analyst ${analyst.vote.toLowerCase()}, Scout sieht starkes Setup, Risiko-Manager gibt grünes Licht${newsHint}.`;
+          const backtestHint = backtestAudit.vote === 'BESTÄTIGT' ? ', Vergangenheit bestätigt' : '';
+          rationale = `Team einstimmig grün: Analyst ${analyst.vote.toLowerCase()}, Scout sieht starkes Setup, Risiko-Manager gibt grünes Licht${newsHint}${backtestHint}.`;
         } else {
           const blockers: string[] = [];
           if (eventBlocksConservative && eventWindow?.nextHighImpact) {
@@ -112,14 +131,19 @@ export function evaluatePersonas(
           if (risk.vote === 'VETO') blockers.push('Risiko-Manager Veto');
           if (news.vote === 'NEGATIV') blockers.push(`News-Watcher: ${target.symbol} bärisch`);
           if (!safety.maxSafety) blockers.push(`Note ${safety.grade}`);
+          if (liquidityBlocksConservative) blockers.push('Liquidität zu dünn');
+          if (backtestBlocksConservative) blockers.push('Backtest widerspricht');
           rationale = blockers.length > 0 ? `Ich warte: ${blockers.join(', ')}.` : 'Ich warte — nicht alle Kriterien erfüllt.';
         }
       } else if (id === 'balanced') {
         // Balanciert: Scout mindestens MITTEL, Risiko OK, Analyst nicht NEGATIV.
         // News-Watcher kann nicht veto'en, aber NEGATIV verlangt zusätzliche
         // Konfluenz (≥9). Hoch-impact Event ≤12h blockt zusätzlich.
+        // Liquidität DUENN ist Bremse, Backtest WIDERSPRUCH ist Bremse.
         const newsBlocksBalanced = news.vote === 'NEGATIV' && target.passedCount < 9;
-        if (scout.vote !== 'SCHWACH' && risk.vote === 'OK' && analyst.vote !== 'NEGATIV' && target.passedCount >= 8 && !newsBlocksBalanced && !eventBlocksBalanced) {
+        const liquidityBlocksBalanced = liquidity.vote === 'DUENN';
+        const backtestBlocksBalanced = backtestAudit.vote === 'WIDERSPRUCH' && target.passedCount < 10;
+        if (scout.vote !== 'SCHWACH' && risk.vote === 'OK' && analyst.vote !== 'NEGATIV' && target.passedCount >= 8 && !newsBlocksBalanced && !eventBlocksBalanced && !liquidityBlocksBalanced && !backtestBlocksBalanced) {
           verdict = 'BUY';
           const newsHint = news.vote === 'POSITIV' ? ', News bullisch' : news.vote === 'NEGATIV' ? ', trotz bärischer News' : '';
           rationale = `Scout ${scout.vote.toLowerCase()}, Risiko ok, Markt nicht negativ — solide genug${newsHint}. Note ${safety.grade} (${safety.passedHard}/${safety.totalHard}).`;
@@ -131,6 +155,8 @@ export function evaluatePersonas(
           if (analyst.vote === 'NEGATIV') blockers.push('Markt negativ');
           if (target.passedCount < 8) blockers.push(`nur ${target.passedCount} von 12 Häkchen`);
           if (newsBlocksBalanced) blockers.push('News-Watcher bärisch und Konfluenz < 9');
+          if (liquidityBlocksBalanced) blockers.push('Liquidität zu dünn');
+          if (backtestBlocksBalanced) blockers.push('Backtest widerspricht (und Konfluenz < 10)');
           rationale = blockers.length > 0 ? `Ich warte: ${blockers.join(', ')}.` : `Ich warte — Note ${safety.grade}.`;
         }
       } else {
@@ -151,7 +177,7 @@ export function evaluatePersonas(
 
     const ceoFinalWord = composeCeoFinalWord(id, name, verdict, team, target, safety);
 
-    return { persona: id, name, motto, verdict, target, safety, rationale, team, ceoFinalWord };
+    return { persona: id, name, motto, manifest, verdict, target, safety, rationale, team, ceoFinalWord };
   });
 }
 

@@ -1,5 +1,10 @@
 import { MasterSignalReport, RankedCandidate } from '@/lib/analysis/master-signal-engine';
 import { SpaeherReport } from '@/lib/akademie/spaeher';
+import { SetupSimilarity } from '@/lib/analysis/setup-similarity';
+
+// PersonaId duplicated here to avoid a circular import with personas.ts —
+// keep these literal strings in sync.
+type FirmaId = 'conservative' | 'balanced' | 'aggressive';
 
 export type VoteTone = 'good' | 'neutral' | 'bad';
 
@@ -35,7 +40,39 @@ export interface NewsReport {
   reason: string;
 }
 
-export type SubAgentReport = AnalystReport | ScoutReport | RiskReport | NewsReport;
+export interface PositionManagerReport {
+  role: 'position';
+  title: 'Position-Manager';
+  vote: 'KLEIN' | 'NORMAL' | 'GROSS' | 'KEINE_POSITION';
+  voteTone: VoteTone;
+  reason: string;
+  suggestedAccountRiskPct: number; // 0..5
+}
+
+export interface LiquidityReport {
+  role: 'liquidity';
+  title: 'Liquiditäts-Spezialist';
+  vote: 'TIEF' | 'OK' | 'DUENN' | 'KEINE_DATEN';
+  voteTone: VoteTone;
+  reason: string;
+}
+
+export interface BacktestAuditReport {
+  role: 'backtest';
+  title: 'Backtest-Auditor';
+  vote: 'BESTÄTIGT' | 'GEMISCHT' | 'WIDERSPRUCH' | 'KEINE_DATEN';
+  voteTone: VoteTone;
+  reason: string;
+}
+
+export type SubAgentReport =
+  | AnalystReport
+  | ScoutReport
+  | RiskReport
+  | NewsReport
+  | PositionManagerReport
+  | LiquidityReport
+  | BacktestAuditReport;
 
 // Markt-Analyst: liest die übergeordnete Marktlage (Stimmung, BTC, Crowd) und
 // votet positiv/neutral/negativ unabhängig vom konkreten Setup.
@@ -155,4 +192,89 @@ export function newsVote(target: RankedCandidate | null, spaeher: SpaeherReport 
     role: 'news', title: 'News-Watcher', vote: 'NEUTRAL', voteTone: 'neutral',
     reason: `${symbolUpper}-News gemischt (${bull}↑ / ${bear}↓) — keine klare Richtung.`
   };
+}
+
+// Position-Manager: schlägt eine Position-Größe für die jeweilige Firma vor.
+// Konservativ: maximal 1% Account-Risk, nur bei sauberem Stop.
+// Balanciert: 2% bei guter Konfluenz.
+// Aggressiv: 3% bei hoher Volatilität, aber kleinere Position bei dünnem Stop.
+export function positionManagerVote(target: RankedCandidate | null, firma: FirmaId): PositionManagerReport {
+  if (!target) {
+    return {
+      role: 'position', title: 'Position-Manager', vote: 'KEINE_POSITION', voteTone: 'neutral',
+      reason: 'Kein Setup zum Sizen.', suggestedAccountRiskPct: 0
+    };
+  }
+  const stop = target.stopDistancePct;
+  let basePct: number;
+  if (firma === 'conservative') basePct = 1;
+  else if (firma === 'balanced') basePct = 2;
+  else basePct = 3;
+
+  // Wenn Stop sehr weit ist, Position-Risk drosseln.
+  if (stop > 5) basePct = Math.max(0.5, basePct - 0.5);
+  // Wenn Häkchen sehr hoch sind, leicht erhöhen (bei aggressiv bis max 5%).
+  if (target.passedCount >= 10 && firma === 'aggressive') basePct = Math.min(5, basePct + 1);
+
+  let vote: PositionManagerReport['vote'];
+  let voteTone: VoteTone;
+  if (basePct < 1) { vote = 'KLEIN'; voteTone = 'neutral'; }
+  else if (basePct <= 2) { vote = 'NORMAL'; voteTone = 'good'; }
+  else { vote = 'GROSS'; voteTone = 'good'; }
+
+  return {
+    role: 'position', title: 'Position-Manager',
+    vote, voteTone,
+    suggestedAccountRiskPct: basePct,
+    reason: `Bei ${stop.toFixed(1)}% Stop-Distanz schlage ich ${basePct.toFixed(1)}% Account-Risk vor — passt zum ${firma === 'conservative' ? 'konservativen' : firma === 'balanced' ? 'balancierten' : 'aggressiven'} Profil.`
+  };
+}
+
+// Liquiditäts-Spezialist: bewertet die Tiefe des Marktes für die geplante
+// Position-Größe. Konservativ braucht tiefe Märkte, aggressiv toleriert dünner.
+export function liquiditySpecialistVote(target: RankedCandidate | null, firma: FirmaId): LiquidityReport {
+  if (!target) {
+    return { role: 'liquidity', title: 'Liquiditäts-Spezialist', vote: 'KEINE_DATEN', voteTone: 'neutral', reason: 'Kein Setup zu bewerten.' };
+  }
+  const vol = target.quoteVolume;
+  const volMio = Math.round(vol / 1_000_000);
+
+  // Konservativ braucht ≥200 Mio, balanced ≥75 Mio, aggressiv ≥30 Mio
+  const minRequired = firma === 'conservative' ? 200_000_000 : firma === 'balanced' ? 75_000_000 : 30_000_000;
+  const comfortable = firma === 'conservative' ? 500_000_000 : firma === 'balanced' ? 200_000_000 : 100_000_000;
+
+  if (vol >= comfortable) {
+    return { role: 'liquidity', title: 'Liquiditäts-Spezialist', vote: 'TIEF', voteTone: 'good',
+      reason: `${volMio} Mio. USD 24h-Volumen — tiefe Liquidität, Slippage praktisch null.` };
+  }
+  if (vol >= minRequired) {
+    return { role: 'liquidity', title: 'Liquiditäts-Spezialist', vote: 'OK', voteTone: 'neutral',
+      reason: `${volMio} Mio. USD 24h-Volumen — ausreichend für ${firma === 'conservative' ? 'konservative' : firma === 'balanced' ? 'balancierte' : 'aggressive'} Position-Größen.` };
+  }
+  return { role: 'liquidity', title: 'Liquiditäts-Spezialist', vote: 'DUENN', voteTone: 'bad',
+    reason: `Nur ${volMio} Mio. USD 24h-Volumen — für ${firma === 'conservative' ? 'mich' : firma === 'balanced' ? 'mich' : 'mich'} zu dünn (Mindestens ${Math.round(minRequired / 1_000_000)} Mio. nötig).` };
+}
+
+// Backtest-Auditor: prüft historisch vergleichbare Setups für genau diesen Coin
+// und meldet, ob die Vergangenheit das aktuelle Verdikt unterstützt.
+export function backtestAuditVote(target: RankedCandidate | null, similarity: SetupSimilarity | null): BacktestAuditReport {
+  if (!target || !similarity) {
+    return { role: 'backtest', title: 'Backtest-Auditor', vote: 'KEINE_DATEN', voteTone: 'neutral',
+      reason: 'Keine historisch vergleichbaren Daten verfügbar.' };
+  }
+  if (similarity.sampleSize === 'too_small' || similarity.sampleSize === 'small') {
+    return { role: 'backtest', title: 'Backtest-Auditor', vote: 'KEINE_DATEN', voteTone: 'neutral',
+      reason: `Nur ${similarity.matchCount} vergleichbare ${target.symbol}-Setups — Stichprobe zu klein für eine harte Aussage.` };
+  }
+  const hit = similarity.hitRatePct ?? 0;
+  if (hit >= 60) {
+    return { role: 'backtest', title: 'Backtest-Auditor', vote: 'BESTÄTIGT', voteTone: 'good',
+      reason: `${similarity.matchCount} vergleichbare Setups historisch, ${hit.toFixed(0)}% Trefferquote — Vergangenheit stützt das Setup.` };
+  }
+  if (hit >= 45) {
+    return { role: 'backtest', title: 'Backtest-Auditor', vote: 'GEMISCHT', voteTone: 'neutral',
+      reason: `${similarity.matchCount} vergleichbare Setups, ${hit.toFixed(0)}% Trefferquote — Vergangenheit ist gemischt.` };
+  }
+  return { role: 'backtest', title: 'Backtest-Auditor', vote: 'WIDERSPRUCH', voteTone: 'bad',
+    reason: `${similarity.matchCount} vergleichbare Setups, nur ${hit.toFixed(0)}% Trefferquote — Vergangenheit spricht gegen das Setup.` };
 }
