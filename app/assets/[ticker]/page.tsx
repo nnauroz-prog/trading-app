@@ -18,6 +18,7 @@ import { Asset, PriceSnapshot } from '@/lib/types/domain';
 import { HeadlinesList } from '@/components/headlines-list';
 import { InteractiveChart } from '@/components/interactive-chart';
 import { WatchlistToggle } from '@/components/watchlist-toggle';
+import { DataQualityBadge } from '@/components/data-quality-badge';
 
 export const dynamic = 'force-dynamic';
 
@@ -182,8 +183,7 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
               <div className="mt-1 font-mono text-4xl font-bold text-white">${fmtPrice(snapshot.price)}</div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-widest text-slate-500">Quelle</div>
-              <div className="mt-1 font-mono text-xs uppercase tracking-wider text-slate-400">{snapshot.source}</div>
+              <DataQualityBadge source={snapshot.source} verified={snapshot.source !== 'mock'} fetchedAt={Date.now()} />
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
