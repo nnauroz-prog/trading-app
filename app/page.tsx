@@ -16,6 +16,8 @@ import { DailyBriefing } from '@/components/daily-briefing';
 import { MarketBriefing } from '@/components/market-briefing';
 import { AgentRecorder } from '@/components/agent-recorder';
 import { FirmaStrip } from '@/components/firma-strip';
+import { SetupTrend } from '@/components/setup-trend';
+import { WatchlistStrip } from '@/components/watchlist-strip';
 import { AkademieStrip } from '@/components/akademie-strip';
 import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
@@ -24,6 +26,11 @@ import { getLehrlingReport } from '@/lib/akademie/lehrling';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
 import { detectChaseSignals, detectOpportunitySignals, PriceContext } from '@/lib/analysis/chase-detector';
 import { ChaseWarning } from '@/components/chase-warning';
+import { fetchBothTickerSources } from '@/lib/providers/binance-tickers';
+import { checkCrossExchangePrices } from '@/lib/analysis/cross-exchange-check';
+import { CrossExchangeWarning } from '@/components/cross-exchange-warning';
+import { EhrlicheGrenzen } from '@/components/ehrliche-grenzen';
+import { MorningBriefingExport } from '@/components/morning-briefing-export';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import { computeEventWindow } from '@/lib/calendar/event-window';
 import { WocheVoraus } from '@/components/woche-voraus';
@@ -55,7 +62,7 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport] = await Promise.all([
+  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources] = await Promise.all([
     buildTopPlayReport(),
     buildMasterSignal(tradeMode),
     fetchFearGreed(),
@@ -64,8 +71,10 @@ export default async function HomePage() {
     fetchFundingRate('ETHUSDT'),
     getBacktestSummary(),
     getCryptoNews(),
-    getLehrlingReport()
+    getLehrlingReport(),
+    fetchBothTickerSources()
   ]);
+  const crossExchange = checkCrossExchangePrices(exchangeSources.binance, exchangeSources.bybit);
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
   const spaeherReport = runSpaeher(newsItems);
@@ -162,6 +171,7 @@ export default async function HomePage() {
         <nav className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link href="/agent" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Firmen</Link>
           <Link href="/intel" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Recherche</Link>
+          <Link href="/news" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">News</Link>
           <Link href="/akademie" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Akademie</Link>
           <Link href="/positions" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Positionen</Link>
           <Link href="/gold" className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-200 transition hover:border-amber-400/50">Gold</Link>
@@ -173,6 +183,16 @@ export default async function HomePage() {
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
       <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} eventWindow={eventWindow} intelSignal={intelCeo.netSignal} />
+
+      <CrossExchangeWarning report={crossExchange} />
+
+      <WatchlistStrip candidates={masterSignal.candidates.map((c) => ({
+        coinId: c.coinId,
+        passedCount: c.passedCount,
+        priceChangePct24h: c.priceChangePct24h,
+        structure: c.structure,
+        nearSupport: c.nearSupport
+      }))} />
 
       <IntelStrip ceo={intelCeo} />
 
@@ -196,6 +216,8 @@ export default async function HomePage() {
         <TodoBox report={masterSignal} />
 
         <FirmaStrip personas={personas} />
+
+        <SetupTrend />
 
         <AkademieStrip spaeher={spaeherReport} lehrling={lehrlingReport} />
 
@@ -248,6 +270,20 @@ export default async function HomePage() {
 
         <PaperTradesPanel latestPrices={latestPrices} />
       </AdvancedOnly>
+
+      <MorningBriefingExport
+        date={todayIso}
+        firmasBuyingCount={personas.filter((p) => p.verdict === 'BUY').length}
+        firmaBuyTargets={personas.filter((p) => p.verdict === 'BUY' && p.target).map((p) => ({ name: p.name, coin: p.target!.symbol }))}
+        ceoLagebericht={intelCeo.lagebericht}
+        ceoSignal={intelCeo.netSignal}
+        topNews={spaeherReport.items.slice(0, 5).map((n) => ({ title: n.title, impact: n.impact, source: n.source }))}
+        macroNext={eventWindow?.nextHighImpact && eventWindow.hoursUntilNextHighImpact !== null
+          ? { title: eventWindow.nextHighImpact.title, hoursUntil: eventWindow.hoursUntilNextHighImpact }
+          : null}
+      />
+
+      <EhrlicheGrenzen />
 
       <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
         Keine Finanzberatung. Stop-Loss respektieren. Vergangenheit ≠ Zukunft.

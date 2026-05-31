@@ -16,6 +16,7 @@ import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
 import { Asset, PriceSnapshot } from '@/lib/types/domain';
 import { HeadlinesList } from '@/components/headlines-list';
 import { InteractiveChart } from '@/components/interactive-chart';
+import { WatchlistToggle } from '@/components/watchlist-toggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -154,9 +155,12 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
           <span className="text-slate-700">·</span>
           <span>{asset.venueAvailability.join(' · ')}</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">
-          {asset.name} <span className="font-mono text-slate-500">({asset.ticker})</span>
-        </h1>
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
+            {asset.name} <span className="font-mono text-slate-500">({asset.ticker})</span>
+          </h1>
+          <WatchlistToggle coinId={asset.id} symbol={asset.ticker} />
+        </div>
       </header>
 
       {snapshot ? (
