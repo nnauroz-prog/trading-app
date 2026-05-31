@@ -7,11 +7,13 @@ export interface NewsItem {
   publishedAt: number;
 }
 
+// Deutsche Krypto-Newsquellen (öffentliche RSS-Feeds, keine API-Keys).
 const SOURCES: { name: string; url: string }[] = [
-  { name: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml' },
-  { name: 'Cointelegraph', url: 'https://cointelegraph.com/rss' },
-  { name: 'Decrypt', url: 'https://decrypt.co/feed' },
-  { name: 'The Block', url: 'https://www.theblock.co/rss.xml' }
+  { name: 'BTC-ECHO', url: 'https://www.btc-echo.de/feed/' },
+  { name: 'CoinKurier', url: 'https://www.coinkurier.de/feed/' },
+  { name: 'Kryptoszene', url: 'https://www.kryptoszene.de/feed/' },
+  { name: 'BlockchainWelt', url: 'https://www.blockchainwelt.de/feed/' },
+  { name: 'Cointelegraph DE', url: 'https://de.cointelegraph.com/rss' }
 ];
 
 function decodeEntities(s: string): string {
@@ -82,4 +84,4 @@ async function compute(): Promise<NewsItem[]> {
 
 // Cached at 10 minutes — news doesn't change that fast and we don't want to
 // hammer the feeds on every page render.
-export const getCryptoNews = unstable_cache(compute, ['crypto-news-v1'], { revalidate: 600 });
+export const getCryptoNews = unstable_cache(compute, ['crypto-news-de-v1'], { revalidate: 600 });

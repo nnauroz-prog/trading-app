@@ -44,7 +44,7 @@ export function NewsFeed({ items }: { items: NewsItem[] }) {
         ))}
       </ul>
       <p className="text-[10px] text-slate-500">
-        Aggregiert aus öffentlichen RSS-Feeds (CoinDesk, Cointelegraph, Decrypt, The Block). Keine Anlageberatung — News bewegen Märkte, aber Reaktion ist nie garantiert.
+        Aggregiert aus deutschsprachigen RSS-Feeds (BTC-ECHO, CoinKurier, Kryptoszene, BlockchainWelt, Cointelegraph DE). Keine Anlageberatung — News bewegen Märkte, aber Reaktion ist nie garantiert.
       </p>
     </section>
   );

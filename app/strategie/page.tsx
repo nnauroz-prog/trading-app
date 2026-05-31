@@ -40,6 +40,32 @@ export default async function StrategiePage({ searchParams }: { searchParams: Pr
   const winRate = sorted.length > 0 ? Math.round((wins / sorted.length) * 100) : null;
   const net = sorted.reduce((s, t) => s + t.netPnlPct, 0);
 
+  // Per-coin breakdown across the full safe-tier set (independent of current filter).
+  const byCoin = new Map<string, { ticker: string; trades: typeof summary.safeTrades }>();
+  for (const t of summary.safeTrades) {
+    const cur = byCoin.get(t.assetId) ?? { ticker: t.ticker, trades: [] as typeof summary.safeTrades };
+    cur.trades.push(t);
+    byCoin.set(t.assetId, cur);
+  }
+  const coinRows = Array.from(byCoin.entries())
+    .map(([assetId, { ticker, trades }]) => {
+      const w = trades.filter((t) => t.outcome === 'TP1').length;
+      const n = trades.reduce((s, t) => s + t.netPnlPct, 0);
+      const returns = trades.map((t) => t.netPnlPct);
+      const best = returns.length > 0 ? Math.max(...returns) : 0;
+      const worst = returns.length > 0 ? Math.min(...returns) : 0;
+      return {
+        assetId,
+        ticker,
+        trades: trades.length,
+        winRatePct: trades.length > 0 ? Math.round((w / trades.length) * 100) : 0,
+        netPct: n,
+        bestPct: best,
+        worstPct: worst
+      };
+    })
+    .sort((a, b) => b.netPct - a.netPct);
+
   const coins = ['all', 'btc', 'eth', 'sol'];
 
   return (
@@ -76,6 +102,38 @@ export default async function StrategiePage({ searchParams }: { searchParams: Pr
               <div className={`font-mono text-xl font-bold ${net >= 0 ? 'text-emerald-200' : 'text-rose-300'}`}>{net >= 0 ? '+' : ''}{net.toFixed(1)}%</div>
             </div>
           </section>
+
+          {coinRows.length > 1 && (
+            <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Per-Coin-Aufschlüsselung (komplettes Set)</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[12px]">
+                  <thead>
+                    <tr className="text-[10px] uppercase tracking-wider text-slate-500">
+                      <th className="py-1.5 pr-2 text-left">Coin</th>
+                      <th className="py-1.5 pr-2 text-right">Trades</th>
+                      <th className="py-1.5 pr-2 text-right">Treffer</th>
+                      <th className="py-1.5 pr-2 text-right">Netto</th>
+                      <th className="py-1.5 pr-2 text-right">Bester</th>
+                      <th className="py-1.5 text-right">Schlechtester</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coinRows.map((r) => (
+                      <tr key={r.assetId} className="border-t border-slate-800/80">
+                        <td className="py-1.5 pr-2 font-mono font-bold text-white">{r.ticker}</td>
+                        <td className="py-1.5 pr-2 text-right font-mono text-slate-200">{r.trades}</td>
+                        <td className="py-1.5 pr-2 text-right font-mono text-emerald-300">{r.winRatePct}%</td>
+                        <td className={`py-1.5 pr-2 text-right font-mono font-bold ${r.netPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{r.netPct >= 0 ? '+' : ''}{r.netPct.toFixed(1)}%</td>
+                        <td className="py-1.5 pr-2 text-right font-mono text-emerald-300">+{r.bestPct.toFixed(2)}%</td>
+                        <td className="py-1.5 text-right font-mono text-rose-300">{r.worstPct.toFixed(2)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           <section className="flex flex-wrap items-center gap-2 text-[11px]">
             <span className="text-slate-400">Coin:</span>
