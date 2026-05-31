@@ -76,10 +76,12 @@ async function fetchBinance(symbol: string, interval: string, limit: number): Pr
   }
 }
 
+// Binance is the canonical source for chart candles; prefer it when reachable
+// from the deploy region, fall back to Bybit otherwise.
 export async function fetchKlinesBySymbol(symbol: string, interval: string, limit = 200): Promise<Candle[] | null> {
-  const bybit = await fetchBybit(symbol, interval, limit);
-  if (bybit && bybit.length > 0) return bybit;
-  return fetchBinance(symbol, interval, limit);
+  const binance = await fetchBinance(symbol, interval, limit);
+  if (binance && binance.length > 0) return binance;
+  return fetchBybit(symbol, interval, limit);
 }
 
 export async function fetchCandles(assetId: string, interval: '1h' | '4h', limit = 200): Promise<Candle[] | null> {
