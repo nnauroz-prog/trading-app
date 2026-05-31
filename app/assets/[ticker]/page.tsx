@@ -19,6 +19,7 @@ import { HeadlinesList } from '@/components/headlines-list';
 import { InteractiveChart } from '@/components/interactive-chart';
 import { WatchlistToggle } from '@/components/watchlist-toggle';
 import { DataQualityBadge } from '@/components/data-quality-badge';
+import { QuickPositionButton } from '@/components/quick-position-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -171,7 +172,19 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
           <h1 className="text-3xl font-bold tracking-tight text-white">
             {asset.name} <span className="font-mono text-slate-500">({asset.ticker})</span>
           </h1>
-          <WatchlistToggle coinId={asset.id} symbol={asset.ticker} />
+          <div className="flex flex-wrap items-baseline gap-2">
+            <WatchlistToggle coinId={asset.id} symbol={asset.ticker} />
+            {candidate && (
+              <QuickPositionButton
+                ticker={candidate.symbol}
+                underlying={asset.name}
+                entry={candidate.entry}
+                stopLoss={candidate.stopLoss}
+                takeProfit={candidate.takeProfit1}
+                brokers={candidate.brokers}
+              />
+            )}
+          </div>
         </div>
       </header>
 

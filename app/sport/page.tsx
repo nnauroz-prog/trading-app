@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { getFootballFixtures, Fixture, UpcomingFixture, LeagueFixtures } from '@/lib/sport/fetcher';
 import { TeamForm5 } from '@/lib/sport/predictor';
 import { ProbabilityCard } from '@/components/probability-card';
+import { SportTipJournal } from '@/components/sport-tip-journal';
+import { StandingsTable } from '@/components/standings-table';
+import { computeStandings } from '@/lib/sport/standings';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
@@ -131,7 +134,13 @@ function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
             Wahrscheinlichkeiten + Tipp-Stufen anzeigen
           </summary>
           <div className="mt-2">
-            <ProbabilityCard homeTeam={f.homeTeam} awayTeam={f.awayTeam} model={f.probabilities} tips={f.tips} />
+            <ProbabilityCard
+              homeTeam={f.homeTeam}
+              awayTeam={f.awayTeam}
+              model={f.probabilities}
+              tips={f.tips}
+              saveContext={{ fixtureId: f.id, date: f.date, league: f.league }}
+            />
           </div>
         </details>
       ) : (
@@ -146,6 +155,11 @@ function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
 export default async function SportPage() {
   const leagues = await getFootballFixtures();
   const anyData = leagues.some((l) => l.next.length > 0 || l.last.length > 0);
+
+  // Flatten all finished fixtures across leagues for the tip-journal resolver.
+  const finishedLite = leagues.flatMap((lf) => lf.last
+    .filter((f) => f.homeScore !== null && f.awayScore !== null)
+    .map((f) => ({ id: f.id, homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore!, awayScore: f.awayScore! })));
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
@@ -201,11 +215,23 @@ export default async function SportPage() {
                     </ul>
                   </div>
                 )}
+                {lf.last.length >= 3 && (
+                  <details>
+                    <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-sky-300 hover:text-sky-200">
+                      Liga-Tabelle (geschätzt) anzeigen
+                    </summary>
+                    <div className="mt-2">
+                      <StandingsTable standings={computeStandings(lf.last)} />
+                    </div>
+                  </details>
+                )}
               </div>
             </details>
           );
         })}
       </div>
+
+      <SportTipJournal finishedFixtures={finishedLite} />
 
       <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
         Daten: TheSportsDB (öffentlich, frei) · Zeiten in Europe/Berlin · Aktualisierung max. stündlich · keine Garantie auf Vollständigkeit/Korrektheit.

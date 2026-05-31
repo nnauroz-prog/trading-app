@@ -1,5 +1,6 @@
 import { FootballProbabilityModel, ModelConfidence, DataQuality } from '@/lib/sport/probabilities';
 import { AllTips, TipSelection } from '@/lib/sport/tip-selection';
+import { TipSaveButton } from '@/components/tip-save-button';
 
 function pct(p: number): string {
   return `${Math.round(p * 1000) / 10}%`;
@@ -38,16 +39,30 @@ function Bar({ value, label, highlight }: { value: number; label: string; highli
   );
 }
 
-function TipRow({ tip }: { tip: TipSelection }) {
+function TipRow({ tip, ctx }: { tip: TipSelection; ctx: { fixtureId: string; date: string; league: string; home: string; away: string } | null }) {
   const tierColor =
     tip.tier === 'konservativ' ? 'text-emerald-300' :
     tip.tier === 'standard' ? 'text-sky-300' :
     'text-amber-300';
   return (
     <li className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[11px]">
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-baseline justify-between gap-2">
         <span className={`text-[9px] font-bold uppercase tracking-wider ${tierColor}`}>{tip.tier}</span>
-        {tip.available && <span className="font-mono text-[10px] text-slate-300">{tip.probabilityPct}%</span>}
+        <div className="flex items-baseline gap-1.5">
+          {tip.available && <span className="font-mono text-[10px] text-slate-300">{tip.probabilityPct}%</span>}
+          {tip.available && ctx && (
+            <TipSaveButton
+              fixtureId={ctx.fixtureId}
+              fixtureDate={ctx.date}
+              league={ctx.league}
+              homeTeam={ctx.home}
+              awayTeam={ctx.away}
+              tier={tip.tier}
+              market={tip.market}
+              modelProbabilityPct={tip.probabilityPct}
+            />
+          )}
+        </div>
       </div>
       <div className="mt-0.5 font-semibold text-white">{tip.market}</div>
       <p className="mt-0.5 text-[10px] leading-snug text-slate-400">{tip.reason}</p>
@@ -61,9 +76,11 @@ interface Props {
   awayTeam: string;
   model: FootballProbabilityModel;
   tips: AllTips;
+  saveContext?: { fixtureId: string; date: string; league: string };
 }
 
-export function ProbabilityCard({ homeTeam, awayTeam, model, tips }: Props) {
+export function ProbabilityCard({ homeTeam, awayTeam, model, tips, saveContext }: Props) {
+  const ctx = saveContext ? { fixtureId: saveContext.fixtureId, date: saveContext.date, league: saveContext.league, home: homeTeam, away: awayTeam } : null;
   const winner = model.homeWin >= Math.max(model.draw, model.awayWin) ? 'home' :
                  model.awayWin >= Math.max(model.draw, model.homeWin) ? 'away' : 'draw';
 
@@ -123,9 +140,9 @@ export function ProbabilityCard({ homeTeam, awayTeam, model, tips }: Props) {
       <div className="space-y-1.5">
         <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tipp-Vorschläge</div>
         <ul className="space-y-1.5">
-          <TipRow tip={tips.konservativ} />
-          <TipRow tip={tips.standard} />
-          <TipRow tip={tips.risiko} />
+          <TipRow tip={tips.konservativ} ctx={ctx} />
+          <TipRow tip={tips.standard} ctx={ctx} />
+          <TipRow tip={tips.risiko} ctx={ctx} />
         </ul>
       </div>
 
