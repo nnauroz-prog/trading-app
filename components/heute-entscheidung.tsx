@@ -3,6 +3,7 @@ import { AgentVerdict } from '@/lib/agents/personas';
 import { CoinSentiment } from '@/lib/akademie/spaeher';
 import { SetupSimilarity } from '@/lib/analysis/setup-similarity';
 import { EventWindowState } from '@/lib/calendar/event-window';
+import { IntelSignal } from '@/lib/intel/types';
 import { HeuteStreak } from '@/components/heute-streak';
 
 function fmtPrice(v: number): string {
@@ -17,6 +18,7 @@ interface Props {
   perCoinSentiment: CoinSentiment[];
   setupSimilarity: SetupSimilarity | null;
   eventWindow: EventWindowState | null;
+  intelSignal: IntelSignal | null;
 }
 
 // One-glance verdict for the home page. Synthesises the three firma decisions
@@ -28,7 +30,8 @@ function computeConfidence(
   buyCount: number,
   newsTilt: 'bullisch' | 'bärisch' | 'neutral' | 'none',
   similarity: SetupSimilarity | null,
-  eventWindow: EventWindowState | null
+  eventWindow: EventWindowState | null,
+  intelSignal: IntelSignal | null
 ): { score: number; label: string; toneClass: string } {
   // Base from firma agreement: 0/1/2/3 → 10/35/65/85.
   let score =
@@ -56,6 +59,10 @@ function computeConfidence(
   if (eventWindow?.veryImminent) score -= 20;
   else if (eventWindow?.imminent) score -= 10;
 
+  // Chefredakteur der Recherche-Firma stimmt mit.
+  if (intelSignal === 'risk-on') score += 5;
+  else if (intelSignal === 'risk-off') score -= 10;
+
   score = Math.max(0, Math.min(100, score));
 
   const label =
@@ -70,7 +77,7 @@ function computeConfidence(
   return { score, label, toneClass };
 }
 
-export function HeuteEntscheidung({ personas, perCoinSentiment, setupSimilarity, eventWindow }: Props) {
+export function HeuteEntscheidung({ personas, perCoinSentiment, setupSimilarity, eventWindow, intelSignal }: Props) {
   const buys = personas.filter((p) => p.verdict === 'BUY');
   const buyCount = buys.length;
 
@@ -140,7 +147,7 @@ export function HeuteEntscheidung({ personas, perCoinSentiment, setupSimilarity,
     }
   }
 
-  const confidence = computeConfidence(buyCount, newsTilt, setupSimilarity, eventWindow);
+  const confidence = computeConfidence(buyCount, newsTilt, setupSimilarity, eventWindow, intelSignal);
 
   void verdict;
   void conservative;
@@ -196,6 +203,9 @@ export function HeuteEntscheidung({ personas, perCoinSentiment, setupSimilarity,
             <div>· Vergangenheit: {setupSimilarity.oneLineVerdict}</div>
           )}
           {newsHint && <div>· {newsHint}</div>}
+          {intelSignal && intelSignal !== 'neutral' && intelSignal !== 'kein_signal' && (
+            <div>· Recherche-Chefredakteur sieht Tendenz {intelSignal}.</div>
+          )}
         </div>
       </div>
 

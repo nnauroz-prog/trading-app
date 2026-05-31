@@ -27,6 +27,10 @@ import { ChaseWarning } from '@/components/chase-warning';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import { computeEventWindow } from '@/lib/calendar/event-window';
 import { WocheVoraus } from '@/components/woche-voraus';
+import { buildIntelContext } from '@/lib/intel/context';
+import { runAllEmployees } from '@/lib/intel/employees';
+import { chefredakteurSynthesis } from '@/lib/intel/chefredakteur';
+import { IntelStrip } from '@/components/intel-strip';
 import { todayIsoBerlin } from '@/lib/agent-memory';
 import { SafetyCheck } from '@/components/safety-check';
 import { ProofCard } from '@/components/proof-card';
@@ -86,6 +90,21 @@ export default async function HomePage() {
   const opportunitySignals = detectOpportunitySignals(spaeherReport.perCoin, priceCtx);
   const upcomingMacro = upcomingMacroAll;
   const todayIso = todayIsoBerlin();
+
+  // Recherche-Firma: Chefredakteur-Lagebericht (für Strip + Confidence-Score)
+  const intelCtx = buildIntelContext({
+    masterSignal, backtest: backtestSummary, spaeher: spaeherReport,
+    fearGreed: fearGreed?.value ?? null,
+    fundingBtcAnnualizedPct: fundingBtc?.fundingRateAnnualizedPct ?? null,
+    fundingEthAnnualizedPct: fundingEth?.fundingRateAnnualizedPct ?? null,
+    btcDominancePct: btcDominance?.btcDominancePct ?? null,
+    eventWindow,
+    cycleLabel: halving?.phaseLabel ?? null,
+    cycleProgressPct: halving?.cyclePct ?? null,
+    firmaLog: []
+  });
+  const intelReports = runAllEmployees(intelCtx);
+  const intelCeo = chefredakteurSynthesis(intelReports);
 
   const tickerChangesAll = report.tickers.map((t) => t.priceChangePct);
   const negShareAll = tickerChangesAll.filter((c) => c < -2).length / (tickerChangesAll.length || 1);
@@ -153,7 +172,9 @@ export default async function HomePage() {
 
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
-      <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} eventWindow={eventWindow} />
+      <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} eventWindow={eventWindow} intelSignal={intelCeo.netSignal} />
+
+      <IntelStrip ceo={intelCeo} />
 
       <ChaseWarning chase={chaseSignals} opportunity={opportunitySignals} />
 
