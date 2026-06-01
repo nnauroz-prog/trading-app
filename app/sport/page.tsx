@@ -17,6 +17,7 @@ import { computeHeadToHead } from '@/lib/sport/h2h';
 import { FirmaTrackRecord } from '@/components/firma-track-record';
 import { DailyTopPickCard } from '@/components/daily-top-pick';
 import { PerLeagueTopPicks } from '@/components/per-league-top-picks';
+import { MultiTipCombo } from '@/components/multi-tip-combo';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -283,6 +284,8 @@ export default async function SportPage() {
       <FirmaTrackRecord safetyPickerName={firmaSynth.safetyPicker.name} />
 
       <SafetyPicksSection synth={firmaSynth} />
+
+      <MultiTipCombo synth={firmaSynth} />
 
       <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3">
         <p className="text-[11px] leading-snug text-slate-300">
