@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { TEAM_WATCHLIST_CHANGED_EVENT, TeamWatchEntry, loadTeamWatchlist, toggleTeamWatch } from '@/lib/sport/team-watchlist';
+import { TEAM_WATCHLIST_CHANGED_EVENT, TeamWatchEntry, loadTeamWatchlist, setTeamNote, toggleTeamWatch } from '@/lib/sport/team-watchlist';
 
 interface TeamWatchInput {
   team: string;
@@ -19,6 +19,37 @@ interface TeamWatchInput {
     goalsAgainst?: number;
   };
   nextOpponent?: { opponent: string; date: string; isHome: boolean };
+}
+
+function TeamNoteEditor({ team, league, initial }: { team: string; league: string; initial: string }) {
+  const [value, setValue] = useState(initial);
+  const [open, setOpen] = useState(false);
+  useEffect(() => setValue(initial), [initial]);
+  return (
+    <details open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
+      <summary className="cursor-pointer text-[10px] uppercase tracking-wider text-slate-500 hover:text-slate-300">
+        ▸ {initial ? 'Notiz bearbeiten' : 'Notiz schreiben'}{initial && <span className="ml-1 normal-case tracking-normal text-slate-400">— {initial.slice(0, 40)}{initial.length > 40 ? '…' : ''}</span>}
+      </summary>
+      <div className="mt-1.5 space-y-1">
+        <textarea
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="z. B. Verletzung Top-Stürmer, Stadion ausverkauft, Trainerwechsel ..."
+          rows={2}
+          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-100 focus:border-emerald-400/60 focus:outline-none"
+        />
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => { setTeamNote(team, league, value); setOpen(false); }}
+            className="rounded-md border border-emerald-400/50 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 hover:border-emerald-300"
+          >
+            Notiz speichern
+          </button>
+        </div>
+      </div>
+    </details>
+  );
 }
 
 function GoalsBar({ goalsFor, goalsAgainst }: { goalsFor: number; goalsAgainst: number }) {
@@ -145,6 +176,7 @@ export function TeamWatchlistPanel({ candidates }: { candidates: TeamWatchInput[
                     <span className="text-slate-500">({info.nextOpponent.isHome ? 'Heim' : 'Auswärts'}, {info.nextOpponent.date})</span>
                   </div>
                 ) : null}
+                <TeamNoteEditor team={w.team} league={w.league} initial={w.note ?? ''} />
               </li>
             );
           })}
