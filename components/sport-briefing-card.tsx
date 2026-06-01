@@ -4,7 +4,10 @@ import type { FirmaSynthesis } from '@/lib/sport/firma/synthesis';
 // Mini-Karte für die Startseite: kurzer Sport-Tagesausblick mit Link
 // auf den vollen Sport-Reiter. Damit ist die Sport-Firma nicht isoliert.
 export function SportBriefingCard({ synth, todayFixtures }: { synth: FirmaSynthesis; todayFixtures: number }) {
-  const lead = synth.highConfidencePicks[0] ?? null;
+  // Erst der sichere Tipp, sonst der beste verfügbare. Damit die Karte
+  // immer mit einer konkreten Empfehlung füllt, auch in der Sommerpause.
+  const lead = synth.highConfidencePicks[0] ?? synth.dailyTopPick;
+  const leadLabel = synth.highConfidencePicks[0] ? 'Sicherer Tipp' : 'Tipp des Tages';
   const dangerous = synth.findings.find((f) => f.kind === 'dangerous') ?? null;
   return (
     <Link
@@ -28,7 +31,7 @@ export function SportBriefingCard({ synth, todayFixtures }: { synth: FirmaSynthe
         {lead && (
           <>
             <br />
-            <span className="text-slate-300">Klarster Tipp: <span className="font-semibold text-white">{lead.fixture.homeTeam}</span> vs. <span className="font-semibold text-white">{lead.fixture.awayTeam}</span> · <span className="font-mono text-emerald-300">{lead.pickPlain} {Math.round(lead.confidence * 100)}%</span></span>
+            <span className="text-slate-300">{leadLabel}: <span className="font-semibold text-white">{lead.fixture.homeTeam}</span> vs. <span className="font-semibold text-white">{lead.fixture.awayTeam}</span> · <span className="font-mono text-emerald-300">{lead.likelyScore.home}:{lead.likelyScore.away} · {Math.round(lead.confidence * 100)}%</span></span>
           </>
         )}
       </p>
