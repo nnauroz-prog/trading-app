@@ -249,7 +249,8 @@ export default async function SportPage() {
       form: {
         wins: f.wins, draws: f.draws, losses: f.losses,
         points: f.points, goalDiff: f.goalDiff, played: f.played,
-        streak: f.streak, sequence: f.sequence
+        streak: f.streak, sequence: f.sequence,
+        goalsFor: f.goalsFor, goalsAgainst: f.goalsAgainst
       },
       nextOpponent
     };

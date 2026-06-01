@@ -15,8 +15,22 @@ interface TeamWatchInput {
     played: number;
     streak: number;
     sequence?: ('W' | 'D' | 'L')[];
+    goalsFor?: number;
+    goalsAgainst?: number;
   };
   nextOpponent?: { opponent: string; date: string; isHome: boolean };
+}
+
+function GoalsBar({ goalsFor, goalsAgainst }: { goalsFor: number; goalsAgainst: number }) {
+  const total = goalsFor + goalsAgainst;
+  if (total === 0) return null;
+  const pctFor = Math.round((goalsFor / total) * 100);
+  return (
+    <div className="flex h-2 w-full overflow-hidden rounded-sm border border-slate-800 bg-slate-950" title={`${goalsFor} Tore geschossen · ${goalsAgainst} Gegentore`}>
+      <div className="bg-emerald-500/70" style={{ width: `${pctFor}%` }} />
+      <div className="bg-rose-500/70" style={{ width: `${100 - pctFor}%` }} />
+    </div>
+  );
 }
 
 function FormSparkline({ sequence }: { sequence: ('W' | 'D' | 'L')[] }) {
@@ -94,6 +108,17 @@ export function TeamWatchlistPanel({ candidates }: { candidates: TeamWatchInput[
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-slate-500">Verlauf:</span>
                         <FormSparkline sequence={info.form.sequence} />
+                      </div>
+                    )}
+                    {info.form.goalsFor !== undefined && info.form.goalsAgainst !== undefined && (info.form.goalsFor + info.form.goalsAgainst) > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-500 w-12">Tore:</span>
+                        <div className="flex-1">
+                          <GoalsBar goalsFor={info.form.goalsFor} goalsAgainst={info.form.goalsAgainst} />
+                        </div>
+                        <span className="font-mono text-[10px] text-slate-400">
+                          <span className="text-emerald-300">{info.form.goalsFor}</span>:<span className="text-rose-300">{info.form.goalsAgainst}</span>
+                        </span>
                       </div>
                     )}
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10.5px] text-slate-400">
