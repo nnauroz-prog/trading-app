@@ -16,6 +16,7 @@ import { H2HBadge } from '@/components/h2h-badge';
 import { computeHeadToHead } from '@/lib/sport/h2h';
 import { FirmaTrackRecord } from '@/components/firma-track-record';
 import { DailyTopPickCard } from '@/components/daily-top-pick';
+import { PerLeagueTopPicks } from '@/components/per-league-top-picks';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -276,6 +277,8 @@ export default async function SportPage() {
       <SportFirmaCard synth={firmaSynth} />
 
       <DailyTopPickCard synth={firmaSynth} />
+
+      <PerLeagueTopPicks synth={firmaSynth} />
 
       <FirmaTrackRecord safetyPickerName={firmaSynth.safetyPicker.name} />
 

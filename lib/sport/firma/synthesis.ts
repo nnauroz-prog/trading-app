@@ -25,6 +25,8 @@ export interface FirmaSynthesis {
   scheduleGatekeeper: SportEmployee;
   safetyPicker: SportEmployee;
   dailyPickCurator: SportEmployee;
+  // Best pick per active league with at least one prediction.
+  perLeagueTopPicks: HighConfidencePick[];
   // Bestes verfügbares Spiel der nächsten 7 Tage, egal ob ≥ Threshold.
   // Wenn auch die nichts liefern (keine prediction overhaupt), null.
   dailyTopPick: HighConfidencePick | null;
@@ -56,6 +58,7 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
   const totalFixturesNext7d = weekAhead.reduce((s, d) => s + d.fixtures.length, 0);
   const highConfidencePicks = pickHighConfidence(weekAhead);
   const dailyTopPick = pickBestOfAll(weekAhead);
+  const perLeagueTopPicks = pickBestPerLeague(weekAhead);
   const counts = countByDepartment();
 
   const chefStatement = composeChefStatement({
@@ -79,8 +82,32 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
     safetyPicker: SAFETY_PICKER_EMPLOYEE,
     dailyPickCurator: DAILY_PICK_CURATOR_EMPLOYEE,
     dailyTopPick,
+    perLeagueTopPicks,
     honesty: HONESTY
   };
+}
+
+function pickBestPerLeague(weekAhead: WeekAheadDay[]): HighConfidencePick[] {
+  const bestByLeague = new Map<string, HighConfidencePick>();
+  for (const day of weekAhead) {
+    for (const { fixture, leagueName } of day.fixtures) {
+      const pred = fixture.prediction;
+      if (!pred) continue;
+      const current = bestByLeague.get(leagueName);
+      if (!current || pred.pickConfidence > current.confidence) {
+        bestByLeague.set(leagueName, {
+          fixture,
+          leagueName,
+          pickPlain: pred.pickPlain,
+          confidence: pred.pickConfidence,
+          likelyScore: pred.likelyScore,
+          btts: fixture.probabilities?.bothTeamsToScore ?? null,
+          over25: fixture.probabilities?.over25 ?? null
+        });
+      }
+    }
+  }
+  return Array.from(bestByLeague.values()).sort((a, b) => b.confidence - a.confidence);
 }
 
 function pickBestOfAll(weekAhead: WeekAheadDay[]): HighConfidencePick | null {
