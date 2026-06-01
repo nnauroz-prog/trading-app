@@ -96,7 +96,7 @@ function pickBestOfAll(weekAhead: WeekAheadDay[]): HighConfidencePick | null {
           pickPlain: pred.pickPlain,
           confidence: pred.pickConfidence,
           likelyScore: pred.likelyScore,
-          btts: fixture.probabilities?.btts ?? null,
+          btts: fixture.probabilities?.bothTeamsToScore ?? null,
           over25: fixture.probabilities?.over25 ?? null
         };
       }
@@ -129,7 +129,7 @@ function pickHighConfidence(weekAhead: WeekAheadDay[]): HighConfidencePick[] {
         pickPlain: pred.pickPlain,
         confidence: pred.pickConfidence,
         likelyScore: pred.likelyScore,
-        btts: fixture.probabilities?.btts ?? null,
+        btts: fixture.probabilities?.bothTeamsToScore ?? null,
         over25: fixture.probabilities?.over25 ?? null
       });
     }
