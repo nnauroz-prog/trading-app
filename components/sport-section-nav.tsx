@@ -2,6 +2,7 @@
 // damit man nicht durch die ganze Seite scrollen muss.
 export function SportSectionNav() {
   const items = [
+    { href: '#tier-90', label: '⚜ Tier 90' },
     { href: '#maximal-sicher', label: '🛡 Maximal-Sicher' },
     { href: '#ergebnisse', label: '🎯 Ergebnisse' },
     { href: '#historie', label: '📚 Historie' },

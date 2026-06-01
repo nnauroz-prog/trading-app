@@ -31,6 +31,7 @@ import { LeagueSeasonStatsCard } from '@/components/league-season-stats';
 import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 import { computeConsensus } from '@/lib/sport/firma/consensus';
 import { ConsensusPicks } from '@/components/consensus-picks';
+import { Tier90Picks } from '@/components/tier-90-picks';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -312,6 +313,9 @@ export default async function SportPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Vorhergesagte Ergebnisse</h1>
         <p className="text-sm text-slate-400">Jedes anstehende Spiel der nächsten 14 Tage mit voraussichtlichem Endstand — basierend auf 3 Saisons echter Daten.</p>
       </header>
+
+      <div id="tier-90" />
+      <Tier90Picks picks={consensusEnriched} />
 
       <div id="maximal-sicher" />
       <ConsensusPicks picks={consensusEnriched} />
