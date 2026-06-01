@@ -39,7 +39,7 @@ export function ConsensusPicks({ picks }: { picks: EnrichedPick[] }) {
 
       {topPicks.length === 0 ? (
         <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-3 text-[11.5px] leading-snug text-amber-100/90">
-          Aktuell schafft kein einziges Spiel den Konsens-Filter. Genau so soll es sein, wenn die Datenlage uneindeutig ist — kein „sehr sicher", kein Bauern-Tipp. Schau morgen wieder rein.
+          Aktuell schafft kein einziges Spiel den Konsens-Filter. Genau so soll es sein, wenn die Datenlage uneindeutig ist — kein vorgegaukeltes „sehr sicher“, kein Bauern-Tipp. Schau morgen wieder rein.
         </p>
       ) : (
         <ul className="space-y-2">

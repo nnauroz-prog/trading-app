@@ -128,12 +128,12 @@ describe('scoutFindings', () => {
 });
 
 describe('buildWeekAhead', () => {
-  it('buckets fixtures across days within the 7-day horizon', () => {
+  it('buckets fixtures across days within the 14-day horizon', () => {
     const today = '2026-06-01';
     const next: UpcomingFixture[] = [
       upcoming('A', 'B', '2026-06-01', '15:30'),
       upcoming('C', 'D', '2026-06-03', '20:00'),
-      upcoming('E', 'F', '2026-06-12', '20:00') // außerhalb 7-Tage-Fenster
+      upcoming('E', 'F', '2026-06-20', '20:00') // außerhalb 14-Tage-Fenster
     ];
     const days = buildWeekAhead([league('L1', [], next)], today);
     expect(days.map((d) => d.date)).toEqual(['2026-06-01', '2026-06-03']);
