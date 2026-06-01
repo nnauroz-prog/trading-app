@@ -353,7 +353,7 @@ export function computeConsensusBatch(
   h2hByFixtureId: Map<string, HeadToHeadResult>
 ): ConsensusVerdict[] {
   return fixturesWithLeague
-    .map(({ fixture, leagueName }) => {
+    .map(({ fixture, leagueName, finishedPool }) => {
       const homeForm = forms.find((f) => f.team === fixture.homeTeam) ?? null;
       const awayForm = forms.find((f) => f.team === fixture.awayTeam) ?? null;
       const lstats = leagueStats.get(leagueName) ?? null;
@@ -364,7 +364,8 @@ export function computeConsensusBatch(
         awayForm,
         h2h,
         leagueHomeWinPct: lstats?.homeWinPct ?? null,
-        leagueGoalsPerMatch: lstats?.goalsPerMatch ?? null
+        leagueGoalsPerMatch: lstats?.goalsPerMatch ?? null,
+        finishedPool
       });
     });
 }
