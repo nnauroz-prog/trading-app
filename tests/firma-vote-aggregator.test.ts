@@ -3,7 +3,7 @@ import { summariseFirmaVotes } from '@/lib/agents/firma-vote-aggregator';
 import type { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 
 function report(tone: 'good' | 'neutral' | 'bad'): SubAgentReport {
-  return { role: 'analyst', title: 'Analyst', vote: 'POSITIV', voteTone: tone, reason: '' } as SubAgentReport;
+  return { role: 'analyst', title: 'Markt-Analyst', vote: 'POSITIV', voteTone: tone, reason: '' } as SubAgentReport;
 }
 
 describe('summariseFirmaVotes', () => {
