@@ -23,6 +23,7 @@ import { LeagueHeatmap } from '@/components/league-heatmap';
 import { SeasonPauseBanner } from '@/components/season-pause-banner';
 import { SportCuratorsQuote } from '@/components/sport-curators-quote';
 import { WeekHighlights } from '@/components/week-highlights';
+import { TeamSearch } from '@/components/team-search';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -317,6 +318,8 @@ export default async function SportPage() {
       </Link>
 
       <TeamWatchlistPanel candidates={teamCandidates} />
+
+      <TeamSearch teams={teamCandidates.map((c) => ({ team: c.team, league: c.league }))} />
 
       <WeekAheadList days={firmaSynth.weekAhead} />
 
