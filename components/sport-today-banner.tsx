@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { LeagueFixtures, UpcomingFixture } from '@/lib/sport/fetcher';
 import { bucketByDay } from '@/lib/sport/day-buckets';
+import { KickoffCountdown } from '@/components/kickoff-countdown';
 
 function fmtTime(time: string | null, date: string): string {
   if (!time) return '';
@@ -30,7 +31,10 @@ export function SportTodayBanner({ leagues }: { leagues: LeagueFixtures[] }) {
       <ul className="mt-1 space-y-0.5 text-[10.5px]">
         {first3.map((f) => (
           <li key={f.id} className="grid grid-cols-[auto_1fr_auto] gap-2">
-            <span className="font-mono text-emerald-300">{fmtTime(f.time, f.date) || '—'}</span>
+            <span className="font-mono text-emerald-300">
+              {fmtTime(f.time, f.date) || '—'}
+              <KickoffCountdown dateIso={f.date} time={f.time} />
+            </span>
             <span className="truncate">{f.homeTeam} vs. {f.awayTeam}</span>
             {f.prediction && (
               <span className="font-mono text-slate-400">
