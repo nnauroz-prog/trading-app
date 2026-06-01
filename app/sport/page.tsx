@@ -21,6 +21,7 @@ import { MultiTipCombo } from '@/components/multi-tip-combo';
 import { PendingTipsCounter } from '@/components/pending-tips-counter';
 import { LeagueHeatmap } from '@/components/league-heatmap';
 import { SeasonPauseBanner } from '@/components/season-pause-banner';
+import { SportCuratorsQuote } from '@/components/sport-curators-quote';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -283,6 +284,8 @@ export default async function SportPage() {
       <SportFirmaCard synth={firmaSynth} />
 
       <DailyTopPickCard synth={firmaSynth} />
+
+      <SportCuratorsQuote synth={firmaSynth} />
 
       <PerLeagueTopPicks synth={firmaSynth} />
 
