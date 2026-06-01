@@ -4,6 +4,9 @@ import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { computeTeamForms } from '@/lib/sport/firma/scouts';
 import { computeHeadToHead } from '@/lib/sport/h2h';
 import { H2HBadge } from '@/components/h2h-badge';
+import { collectFirmaVotes } from '@/lib/sport/firma/employee-votes';
+import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
+import { FirmaVotesCard } from '@/components/firma-votes-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -28,6 +31,8 @@ export default async function TeamDetailPage({ params }: PageProps) {
   if (!lf) return notFound();
 
   const form = computeTeamForms([lf]).find((f) => f.team === team) ?? null;
+  const allForms = computeTeamForms([lf]);
+  const leagueStats = computeLeagueSeasonStats([lf])[0] ?? null;
   const upcoming = lf.next.filter((f) => f.homeTeam === team || f.awayTeam === team);
   const allPast = lf.last.filter((f) => f.homeTeam === team || f.awayTeam === team);
   const past = allPast.slice(0, 8);
@@ -127,6 +132,20 @@ export default async function TeamDetailPage({ params }: PageProps) {
                     )}
                   </div>
                   <H2HBadge h2h={h2h} />
+                  {(() => {
+                    const homeF = allForms.find((x) => x.team === f.homeTeam) ?? null;
+                    const awayF = allForms.find((x) => x.team === f.awayTeam) ?? null;
+                    const voteResult = collectFirmaVotes({
+                      fixture: f,
+                      leagueName: lf.league.name,
+                      homeForm: homeF,
+                      awayForm: awayF,
+                      h2h,
+                      leagueStats,
+                      finishedPool: lf.last
+                    });
+                    return <FirmaVotesCard fixture={f} voteResult={voteResult} />;
+                  })()}
                   {h2hHistory.length > 0 && (
                     <div className="border-t border-slate-800/60 pt-1.5">
                       <div className="text-[9.5px] uppercase tracking-wider text-slate-500">Letzte Aufeinandertreffen</div>
