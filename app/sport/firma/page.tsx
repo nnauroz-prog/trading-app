@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { SPORT_FIRMA, SPORT_FIRMA_SIZE, countByDepartment, type SportDepartment, type SportEmployee } from '@/lib/sport/firma/roster';
+import { getEmployeeBacktest } from '@/lib/sport/firma/employee-backtest-cache';
+import { EmployeeLeaderboard } from '@/components/employee-leaderboard';
 
-export const dynamic = 'force-static';
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 const DEPARTMENT_LABEL: Record<SportDepartment, string> = {
   chef: 'Chefredaktion',
@@ -67,8 +70,9 @@ function EmployeeChip({ e }: { e: SportEmployee }) {
   );
 }
 
-export default function SportFirmaPage() {
+export default async function SportFirmaPage() {
   const counts = countByDepartment();
+  const backtestStats = await getEmployeeBacktest();
   const grouped: Record<SportDepartment, SportEmployee[]> = {
     chef: [], league_scout: [], team_analyst: [], form_analyst: [],
     tactical_analyst: [], international_watch: [], transfer_watch: [], politik_watch: [],
@@ -92,6 +96,8 @@ export default function SportFirmaPage() {
           Die komplette Belegschaft der Sport-Redaktion. Jede·r mit Rolle und Abteilung. Wer was beobachtet, ist hier transparent — das ist kein Marketing-Schaufenster, das ist die echte Aufstellung.
         </p>
       </header>
+
+      <EmployeeLeaderboard stats={backtestStats} />
 
       <section className="grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4">
         {DEPARTMENT_ORDER.map((d) => (
