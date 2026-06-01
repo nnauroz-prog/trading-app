@@ -49,18 +49,20 @@ function hueFromId(id: string): number {
 function EmployeeChip({ e }: { e: SportEmployee }) {
   const hue = hueFromId(e.id);
   return (
-    <li className="grid grid-cols-[2rem_1fr] items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-2.5 py-1.5">
-      <div
-        className="flex h-8 w-8 items-center justify-center rounded-full font-mono text-[10px] font-bold text-white"
-        style={{ background: `hsl(${hue}, 45%, 35%)` }}
-        aria-hidden
-      >
-        {avatarInitials(e.name)}
-      </div>
-      <div className="min-w-0">
-        <div className="truncate text-[12px] font-semibold text-white">{e.name}</div>
-        <div className="truncate text-[10.5px] text-slate-400">{e.role}</div>
-      </div>
+    <li>
+      <Link href={`/sport/firma/${e.id}`} className="grid grid-cols-[2rem_1fr] items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 hover:border-emerald-400/40 hover:bg-slate-900/60">
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-full font-mono text-[10px] font-bold text-white"
+          style={{ background: `hsl(${hue}, 45%, 35%)` }}
+          aria-hidden
+        >
+          {avatarInitials(e.name)}
+        </div>
+        <div className="min-w-0">
+          <div className="truncate text-[12px] font-semibold text-white">{e.name}</div>
+          <div className="truncate text-[10.5px] text-slate-400">{e.role}</div>
+        </div>
+      </Link>
     </li>
   );
 }
