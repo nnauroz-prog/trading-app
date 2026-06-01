@@ -23,5 +23,9 @@ export const FOOTBALL_LEAGUES: League[] = [
   { id: '4347', name: 'Eliteserien', country: 'Norwegen' },
   { id: '4330', name: 'Allsvenskan', country: 'Schweden' },
   { id: '4339', name: 'J1 League', country: 'Japan' },
-  { id: '4356', name: 'A-League Men', country: 'Australien' }
+  { id: '4356', name: 'A-League Men', country: 'Australien' },
+  { id: '4344', name: 'Liga MX', country: 'Mexiko' },
+  { id: '4406', name: 'Primera División', country: 'Argentinien' },
+  { id: '4396', name: 'Indian Super League', country: 'Indien' },
+  { id: '4391', name: 'Chinese Super League', country: 'China' }
 ];

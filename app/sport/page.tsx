@@ -462,23 +462,35 @@ export default async function SportPage() {
       )}
 
       <div className="space-y-3">
-        {leagues.map((lf, leagueIdx) => {
+        {(() => {
+          // Sortierung: Ligen mit anstehenden Spielen zuerst (die mit den meisten
+          // upcoming oben), dann die in Saisonpause. So sieht der User SOFORT
+          // wo Spiele laufen.
+          const sortedLeagues = [...leagues].sort((a, b) => b.next.length - a.next.length);
+          return sortedLeagues.map((lf, leagueIdx) => {
           if (lf.next.length === 0 && lf.last.length === 0) return null;
-          // First two leagues open by default so visitors see real content
-          // immediately. Remaining leagues stay collapsed to keep the page tight.
+          const hasNext = lf.next.length > 0;
           return (
-            <details key={lf.league.id} open={leagueIdx < 2} className="rounded-2xl border border-slate-800/80 bg-slate-900/40">
-              <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-300 hover:text-slate-100">
-                ▸ {lf.league.name} <span className="text-slate-500">· {lf.league.country}</span>
+            <details key={lf.league.id} open={hasNext && leagueIdx < 3} className={`rounded-2xl border bg-slate-900/40 ${hasNext ? 'border-emerald-400/40' : 'border-slate-800/80'}`}>
+              <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider hover:text-slate-100">
+                <span className={hasNext ? 'text-emerald-300' : 'text-slate-500'}>
+                  ▸ {lf.league.name} <span className="text-slate-500">· {lf.league.country}</span>
+                  {hasNext && <span className="ml-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] text-emerald-200 normal-case">{lf.next.length} Spiele kommen</span>}
+                  {!hasNext && <span className="ml-2 text-[9px] normal-case text-slate-600">Saisonpause</span>}
+                </span>
               </summary>
               <div className="space-y-4 p-4 pt-0">
-                {lf.next.length > 0 && (
+                {hasNext ? (
                   <div>
-                    <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Nächste Spiele · mit Tipp</h3>
+                    <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">🎯 Vorhergesagte Ergebnisse · {lf.next.length} Spiele</h3>
                     <ul className="space-y-1.5">
                       {lf.next.map((f) => <UpcomingFixtureRow key={f.id} f={f} h2h={h2hById.get(f.id)} />)}
                     </ul>
                   </div>
+                ) : (
+                  <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-3 text-[11.5px] leading-snug text-amber-100/90">
+                    Aktuell keine anstehenden Spiele in dieser Liga (Sommerpause / Pokal-Modus). Die Vergangenheit ist unten ausklappbar, die Liga-Tabelle ebenfalls. Sobald Spiele wieder angesetzt sind, erscheinen hier voraussagene Ergebnisse.
+                  </p>
                 )}
                 {lf.last.length > 0 && (
                   <details>
@@ -530,7 +542,8 @@ export default async function SportPage() {
               </div>
             </details>
           );
-        })}
+          });
+        })()}
       </div>
 
       <div id="tagebuch" />
