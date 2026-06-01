@@ -292,10 +292,14 @@ export default async function SportPage() {
       <SportFirmaCard synth={firmaSynth} />
       </div>
 
+      <div id="sicher" />
+      <SafetyPicksSection synth={firmaSynth} />
+      <div id="tag" />
       <DailyTopPickCard synth={firmaSynth} />
 
       <SportCuratorsQuote synth={firmaSynth} />
 
+      <div id="liga" />
       <PerLeagueTopPicks synth={firmaSynth} />
 
       <LeagueHeatmap synth={firmaSynth} />
@@ -306,8 +310,7 @@ export default async function SportPage() {
 
       <PendingTipsCounter />
 
-      <SafetyPicksSection synth={firmaSynth} />
-
+      <div id="kombi" />
       <MultiTipCombo synth={firmaSynth} />
 
       <WeekHighlights synth={firmaSynth} />
@@ -333,10 +336,12 @@ export default async function SportPage() {
         </Link>
       </div>
 
+      <div id="meine-teams" />
       <TeamWatchlistPanel candidates={teamCandidates} />
 
       <TeamSearch teams={teamCandidates.map((c) => ({ team: c.team, league: c.league }))} />
 
+      <div id="woche" />
       <WeekAheadList days={firmaSynth.weekAhead} />
 
       <TopTipp leagues={leagues} />
@@ -470,6 +475,7 @@ export default async function SportPage() {
         })}
       </div>
 
+      <div id="tagebuch" />
       <SportTipJournal finishedFixtures={finishedLite} />
 
       <footer className="space-y-1 border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
