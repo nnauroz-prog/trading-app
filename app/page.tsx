@@ -25,6 +25,7 @@ import { WatchlistStrip } from '@/components/watchlist-strip';
 import { CoinScoreRecorder } from '@/components/coin-score-recorder';
 import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { SportBriefingCard } from '@/components/sport-briefing-card';
+import { SportTodayBanner } from '@/components/sport-today-banner';
 import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { buildFirmaSynthesis } from '@/lib/sport/firma/synthesis';
 import { bucketByDay } from '@/lib/sport/day-buckets';
@@ -329,6 +330,8 @@ export default async function HomePage() {
           </p>
         </section>
       )}
+
+      <SportTodayBanner leagues={sportLeagues} />
 
       <VorstandStrip report={vorstandReport} />
       <KonsensStreakCard />
