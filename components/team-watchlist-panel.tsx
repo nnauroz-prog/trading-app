@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { TEAM_WATCHLIST_CHANGED_EVENT, TeamWatchEntry, loadTeamWatchlist, setTeamNote, toggleTeamWatch } from '@/lib/sport/team-watchlist';
 
@@ -121,10 +122,10 @@ export function TeamWatchlistPanel({ candidates }: { candidates: TeamWatchInput[
             return (
               <li key={`${w.team}::${w.league}`} className="space-y-1 rounded-lg border border-slate-800 bg-slate-950/40 p-2.5">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
+                  <Link href={`/sport/team/${encodeURIComponent(w.team)}`} className="min-w-0 hover:text-emerald-300">
                     <div className="truncate text-[12px] font-semibold text-white">{w.team}</div>
                     <div className="truncate text-[10px] text-slate-500">{w.league}</div>
-                  </div>
+                  </Link>
                   <button
                     type="button"
                     onClick={() => toggleTeamWatch(w.team, w.league)}
