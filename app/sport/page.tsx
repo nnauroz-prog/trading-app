@@ -22,6 +22,7 @@ import { PendingTipsCounter } from '@/components/pending-tips-counter';
 import { LeagueHeatmap } from '@/components/league-heatmap';
 import { SeasonPauseBanner } from '@/components/season-pause-banner';
 import { SportCuratorsQuote } from '@/components/sport-curators-quote';
+import { WeekHighlights } from '@/components/week-highlights';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -298,6 +299,8 @@ export default async function SportPage() {
       <SafetyPicksSection synth={firmaSynth} />
 
       <MultiTipCombo synth={firmaSynth} />
+
+      <WeekHighlights synth={firmaSynth} />
 
       <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3">
         <p className="text-[11px] leading-snug text-slate-300">
