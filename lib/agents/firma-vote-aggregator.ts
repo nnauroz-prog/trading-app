@@ -26,8 +26,8 @@ export function summariseFirmaVotes(team: SubAgentReport[]): FirmaVoteSummary {
   let neutral = 0;
   for (const r of team) {
     const tone = r.voteTone;
-    if (tone === 'positive') positive++;
-    else if (tone === 'negative') negative++;
+    if (tone === 'good') positive++;
+    else if (tone === 'bad') negative++;
     else neutral++;
   }
   const decisiveVotes = positive + negative;

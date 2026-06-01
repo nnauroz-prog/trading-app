@@ -48,8 +48,8 @@ export function FirmaVoteSummaryCard({ voteSummary, team, firmaName }: Props) {
         <ul className="space-y-1 p-2 pt-0">
           {team.map((r, i) => (
             <li key={`${r.role}-${i}`} className="grid grid-cols-[auto_1fr_auto] gap-2 rounded border border-slate-800 bg-slate-950/40 p-1.5 text-[10.5px]">
-              <span className={`font-mono text-[9px] uppercase tracking-wider ${r.voteTone === 'positive' ? 'text-emerald-300' : r.voteTone === 'negative' ? 'text-rose-300' : 'text-slate-400'}`}>
-                {r.voteTone === 'positive' ? '✓' : r.voteTone === 'negative' ? '✗' : '○'}
+              <span className={`font-mono text-[9px] uppercase tracking-wider ${r.voteTone === 'good' ? 'text-emerald-300' : r.voteTone === 'bad' ? 'text-rose-300' : 'text-slate-400'}`}>
+                {r.voteTone === 'good' ? '✓' : r.voteTone === 'bad' ? '✗' : '○'}
               </span>
               <span>
                 <span className="font-semibold text-slate-200">{ROLE_LABEL[r.role] ?? r.role}</span>
