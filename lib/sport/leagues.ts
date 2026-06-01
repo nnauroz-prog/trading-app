@@ -27,5 +27,8 @@ export const FOOTBALL_LEAGUES: League[] = [
   { id: '4344', name: 'Liga MX', country: 'Mexiko' },
   { id: '4406', name: 'Primera División', country: 'Argentinien' },
   { id: '4396', name: 'Indian Super League', country: 'Indien' },
-  { id: '4391', name: 'Chinese Super League', country: 'China' }
+  { id: '4391', name: 'Chinese Super League', country: 'China' },
+  { id: '4429', name: 'FIFA World Cup', country: 'International' }
 ];
+
+export const WORLD_CUP_LEAGUE_ID = '4429';
