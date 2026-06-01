@@ -22,6 +22,8 @@ import { StreitBanner } from '@/components/streit-banner';
 import { KonsensStreakCard } from '@/components/konsens-streak-card';
 import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
+import { CoinScoreRecorder } from '@/components/coin-score-recorder';
+import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { DiffVsYesterday } from '@/components/diff-vs-yesterday';
 import { FirstVisitHint } from '@/components/first-visit-hint';
 import { TriggeredAlertsStrip } from '@/components/triggered-alerts-strip';
@@ -341,6 +343,11 @@ export default async function HomePage() {
         structure: c.structure,
         nearSupport: c.nearSupport
       }))} />
+      <CoinScoreRecorder
+        date={todayIso}
+        candidates={masterSignal.candidates.map((c) => ({ coinId: c.coinId, symbol: c.symbol, passedCount: c.passedCount }))}
+      />
+      <CoinScoreTrend />
 
       <CrossExchangeWarning report={crossExchange} />
 
