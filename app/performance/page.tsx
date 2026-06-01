@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { PerformanceDashboard } from '@/components/performance-dashboard';
+import { AppPerformancePanel } from '@/components/app-performance-panel';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,8 @@ export default function PerformancePage() {
       </header>
 
       <PerformanceDashboard />
+
+      <AppPerformancePanel />
     </main>
   );
 }
