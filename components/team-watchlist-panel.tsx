@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { TEAM_WATCHLIST_CHANGED_EVENT, TeamWatchEntry, loadTeamWatchlist, setTeamNote, toggleTeamWatch } from '@/lib/sport/team-watchlist';
+import { FormSparkline } from '@/components/form-sparkline';
 
 interface TeamWatchInput {
   team: string;
@@ -65,27 +66,7 @@ function GoalsBar({ goalsFor, goalsAgainst }: { goalsFor: number; goalsAgainst: 
   );
 }
 
-function FormSparkline({ sequence }: { sequence: ('W' | 'D' | 'L')[] }) {
-  if (sequence.length === 0) return null;
-  return (
-    <span className="inline-flex gap-0.5" aria-label="Form der letzten Spiele">
-      {sequence.map((r, i) => {
-        const color =
-          r === 'W' ? 'bg-emerald-500/80 text-emerald-50' : r === 'L' ? 'bg-rose-500/80 text-rose-50' : 'bg-slate-600 text-slate-100';
-        const label = r === 'W' ? 'Sieg' : r === 'L' ? 'Niederlage' : 'Unentschieden';
-        return (
-          <span
-            key={i}
-            title={label}
-            className={`inline-block h-3 w-3 rounded-sm text-center text-[8.5px] font-bold leading-3 ${color}`}
-          >
-            {r === 'W' ? 'S' : r === 'L' ? 'N' : 'U'}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
+import { FormSparkline } from '@/components/form-sparkline';
 
 // Renders a list of teams the user is following. Cross-references the form
 // info coming from server-side analysis so each row shows fresh data.
