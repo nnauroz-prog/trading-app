@@ -64,6 +64,12 @@ describe('SPORT_FIRMA roster', () => {
     expect(counts.chef).toBeGreaterThan(0);
     expect(counts.league_scout).toBeGreaterThan(0);
   });
+
+  it('has exactly one schedule gatekeeper and one safety picker', () => {
+    const counts = countByDepartment();
+    expect(counts.schedule_gatekeeper).toBe(1);
+    expect(counts.safety_picker).toBe(1);
+  });
 });
 
 describe('computeTeamForms', () => {
@@ -138,6 +144,20 @@ describe('buildFirmaSynthesis', () => {
     expect(synth.totalEmployees).toBe(100);
     expect(synth.chefStatement.length).toBeGreaterThan(0);
     expect(synth.honesty.length).toBeGreaterThan(0);
+  });
+
+  it('blocks picks below the 65% safety threshold', () => {
+    const fx = upcoming('Mid', 'Mid', '2026-06-02', '20:00');
+    fx.prediction = {
+      lambdaHome: 1.4, lambdaAway: 1.2, pHome: 0.45, pDraw: 0.30, pAway: 0.25,
+      likelyScore: { home: 1, away: 1 }, homeGames: 5, awayGames: 5,
+      pickSide: 'home', pickConfidence: 0.45, pickLabel: 'offen', pickPlain: 'leicht Heim',
+      homeForm: { results: [], goalsFor: 0, goalsAgainst: 0 },
+      awayForm: { results: [], goalsFor: 0, goalsAgainst: 0 }
+    };
+    const synth = buildFirmaSynthesis([league('L1', [], [fx])], '2026-06-01');
+    expect(synth.highConfidencePicks).toHaveLength(0);
+    expect(synth.safetyPicker.name).toBeTruthy();
   });
 
   it('includes a high-confidence pick when a prediction crosses the threshold', () => {

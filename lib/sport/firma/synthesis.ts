@@ -1,7 +1,15 @@
 import type { LeagueFixtures, UpcomingFixture } from '@/lib/sport/fetcher';
 import { computeTeamForms, scoutFindings, type ScoutFinding, type TeamForm } from '@/lib/sport/firma/scouts';
 import { buildWeekAhead, type WeekAheadDay } from '@/lib/sport/firma/week-ahead';
-import { SPORT_FIRMA_SIZE, countByDepartment, type SportDepartment } from '@/lib/sport/firma/roster';
+import {
+  SAFETY_PICKER_EMPLOYEE,
+  SAFETY_PICK_THRESHOLD,
+  SCHEDULE_GATEKEEPER_EMPLOYEE,
+  SPORT_FIRMA_SIZE,
+  countByDepartment,
+  type SportDepartment,
+  type SportEmployee
+} from '@/lib/sport/firma/roster';
 
 export interface FirmaSynthesis {
   totalEmployees: number;
@@ -12,6 +20,9 @@ export interface FirmaSynthesis {
   weekAhead: WeekAheadDay[];
   totalFixturesNext7d: number;
   highConfidencePicks: HighConfidencePick[];
+  safetyPickThreshold: number;
+  scheduleGatekeeper: SportEmployee;
+  safetyPicker: SportEmployee;
   honesty: HonestyNote[];
 }
 
@@ -42,17 +53,6 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
     picks: highConfidencePicks
   });
 
-  const honesty: HonestyNote[] = [
-    {
-      department: 'transfer_watch',
-      text: '10 Transfer-Markt-Beobachter sind eingeteilt, aber ein Live-Feed (Rumours, Vereinswechsel) ist noch nicht angebunden. Wir lügen euch nicht an — sobald er da ist, melden sich diese Kolleg·innen.'
-    },
-    {
-      department: 'politik_watch',
-      text: '5 Verbands-Politik-Reporter (DFB, UEFA, FIFA, Stadion/Fan, Schiedsrichter) stehen bereit. Auch hier: noch kein offizieller Feed angebunden, also keine Spekulation aus dem Bauch.'
-    }
-  ];
-
   return {
     totalEmployees: SPORT_FIRMA_SIZE,
     departmentCounts: counts,
@@ -62,9 +62,23 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
     weekAhead,
     totalFixturesNext7d,
     highConfidencePicks,
-    honesty
+    safetyPickThreshold: SAFETY_PICK_THRESHOLD,
+    scheduleGatekeeper: SCHEDULE_GATEKEEPER_EMPLOYEE,
+    safetyPicker: SAFETY_PICKER_EMPLOYEE,
+    honesty: HONESTY
   };
 }
+
+const HONESTY: HonestyNote[] = [
+  {
+    department: 'transfer_watch',
+    text: '10 Transfer-Markt-Beobachter sind eingeteilt, aber ein Live-Feed (Rumours, Vereinswechsel) ist noch nicht angebunden. Wir lügen euch nicht an — sobald er da ist, melden sich diese Kolleg·innen.'
+  },
+  {
+    department: 'politik_watch',
+    text: '5 Verbands-Politik-Reporter (DFB, UEFA, FIFA, Stadion/Fan, Schiedsrichter) stehen bereit. Auch hier: noch kein offizieller Feed angebunden, also keine Spekulation aus dem Bauch.'
+  }
+];
 
 function pickHighConfidence(weekAhead: WeekAheadDay[]): HighConfidencePick[] {
   const all: HighConfidencePick[] = [];
@@ -72,7 +86,7 @@ function pickHighConfidence(weekAhead: WeekAheadDay[]): HighConfidencePick[] {
     for (const { fixture, leagueName } of day.fixtures) {
       const pred = fixture.prediction;
       if (!pred) continue;
-      if (pred.pickConfidence < 0.55) continue;
+      if (pred.pickConfidence < SAFETY_PICK_THRESHOLD) continue;
       all.push({
         fixture,
         leagueName,
@@ -81,7 +95,7 @@ function pickHighConfidence(weekAhead: WeekAheadDay[]): HighConfidencePick[] {
       });
     }
   }
-  return all.sort((a, b) => b.confidence - a.confidence).slice(0, 5);
+  return all.sort((a, b) => b.confidence - a.confidence);
 }
 
 function composeChefStatement(args: {

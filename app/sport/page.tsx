@@ -11,9 +11,10 @@ import { SportFirmaCard } from '@/components/sport-firma-card';
 import { WeekAheadList } from '@/components/week-ahead-list';
 import { TeamWatchlistPanel } from '@/components/team-watchlist-panel';
 import { TeamWatchToggle } from '@/components/team-watch-toggle';
+import { SafetyPicksSection } from '@/components/safety-picks-section';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 900;
+export const revalidate = 600;
 
 function fmtDate(iso: string): string {
   const d = new Date(iso + 'T00:00:00');
@@ -244,6 +245,14 @@ export default async function SportPage() {
 
       <SportFirmaCard synth={firmaSynth} />
 
+      <SafetyPicksSection synth={firmaSynth} />
+
+      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3">
+        <p className="text-[11px] leading-snug text-slate-300">
+          <span className="font-semibold text-emerald-300">{firmaSynth.scheduleGatekeeper.name}</span> ({firmaSynth.scheduleGatekeeper.role.split('·')[0].trim()}) sorgt dafür, dass auf dieser Seite ausschließlich Spiele auftauchen, die in Europe/Berlin noch nicht angefangen haben. Alles, was vorbei ist, wird unsichtbar — vergangene Begegnungen liegen nur noch hinter dem „Vergangenheit ansehen“-Aufklapper jeder Liga, falls du sie für die Tabelle brauchst.
+        </p>
+      </section>
+
       <Link
         href="/sport/firma"
         className="block rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 text-center text-[12px] text-emerald-300 hover:border-emerald-400/60 hover:bg-slate-900/60"
@@ -333,12 +342,14 @@ export default async function SportPage() {
                   </div>
                 )}
                 {lf.last.length > 0 && (
-                  <div>
-                    <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Letzte Ergebnisse</h3>
-                    <ul className="space-y-1.5">
+                  <details>
+                    <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300">
+                      ▸ Vergangenheit ansehen ({lf.last.length} Ergebnisse)
+                    </summary>
+                    <ul className="mt-2 space-y-1.5">
                       {lf.last.map((f) => <FixtureRow key={f.id} f={f} />)}
                     </ul>
-                  </div>
+                  </details>
                 )}
                 {lf.last.length >= 3 && (
                   <details>
@@ -386,7 +397,8 @@ export default async function SportPage() {
       <SportTipJournal finishedFixtures={finishedLite} />
 
       <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
-        Daten: TheSportsDB (öffentlich, frei) · Zeiten in Europe/Berlin · Aktualisierung max. stündlich · keine Garantie auf Vollständigkeit/Korrektheit.
+        Daten: TheSportsDB (öffentlich, frei) · Zeiten in Europe/Berlin · Daten werden alle 10 Minuten aktualisiert · Stand:{' '}
+        {new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', dateStyle: 'short', timeStyle: 'short' })} (Berlin) · keine Garantie auf Vollständigkeit/Korrektheit.
       </footer>
     </main>
   );

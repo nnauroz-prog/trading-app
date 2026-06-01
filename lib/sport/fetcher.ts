@@ -63,7 +63,7 @@ function normalize(e: ApiEvent, status: 'upcoming' | 'finished'): Fixture | null
 async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<Fixture[]> {
   const url = `https://www.thesportsdb.com/api/v1/json/3/events${kind}league.php?id=${leagueId}`;
   try {
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    const res = await fetch(url, { next: { revalidate: 600 } });
     if (!res.ok) return [];
     const data = (await res.json()) as { events?: ApiEvent[] | null };
     const events = data.events ?? [];
@@ -99,6 +99,7 @@ async function compute(): Promise<LeagueFixtures[]> {
   return results;
 }
 
-// Fixtures don't change minute-to-minute; cache for an hour.
-// Bumped cache key to v2: response schema gained probability + tip fields.
-export const getFootballFixtures = unstable_cache(compute, ['football-fixtures-v2'], { revalidate: 3600 });
+// Live-Daten: alle 10 Minuten frischer Pull von TheSportsDB, damit
+// kurzfristige Spielplan-Änderungen schnell durchkommen.
+// v3-Cache-Key zwingt einen Reset, damit alte 1h-Einträge nicht hängen bleiben.
+export const getFootballFixtures = unstable_cache(compute, ['football-fixtures-v3'], { revalidate: 600 });

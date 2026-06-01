@@ -11,7 +11,9 @@ export type SportDepartment =
   | 'tactical_analyst'
   | 'international_watch'
   | 'transfer_watch'
-  | 'politik_watch';
+  | 'politik_watch'
+  | 'schedule_gatekeeper'
+  | 'safety_picker';
 
 export interface SportEmployee {
   id: string;
@@ -116,9 +118,25 @@ const FORM_ANALYSTS: SportEmployee[] = [
   { id: 'fa-5', name: 'Heike Tollner', role: 'Form-Analyst · Heim-Form', department: 'form_analyst' },
   { id: 'fa-6', name: 'Phil Karras', role: 'Form-Analyst · Auswärts-Form', department: 'form_analyst' },
   { id: 'fa-7', name: 'Margit Wiesinger', role: 'Form-Analyst · Aufholjagden', department: 'form_analyst' },
-  { id: 'fa-8', name: 'Bo-Yeon Lee', role: 'Form-Analyst · Knappe Spiele', department: 'form_analyst' },
-  { id: 'fa-9', name: 'Edda Reuß', role: 'Form-Analyst · Klare Spiele', department: 'form_analyst' },
-  { id: 'fa-10', name: 'Tomáš Beránek', role: 'Form-Analyst · Volatilität', department: 'form_analyst' }
+  { id: 'fa-8', name: 'Bo-Yeon Lee', role: 'Form-Analyst · Knappe Spiele', department: 'form_analyst' }
+];
+
+const SCHEDULE_GATEKEEPER: SportEmployee[] = [
+  {
+    id: 'gate-1',
+    name: 'Linnea Steinmetz',
+    role: 'Aktualitäts-Wächterin · sorgt dafür, dass nur kommende Spiele angezeigt werden, vergangene Begegnungen werden ausgeblendet.',
+    department: 'schedule_gatekeeper'
+  }
+];
+
+const SAFETY_PICKER: SportEmployee[] = [
+  {
+    id: 'pick-1',
+    name: 'Roland Vogt',
+    role: 'Sicherheits-Tipp-Wächter · filtert die Wochenvorhersage und zeigt nur Begegnungen mit sehr hoher Konfidenz (≥ 65 %).',
+    department: 'safety_picker'
+  }
 ];
 
 const TACTICAL_ANALYSTS: SportEmployee[] = [
@@ -171,8 +189,17 @@ export const SPORT_FIRMA: SportEmployee[] = [
   ...TACTICAL_ANALYSTS,
   ...INTERNATIONAL_WATCH,
   ...TRANSFER_WATCH,
-  ...POLITIK_WATCH
+  ...POLITIK_WATCH,
+  ...SCHEDULE_GATEKEEPER,
+  ...SAFETY_PICKER
 ];
+
+// Praktischer Zugriff auf die zwei „Einzelplatz"-Rollen, deren Namen die UI
+// neben ihrer Auswertung ausweist.
+export const SCHEDULE_GATEKEEPER_EMPLOYEE: SportEmployee = SCHEDULE_GATEKEEPER[0];
+export const SAFETY_PICKER_EMPLOYEE: SportEmployee = SAFETY_PICKER[0];
+
+export const SAFETY_PICK_THRESHOLD = 0.65;
 
 // Sicherheits-Check: Wenn jemand die Liste anpasst, soll der Build laut werden,
 // falls wir nicht mehr genau 100 Mitarbeiter haben. Die Karte verspricht „100".
@@ -181,7 +208,8 @@ export const SPORT_FIRMA_SIZE = SPORT_FIRMA.length;
 export function countByDepartment(): Record<SportDepartment, number> {
   const out = {
     chef: 0, league_scout: 0, team_analyst: 0, form_analyst: 0,
-    tactical_analyst: 0, international_watch: 0, transfer_watch: 0, politik_watch: 0
+    tactical_analyst: 0, international_watch: 0, transfer_watch: 0, politik_watch: 0,
+    schedule_gatekeeper: 0, safety_picker: 0
   } as Record<SportDepartment, number>;
   for (const e of SPORT_FIRMA) out[e.department]++;
   return out;
