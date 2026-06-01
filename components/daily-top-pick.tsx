@@ -87,6 +87,13 @@ export function DailyTopPickCard({ synth }: { synth: FirmaSynthesis }) {
         <span>· Tipp: <span className="font-mono text-emerald-300">{pick.pickPlain}</span></span>
       </div>
 
+      {pick.fixture.prediction && (
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-[10px] text-slate-500">
+          <span>Form Heim {pick.fixture.homeTeam}: {pick.fixture.prediction.homeForm.results.join(' · ') || '—'}</span>
+          <span>Form Auswärts {pick.fixture.awayTeam}: {pick.fixture.prediction.awayForm.results.join(' · ') || '—'}</span>
+        </div>
+      )}
+
       <p className="rounded-lg border border-slate-800 bg-slate-950/40 p-2.5 text-[10.5px] leading-snug text-slate-300">
         <span className="font-semibold text-slate-200">{curator.name}</span> hat das aus allen kommenden Spielen als bestes Setup rausgesucht.{' '}
         {isSafety
