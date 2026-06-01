@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ConsensusVerdict } from '@/lib/sport/firma/consensus';
 import type { UpcomingFixture } from '@/lib/sport/fetcher';
+import { FirmaVotesCard } from '@/components/firma-votes-card';
 
 interface EnrichedPick {
   verdict: ConsensusVerdict;
@@ -81,6 +82,9 @@ export function Tier90Picks({ picks }: { picks: EnrichedPick[] }) {
               <p className="text-[10px] leading-snug text-yellow-200/80">
                 Ehrlich: 90 % ist die <span className="font-bold">Langzeit-Trefferquote</span> über viele solcher Picks — auf das einzelne Spiel bleibt immer Restrisiko. Setze entsprechend.
               </p>
+              {verdict.firmaVotes && (
+                <FirmaVotesCard fixture={fixture} voteResult={verdict.firmaVotes} />
+              )}
             </li>
           ))}
         </ul>

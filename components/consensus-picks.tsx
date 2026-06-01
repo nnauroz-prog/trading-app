@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ConsensusVerdict } from '@/lib/sport/firma/consensus';
 import type { UpcomingFixture } from '@/lib/sport/fetcher';
+import { FirmaVotesCard } from '@/components/firma-votes-card';
 
 interface EnrichedPick {
   verdict: ConsensusVerdict;
@@ -81,6 +82,9 @@ export function ConsensusPicks({ picks }: { picks: EnrichedPick[] }) {
               </div>
 
               <p className="text-[10px] leading-snug text-slate-500">{verdict.honestNote}</p>
+              {verdict.firmaVotes && (
+                <FirmaVotesCard fixture={fixture} voteResult={verdict.firmaVotes} />
+              )}
             </li>
           ))}
         </ul>
