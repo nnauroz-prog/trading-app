@@ -6,8 +6,39 @@ import { TEAM_WATCHLIST_CHANGED_EVENT, TeamWatchEntry, loadTeamWatchlist, toggle
 interface TeamWatchInput {
   team: string;
   league: string;
-  form?: { wins: number; draws: number; losses: number; points: number; goalDiff: number; played: number; streak: number };
+  form?: {
+    wins: number;
+    draws: number;
+    losses: number;
+    points: number;
+    goalDiff: number;
+    played: number;
+    streak: number;
+    sequence?: ('W' | 'D' | 'L')[];
+  };
   nextOpponent?: { opponent: string; date: string; isHome: boolean };
+}
+
+function FormSparkline({ sequence }: { sequence: ('W' | 'D' | 'L')[] }) {
+  if (sequence.length === 0) return null;
+  return (
+    <span className="inline-flex gap-0.5" aria-label="Form der letzten Spiele">
+      {sequence.map((r, i) => {
+        const color =
+          r === 'W' ? 'bg-emerald-500/80 text-emerald-50' : r === 'L' ? 'bg-rose-500/80 text-rose-50' : 'bg-slate-600 text-slate-100';
+        const label = r === 'W' ? 'Sieg' : r === 'L' ? 'Niederlage' : 'Unentschieden';
+        return (
+          <span
+            key={i}
+            title={label}
+            className={`inline-block h-3 w-3 rounded-sm text-center text-[8.5px] font-bold leading-3 ${color}`}
+          >
+            {r === 'W' ? 'S' : r === 'L' ? 'N' : 'U'}
+          </span>
+        );
+      })}
+    </span>
+  );
 }
 
 // Renders a list of teams the user is following. Cross-references the form
@@ -58,19 +89,27 @@ export function TeamWatchlistPanel({ candidates }: { candidates: TeamWatchInput[
                   </button>
                 </div>
                 {info?.form && info.form.played > 0 ? (
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10.5px] text-slate-400">
-                    <span>
-                      <span className="font-mono text-emerald-300">{info.form.wins}S</span>{' '}
-                      <span className="font-mono text-slate-300">{info.form.draws}U</span>{' '}
-                      <span className="font-mono text-rose-300">{info.form.losses}N</span>{' '}
-                      <span className="text-slate-600">(letzte {info.form.played})</span>
-                    </span>
-                    <span>Tor-Diff: <span className="font-mono">{info.form.goalDiff >= 0 ? '+' : ''}{info.form.goalDiff}</span></span>
-                    {info.form.streak !== 0 && (
-                      <span className={info.form.streak > 0 ? 'text-emerald-300' : 'text-rose-300'}>
-                        {info.form.streak > 0 ? `${info.form.streak} S in Folge` : `${Math.abs(info.form.streak)} N in Folge`}
-                      </span>
+                  <div className="space-y-1">
+                    {info.form.sequence && info.form.sequence.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-500">Verlauf:</span>
+                        <FormSparkline sequence={info.form.sequence} />
+                      </div>
                     )}
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10.5px] text-slate-400">
+                      <span>
+                        <span className="font-mono text-emerald-300">{info.form.wins}S</span>{' '}
+                        <span className="font-mono text-slate-300">{info.form.draws}U</span>{' '}
+                        <span className="font-mono text-rose-300">{info.form.losses}N</span>{' '}
+                        <span className="text-slate-600">(letzte {info.form.played})</span>
+                      </span>
+                      <span>Tor-Diff: <span className="font-mono">{info.form.goalDiff >= 0 ? '+' : ''}{info.form.goalDiff}</span></span>
+                      {info.form.streak !== 0 && (
+                        <span className={info.form.streak > 0 ? 'text-emerald-300' : 'text-rose-300'}>
+                          {info.form.streak > 0 ? `${info.form.streak} S in Folge` : `${Math.abs(info.form.streak)} N in Folge`}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-[10.5px] text-slate-500">Keine aktuelle Form-Daten — gerade keine letzten Spiele im Feed.</div>

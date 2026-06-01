@@ -12,6 +12,8 @@ export interface TeamForm {
   goalDiff: number;
   points: number;
   streak: number; // signed: +3 = 3 W in Folge, -2 = 2 L in Folge
+  // letzte bis-zu-5 Ergebnisse, ältestes zuerst — für Sparklines im UI.
+  sequence: ('W' | 'D' | 'L')[];
 }
 
 const FORM_WINDOW = 5;
@@ -71,7 +73,8 @@ export function computeTeamForms(leagues: LeagueFixtures[]): TeamForm[] {
         goalsFor, goalsAgainst,
         goalDiff: goalsFor - goalsAgainst,
         points: wins * 3 + draws,
-        streak
+        streak,
+        sequence: seq
       });
     }
   }

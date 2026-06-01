@@ -73,6 +73,17 @@ describe('SPORT_FIRMA roster', () => {
 });
 
 describe('computeTeamForms', () => {
+  it('preserves the chronological W/D/L sequence (oldest first)', () => {
+    const past = [
+      finished('A', 'X', 2, 0, '2026-05-01'),  // W
+      finished('Y', 'A', 1, 1, '2026-05-08'),  // D
+      finished('A', 'Z', 0, 2, '2026-05-15')   // L
+    ];
+    const forms = computeTeamForms([league('L1', past)]);
+    const a = forms.find((f) => f.team === 'A')!;
+    expect(a.sequence).toEqual(['W', 'D', 'L']);
+  });
+
   it('produces a form row per team with correct W/D/L tally', () => {
     const past = [
       finished('A', 'B', 2, 0),

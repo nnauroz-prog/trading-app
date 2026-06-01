@@ -244,7 +244,11 @@ export default async function SportPage() {
     return {
       team: f.team,
       league: f.league,
-      form: { wins: f.wins, draws: f.draws, losses: f.losses, points: f.points, goalDiff: f.goalDiff, played: f.played, streak: f.streak },
+      form: {
+        wins: f.wins, draws: f.draws, losses: f.losses,
+        points: f.points, goalDiff: f.goalDiff, played: f.played,
+        streak: f.streak, sequence: f.sequence
+      },
       nextOpponent
     };
   });
