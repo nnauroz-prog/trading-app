@@ -5,6 +5,7 @@ import { SubAgentReport, analystVote, scoutVote, riskVote, newsVote, positionMan
 import { SpaeherReport } from '@/lib/akademie/spaeher';
 import { EventWindowState } from '@/lib/calendar/event-window';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
+import { summariseFirmaVotes, type FirmaVoteSummary } from '@/lib/agents/firma-vote-aggregator';
 
 export type PersonaId = 'conservative' | 'balanced' | 'aggressive';
 
@@ -18,6 +19,9 @@ export interface AgentVerdict {
   safety: SafetyAssessment | null;
   rationale: string;
   team: SubAgentReport[];
+  // Aggregat aller Sub-Agent-Stimmen — Plus/Neutral/Minus + Konsens-Richtung.
+  // Identisches Pattern wie die Sport-Firma-Votes.
+  voteSummary: FirmaVoteSummary;
   ceoFinalWord: string;
 }
 
@@ -177,7 +181,8 @@ export function evaluatePersonas(
 
     const ceoFinalWord = composeCeoFinalWord(id, name, verdict, team, target, safety);
 
-    return { persona: id, name, motto, manifest, verdict, target, safety, rationale, team, ceoFinalWord };
+    const voteSummary = summariseFirmaVotes(team);
+    return { persona: id, name, motto, manifest, verdict, target, safety, rationale, team, voteSummary, ceoFinalWord };
   });
 }
 

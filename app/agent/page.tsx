@@ -21,6 +21,7 @@ import { getCryptoNews } from '@/lib/news/news-agent';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import { computeEventWindow } from '@/lib/calendar/event-window';
 import { AgentLog } from '@/components/agent-log';
+import { FirmaVoteSummaryCard } from '@/components/firma-vote-summary-card';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { FirmaStandings } from '@/components/firma-standings';
 import { FirmaRankingPanel } from '@/components/firma-ranking';
@@ -226,6 +227,8 @@ export default async function AgentPage() {
                   )}
                 </div>
               )}
+
+              <FirmaVoteSummaryCard voteSummary={p.voteSummary} team={p.team} firmaName={p.name} />
 
               <div className="space-y-1.5">
                 <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Team</div>
