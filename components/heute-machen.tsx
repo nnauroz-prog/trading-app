@@ -20,6 +20,8 @@ export interface AssetCardData {
     takeProfit2?: number;
     stopDistancePct?: number;
   };
+  // Optionale Liste mit weiteren Ergebnis-Tipps für heute (Sport).
+  extraTips?: { home: string; away: string; score: string; confidence: number }[];
 }
 
 interface Props {
@@ -122,6 +124,19 @@ export function HeuteMachen({ cards }: Props) {
                   <LevelTile label="Stop" value={fmtPrice(card.levels.stopLoss)} tone="bad" sub={card.levels.stopDistancePct !== undefined ? `−${card.levels.stopDistancePct.toFixed(1)}%` : undefined} />
                   <LevelTile label="Ziel" value={fmtPrice(card.levels.takeProfit1)} tone="good" />
                 </div>
+              )}
+              {card.extraTips && card.extraTips.length > 0 && (
+                <ul className="space-y-0.5 rounded-lg border border-sky-400/30 bg-sky-950/15 p-1.5">
+                  <li className="text-[8.5px] uppercase tracking-wider text-sky-300">Heute spielen außerdem</li>
+                  {card.extraTips.map((t, i) => (
+                    <li key={i} className="grid grid-cols-[1fr_auto_1fr_auto] gap-1.5 text-[10.5px] text-slate-200">
+                      <span className="truncate text-right">{t.home}</span>
+                      <span className="font-mono text-emerald-300">{t.score}</span>
+                      <span className="truncate">{t.away}</span>
+                      <span className="font-mono text-slate-400">{t.confidence}%</span>
+                    </li>
+                  ))}
+                </ul>
               )}
               <p className="text-[10.5px] leading-snug text-slate-400">{card.detail}</p>
             </div>

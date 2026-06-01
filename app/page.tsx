@@ -113,6 +113,17 @@ export default async function HomePage() {
   const cryptoTop = cryptoScored[0] ?? null;
 
   const sportLead = sportSynth.highConfidencePicks[0] ?? sportSynth.dailyTopPick;
+  const todayBerlin = sportSynth.weekAhead[0]?.date;
+  const todaySportFixtures = todayBerlin === undefined ? [] : (sportSynth.weekAhead[0]?.fixtures ?? []);
+  const sportExtraTips = todaySportFixtures
+    .filter(({ fixture: f }) => f.prediction && (sportLead === null || sportLead === undefined || f.id !== sportLead.fixture.id))
+    .slice(0, 4)
+    .map(({ fixture: f }) => ({
+      home: f.homeTeam,
+      away: f.awayTeam,
+      score: `${f.prediction!.likelyScore.home}:${f.prediction!.likelyScore.away}`,
+      confidence: Math.round(f.prediction!.pickConfidence * 100)
+    }));
 
   const heuteCards: AssetCardData[] = [
     cryptoTop && cryptoTop.safety.maxSafety
@@ -184,7 +195,8 @@ export default async function HomePage() {
           detail: `Vorhersage: ${sportLead.likelyScore.home}:${sportLead.likelyScore.away} (${sportLead.pickPlain}). Liga: ${sportLead.leagueName}.`,
           target: `${sportLead.likelyScore.home}:${sportLead.likelyScore.away}`,
           confidence: Math.round(sportLead.confidence * 100),
-          href: '/sport'
+          href: '/sport',
+          extraTips: sportExtraTips
         }
       : {
           klass: 'sport',
