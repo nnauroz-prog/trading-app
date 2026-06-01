@@ -31,7 +31,7 @@ export function FirmaVotesCard({ fixture, voteResult }: Props) {
       <header>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-sky-300">Firma-Abstimmung · {voteResult.totalActiveVotes} aktive Stimmen</h3>
         <p className="mt-0.5 text-[10.5px] leading-snug text-slate-400">
-          Die 100 Mitarbeiter:innen geben jede ihre eigene Stimme ab, jede mit anderer Methodik. Die meisten passen — die geben dann „Enthaltung". Wer eine Meinung hat, taucht hier auf.
+          Die 100 Mitarbeiter:innen geben jede ihre eigene Stimme ab, jede mit anderer Methodik. Die meisten passen — die geben dann „Enthaltung“. Wer eine Meinung hat, taucht hier auf.
         </p>
       </header>
 
