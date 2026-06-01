@@ -26,6 +26,7 @@ import { CoinScoreRecorder } from '@/components/coin-score-recorder';
 import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { SportBriefingCard } from '@/components/sport-briefing-card';
 import { SportTodayBanner } from '@/components/sport-today-banner';
+import { MarketQuickStats } from '@/components/market-quick-stats';
 import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { buildFirmaSynthesis } from '@/lib/sport/firma/synthesis';
 import { bucketByDay } from '@/lib/sport/day-buckets';
@@ -332,6 +333,13 @@ export default async function HomePage() {
       )}
 
       <SportTodayBanner leagues={sportLeagues} />
+
+      <MarketQuickStats
+        fearGreed={fearGreed?.value ?? null}
+        btcDominancePct={btcDominance?.btcDominancePct ?? null}
+        fundingBtcAnnualizedPct={fundingBtc?.fundingRateAnnualizedPct ?? null}
+        fundingEthAnnualizedPct={fundingEth?.fundingRateAnnualizedPct ?? null}
+      />
 
       <VorstandStrip report={vorstandReport} />
       <KonsensStreakCard />
