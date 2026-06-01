@@ -467,9 +467,14 @@ export default async function SportPage() {
 
       <SportTipJournal finishedFixtures={finishedLite} />
 
-      <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
-        Daten: TheSportsDB (öffentlich, frei) · Zeiten in Europe/Berlin · Daten werden alle 10 Minuten aktualisiert · Stand:{' '}
-        {new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', dateStyle: 'short', timeStyle: 'short' })} (Berlin) · keine Garantie auf Vollständigkeit/Korrektheit.
+      <footer className="space-y-1 border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
+        <p>
+          Daten: TheSportsDB (öffentlich, frei) · Zeiten in Europe/Berlin · Daten werden alle 10 Minuten aktualisiert · Stand:{' '}
+          {new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', dateStyle: 'short', timeStyle: 'short' })} (Berlin).
+        </p>
+        <p>
+          Build: <span className="font-mono text-slate-500">{process.env.BUILD_MARKER ?? '—'}</span> · Tippspiel-Modus aktiv, keine Wett-Empfehlung.
+        </p>
       </footer>
     </main>
   );
