@@ -20,6 +20,7 @@ import { PerLeagueTopPicks } from '@/components/per-league-top-picks';
 import { MultiTipCombo } from '@/components/multi-tip-combo';
 import { PendingTipsCounter } from '@/components/pending-tips-counter';
 import { LeagueHeatmap } from '@/components/league-heatmap';
+import { SeasonPauseBanner } from '@/components/season-pause-banner';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -276,6 +277,8 @@ export default async function SportPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Spielpläne &amp; Ergebnisse</h1>
         <p className="text-sm text-slate-400">Top-Ligen Europas — die nächsten und letzten Spiele.</p>
       </header>
+
+      <SeasonPauseBanner leagues={leagues} />
 
       <SportFirmaCard synth={firmaSynth} />
 
