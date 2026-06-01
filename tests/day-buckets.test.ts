@@ -3,13 +3,14 @@ import { bucketByDay, fixtureBerlinDate } from '@/lib/sport/day-buckets';
 import type { UpcomingFixture } from '@/lib/sport/fetcher';
 
 function fixture(overrides: Partial<UpcomingFixture> & { date: string; time?: string | null; id?: string }): UpcomingFixture {
+  const { date, time, id, ...rest } = overrides;
   return {
-    id: overrides.id ?? `${overrides.date}-${overrides.time ?? 'n'}`,
+    id: id ?? `${date}-${time ?? 'n'}`,
     homeTeam: 'Home',
     awayTeam: 'Away',
     league: 'L1',
-    date: overrides.date,
-    time: overrides.time ?? null,
+    date,
+    time: time ?? null,
     venue: null,
     homeScore: null,
     awayScore: null,
@@ -17,7 +18,7 @@ function fixture(overrides: Partial<UpcomingFixture> & { date: string; time?: st
     prediction: null,
     probabilities: null,
     tips: null,
-    ...overrides
+    ...rest
   };
 }
 
