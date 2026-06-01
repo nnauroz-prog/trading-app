@@ -40,22 +40,32 @@ export function SafetyPicksSection({ synth }: { synth: FirmaSynthesis }) {
           Diese Woche kommt kein Spiel über die {thresholdPct}%-Schwelle. Ehrlicher Hinweis statt erfundener „Top-Tipp“. Schau morgen wieder rein, wenn neue Form-Daten reinkommen.
         </p>
       ) : (
-        <ul className="space-y-1.5">
+        <ul className="space-y-2">
           {picks.map((p) => (
-            <li key={p.fixture.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg border border-emerald-400/30 bg-slate-950/40 px-3 py-2">
-              <span className="font-mono text-[10px] text-slate-400">
-                {fmtDate(p.fixture.date)}
-                {p.fixture.time && <span className="ml-1 text-slate-500">{fmtTime(p.fixture.time, p.fixture.date)}</span>}
-              </span>
-              <span className="text-[12px] text-slate-100">
-                <span className="font-semibold">{p.fixture.homeTeam}</span>
-                <span className="mx-1 text-slate-500">vs.</span>
-                <span className="font-semibold">{p.fixture.awayTeam}</span>
-                <span className="ml-2 text-[9.5px] uppercase tracking-wider text-slate-500">{p.leagueName}</span>
-              </span>
-              <span className="font-mono text-[11px] text-emerald-300">
-                {p.pickPlain} · {Math.round(p.confidence * 100)}%
-              </span>
+            <li key={p.fixture.id} className="space-y-1.5 rounded-lg border border-emerald-400/40 bg-slate-950/40 p-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="font-mono text-[10px] text-slate-400">
+                  {fmtDate(p.fixture.date)}
+                  {p.fixture.time && <span className="ml-1 text-slate-500">{fmtTime(p.fixture.time, p.fixture.date)}</span>}
+                  <span className="ml-2 text-[9.5px] uppercase tracking-wider text-slate-600">{p.leagueName}</span>
+                </span>
+                <span className="font-mono text-[11px] text-emerald-300">
+                  {p.pickPlain} · {Math.round(p.confidence * 100)}%
+                </span>
+              </div>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-center">
+                <div className="text-[13px] font-semibold text-slate-100">{p.fixture.homeTeam}</div>
+                <div className="rounded-md border border-emerald-400/50 bg-emerald-500/15 px-3 py-1">
+                  <div className="text-[9px] uppercase tracking-wider text-emerald-300">wahrscheinlichstes Ergebnis</div>
+                  <div className="font-mono text-lg font-bold text-emerald-100">
+                    {p.likelyScore.home} : {p.likelyScore.away}
+                  </div>
+                </div>
+                <div className="text-[13px] font-semibold text-slate-100">{p.fixture.awayTeam}</div>
+              </div>
+              <p className="text-[10px] leading-snug text-slate-500">
+                Wahrscheinlichstes ≠ garantiertes Ergebnis. Modell-Schätzung aus den letzten Liga-Spielen.
+              </p>
             </li>
           ))}
         </ul>

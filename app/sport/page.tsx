@@ -14,6 +14,7 @@ import { TeamWatchToggle } from '@/components/team-watch-toggle';
 import { SafetyPicksSection } from '@/components/safety-picks-section';
 import { H2HBadge } from '@/components/h2h-badge';
 import { computeHeadToHead } from '@/lib/sport/h2h';
+import { FirmaTrackRecord } from '@/components/firma-track-record';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -271,6 +272,8 @@ export default async function SportPage() {
       </header>
 
       <SportFirmaCard synth={firmaSynth} />
+
+      <FirmaTrackRecord safetyPickerName={firmaSynth.safetyPicker.name} />
 
       <SafetyPicksSection synth={firmaSynth} />
 

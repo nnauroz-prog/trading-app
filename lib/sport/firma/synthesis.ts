@@ -31,6 +31,9 @@ export interface HighConfidencePick {
   leagueName: string;
   pickPlain: string;
   confidence: number;
+  // Exakter wahrscheinlichster Score laut Poisson — präzise Vorhersage,
+  // KEINE Garantie. Die UI muss das ehrlich labeln.
+  likelyScore: { home: number; away: number };
 }
 
 export interface HonestyNote {
@@ -91,7 +94,8 @@ function pickHighConfidence(weekAhead: WeekAheadDay[]): HighConfidencePick[] {
         fixture,
         leagueName,
         pickPlain: pred.pickPlain,
-        confidence: pred.pickConfidence
+        confidence: pred.pickConfidence,
+        likelyScore: pred.likelyScore
       });
     }
   }
