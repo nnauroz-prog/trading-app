@@ -28,6 +28,7 @@ import { SportBriefingCard } from '@/components/sport-briefing-card';
 import { SportTodayBanner } from '@/components/sport-today-banner';
 import { MarketQuickStats } from '@/components/market-quick-stats';
 import { HeuteMachen, type AssetCardData } from '@/components/heute-machen';
+import { ScorePredictionsStrip } from '@/components/score-predictions-strip';
 import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
 import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { buildFirmaSynthesis } from '@/lib/sport/firma/synthesis';
@@ -407,6 +408,8 @@ export default async function HomePage() {
       </header>
 
       <HeuteMachen cards={heuteCards} />
+
+      <ScorePredictionsStrip synth={sportSynth} />
 
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 

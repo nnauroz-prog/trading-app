@@ -129,7 +129,7 @@ async function compute(): Promise<LeagueFixtures[]> {
       ]);
       // Volle Historie aus Saisons + jüngste Form-Spiele zusammenführen.
       const finishedPool = mergeFixtures(past, ...seasonalLists);
-      const upcoming: UpcomingFixture[] = next.slice(0, 8).map((f) => {
+      const upcoming: UpcomingFixture[] = next.slice(0, 20).map((f) => {
         const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, finishedPool);
         const tips = probabilities ? generateTips(probabilities, f.homeTeam, f.awayTeam) : null;
         return {

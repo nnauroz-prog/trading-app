@@ -284,16 +284,16 @@ export default async function SportPage() {
 
       <header className="space-y-2">
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Sport · Fußball</div>
-        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Spielpläne &amp; Ergebnisse</h1>
-        <p className="text-sm text-slate-400">Top-Ligen Europas — die nächsten und letzten Spiele.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Vorhergesagte Ergebnisse</h1>
+        <p className="text-sm text-slate-400">Jedes anstehende Spiel der nächsten 14 Tage mit voraussichtlichem Endstand — basierend auf 3 Saisons echter Daten.</p>
       </header>
+
+      <div id="ergebnisse" />
+      <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} />
 
       <SeasonPauseBanner leagues={leagues} />
 
       <SportSectionNav />
-
-      <div id="ergebnisse" />
-      <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} />
 
       <div id="historie" />
       <LeagueSeasonStatsCard stats={leagueSeasonStats} />
