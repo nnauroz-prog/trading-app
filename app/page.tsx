@@ -57,6 +57,7 @@ import { chefredakteurSynthesis } from '@/lib/intel/chefredakteur';
 import { IntelStrip } from '@/components/intel-strip';
 import { todayIsoBerlin } from '@/lib/agent-memory';
 import { SafetyCheck } from '@/components/safety-check';
+import { SafetyHistoryStrip } from '@/components/safety-history-strip';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
@@ -358,6 +359,10 @@ export default async function HomePage() {
         <ViewModeToggle />
       </div>
 
+      <SafetyCheck report={masterSignal} backtest={backtestSummary} />
+      <SafetyHistoryStrip />
+      <ProofCard summary={backtestSummary} />
+
       <AdvancedOnly>
         <AccountConfigBar />
 
@@ -371,13 +376,9 @@ export default async function HomePage() {
 
         <DailyBriefing report={masterSignal} backtest={backtestSummary} />
 
-        <SafetyCheck report={masterSignal} backtest={backtestSummary} />
-
         <MarketBriefing report={masterSignal} />
 
         <NewsFeed items={newsItems} />
-
-        <ProofCard summary={backtestSummary} />
       </AdvancedOnly>
 
       <AdvancedOnly>
