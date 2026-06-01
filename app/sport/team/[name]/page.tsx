@@ -109,6 +109,11 @@ export default async function TeamDetailPage({ params }: PageProps) {
               const opponent = f.homeTeam === team ? f.awayTeam : f.homeTeam;
               const isHome = f.homeTeam === team;
               const h2h = computeHeadToHead(f.homeTeam, f.awayTeam, lf.last);
+              const h2hHistory = lf.last
+                .filter((x) => (x.homeTeam === team && x.awayTeam === opponent) || (x.homeTeam === opponent && x.awayTeam === team))
+                .filter((x) => x.homeScore !== null && x.awayScore !== null)
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .slice(0, 6);
               return (
                 <li key={f.id} className="space-y-1.5 rounded-lg border border-slate-800 bg-slate-950/40 px-2.5 py-2 text-[11.5px] text-slate-100">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -122,6 +127,20 @@ export default async function TeamDetailPage({ params }: PageProps) {
                     )}
                   </div>
                   <H2HBadge h2h={h2h} />
+                  {h2hHistory.length > 0 && (
+                    <div className="border-t border-slate-800/60 pt-1.5">
+                      <div className="text-[9.5px] uppercase tracking-wider text-slate-500">Letzte Aufeinandertreffen</div>
+                      <ul className="mt-1 space-y-0.5">
+                        {h2hHistory.map((g) => (
+                          <li key={g.id} className="grid grid-cols-[auto_1fr_auto] gap-2 text-[10px]">
+                            <span className="font-mono text-slate-500">{fmtDate(g.date)}</span>
+                            <span>{g.homeTeam} <span className="font-mono">{g.homeScore}:{g.awayScore}</span> {g.awayTeam}</span>
+                            <span className="font-mono text-slate-500">{g.homeTeam === team ? 'Heim' : 'Auswärts'}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </li>
               );
             })}
