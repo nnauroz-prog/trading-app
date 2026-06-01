@@ -18,6 +18,7 @@ import { FirmaTrackRecord } from '@/components/firma-track-record';
 import { DailyTopPickCard } from '@/components/daily-top-pick';
 import { PerLeagueTopPicks } from '@/components/per-league-top-picks';
 import { MultiTipCombo } from '@/components/multi-tip-combo';
+import { PendingTipsCounter } from '@/components/pending-tips-counter';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -282,6 +283,8 @@ export default async function SportPage() {
       <PerLeagueTopPicks synth={firmaSynth} />
 
       <FirmaTrackRecord safetyPickerName={firmaSynth.safetyPicker.name} />
+
+      <PendingTipsCounter />
 
       <SafetyPicksSection synth={firmaSynth} />
 
