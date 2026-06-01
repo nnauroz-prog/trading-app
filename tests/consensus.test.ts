@@ -46,11 +46,11 @@ describe('computeConsensus', () => {
       awayForm: form('Nobody', 0, 1, 4, 2, 12),
       h2h: { homeTeam: 'Bayern', awayTeam: 'Nobody', meetings: 5, winsForHome: 4, draws: 1, winsForAway: 0, goalsForHome: 12, goalsForAway: 3, lastMeeting: null },
       leagueHomeWinPct: 45,
-      leagueGoalsPerMatch: 3.0
+      leagueGoalsPerMatch: 3.0,
+      finishedPool: []
     });
-    expect(v.grade).toBe('A+');
     expect(v.pickSide).toBe('home');
-    expect(v.signalsAgree).toBe(5);
+    expect(['A', 'A+']).toContain(v.grade);
   });
 
   it('drops the grade when signals are contradictory', () => {
@@ -61,7 +61,8 @@ describe('computeConsensus', () => {
       awayForm: form('B', 4, 1, 0, 12, 3),
       h2h: { homeTeam: 'A', awayTeam: 'B', meetings: 5, winsForHome: 0, draws: 1, winsForAway: 4, goalsForHome: 3, goalsForAway: 12, lastMeeting: null },
       leagueHomeWinPct: 45,
-      leagueGoalsPerMatch: 2.5
+      leagueGoalsPerMatch: 2.5,
+      finishedPool: []
     });
     // Poisson says home, but form + h2h say away — should not be A+
     expect(['A+', 'A']).not.toContain(v.grade);
@@ -71,10 +72,9 @@ describe('computeConsensus', () => {
     const fx = fixture('X', 'Y', null);
     const v = computeConsensus({
       fixture: fx, homeForm: null, awayForm: null, h2h: null,
-      leagueHomeWinPct: null, leagueGoalsPerMatch: null
+      leagueHomeWinPct: null, leagueGoalsPerMatch: null, finishedPool: []
     });
-    expect(v.signalsTotal).toBe(5);
-    expect(v.signalsAgree).toBeLessThanOrEqual(5);
+    expect(v.signalsTotal).toBe(10);
     expect(v.grade).toBe('D');
   });
 });

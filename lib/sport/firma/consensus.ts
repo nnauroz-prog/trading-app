@@ -1,11 +1,19 @@
 import type { Fixture, UpcomingFixture } from '@/lib/sport/fetcher';
 import type { TeamForm } from '@/lib/sport/firma/scouts';
 import type { HeadToHeadResult } from '@/lib/sport/h2h';
+import {
+  computeVenueSplit,
+  computeRestDays,
+  computeFormTrend,
+  computeDefensiveStability,
+  computeOffensiveConsistency
+} from '@/lib/sport/firma/advanced-signals';
 
 export type ConsensusSide = 'home' | 'away' | 'draw';
 
 export interface ConsensusSignal {
-  id: 'poisson' | 'form' | 'h2h' | 'home_advantage' | 'goal_quality';
+  id: 'poisson' | 'form' | 'h2h' | 'home_advantage' | 'goal_quality'
+    | 'venue_split' | 'rest_days' | 'form_trend' | 'defensive_stability' | 'offensive_consistency';
   label: string;
   side: ConsensusSide | null; // null = neutral
   strength: number; // 0..1, wie deutlich ist das Signal
@@ -39,6 +47,8 @@ interface ConsensusInput {
   h2h: HeadToHeadResult | null;
   leagueHomeWinPct: number | null; // 0..100, Liga-Durchschnitt
   leagueGoalsPerMatch: number | null;
+  // Vollständiger Vergangenheits-Pool aus 3 Saisons für die erweiterten Signale.
+  finishedPool: Fixture[];
 }
 
 const NEUTRAL_DETAIL = 'kein klares Signal';
@@ -117,6 +127,122 @@ export function computeConsensus(input: ConsensusInput): ConsensusVerdict {
     signals.push({ id: 'home_advantage', label: 'Heim-Stadion-Faktor', side: null, strength: 0, detail: 'keine Liga-Statistik' });
   }
 
+  // 6) Heim-spezifische vs Auswärts-spezifische Form (Venue-Split aus dem
+  //    gesamten 3-Saisons-Pool).
+  if (input.finishedPool.length > 0) {
+    const homeSplit = computeVenueSplit(input.fixture.homeTeam, input.finishedPool);
+    const awaySplit = computeVenueSplit(input.fixture.awayTeam, input.finishedPool);
+    if (homeSplit.homeGames >= 10 && awaySplit.awayGames >= 10) {
+      const homeAdvantage = homeSplit.homeOnlyWinPct - awaySplit.awayOnlyWinPct;
+      const venueSide: ConsensusSide | null = homeAdvantage >= 0.15 ? 'home' : homeAdvantage <= -0.15 ? 'away' : null;
+      const strength = Math.min(1, Math.abs(homeAdvantage) * 2.5);
+      signals.push({
+        id: 'venue_split',
+        label: 'Heim/Auswärts-Spezialform',
+        side: venueSide,
+        strength: venueSide ? strength : 0,
+        detail: venueSide
+          ? `${input.fixture.homeTeam} heim ${Math.round(homeSplit.homeOnlyWinPct * 100)} % · ${input.fixture.awayTeam} auswärts ${Math.round(awaySplit.awayOnlyWinPct * 100)} %`
+          : 'beide gleich stark zu Hause/auswärts'
+      });
+    } else {
+      signals.push({ id: 'venue_split', label: 'Heim/Auswärts-Spezialform', side: null, strength: 0, detail: 'zu wenige Heim-/Auswärtsspiele' });
+    }
+  } else {
+    signals.push({ id: 'venue_split', label: 'Heim/Auswärts-Spezialform', side: null, strength: 0, detail: 'kein Vergangenheits-Pool' });
+  }
+
+  // 7) Ruhetage seit letztem Spiel. < 4 Tage = Belastung, > 5 Tage = ausgeruht.
+  const homeRest = computeRestDays(input.fixture.homeTeam, input.fixture.date, input.finishedPool);
+  const awayRest = computeRestDays(input.fixture.awayTeam, input.fixture.date, input.finishedPool);
+  if (homeRest.daysSinceLastGame !== null && awayRest.daysSinceLastGame !== null) {
+    const restDiff = (awayRest.daysSinceLastGame ?? 0) - (homeRest.daysSinceLastGame ?? 0);
+    // Negativer Diff = Heim ist ausgeruhter
+    const restSide: ConsensusSide | null = restDiff <= -2 ? 'home' : restDiff >= 2 ? 'away' : null;
+    const strength = Math.min(1, Math.abs(restDiff) / 5);
+    signals.push({
+      id: 'rest_days',
+      label: 'Ruhetage',
+      side: restSide,
+      strength: restSide ? strength : 0,
+      detail: `Heim: ${homeRest.daysSinceLastGame} Tage Pause · Auswärts: ${awayRest.daysSinceLastGame} Tage`
+    });
+  } else {
+    signals.push({ id: 'rest_days', label: 'Ruhetage', side: null, strength: 0, detail: 'keine Ruhetage-Daten' });
+  }
+
+  // 8) Form-Trend (Frühphase vs Spätphase der letzten 6 Spiele).
+  if (input.finishedPool.length > 0) {
+    const homeTrend = computeFormTrend(input.fixture.homeTeam, input.finishedPool);
+    const awayTrend = computeFormTrend(input.fixture.awayTeam, input.finishedPool);
+    const trendDelta = homeTrend.delta - awayTrend.delta;
+    const trendSide: ConsensusSide | null = trendDelta >= 4 ? 'home' : trendDelta <= -4 ? 'away' : null;
+    const strength = Math.min(1, Math.abs(trendDelta) / 12);
+    signals.push({
+      id: 'form_trend',
+      label: 'Form-Trend',
+      side: trendSide,
+      strength: trendSide ? strength : 0,
+      detail: trendSide
+        ? `Heim ${homeTrend.direction === 'up' ? '↑' : homeTrend.direction === 'down' ? '↓' : '→'} (Δ ${homeTrend.delta > 0 ? '+' : ''}${homeTrend.delta}) · Auswärts ${awayTrend.direction === 'up' ? '↑' : awayTrend.direction === 'down' ? '↓' : '→'} (Δ ${awayTrend.delta > 0 ? '+' : ''}${awayTrend.delta})`
+        : 'beide Trends ähnlich'
+    });
+  } else {
+    signals.push({ id: 'form_trend', label: 'Form-Trend', side: null, strength: 0, detail: 'kein Pool' });
+  }
+
+  // 9) Defensiv-Stabilität: wer kassiert weniger und konstanter?
+  if (input.finishedPool.length > 0) {
+    const homeDef = computeDefensiveStability(input.fixture.homeTeam, input.finishedPool);
+    const awayDef = computeDefensiveStability(input.fixture.awayTeam, input.finishedPool);
+    if (homeDef.games >= 10 && awayDef.games >= 10) {
+      // Niedrigere Gegentor-Quote ist besser → side gewinnt
+      const defDiff = awayDef.goalsConcededPerGame - homeDef.goalsConcededPerGame;
+      const defSide: ConsensusSide | null = defDiff >= 0.4 ? 'home' : defDiff <= -0.4 ? 'away' : null;
+      const strength = Math.min(1, Math.abs(defDiff) / 1.2);
+      signals.push({
+        id: 'defensive_stability',
+        label: 'Defensiv-Stabilität',
+        side: defSide,
+        strength: defSide ? strength : 0,
+        detail: defSide
+          ? `Heim ${homeDef.goalsConcededPerGame.toFixed(2)} Gegentore/Spiel · Auswärts ${awayDef.goalsConcededPerGame.toFixed(2)}`
+          : 'Defensive ähnlich'
+      });
+    } else {
+      signals.push({ id: 'defensive_stability', label: 'Defensiv-Stabilität', side: null, strength: 0, detail: 'zu wenige Spiele' });
+    }
+  } else {
+    signals.push({ id: 'defensive_stability', label: 'Defensiv-Stabilität', side: null, strength: 0, detail: 'kein Pool' });
+  }
+
+  // 10) Offensiv-Konsistenz: wer trifft konstanter?
+  if (input.finishedPool.length > 0) {
+    const homeOff = computeOffensiveConsistency(input.fixture.homeTeam, input.finishedPool);
+    const awayOff = computeOffensiveConsistency(input.fixture.awayTeam, input.finishedPool);
+    if (homeOff.games >= 10 && awayOff.games >= 10) {
+      // Höhere Tor-Quote × Konstanz = besser
+      const homeScore = homeOff.scoringRate * homeOff.scoreInEveryGamePct;
+      const awayScore = awayOff.scoringRate * awayOff.scoreInEveryGamePct;
+      const offDiff = homeScore - awayScore;
+      const offSide: ConsensusSide | null = offDiff >= 0.3 ? 'home' : offDiff <= -0.3 ? 'away' : null;
+      const strength = Math.min(1, Math.abs(offDiff) / 1.0);
+      signals.push({
+        id: 'offensive_consistency',
+        label: 'Offensiv-Konsistenz',
+        side: offSide,
+        strength: offSide ? strength : 0,
+        detail: offSide
+          ? `Heim ${homeOff.scoringRate.toFixed(2)} T/Sp · ${Math.round(homeOff.scoreInEveryGamePct * 100)} % Trefferquote · Auswärts ${awayOff.scoringRate.toFixed(2)} T/Sp`
+          : 'beide ähnlich treffsicher'
+      });
+    } else {
+      signals.push({ id: 'offensive_consistency', label: 'Offensiv-Konsistenz', side: null, strength: 0, detail: 'zu wenige Spiele' });
+    }
+  } else {
+    signals.push({ id: 'offensive_consistency', label: 'Offensiv-Konsistenz', side: null, strength: 0, detail: 'kein Pool' });
+  }
+
   // 5) Tor-Qualität: spielt die favorisierte Mannschaft offensiv konstant?
   if (pred && input.homeForm && input.awayForm) {
     const fav = pred.pickSide;
@@ -161,11 +287,16 @@ export function computeConsensus(input: ConsensusInput): ConsensusVerdict {
   const avgStrength = agreeing.length > 0 ? agreeing.reduce((acc, x) => acc + x.strength, 0) / agreeing.length : 0;
   const consensusScore = Math.round(((agreeing.length / signals.length) * 0.6 + avgStrength * 0.4) * 100);
 
+  // 10 Signale insgesamt: Skalierung der Grades entsprechend anpassen.
+  // A+: mindestens 9 von 10 Signale + sehr hohe Durchschnittsstärke
+  // A : mindestens 7 von 10 + hohe Stärke
+  // B : mindestens 5 von 10
+  // C : mindestens 3 von 10
   const grade: ConsensusVerdict['grade'] =
-    agreeing.length === signals.length && avgStrength >= 0.7 ? 'A+' :
-    agreeing.length >= 4 && avgStrength >= 0.6 ? 'A' :
-    agreeing.length >= 3 && avgStrength >= 0.5 ? 'B' :
-    agreeing.length >= 2 ? 'C' : 'D';
+    agreeing.length >= 9 && avgStrength >= 0.75 ? 'A+' :
+    agreeing.length >= 7 && avgStrength >= 0.6 ? 'A' :
+    agreeing.length >= 5 && avgStrength >= 0.5 ? 'B' :
+    agreeing.length >= 3 ? 'C' : 'D';
 
   const pickPlain = pickPlainFor(bestSide, input.fixture);
   const honestNote = grade === 'A+'
@@ -185,8 +316,9 @@ export function computeConsensus(input: ConsensusInput): ConsensusVerdict {
   const h2hSignal = signals.find((s) => s.id === 'h2h');
   const formSignal = signals.find((s) => s.id === 'form');
   const poissonStrength = signals.find((s) => s.id === 'poisson')?.strength ?? 0;
+  // Bei 10 Signalen: mindestens 9 müssen übereinstimmen, plus die alte Strenge.
   const tier90 =
-    agreeing.length === signals.length &&
+    agreeing.length >= 9 &&
     avgStrength >= 0.80 &&
     poissonStrength >= 0.75 &&
     h2hSignal?.side === bestSide &&

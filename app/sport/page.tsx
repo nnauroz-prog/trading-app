@@ -264,7 +264,8 @@ export default async function SportPage() {
         awayForm,
         h2h,
         leagueHomeWinPct: lstats?.homeWinPct ?? null,
-        leagueGoalsPerMatch: lstats?.goalsPerMatch ?? null
+        leagueGoalsPerMatch: lstats?.goalsPerMatch ?? null,
+        finishedPool: lf.last
       });
       consensusEnriched.push({ verdict, fixture: f, leagueName: lf.league.name });
     }
