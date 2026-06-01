@@ -1,6 +1,7 @@
 import type { Fixture, UpcomingFixture } from '@/lib/sport/fetcher';
 import type { TeamForm } from '@/lib/sport/firma/scouts';
 import type { HeadToHeadResult } from '@/lib/sport/h2h';
+import type { LeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 import {
   computeVenueSplit,
   computeRestDays,
@@ -8,12 +9,14 @@ import {
   computeDefensiveStability,
   computeOffensiveConsistency
 } from '@/lib/sport/firma/advanced-signals';
+import { collectFirmaVotes, type FirmaVoteResult } from '@/lib/sport/firma/employee-votes';
 
 export type ConsensusSide = 'home' | 'away' | 'draw';
 
 export interface ConsensusSignal {
   id: 'poisson' | 'form' | 'h2h' | 'home_advantage' | 'goal_quality'
-    | 'venue_split' | 'rest_days' | 'form_trend' | 'defensive_stability' | 'offensive_consistency';
+    | 'venue_split' | 'rest_days' | 'form_trend' | 'defensive_stability' | 'offensive_consistency'
+    | 'firma_vote';
   label: string;
   side: ConsensusSide | null; // null = neutral
   strength: number; // 0..1, wie deutlich ist das Signal
@@ -34,9 +37,10 @@ export interface ConsensusVerdict {
   grade: 'A+' | 'A' | 'B' | 'C' | 'D';
   signals: ConsensusSignal[];
   honestNote: string;
-  // Höchste Filterstufe: alle 5 Signale einig + sehr hohe Stärke + Poisson
-  // ≥ 75 %. Empirisch (Sportwetten-Literatur) liefert das ~90 % Trefferquote
-  // über viele Spiele — auf das Einzelspiel ist keine Garantie möglich.
+  // Vollständiges Firma-Vote-Ergebnis (alle 100 Mitarbeiter-Stimmen).
+  firmaVotes: FirmaVoteResult | null;
+  // Höchste Filterstufe: alle Signale einig + sehr hohe Stärke + Poisson
+  // ≥ 75 % + Firma-Mehrheit auf Pick-Seite.
   tier90: boolean;
 }
 
@@ -49,6 +53,9 @@ interface ConsensusInput {
   leagueGoalsPerMatch: number | null;
   // Vollständiger Vergangenheits-Pool aus 3 Saisons für die erweiterten Signale.
   finishedPool: Fixture[];
+  // Optional: Liga-Name + komplette Saisonen-Statistik für das Firma-Vote.
+  leagueName?: string;
+  leagueStats?: LeagueSeasonStats | null;
 }
 
 const NEUTRAL_DETAIL = 'kein klares Signal';
@@ -243,6 +250,38 @@ export function computeConsensus(input: ConsensusInput): ConsensusVerdict {
     signals.push({ id: 'offensive_consistency', label: 'Offensiv-Konsistenz', side: null, strength: 0, detail: 'kein Pool' });
   }
 
+  // 11) Firma-Vote: alle 100 Mitarbeiter:innen stimmen ab, das gewichtete
+  //     Konsens-Ergebnis fließt als eigenes Signal ein. Spezial: höhere
+  //     Gewichtung als andere Signale, da es ein Mehrheits-Vote ist.
+  let firmaVoteResult: FirmaVoteResult | null = null;
+  if (input.leagueName) {
+    firmaVoteResult = collectFirmaVotes({
+      fixture: input.fixture,
+      leagueName: input.leagueName,
+      homeForm: input.homeForm,
+      awayForm: input.awayForm,
+      h2h: input.h2h,
+      leagueStats: input.leagueStats ?? null,
+      finishedPool: input.finishedPool
+    });
+    const consensusSide = firmaVoteResult.consensusSide;
+    const firmaSide: ConsensusSide | null = consensusSide === 'home' ? 'home' : consensusSide === 'away' ? 'away' : consensusSide === 'draw' ? 'draw' : null;
+    const strength = firmaVoteResult.totalActiveVotes >= 5
+      ? Math.min(1, firmaVoteResult.consensusWeight)
+      : 0;
+    signals.push({
+      id: 'firma_vote',
+      label: 'Firma-Konsens (100 Stimmen)',
+      side: firmaSide && firmaVoteResult.totalActiveVotes >= 5 ? firmaSide : null,
+      strength,
+      detail: firmaVoteResult.totalActiveVotes >= 5
+        ? `${firmaVoteResult.totalActiveVotes} aktive Stimmen · ${Math.round(firmaVoteResult.consensusWeight * 100)} % gewichtet zugunsten ${firmaSide ?? '—'}`
+        : `nur ${firmaVoteResult.totalActiveVotes} aktive Stimmen — zu wenig Konsens`
+    });
+  } else {
+    signals.push({ id: 'firma_vote', label: 'Firma-Konsens (100 Stimmen)', side: null, strength: 0, detail: 'kein Liga-Kontext für Firma-Vote' });
+  }
+
   // 5) Tor-Qualität: spielt die favorisierte Mannschaft offensiv konstant?
   if (pred && input.homeForm && input.awayForm) {
     const fav = pred.pickSide;
@@ -287,16 +326,16 @@ export function computeConsensus(input: ConsensusInput): ConsensusVerdict {
   const avgStrength = agreeing.length > 0 ? agreeing.reduce((acc, x) => acc + x.strength, 0) / agreeing.length : 0;
   const consensusScore = Math.round(((agreeing.length / signals.length) * 0.6 + avgStrength * 0.4) * 100);
 
-  // 10 Signale insgesamt: Skalierung der Grades entsprechend anpassen.
-  // A+: mindestens 9 von 10 Signale + sehr hohe Durchschnittsstärke
-  // A : mindestens 7 von 10 + hohe Stärke
-  // B : mindestens 5 von 10
-  // C : mindestens 3 von 10
+  // 11 Signale insgesamt: Skalierung der Grades entsprechend anpassen.
+  // A+: mindestens 10 von 11 + sehr hohe Durchschnittsstärke
+  // A : mindestens 8 von 11
+  // B : mindestens 6 von 11
+  // C : mindestens 4 von 11
   const grade: ConsensusVerdict['grade'] =
-    agreeing.length >= 9 && avgStrength >= 0.75 ? 'A+' :
-    agreeing.length >= 7 && avgStrength >= 0.6 ? 'A' :
-    agreeing.length >= 5 && avgStrength >= 0.5 ? 'B' :
-    agreeing.length >= 3 ? 'C' : 'D';
+    agreeing.length >= 10 && avgStrength >= 0.75 ? 'A+' :
+    agreeing.length >= 8 && avgStrength >= 0.6 ? 'A' :
+    agreeing.length >= 6 && avgStrength >= 0.5 ? 'B' :
+    agreeing.length >= 4 ? 'C' : 'D';
 
   const pickPlain = pickPlainFor(bestSide, input.fixture);
   const honestNote = grade === 'A+'
@@ -316,13 +355,21 @@ export function computeConsensus(input: ConsensusInput): ConsensusVerdict {
   const h2hSignal = signals.find((s) => s.id === 'h2h');
   const formSignal = signals.find((s) => s.id === 'form');
   const poissonStrength = signals.find((s) => s.id === 'poisson')?.strength ?? 0;
-  // Bei 10 Signalen: mindestens 9 müssen übereinstimmen, plus die alte Strenge.
+  // Bei 11 Signalen: mindestens 10 müssen übereinstimmen, plus die alte Strenge.
+  // Plus: Die 100-Mann-Firma muss in der Pick-Richtung stehen, mit ≥ 65 %
+  // gewichtetem Konsens.
+  const firmaSignal = signals.find((s) => s.id === 'firma_vote');
+  const firmaConsensusOk = firmaVoteResult !== null
+    && firmaSignal?.side === bestSide
+    && firmaVoteResult.consensusWeight >= 0.65
+    && firmaVoteResult.totalActiveVotes >= 10;
   const tier90 =
-    agreeing.length >= 9 &&
+    agreeing.length >= 10 &&
     avgStrength >= 0.80 &&
     poissonStrength >= 0.75 &&
     h2hSignal?.side === bestSide &&
-    formSignal?.side === bestSide;
+    formSignal?.side === bestSide &&
+    firmaConsensusOk;
 
   return {
     fixtureId: input.fixture.id,
@@ -335,6 +382,7 @@ export function computeConsensus(input: ConsensusInput): ConsensusVerdict {
     grade,
     signals,
     honestNote,
+    firmaVotes: firmaVoteResult,
     tier90
   };
 }

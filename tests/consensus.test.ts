@@ -50,9 +50,10 @@ describe('computeConsensus', () => {
       finishedPool: []
     });
     expect(v.pickSide).toBe('home');
-    // Mit leerem finishedPool fallen 5 erweiterte Signale auf null → Grade B
-    // (5/10 home). Mit richtigem Pool wären es A/A+. Wichtig: Pick-Richtung stimmt.
-    expect(['A+', 'A', 'B']).toContain(v.grade);
+    // Mit leerem finishedPool + ohne leagueName fallen 6 erweiterte Signale
+    // auf null → 5/11 home → Grade C. Mit richtigem Pool wären es A/A+.
+    // Wichtig: Pick-Richtung stimmt.
+    expect(['A+', 'A', 'B', 'C']).toContain(v.grade);
     expect(v.signalsAgree).toBeGreaterThanOrEqual(5);
   });
 
@@ -77,7 +78,7 @@ describe('computeConsensus', () => {
       fixture: fx, homeForm: null, awayForm: null, h2h: null,
       leagueHomeWinPct: null, leagueGoalsPerMatch: null, finishedPool: []
     });
-    expect(v.signalsTotal).toBe(10);
+    expect(v.signalsTotal).toBe(11);
     expect(v.grade).toBe('D');
   });
 });

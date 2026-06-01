@@ -258,6 +258,7 @@ export default async function SportPage() {
       const awayForm = firmaSynth.forms.find((x) => x.team === f.awayTeam && x.league === lf.league.name) ?? null;
       const h2h = h2hById.get(f.id) ?? null;
       const lstats = leagueStatsMap.get(lf.league.name) ?? null;
+      const fullLstats = leagueSeasonStats.find((s) => s.league === lf.league.name) ?? null;
       const verdict = computeConsensus({
         fixture: f,
         homeForm,
@@ -265,7 +266,9 @@ export default async function SportPage() {
         h2h,
         leagueHomeWinPct: lstats?.homeWinPct ?? null,
         leagueGoalsPerMatch: lstats?.goalsPerMatch ?? null,
-        finishedPool: lf.last
+        finishedPool: lf.last,
+        leagueName: lf.league.name,
+        leagueStats: fullLstats
       });
       consensusEnriched.push({ verdict, fixture: f, leagueName: lf.league.name });
     }
