@@ -66,8 +66,6 @@ function GoalsBar({ goalsFor, goalsAgainst }: { goalsFor: number; goalsAgainst: 
   );
 }
 
-import { FormSparkline } from '@/components/form-sparkline';
-
 // Renders a list of teams the user is following. Cross-references the form
 // info coming from server-side analysis so each row shows fresh data.
 export function TeamWatchlistPanel({ candidates }: { candidates: TeamWatchInput[] }) {
