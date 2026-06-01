@@ -18,7 +18,7 @@ export function buildWeekAhead(leagues: LeagueFixtures[], todayIso: string = tod
     for (const f of lf.next) flat.push({ fixture: f, leagueName: lf.league.name });
   }
 
-  const horizon = addDays(todayIso, 14);
+  const horizon = addDays(todayIso, 45);
   const byDate = new Map<string, { fixture: UpcomingFixture; leagueName: string }[]>();
   for (const entry of flat) {
     const berlinDate = fixtureBerlinDate(entry.fixture.date, entry.fixture.time);

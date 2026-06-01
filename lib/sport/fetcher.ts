@@ -129,7 +129,7 @@ async function compute(): Promise<LeagueFixtures[]> {
       ]);
       // Volle Historie aus Saisons + jüngste Form-Spiele zusammenführen.
       const finishedPool = mergeFixtures(past, ...seasonalLists);
-      const upcoming: UpcomingFixture[] = next.slice(0, 20).map((f) => {
+      const upcoming: UpcomingFixture[] = next.slice(0, 50).map((f) => {
         const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, finishedPool);
         const tips = probabilities ? generateTips(probabilities, f.homeTeam, f.awayTeam) : null;
         return {
@@ -154,4 +154,4 @@ async function compute(): Promise<LeagueFixtures[]> {
 // Live-Daten: alle 10 Minuten frischer Pull. Vergangenheit (Saisonalcalls
 // einzeln gecacht in fetchSeasonEvents) wird intern 24 h gehalten.
 // v4-Cache-Key, weil sich das Schema durch Saison-Aggregation verändert.
-export const getFootballFixtures = unstable_cache(compute, ['football-fixtures-v4'], { revalidate: 600 });
+export const getFootballFixtures = unstable_cache(compute, ['football-fixtures-v5-45d'], { revalidate: 600 });
