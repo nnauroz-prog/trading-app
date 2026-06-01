@@ -21,10 +21,21 @@ function sideColor(side: 'home' | 'away' | 'draw' | 'abstain'): string {
   return 'text-slate-500';
 }
 
+function skillMultiplier(hr: number | undefined): number {
+  if (hr === undefined) return 1;
+  return Math.max(0.1, Math.min(2.0, 1 + (hr - 50) / 25));
+}
+
+function influenceScore(v: { confidence: number; hitRatePct?: number }): number {
+  return v.confidence * skillMultiplier(v.hitRatePct);
+}
+
 export function FirmaVotesCard({ fixture, voteResult }: Props) {
   const active = voteResult.votes.filter((v) => v.side !== 'abstain');
   const abstain = voteResult.votes.filter((v) => v.side === 'abstain');
-  const topActive = [...active].sort((a, b) => b.confidence - a.confidence).slice(0, 15);
+  // Sortiert nach echtem Einfluss (Konfidenz × Skill-Multiplier), nicht nur
+  // nach roher Konfidenz. Wer historisch besser ist UND klar votet, steht oben.
+  const topActive = [...active].sort((a, b) => influenceScore(b) - influenceScore(a)).slice(0, 15);
 
   return (
     <section className="space-y-3 rounded-2xl border-2 border-sky-400/40 bg-slate-900/60 p-4">
