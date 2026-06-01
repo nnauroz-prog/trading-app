@@ -12,6 +12,14 @@ export interface AssetCardData {
   target?: string;  // Coin/Team/Wert
   href?: string;
   confidence?: number; // 0-100
+  // Optionale Trade-Levels für KAUFEN-Verdikt — Entry/Stop/Take-Profit.
+  levels?: {
+    entry: number;
+    stopLoss: number;
+    takeProfit1: number;
+    takeProfit2?: number;
+    stopDistancePct?: number;
+  };
 }
 
 interface Props {
@@ -58,6 +66,24 @@ const VERDICT_STYLE: Record<Verdict, { border: string; bg: string; text: string;
 
 // Der EINE Bildschirm: heute machen. Ganz oben auf der Startseite.
 // Pro Asset-Klasse eine prominente Karte mit klarer Empfehlung.
+function fmtPrice(n: number): string {
+  if (!Number.isFinite(n)) return '—';
+  if (n >= 1000) return `$${Math.round(n).toLocaleString('de-DE')}`;
+  if (n >= 1) return `$${n.toFixed(2)}`;
+  return `$${n.toPrecision(3)}`;
+}
+
+function LevelTile({ label, value, tone, sub }: { label: string; value: string; tone: 'good' | 'bad' | 'neutral'; sub?: string }) {
+  const cls = tone === 'good' ? 'text-emerald-200' : tone === 'bad' ? 'text-rose-200' : 'text-slate-100';
+  return (
+    <div className="rounded border border-slate-800 bg-slate-950/60 p-1 text-center">
+      <div className="text-[8px] uppercase tracking-wider text-slate-500">{label}</div>
+      <div className={`mt-0.5 font-mono text-[10.5px] font-bold ${cls}`}>{value}</div>
+      {sub && <div className="font-mono text-[9px] text-slate-500">{sub}</div>}
+    </div>
+  );
+}
+
 export function HeuteMachen({ cards }: Props) {
   return (
     <section className="space-y-3 rounded-2xl border-2 border-emerald-400/40 bg-slate-900/60 p-4">
@@ -90,6 +116,13 @@ export function HeuteMachen({ cards }: Props) {
                   <div className="font-mono text-[11px] text-white">{card.target}{card.confidence !== undefined ? ` · ${card.confidence}%` : ''}</div>
                 )}
               </div>
+              {card.levels && card.verdict === 'kaufen' && (
+                <div className="grid grid-cols-3 gap-1 rounded-lg border border-emerald-400/30 bg-emerald-500/5 p-1.5">
+                  <LevelTile label="Einstieg" value={fmtPrice(card.levels.entry)} tone="neutral" />
+                  <LevelTile label="Stop" value={fmtPrice(card.levels.stopLoss)} tone="bad" sub={card.levels.stopDistancePct !== undefined ? `−${card.levels.stopDistancePct.toFixed(1)}%` : undefined} />
+                  <LevelTile label="Ziel" value={fmtPrice(card.levels.takeProfit1)} tone="good" />
+                </div>
+              )}
               <p className="text-[10.5px] leading-snug text-slate-400">{card.detail}</p>
             </div>
           );

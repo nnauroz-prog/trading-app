@@ -122,10 +122,17 @@ export default async function HomePage() {
           label: 'Krypto',
           verdict: 'kaufen',
           headline: `${cryptoTop.c.symbol} kaufen`,
-          detail: `Grade A · alle ${cryptoTop.safety.totalHard} Sicherheits-Kriterien erfüllt. Stop wie auf Coin-Seite gezeigt.`,
+          detail: `Grade A · alle ${cryptoTop.safety.totalHard} Sicherheits-Kriterien erfüllt. Levels stehen direkt hier.`,
           target: `${cryptoTop.c.symbol}`,
           confidence: cryptoTop.safety.score,
-          href: `/assets/${cryptoTop.c.symbol.toLowerCase()}`
+          href: `/assets/${cryptoTop.c.symbol.toLowerCase()}`,
+          levels: {
+            entry: cryptoTop.c.entry,
+            stopLoss: cryptoTop.c.stopLoss,
+            takeProfit1: cryptoTop.c.takeProfit1,
+            takeProfit2: cryptoTop.c.takeProfit2,
+            stopDistancePct: cryptoTop.c.stopDistancePct
+          }
         }
       : cryptoTop && cryptoTop.safety.grade === 'B'
       ? {
