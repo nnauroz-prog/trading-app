@@ -14,12 +14,6 @@ function fmtDayHead(date: string, weekday: string): string {
   return `${weekday} · ${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' })}`;
 }
 
-function confidenceColor(label: 'klar' | 'leicht' | 'offen'): string {
-  if (label === 'klar') return 'text-emerald-300';
-  if (label === 'leicht') return 'text-amber-300';
-  return 'text-slate-400';
-}
-
 function pickToneClass(conf: number): string {
   if (conf >= 0.65) return 'text-emerald-300';
   if (conf >= 0.5) return 'text-sky-300';

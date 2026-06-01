@@ -27,6 +27,8 @@ import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { SportBriefingCard } from '@/components/sport-briefing-card';
 import { SportTodayBanner } from '@/components/sport-today-banner';
 import { MarketQuickStats } from '@/components/market-quick-stats';
+import { HeuteMachen, type AssetCardData } from '@/components/heute-machen';
+import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
 import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { buildFirmaSynthesis } from '@/lib/sport/firma/synthesis';
 import { bucketByDay } from '@/lib/sport/day-buckets';
@@ -104,6 +106,89 @@ export default async function HomePage() {
   ]);
   const sportSynth = buildFirmaSynthesis(sportLeagues);
   const sportTodayCount = bucketByDay(sportLeagues.flatMap((lf) => lf.next)).today.length;
+
+  // "Heute machen" — die EINE Empfehlung pro Asset-Klasse, ganz oben.
+  const cryptoScored = masterSignal.candidates.map((c) => ({ c, safety: scoreCandidateSafety(c, masterSignal, backtestSummary) }));
+  cryptoScored.sort((a, b) => b.safety.score - a.safety.score || b.c.passedCount - a.c.passedCount);
+  const cryptoTop = cryptoScored[0] ?? null;
+
+  const sportLead = sportSynth.highConfidencePicks[0] ?? sportSynth.dailyTopPick;
+
+  const heuteCards: AssetCardData[] = [
+    cryptoTop && cryptoTop.safety.maxSafety
+      ? {
+          klass: 'krypto',
+          emoji: '₿',
+          label: 'Krypto',
+          verdict: 'kaufen',
+          headline: `${cryptoTop.c.symbol} kaufen`,
+          detail: `Grade A · alle ${cryptoTop.safety.totalHard} Sicherheits-Kriterien erfüllt. Stop wie auf Coin-Seite gezeigt.`,
+          target: `${cryptoTop.c.symbol}`,
+          confidence: cryptoTop.safety.score,
+          href: `/assets/${cryptoTop.c.symbol.toLowerCase()}`
+        }
+      : cryptoTop && cryptoTop.safety.grade === 'B'
+      ? {
+          klass: 'krypto',
+          emoji: '₿',
+          label: 'Krypto',
+          verdict: 'halten',
+          headline: `${cryptoTop.c.symbol} beobachten`,
+          detail: `Grade B · ${cryptoTop.safety.passedHard}/${cryptoTop.safety.totalHard} Kriterien. Noch nicht sicher genug zum Einstieg.`,
+          target: cryptoTop.c.symbol,
+          confidence: cryptoTop.safety.score,
+          href: `/assets/${cryptoTop.c.symbol.toLowerCase()}`
+        }
+      : {
+          klass: 'krypto',
+          emoji: '₿',
+          label: 'Krypto',
+          verdict: 'warten',
+          headline: 'Heute nicht kaufen',
+          detail: 'Kein Coin schafft die strengen Kriterien. Cash bleibt eine valide Position.',
+          href: '/screener'
+        },
+    {
+      klass: 'aktien',
+      emoji: '📈',
+      label: 'Aktien',
+      verdict: 'keine_daten',
+      headline: 'Daten-Quelle fehlt',
+      detail: 'Finnhub-API-Key nicht angebunden. Sobald er da ist, erscheint hier dieselbe Logik wie für Krypto.',
+      href: '/screener'
+    },
+    {
+      klass: 'gold',
+      emoji: '🥇',
+      label: 'Gold',
+      verdict: 'halten',
+      headline: 'Defensiv beibehalten',
+      detail: 'Gold bleibt der Stabilitäts-Anker. Kein schneller Trade, aber gut zur Risiko-Streuung.',
+      target: 'PAXG / XAUT',
+      href: '/gold'
+    },
+    sportLead
+      ? {
+          klass: 'sport',
+          emoji: '⚽',
+          label: 'Sport',
+          verdict: 'tippen',
+          headline: `${sportLead.fixture.homeTeam} – ${sportLead.fixture.awayTeam}`,
+          detail: `Vorhersage: ${sportLead.likelyScore.home}:${sportLead.likelyScore.away} (${sportLead.pickPlain}). Liga: ${sportLead.leagueName}.`,
+          target: `${sportLead.likelyScore.home}:${sportLead.likelyScore.away}`,
+          confidence: Math.round(sportLead.confidence * 100),
+          href: '/sport'
+        }
+      : {
+          klass: 'sport',
+          emoji: '⚽',
+          label: 'Sport',
+          verdict: 'warten',
+          headline: 'Kein klarer Tipp',
+          detail: 'In den eingebundenen Ligen läuft gerade zu wenig — schau morgen wieder rein.',
+          href: '/sport'
+        }
+  ];
   const crossExchange = checkCrossExchangePrices(exchangeSources.binance, exchangeSources.bybit);
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
@@ -301,6 +386,8 @@ export default async function HomePage() {
           <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Mehr</Link>
         </nav>
       </header>
+
+      <HeuteMachen cards={heuteCards} />
 
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
