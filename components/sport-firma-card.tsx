@@ -21,9 +21,14 @@ export function SportFirmaCard({ synth }: { synth: FirmaSynthesis }) {
           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-300">Sport-Redaktion</div>
           <h2 className="text-lg font-bold text-white">{synth.totalEmployees} Mitarbeiter im Einsatz</h2>
         </div>
-        <span className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-300">
-          {synth.totalFixturesNext7d} Spiele · 7 Tage
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-300">
+            {synth.totalFixturesNext7d} Spiele · 7 Tage
+          </span>
+          <span className="rounded-md border border-emerald-400/30 bg-emerald-950/20 px-2 py-1 text-[10px] text-emerald-200">
+            Historie: {synth.totalAnalyzedFixtures.toLocaleString('de-DE')} Spiele ausgewertet
+          </span>
+        </div>
       </header>
 
       <div className="rounded-lg border border-emerald-400/30 bg-emerald-950/15 p-3">

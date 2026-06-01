@@ -17,6 +17,9 @@ export interface FirmaSynthesis {
   departmentCounts: Record<SportDepartment, number>;
   chefStatement: string;
   forms: TeamForm[];
+  // Anzahl ausgewerteter, abgeschlossener Spiele aus dem gesamten
+  // Vergangenheits-Pool (mehrere Saisons), den das Modell sieht.
+  totalAnalyzedFixtures: number;
   findings: ScoutFinding[];
   weekAhead: WeekAheadDay[];
   totalFixturesNext7d: number;
@@ -59,6 +62,7 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
   const highConfidencePicks = pickHighConfidence(weekAhead);
   const dailyTopPick = pickBestOfAll(weekAhead);
   const perLeagueTopPicks = pickBestPerLeague(weekAhead);
+  const totalAnalyzedFixtures = leagues.reduce((s, l) => s + l.last.length, 0);
   const counts = countByDepartment();
 
   const chefStatement = composeChefStatement({
@@ -73,6 +77,7 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
     departmentCounts: counts,
     chefStatement,
     forms,
+    totalAnalyzedFixtures,
     findings,
     weekAhead,
     totalFixturesNext7d,

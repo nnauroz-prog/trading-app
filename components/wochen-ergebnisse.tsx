@@ -26,12 +26,16 @@ function confidenceColor(conf: number): string {
 // mit voraussichtlichem Endergebnis. Score steht dick in der Mitte zwischen
 // Heim- und Auswärtsteam. Genau das, was der Nutzer wirklich will.
 export function WochenErgebnisse({ synth }: { synth: FirmaSynthesis }) {
+  const totalHistory = synth.totalAnalyzedFixtures;
   if (synth.weekAhead.length === 0) {
     return (
       <section className="space-y-2 rounded-2xl border-2 border-emerald-400/40 bg-slate-900/60 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Voraussichtliche Ergebnisse · 7 Tage</h2>
         <p className="text-[12px] leading-snug text-slate-300">
-          Aktuell keine Spiele in den eingebundenen Ligen mit auswertbarer Form. Sobald die Sommer-Ligen frische Daten liefern, erscheint hier pro Tag jedes Spiel mit voraussichtlichem Endergebnis.
+          Aktuell sind in den nächsten 7 Tagen keine Spielansetzungen in den eingebundenen Ligen verfügbar. Das ist meist die europäische Sommerpause — die Sommer-Ligen (MLS, Brasilien, Skandinavien, Japan, Australien) liefern dann die Spiele.
+        </p>
+        <p className="text-[11px] leading-snug text-slate-400">
+          Die Auswertung der vergangenen Saisons läuft trotzdem mit: die Form-Statistiken fußen auf {totalHistory.toLocaleString('de-DE')} ausgewerteten Spielen aus den letzten drei Spielzeiten. Sobald Spielpläne wieder einlaufen, fließt diese Historie direkt in die Score-Vorhersage.
         </p>
       </section>
     );
@@ -42,7 +46,7 @@ export function WochenErgebnisse({ synth }: { synth: FirmaSynthesis }) {
         <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300">Voraussichtliche Ergebnisse · 7 Tage</div>
         <h2 className="text-xl font-bold tracking-tight text-white">Wahrscheinliches Endergebnis pro Spiel</h2>
         <p className="text-[11px] leading-snug text-slate-400">
-          Das Hauptprodukt der Sport-Firma. Pro Tag jedes anstehende Spiel mit dem wahrscheinlichsten Score laut Poisson-Modell. Farbe zeigt die Konfidenz: grün = sicher, blau = leichter Favorit, gelb = leichter Trend, grau = offen.
+          Das Hauptprodukt der Sport-Firma. Pro Tag jedes anstehende Spiel mit dem wahrscheinlichsten Score, gerechnet aus <span className="font-semibold text-slate-200">{totalHistory.toLocaleString('de-DE')} ausgewerteten Spielen der letzten drei Saisons</span>. Farbe zeigt die Konfidenz: grün = sicher, blau = leichter Favorit, gelb = leichter Trend, grau = offen.
         </p>
       </header>
       <div className="space-y-4">
