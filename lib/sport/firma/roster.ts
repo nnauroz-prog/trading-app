@@ -14,7 +14,8 @@ export type SportDepartment =
   | 'politik_watch'
   | 'schedule_gatekeeper'
   | 'safety_picker'
-  | 'h2h_specialist';
+  | 'h2h_specialist'
+  | 'daily_pick_curator';
 
 export interface SportEmployee {
   id: string;
@@ -117,8 +118,16 @@ const FORM_ANALYSTS: SportEmployee[] = [
   { id: 'fa-3', name: 'Yvonne Marquardt', role: 'Form-Analyst · Tor-Quote', department: 'form_analyst' },
   { id: 'fa-4', name: 'Sebastián Ortega', role: 'Form-Analyst · Gegen-Tor-Quote', department: 'form_analyst' },
   { id: 'fa-5', name: 'Heike Tollner', role: 'Form-Analyst · Heim-Form', department: 'form_analyst' },
-  { id: 'fa-6', name: 'Phil Karras', role: 'Form-Analyst · Auswärts-Form', department: 'form_analyst' },
-  { id: 'fa-7', name: 'Margit Wiesinger', role: 'Form-Analyst · Aufholjagden', department: 'form_analyst' }
+  { id: 'fa-6', name: 'Phil Karras', role: 'Form-Analyst · Auswärts-Form', department: 'form_analyst' }
+];
+
+const DAILY_PICK_CURATOR: SportEmployee[] = [
+  {
+    id: 'pick-day-1',
+    name: 'Margit Wiesinger',
+    role: 'Tipp-des-Tages-Kuratorin · auch wenn nichts über die 65 %-Schwelle kommt, sucht sie den besten verfügbaren Tipp und stellt ihn vor — mit ehrlicher Konfidenz-Angabe.',
+    department: 'daily_pick_curator'
+  }
 ];
 
 const H2H_SPECIALIST: SportEmployee[] = [
@@ -201,10 +210,12 @@ export const SPORT_FIRMA: SportEmployee[] = [
   ...POLITIK_WATCH,
   ...SCHEDULE_GATEKEEPER,
   ...SAFETY_PICKER,
-  ...H2H_SPECIALIST
+  ...H2H_SPECIALIST,
+  ...DAILY_PICK_CURATOR
 ];
 
 export const H2H_SPECIALIST_EMPLOYEE: SportEmployee = H2H_SPECIALIST[0];
+export const DAILY_PICK_CURATOR_EMPLOYEE: SportEmployee = DAILY_PICK_CURATOR[0];
 
 // Praktischer Zugriff auf die zwei „Einzelplatz"-Rollen, deren Namen die UI
 // neben ihrer Auswertung ausweist.
@@ -221,7 +232,7 @@ export function countByDepartment(): Record<SportDepartment, number> {
   const out = {
     chef: 0, league_scout: 0, team_analyst: 0, form_analyst: 0,
     tactical_analyst: 0, international_watch: 0, transfer_watch: 0, politik_watch: 0,
-    schedule_gatekeeper: 0, safety_picker: 0, h2h_specialist: 0
+    schedule_gatekeeper: 0, safety_picker: 0, h2h_specialist: 0, daily_pick_curator: 0
   } as Record<SportDepartment, number>;
   for (const e of SPORT_FIRMA) out[e.department]++;
   return out;

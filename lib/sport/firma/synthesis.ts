@@ -2,6 +2,7 @@ import type { LeagueFixtures, UpcomingFixture } from '@/lib/sport/fetcher';
 import { computeTeamForms, scoutFindings, type ScoutFinding, type TeamForm } from '@/lib/sport/firma/scouts';
 import { buildWeekAhead, type WeekAheadDay } from '@/lib/sport/firma/week-ahead';
 import {
+  DAILY_PICK_CURATOR_EMPLOYEE,
   SAFETY_PICKER_EMPLOYEE,
   SAFETY_PICK_THRESHOLD,
   SCHEDULE_GATEKEEPER_EMPLOYEE,
@@ -23,6 +24,10 @@ export interface FirmaSynthesis {
   safetyPickThreshold: number;
   scheduleGatekeeper: SportEmployee;
   safetyPicker: SportEmployee;
+  dailyPickCurator: SportEmployee;
+  // Bestes verfügbares Spiel der nächsten 7 Tage, egal ob ≥ Threshold.
+  // Wenn auch die nichts liefern (keine prediction overhaupt), null.
+  dailyTopPick: HighConfidencePick | null;
   honesty: HonestyNote[];
 }
 
@@ -47,6 +52,7 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
   const weekAhead = buildWeekAhead(leagues, todayIso);
   const totalFixturesNext7d = weekAhead.reduce((s, d) => s + d.fixtures.length, 0);
   const highConfidencePicks = pickHighConfidence(weekAhead);
+  const dailyTopPick = pickBestOfAll(weekAhead);
   const counts = countByDepartment();
 
   const chefStatement = composeChefStatement({
@@ -68,8 +74,30 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
     safetyPickThreshold: SAFETY_PICK_THRESHOLD,
     scheduleGatekeeper: SCHEDULE_GATEKEEPER_EMPLOYEE,
     safetyPicker: SAFETY_PICKER_EMPLOYEE,
+    dailyPickCurator: DAILY_PICK_CURATOR_EMPLOYEE,
+    dailyTopPick,
     honesty: HONESTY
   };
+}
+
+function pickBestOfAll(weekAhead: WeekAheadDay[]): HighConfidencePick | null {
+  let best: HighConfidencePick | null = null;
+  for (const day of weekAhead) {
+    for (const { fixture, leagueName } of day.fixtures) {
+      const pred = fixture.prediction;
+      if (!pred) continue;
+      if (best === null || pred.pickConfidence > best.confidence) {
+        best = {
+          fixture,
+          leagueName,
+          pickPlain: pred.pickPlain,
+          confidence: pred.pickConfidence,
+          likelyScore: pred.likelyScore
+        };
+      }
+    }
+  }
+  return best;
 }
 
 const HONESTY: HonestyNote[] = [

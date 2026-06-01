@@ -14,13 +14,15 @@ const DEPARTMENT_LABEL: Record<SportDepartment, string> = {
   politik_watch: 'Verbands-Politik',
   schedule_gatekeeper: 'Aktualitäts-Wache',
   safety_picker: 'Sicherheits-Tipp-Wache',
-  h2h_specialist: 'Direktvergleich (H2H)'
+  h2h_specialist: 'Direktvergleich (H2H)',
+  daily_pick_curator: 'Tipp-des-Tages-Wache'
 };
 
 const DEPARTMENT_ORDER: SportDepartment[] = [
   'chef',
   'schedule_gatekeeper',
   'safety_picker',
+  'daily_pick_curator',
   'h2h_specialist',
   'league_scout',
   'team_analyst',
@@ -68,7 +70,7 @@ export default function SportFirmaPage() {
   const grouped: Record<SportDepartment, SportEmployee[]> = {
     chef: [], league_scout: [], team_analyst: [], form_analyst: [],
     tactical_analyst: [], international_watch: [], transfer_watch: [], politik_watch: [],
-    schedule_gatekeeper: [], safety_picker: [], h2h_specialist: []
+    schedule_gatekeeper: [], safety_picker: [], h2h_specialist: [], daily_pick_curator: []
   };
   for (const e of SPORT_FIRMA) grouped[e.department].push(e);
 
