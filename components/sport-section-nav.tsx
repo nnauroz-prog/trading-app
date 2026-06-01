@@ -3,6 +3,7 @@
 export function SportSectionNav() {
   const items = [
     { href: '#ergebnisse', label: '🎯 Ergebnisse' },
+    { href: '#historie', label: '📚 Historie' },
     { href: '#redaktion', label: 'Redaktion' },
     { href: '#sicher', label: 'Sicher' },
     { href: '#tag', label: 'Tipp d. Tages' },

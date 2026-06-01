@@ -27,6 +27,8 @@ import { TeamSearch } from '@/components/team-search';
 import { LeagueHitRate } from '@/components/league-hit-rate';
 import { SportSectionNav } from '@/components/sport-section-nav';
 import { WochenErgebnisse } from '@/components/wochen-ergebnisse';
+import { LeagueSeasonStatsCard } from '@/components/league-season-stats';
+import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -232,6 +234,7 @@ export default async function SportPage() {
   const laterFirstFixtures = wrap(buckets.laterFirst);
   const laterDateLabel = buckets.laterFirstDate ? fmtDate(buckets.laterFirstDate) : null;
   const firmaSynth = buildFirmaSynthesis(leagues, buckets.todayIso);
+  const leagueSeasonStats = computeLeagueSeasonStats(leagues);
 
   // Sigrid Achterberg (H2H-Spezialistin) gräbt für jedes upcoming-Fixture den
   // Direktvergleich aus den letzten Liga-Spielen.
@@ -291,6 +294,9 @@ export default async function SportPage() {
 
       <div id="ergebnisse" />
       <WochenErgebnisse synth={firmaSynth} />
+
+      <div id="historie" />
+      <LeagueSeasonStatsCard stats={leagueSeasonStats} />
 
       <div id="redaktion">
       <SportFirmaCard synth={firmaSynth} />
