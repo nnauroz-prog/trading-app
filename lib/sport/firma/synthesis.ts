@@ -1,7 +1,7 @@
 import type { LeagueFixtures, UpcomingFixture } from '@/lib/sport/fetcher';
 import { computeTeamForms, scoutFindings, type ScoutFinding, type TeamForm } from '@/lib/sport/firma/scouts';
 import { buildWeekAhead, type WeekAheadDay } from '@/lib/sport/firma/week-ahead';
-import { SPORT_FIRMA, SPORT_FIRMA_SIZE, countByDepartment, type SportDepartment } from '@/lib/sport/firma/roster';
+import { SPORT_FIRMA_SIZE, countByDepartment, type SportDepartment } from '@/lib/sport/firma/roster';
 
 export interface FirmaSynthesis {
   totalEmployees: number;

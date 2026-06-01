@@ -1,4 +1,4 @@
-import type { Fixture, LeagueFixtures } from '@/lib/sport/fetcher';
+import type { LeagueFixtures } from '@/lib/sport/fetcher';
 
 export interface TeamForm {
   team: string;

@@ -9,6 +9,8 @@ import { bucketByDay } from '@/lib/sport/day-buckets';
 import { buildFirmaSynthesis } from '@/lib/sport/firma/synthesis';
 import { SportFirmaCard } from '@/components/sport-firma-card';
 import { WeekAheadList } from '@/components/week-ahead-list';
+import { TeamWatchlistPanel } from '@/components/team-watchlist-panel';
+import { TeamWatchToggle } from '@/components/team-watch-toggle';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 900;
@@ -202,6 +204,27 @@ export default async function SportPage() {
   const laterDateLabel = buckets.laterFirstDate ? fmtDate(buckets.laterFirstDate) : null;
   const firmaSynth = buildFirmaSynthesis(leagues, buckets.todayIso);
 
+  // Liefere für die Team-Watchlist Form + nächstes Spiel pro Team, damit der
+  // Client das ohne Re-Fetch anzeigen kann.
+  const teamCandidates = firmaSynth.forms.map((f) => {
+    const upcomingForThisTeam = flatUpcoming
+      .filter(({ fixture: fx, leagueName }) => leagueName === f.league && (fx.homeTeam === f.team || fx.awayTeam === f.team))
+      .sort((a, b) => a.fixture.date.localeCompare(b.fixture.date))[0];
+    const nextOpponent = upcomingForThisTeam
+      ? {
+          opponent: upcomingForThisTeam.fixture.homeTeam === f.team ? upcomingForThisTeam.fixture.awayTeam : upcomingForThisTeam.fixture.homeTeam,
+          date: upcomingForThisTeam.fixture.date,
+          isHome: upcomingForThisTeam.fixture.homeTeam === f.team
+        }
+      : undefined;
+    return {
+      team: f.team,
+      league: f.league,
+      form: { wins: f.wins, draws: f.draws, losses: f.losses, points: f.points, goalDiff: f.goalDiff, played: f.played, streak: f.streak },
+      nextOpponent
+    };
+  });
+
   // Flatten all finished fixtures across leagues for the tip-journal resolver.
   const finishedLite = leagues.flatMap((lf) => lf.last
     .filter((f) => f.homeScore !== null && f.awayScore !== null)
@@ -220,6 +243,15 @@ export default async function SportPage() {
       </header>
 
       <SportFirmaCard synth={firmaSynth} />
+
+      <Link
+        href="/sport/firma"
+        className="block rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 text-center text-[12px] text-emerald-300 hover:border-emerald-400/60 hover:bg-slate-900/60"
+      >
+        Personalakte aller {firmaSynth.totalEmployees} Mitarbeiter ansehen →
+      </Link>
+
+      <TeamWatchlistPanel candidates={teamCandidates} />
 
       <WeekAheadList days={firmaSynth.weekAhead} />
 
@@ -318,6 +350,33 @@ export default async function SportPage() {
                     </div>
                   </details>
                 )}
+                {(() => {
+                  const teams = new Set<string>();
+                  for (const f of lf.last) {
+                    teams.add(f.homeTeam);
+                    teams.add(f.awayTeam);
+                  }
+                  for (const f of lf.next) {
+                    teams.add(f.homeTeam);
+                    teams.add(f.awayTeam);
+                  }
+                  if (teams.size === 0) return null;
+                  return (
+                    <details>
+                      <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-emerald-300 hover:text-emerald-200">
+                        Teams folgen ({teams.size})
+                      </summary>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {Array.from(teams).sort().map((team) => (
+                          <div key={team} className="flex items-center gap-1.5 rounded-md border border-slate-800 bg-slate-950/40 px-2 py-1 text-[10.5px] text-slate-300">
+                            <span>{team}</span>
+                            <TeamWatchToggle team={team} league={lf.league.name} />
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  );
+                })()}
               </div>
             </details>
           );

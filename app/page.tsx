@@ -24,6 +24,10 @@ import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
 import { CoinScoreRecorder } from '@/components/coin-score-recorder';
 import { CoinScoreTrend } from '@/components/coin-score-trend';
+import { SportBriefingCard } from '@/components/sport-briefing-card';
+import { getFootballFixtures } from '@/lib/sport/fetcher';
+import { buildFirmaSynthesis } from '@/lib/sport/firma/synthesis';
+import { bucketByDay } from '@/lib/sport/day-buckets';
 import { DiffVsYesterday } from '@/components/diff-vs-yesterday';
 import { FirstVisitHint } from '@/components/first-visit-hint';
 import { TriggeredAlertsStrip } from '@/components/triggered-alerts-strip';
@@ -83,7 +87,7 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources] = await Promise.all([
+  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources, sportLeagues] = await Promise.all([
     buildTopPlayReport(),
     buildMasterSignal(tradeMode),
     fetchFearGreed(),
@@ -93,8 +97,11 @@ export default async function HomePage() {
     getBacktestSummary(),
     getCryptoNews(),
     getLehrlingReport(),
-    fetchBothTickerSources()
+    fetchBothTickerSources(),
+    getFootballFixtures()
   ]);
+  const sportSynth = buildFirmaSynthesis(sportLeagues);
+  const sportTodayCount = bucketByDay(sportLeagues.flatMap((lf) => lf.next)).today.length;
   const crossExchange = checkCrossExchangePrices(exchangeSources.binance, exchangeSources.bybit);
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
@@ -356,6 +363,8 @@ export default async function HomePage() {
       <IntelStrip ceo={intelCeo} />
       <ChaseWarning chase={chaseSignals} opportunity={opportunitySignals} />
       <WocheVoraus events={upcomingMacro} today={todayIso} />
+
+      <SportBriefingCard synth={sportSynth} todayFixtures={sportTodayCount} />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
