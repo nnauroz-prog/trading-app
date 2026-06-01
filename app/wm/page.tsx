@@ -106,7 +106,7 @@ export default async function WorldCupPage() {
         <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">FIFA World Cup 2026</div>
         <h1 className="text-3xl font-bold tracking-tight text-white">WM-Gewinner-Vorhersage</h1>
         <p className="max-w-2xl text-sm text-slate-400">
-          11. Juni – 19. Juli 2026 in USA, Kanada, Mexiko. Pro Spiel die wahrscheinlichste Sieger-Seite. Wo Paarungen noch offen sind („Sieger Gruppe A" usw.), wird das ehrlich markiert.
+          11. Juni – 19. Juli 2026 in USA, Kanada, Mexiko. Pro Spiel die wahrscheinlichste Sieger-Seite. Wo Paarungen noch offen sind („Sieger Gruppe A“ usw.), wird das ehrlich markiert.
         </p>
       </header>
 
