@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { FirmaSynthesis } from '@/lib/sport/firma/synthesis';
+import type { HeadToHeadResult } from '@/lib/sport/h2h';
 
 function fmtDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00`);
@@ -25,7 +26,7 @@ function confidenceColor(conf: number): string {
 // Die KERN-Antwort der Sport-Firma: pro Tag der kommenden Woche jedes Spiel
 // mit voraussichtlichem Endergebnis. Score steht dick in der Mitte zwischen
 // Heim- und Auswärtsteam. Genau das, was der Nutzer wirklich will.
-export function WochenErgebnisse({ synth }: { synth: FirmaSynthesis }) {
+export function WochenErgebnisse({ synth, h2hById }: { synth: FirmaSynthesis; h2hById?: Map<string, HeadToHeadResult> }) {
   const totalHistory = synth.totalAnalyzedFixtures;
   if (synth.weekAhead.length === 0) {
     return (
@@ -87,6 +88,13 @@ export function WochenErgebnisse({ synth }: { synth: FirmaSynthesis }) {
                       <span>· Heimsieg <span className="font-mono">{Math.round(pred.pHome * 100)}%</span></span>
                       <span>· Remis <span className="font-mono">{Math.round(pred.pDraw * 100)}%</span></span>
                       <span>· Auswärts <span className="font-mono">{Math.round(pred.pAway * 100)}%</span></span>
+                      {(() => {
+                        const h2h = h2hById?.get(f.id);
+                        if (!h2h || h2h.meetings === 0) return null;
+                        return (
+                          <span>· H2H <span className="font-mono text-slate-300">{h2h.winsForHome}-{h2h.draws}-{h2h.winsForAway}</span> aus {h2h.meetings} Spielen</span>
+                        );
+                      })()}
                     </div>
                   </li>
                 );

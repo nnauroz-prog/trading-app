@@ -293,7 +293,7 @@ export default async function SportPage() {
       <SportSectionNav />
 
       <div id="ergebnisse" />
-      <WochenErgebnisse synth={firmaSynth} />
+      <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} />
 
       <div id="historie" />
       <LeagueSeasonStatsCard stats={leagueSeasonStats} />
