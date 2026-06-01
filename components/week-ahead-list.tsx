@@ -20,6 +20,13 @@ function confidenceColor(label: 'klar' | 'leicht' | 'offen'): string {
   return 'text-slate-400';
 }
 
+function pickToneClass(conf: number): string {
+  if (conf >= 0.65) return 'text-emerald-300';
+  if (conf >= 0.5) return 'text-sky-300';
+  if (conf >= 0.4) return 'text-amber-300';
+  return 'text-slate-400';
+}
+
 export function WeekAheadList({ days }: { days: WeekAheadDay[] }) {
   if (days.length === 0) {
     return (
@@ -57,8 +64,8 @@ export function WeekAheadList({ days }: { days: WeekAheadDay[] }) {
                       <span className="font-semibold">{f.awayTeam}</span>
                       <span className="ml-1 text-[9.5px] uppercase tracking-wider text-slate-600">{leagueName}</span>
                     </span>
-                    <span className={`font-mono text-[10px] ${p ? confidenceColor(p.pickLabel) : 'text-slate-500'}`}>
-                      {p ? `${p.pickPlain} · ${Math.round(p.pickConfidence * 100)}%` : 'zu wenig Daten'}
+                    <span className={`font-mono text-[10px] ${p ? pickToneClass(p.pickConfidence) : 'text-slate-500'}`}>
+                      {p ? `${p.likelyScore.home}:${p.likelyScore.away} · ${Math.round(p.pickConfidence * 100)}%` : 'zu wenig Daten'}
                     </span>
                   </li>
                 );

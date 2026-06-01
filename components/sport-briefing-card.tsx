@@ -15,8 +15,8 @@ export function SportBriefingCard({ synth, todayFixtures }: { synth: FirmaSynthe
       className="block space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 transition hover:border-emerald-400/60 hover:bg-slate-900/60"
     >
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Sport-Redaktion · 100 Mitarbeiter</h2>
-        <span className="text-[10px] text-slate-500">{synth.totalFixturesNext7d} Spiele · 7 Tage</span>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Sport-Redaktion · {synth.totalEmployees} Mitarbeiter</h2>
+        <span className="text-[10px] text-slate-500">{synth.totalFixturesNext7d} Spiele · 7 Tage · {synth.perLeagueTopPicks.length} Ligen</span>
       </div>
       <p className="text-[11.5px] leading-snug text-slate-100">
         <span className="font-mono text-emerald-300">{todayFixtures} heute</span>

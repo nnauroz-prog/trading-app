@@ -145,6 +145,7 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800/60 pt-1.5 text-[10px] text-slate-500">
           <span>Form Heim: <FormChips form={f.prediction.homeForm} /></span>
           <span>Form Auswärts: <FormChips form={f.prediction.awayForm} /></span>
+          {f.venue && <span className="text-slate-600">· 📍 {f.venue}</span>}
         </div>
       )}
       {h2h && (
