@@ -4,7 +4,9 @@ export interface League {
   country: string;
 }
 
-// TheSportsDB free league IDs. Major European top divisions + top European cups.
+// TheSportsDB free league IDs.
+// Europäische Top-Ligen + Sommer-aktive Ligen (Mai–November). Damit ist auch
+// in der europäischen Sommerpause (Juni–Juli) immer was zum Tippen da.
 export const FOOTBALL_LEAGUES: League[] = [
   { id: '4331', name: 'Bundesliga', country: 'Deutschland' },
   { id: '4328', name: 'Premier League', country: 'England' },
@@ -14,5 +16,10 @@ export const FOOTBALL_LEAGUES: League[] = [
   { id: '4337', name: 'Eredivisie', country: 'Niederlande' },
   { id: '4338', name: 'Liga Portugal', country: 'Portugal' },
   { id: '4480', name: 'UEFA Champions League', country: 'Europa' },
-  { id: '4481', name: 'UEFA Europa League', country: 'Europa' }
+  { id: '4481', name: 'UEFA Europa League', country: 'Europa' },
+  // Sommer-aktive Ligen:
+  { id: '4346', name: 'MLS', country: 'USA' },
+  { id: '4351', name: 'Brasileirão Série A', country: 'Brasilien' },
+  { id: '4347', name: 'Eliteserien', country: 'Norwegen' },
+  { id: '4330', name: 'Allsvenskan', country: 'Schweden' }
 ];

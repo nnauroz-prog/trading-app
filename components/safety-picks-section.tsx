@@ -37,7 +37,7 @@ export function SafetyPicksSection({ synth }: { synth: FirmaSynthesis }) {
 
       {picks.length === 0 ? (
         <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-3 text-[11.5px] leading-snug text-amber-100/90">
-          Diese Woche kommt kein Spiel über die {thresholdPct}%-Schwelle. Ehrlicher Hinweis statt erfundener „Top-Tipp“. Schau morgen wieder rein, wenn neue Form-Daten reinkommen.
+          Diese Woche kommt kein Spiel über die {thresholdPct}%-Schwelle. Aktuell laufen viele europäische Top-Ligen in der Sommerpause — die Sommer-Ligen (MLS, Brasilien, Skandinavien) liefern weiter Spiele, aber die Form-Stichprobe ist da kleiner, deshalb selten ≥{thresholdPct}%. Schau morgen wieder rein, wenn neue Daten reinkommen.
         </p>
       ) : (
         <ul className="space-y-2">
@@ -64,14 +64,14 @@ export function SafetyPicksSection({ synth }: { synth: FirmaSynthesis }) {
                 <div className="text-[13px] font-semibold text-slate-100">{p.fixture.awayTeam}</div>
               </div>
               <p className="text-[10px] leading-snug text-slate-500">
-                Wahrscheinlichstes ≠ garantiertes Ergebnis. Modell-Schätzung aus den letzten Liga-Spielen.
+                Modell-Schätzung aus den letzten Liga-Spielen — perfekt fürs Tippspiel mit Freunden.
               </p>
             </li>
           ))}
         </ul>
       )}
       <p className="text-[10px] leading-snug text-slate-500">
-        Statistik-Modell auf der letzten Liga-Form. Keine Wett-Empfehlung. Auch ein 70%-Tipp geht in 3 von 10 Fällen schief.
+        Statistik-Modell auf der letzten Liga-Form. Für dein Tippspiel mit Freunden — selbst ein 70 %-Tipp trifft 7 von 10, also Spannung bleibt.
       </p>
     </section>
   );

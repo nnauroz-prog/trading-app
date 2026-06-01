@@ -127,6 +127,6 @@ function composeChefStatement(args: {
     const pct = Math.round(lead.confidence * 100);
     parts.push(`Klarster Tipp diese Woche: ${lead.pickPlain} (${pct}%, ${lead.leagueName}).`);
   }
-  parts.push('Alles Statistik auf historischer Form — keine Garantie, keine Wett-Empfehlung.');
+  parts.push('Alles aus der historischen Form gerechnet — fürs Tippspiel mit Freunden gemacht.');
   return parts.join(' ');
 }

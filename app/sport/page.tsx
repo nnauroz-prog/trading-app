@@ -341,11 +341,9 @@ export default async function SportPage() {
       )}
 
       <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Tipp-Spiel mit Freunden</div>
+        <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Tippspiel mit Freunden</div>
         <p className="mt-1 text-[12px] leading-relaxed text-slate-300">
-          Die „Tipp“-Schätzungen unter jedem Spiel sind ein einfaches <strong>Statistik-Modell</strong> (Poisson auf den letzten
-          Liga-Spielen) — gedacht für Gespräche und Tipp-Spiele unter Freunden, <strong>nicht</strong> für Wetten. Verletzungen,
-          Sperren, Aufstellungen und Tagesform sind nicht modelliert; die echte Welt schlägt das Modell oft.
+          Die Tipps pro Spiel kommen aus einem einfachen Poisson-Modell auf der letzten Liga-Form. Perfekt fürs Tippspiel im Freundeskreis — die Tagesform schlägt das Modell oft, das ist Teil des Spaßes.
         </p>
       </section>
 
