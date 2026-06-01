@@ -6,6 +6,9 @@ import { SportTipJournal } from '@/components/sport-tip-journal';
 import { StandingsTable } from '@/components/standings-table';
 import { computeStandings } from '@/lib/sport/standings';
 import { bucketByDay } from '@/lib/sport/day-buckets';
+import { buildFirmaSynthesis } from '@/lib/sport/firma/synthesis';
+import { SportFirmaCard } from '@/components/sport-firma-card';
+import { WeekAheadList } from '@/components/week-ahead-list';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 900;
@@ -197,6 +200,7 @@ export default async function SportPage() {
   const tomorrowFixtures = wrap(buckets.tomorrow);
   const laterFirstFixtures = wrap(buckets.laterFirst);
   const laterDateLabel = buckets.laterFirstDate ? fmtDate(buckets.laterFirstDate) : null;
+  const firmaSynth = buildFirmaSynthesis(leagues, buckets.todayIso);
 
   // Flatten all finished fixtures across leagues for the tip-journal resolver.
   const finishedLite = leagues.flatMap((lf) => lf.last
@@ -214,6 +218,10 @@ export default async function SportPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Spielpläne &amp; Ergebnisse</h1>
         <p className="text-sm text-slate-400">Top-Ligen Europas — die nächsten und letzten Spiele.</p>
       </header>
+
+      <SportFirmaCard synth={firmaSynth} />
+
+      <WeekAheadList days={firmaSynth.weekAhead} />
 
       <TopTipp leagues={leagues} />
 
