@@ -24,6 +24,7 @@ import { SeasonPauseBanner } from '@/components/season-pause-banner';
 import { SportCuratorsQuote } from '@/components/sport-curators-quote';
 import { WeekHighlights } from '@/components/week-highlights';
 import { TeamSearch } from '@/components/team-search';
+import { LeagueHitRate } from '@/components/league-hit-rate';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -295,6 +296,8 @@ export default async function SportPage() {
       <LeagueHeatmap synth={firmaSynth} />
 
       <FirmaTrackRecord safetyPickerName={firmaSynth.safetyPicker.name} />
+
+      <LeagueHitRate />
 
       <PendingTipsCounter />
 
