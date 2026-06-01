@@ -274,6 +274,8 @@ export default async function SportPage() {
     }
   }
   consensusEnriched.sort((a, b) => b.verdict.consensusScore - a.verdict.consensusScore);
+  const consensusById = new Map<string, import('@/lib/sport/firma/consensus').ConsensusVerdict>();
+  for (const c of consensusEnriched) consensusById.set(c.fixture.id, c.verdict);
 
   // Liefere für die Team-Watchlist Form + nächstes Spiel pro Team, damit der
   // Client das ohne Re-Fetch anzeigen kann.
@@ -325,7 +327,7 @@ export default async function SportPage() {
       <ConsensusPicks picks={consensusEnriched} />
 
       <div id="ergebnisse" />
-      <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} />
+      <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} consensusById={consensusById} />
 
       <SeasonPauseBanner leagues={leagues} />
 

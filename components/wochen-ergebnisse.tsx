@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { FirmaSynthesis } from '@/lib/sport/firma/synthesis';
 import type { HeadToHeadResult } from '@/lib/sport/h2h';
+import type { ConsensusVerdict } from '@/lib/sport/firma/consensus';
 
 function fmtDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00`);
@@ -26,7 +27,15 @@ function confidenceColor(conf: number): string {
 // Die KERN-Antwort der Sport-Firma: pro Tag der kommenden Woche jedes Spiel
 // mit voraussichtlichem Endergebnis. Score steht dick in der Mitte zwischen
 // Heim- und Auswärtsteam. Genau das, was der Nutzer wirklich will.
-export function WochenErgebnisse({ synth, h2hById }: { synth: FirmaSynthesis; h2hById?: Map<string, HeadToHeadResult> }) {
+export function WochenErgebnisse({
+  synth,
+  h2hById,
+  consensusById
+}: {
+  synth: FirmaSynthesis;
+  h2hById?: Map<string, HeadToHeadResult>;
+  consensusById?: Map<string, ConsensusVerdict>;
+}) {
   const totalHistory = synth.totalAnalyzedFixtures;
   if (synth.weekAhead.length === 0) {
     return (
@@ -93,6 +102,14 @@ export function WochenErgebnisse({ synth, h2hById }: { synth: FirmaSynthesis; h2
                         if (!h2h || h2h.meetings === 0) return null;
                         return (
                           <span>· H2H <span className="font-mono text-slate-300">{h2h.winsForHome}-{h2h.draws}-{h2h.winsForAway}</span> aus {h2h.meetings} Spielen</span>
+                        );
+                      })()}
+                      {(() => {
+                        const con = consensusById?.get(f.id);
+                        if (!con || !con.firmaVotes || con.firmaVotes.totalActiveVotes < 5) return null;
+                        const sideLabel = con.firmaVotes.consensusSide === 'home' ? f.homeTeam : con.firmaVotes.consensusSide === 'away' ? f.awayTeam : con.firmaVotes.consensusSide === 'draw' ? 'Remis' : '?';
+                        return (
+                          <span>· Firma <span className="font-mono text-sky-300">{con.firmaVotes.totalActiveVotes}↳{sideLabel}</span> ({Math.round(con.firmaVotes.consensusWeight * 100)} %)</span>
                         );
                       })()}
                     </div>
