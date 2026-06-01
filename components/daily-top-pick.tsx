@@ -1,5 +1,6 @@
 import type { FirmaSynthesis } from '@/lib/sport/firma/synthesis';
 import { ExtraTipsChips } from '@/components/extra-tips-chips';
+import { TipSaveButton } from '@/components/tip-save-button';
 
 function fmtTime(time: string | null, date: string): string {
   if (!time) return '';
@@ -65,7 +66,19 @@ export function DailyTopPickCard({ synth }: { synth: FirmaSynthesis }) {
         <div className="text-[13px] font-semibold text-slate-100">{pick.fixture.awayTeam}</div>
       </div>
 
-      <ExtraTipsChips btts={pick.btts} over25={pick.over25} />
+      <div className="flex items-center justify-between gap-2">
+        <ExtraTipsChips btts={pick.btts} over25={pick.over25} />
+        <TipSaveButton
+          fixtureId={pick.fixture.id}
+          fixtureDate={pick.fixture.date}
+          league={pick.leagueName}
+          homeTeam={pick.fixture.homeTeam}
+          awayTeam={pick.fixture.awayTeam}
+          tier="custom"
+          market={`Tipp des Tages: ${pick.likelyScore.home}:${pick.likelyScore.away} (${pick.pickPlain})`}
+          modelProbabilityPct={pct}
+        />
+      </div>
 
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[10.5px] text-slate-400">
         <span>{fmtDate(pick.fixture.date)}</span>

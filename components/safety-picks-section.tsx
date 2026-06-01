@@ -1,5 +1,6 @@
 import type { FirmaSynthesis } from '@/lib/sport/firma/synthesis';
 import { ExtraTipsChips } from '@/components/extra-tips-chips';
+import { TipSaveButton } from '@/components/tip-save-button';
 
 function fmtTime(time: string | null, date: string): string {
   if (!time) return '';
@@ -50,9 +51,21 @@ export function SafetyPicksSection({ synth }: { synth: FirmaSynthesis }) {
                   {p.fixture.time && <span className="ml-1 text-slate-500">{fmtTime(p.fixture.time, p.fixture.date)}</span>}
                   <span className="ml-2 text-[9.5px] uppercase tracking-wider text-slate-600">{p.leagueName}</span>
                 </span>
-                <span className="font-mono text-[11px] text-emerald-300">
-                  {p.pickPlain} · {Math.round(p.confidence * 100)}%
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] text-emerald-300">
+                    {p.pickPlain} · {Math.round(p.confidence * 100)}%
+                  </span>
+                  <TipSaveButton
+                    fixtureId={p.fixture.id}
+                    fixtureDate={p.fixture.date}
+                    league={p.leagueName}
+                    homeTeam={p.fixture.homeTeam}
+                    awayTeam={p.fixture.awayTeam}
+                    tier="custom"
+                    market={`Ergebnis-Tipp: ${p.likelyScore.home}:${p.likelyScore.away} (${p.pickPlain})`}
+                    modelProbabilityPct={Math.round(p.confidence * 100)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-center">
                 <div className="text-[13px] font-semibold text-slate-100">{p.fixture.homeTeam}</div>
