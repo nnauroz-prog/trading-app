@@ -13,7 +13,7 @@ export function PerLeagueTopPicks({ synth }: { synth: FirmaSynthesis }) {
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Top-Tipp pro Liga</h2>
         <p className="mt-0.5 text-[10.5px] leading-snug text-slate-500">
-          Aus jeder aktiven Liga das beste Setup der Woche — nach Konfidenz sortiert. Sortiert von „sicher" oben nach „offen" unten.
+          Aus jeder aktiven Liga das beste Setup der Woche — nach Konfidenz sortiert. Sortiert von „sicher“ oben nach „offen“ unten.
         </p>
       </div>
       <ul className="space-y-1.5">
