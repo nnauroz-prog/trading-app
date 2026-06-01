@@ -29,7 +29,32 @@ export default async function TeamDetailPage({ params }: PageProps) {
 
   const form = computeTeamForms([lf]).find((f) => f.team === team) ?? null;
   const upcoming = lf.next.filter((f) => f.homeTeam === team || f.awayTeam === team);
-  const past = lf.last.filter((f) => f.homeTeam === team || f.awayTeam === team).slice(0, 8);
+  const allPast = lf.last.filter((f) => f.homeTeam === team || f.awayTeam === team);
+  const past = allPast.slice(0, 8);
+
+  // Aggregat-Statistiken über alle aufgezeichneten Spiele dieser Mannschaft
+  // (mehrere Saisons), nicht nur die letzten 5.
+  let wHist = 0, dHist = 0, lHist = 0, gFor = 0, gAgainst = 0, homeWins = 0, homeGames = 0, awayWins = 0, awayGames = 0;
+  for (const f of allPast) {
+    if (f.homeScore === null || f.awayScore === null) continue;
+    const isHome = f.homeTeam === team;
+    const my = isHome ? f.homeScore : f.awayScore;
+    const opp = isHome ? f.awayScore : f.homeScore;
+    gFor += my;
+    gAgainst += opp;
+    if (my > opp) wHist++;
+    else if (my < opp) lHist++;
+    else dHist++;
+    if (isHome) {
+      homeGames++;
+      if (my > opp) homeWins++;
+    } else {
+      awayGames++;
+      if (my > opp) awayWins++;
+    }
+  }
+  const totalHistGames = wHist + dHist + lHist;
+  const histAvailable = totalHistGames > 0;
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
@@ -55,6 +80,25 @@ export default async function TeamDetailPage({ params }: PageProps) {
         </section>
       ) : (
         <p className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400">Noch keine auswertbare Form in dieser Liga.</p>
+      )}
+
+      {histAvailable && (
+        <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Saisonen-Bilanz · {totalHistGames} Spiele</h2>
+          <p className="text-[10.5px] leading-snug text-slate-500">
+            Alles, was wir aus den letzten Spielzeiten ausgewertet haben — Sieg-Quote, Tore, Heim-/Auswärts-Stärke.
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Stat label="Siege" value={`${Math.round((wHist / totalHistGames) * 100)}%`} tone="good" />
+            <Stat label="Remis" value={`${Math.round((dHist / totalHistGames) * 100)}%`} tone="neutral" />
+            <Stat label="Niederlagen" value={`${Math.round((lHist / totalHistGames) * 100)}%`} tone="bad" />
+            <Stat label="Tor-Quote/Spiel" value={(gFor / totalHistGames).toFixed(2)} tone="neutral" />
+            <Stat label="Gegentor/Spiel" value={(gAgainst / totalHistGames).toFixed(2)} tone="neutral" />
+            <Stat label="Tor-Diff (∑)" value={`${gFor - gAgainst >= 0 ? '+' : ''}${gFor - gAgainst}`} tone={gFor - gAgainst >= 0 ? 'good' : 'bad'} />
+            <Stat label="Heim-Sieg-Quote" value={homeGames > 0 ? `${Math.round((homeWins / homeGames) * 100)}%` : '—'} tone="good" />
+            <Stat label="Auswärts-Sieg-Quote" value={awayGames > 0 ? `${Math.round((awayWins / awayGames) * 100)}%` : '—'} tone="neutral" />
+          </div>
+        </section>
       )}
 
       {upcoming.length > 0 && (
