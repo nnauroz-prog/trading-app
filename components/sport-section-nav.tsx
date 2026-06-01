@@ -2,6 +2,7 @@
 // damit man nicht durch die ganze Seite scrollen muss.
 export function SportSectionNav() {
   const items = [
+    { href: '#ergebnisse', label: '🎯 Ergebnisse' },
     { href: '#redaktion', label: 'Redaktion' },
     { href: '#sicher', label: 'Sicher' },
     { href: '#tag', label: 'Tipp d. Tages' },

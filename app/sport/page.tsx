@@ -26,6 +26,7 @@ import { WeekHighlights } from '@/components/week-highlights';
 import { TeamSearch } from '@/components/team-search';
 import { LeagueHitRate } from '@/components/league-hit-rate';
 import { SportSectionNav } from '@/components/sport-section-nav';
+import { WochenErgebnisse } from '@/components/wochen-ergebnisse';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -287,6 +288,9 @@ export default async function SportPage() {
       <SeasonPauseBanner leagues={leagues} />
 
       <SportSectionNav />
+
+      <div id="ergebnisse" />
+      <WochenErgebnisse synth={firmaSynth} />
 
       <div id="redaktion">
       <SportFirmaCard synth={firmaSynth} />
