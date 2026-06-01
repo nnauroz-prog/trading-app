@@ -56,6 +56,8 @@ interface ConsensusInput {
   // Optional: Liga-Name + komplette Saisonen-Statistik für das Firma-Vote.
   leagueName?: string;
   leagueStats?: LeagueSeasonStats | null;
+  // Optional: Hit-Rate-Map pro Mitarbeiter:in für skill-gewichtete Stimmen.
+  hitRates?: Map<string, number>;
 }
 
 const NEUTRAL_DETAIL = 'kein klares Signal';
@@ -262,7 +264,8 @@ export function computeConsensus(input: ConsensusInput): ConsensusVerdict {
       awayForm: input.awayForm,
       h2h: input.h2h,
       leagueStats: input.leagueStats ?? null,
-      finishedPool: input.finishedPool
+      finishedPool: input.finishedPool,
+      hitRates: input.hitRates
     });
     const consensusSide = firmaVoteResult.consensusSide;
     const firmaSide: ConsensusSide | null = consensusSide === 'home' ? 'home' : consensusSide === 'away' ? 'away' : consensusSide === 'draw' ? 'draw' : null;

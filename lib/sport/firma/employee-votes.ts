@@ -24,6 +24,10 @@ export interface MatchVoteContext {
   h2h: HeadToHeadResult | null;
   leagueStats: LeagueSeasonStats | null;
   finishedPool: Fixture[];
+  // Optional: pro Mitarbeiter-ID die historische Trefferquote (0-100).
+  // Wenn vorhanden, wird die Stimme entsprechend gewichtet — gute Mitarbeiter
+  // haben mehr Einfluss aufs Endergebnis.
+  hitRates?: Map<string, number>;
 }
 
 // Pro Mitarbeiter eine eigene Stimme. Jede Rolle hat einen anderen Fokus —
@@ -287,6 +291,13 @@ export interface FirmaVoteResult {
   consensusWeight: number; // 0..1, Anteil gewichteter Stimmen für consensusSide
 }
 
+// Gewichts-Multiplier basierend auf historischer Trefferquote.
+// 50 % = neutral (1.0x). 60 % = 1.4x. 70 % = 1.8x. 40 % = 0.6x. 30 % = 0.2x.
+function hitRateWeight(hitRatePct: number | undefined): number {
+  if (hitRatePct === undefined) return 1; // kein Backtest verfügbar → neutral
+  return Math.max(0.1, Math.min(2.0, 1 + (hitRatePct - 50) / 25));
+}
+
 // Lasse die GANZE Firma über das Spiel abstimmen.
 export function collectFirmaVotes(ctx: MatchVoteContext): FirmaVoteResult {
   const votes: EmployeeVote[] = [];
@@ -302,9 +313,12 @@ export function collectFirmaVotes(ctx: MatchVoteContext): FirmaVoteResult {
   let homeWeight = 0, drawWeight = 0, awayWeight = 0;
   let homeCount = 0, drawCount = 0, awayCount = 0, abstainCount = 0;
   for (const v of votes) {
-    if (v.side === 'home') { homeCount++; homeWeight += v.confidence; }
-    else if (v.side === 'away') { awayCount++; awayWeight += v.confidence; }
-    else if (v.side === 'draw') { drawCount++; drawWeight += v.confidence; }
+    // Hit-Rate-Gewichtung: gute Mitarbeiter zählen mehr.
+    const skill = hitRateWeight(ctx.hitRates?.get(v.employeeId));
+    const weighted = v.confidence * skill;
+    if (v.side === 'home') { homeCount++; homeWeight += weighted; }
+    else if (v.side === 'away') { awayCount++; awayWeight += weighted; }
+    else if (v.side === 'draw') { drawCount++; drawWeight += weighted; }
     else abstainCount++;
   }
   const totalWeight = homeWeight + drawWeight + awayWeight;

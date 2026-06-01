@@ -32,6 +32,7 @@ import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 import { computeConsensus } from '@/lib/sport/firma/consensus';
 import { ConsensusPicks } from '@/components/consensus-picks';
 import { Tier90Picks } from '@/components/tier-90-picks';
+import { getEmployeeBacktest } from '@/lib/sport/firma/employee-backtest-cache';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -241,6 +242,14 @@ export default async function SportPage() {
   const leagueStatsMap = new Map<string, { homeWinPct: number; goalsPerMatch: number }>();
   for (const s of leagueSeasonStats) leagueStatsMap.set(s.league, { homeWinPct: s.homeWinPct, goalsPerMatch: s.goalsPerMatch });
 
+  // Hit-Rate-Map aus dem Mitarbeiter-Backtest: jede Stimme wird mit dieser
+  // historischen Trefferquote gewichtet (Welle 227).
+  const backtestStats = await getEmployeeBacktest();
+  const hitRates = new Map<string, number>();
+  for (const s of backtestStats) {
+    if (s.hitRatePct !== null && s.totalVotes >= 15) hitRates.set(s.employeeId, s.hitRatePct);
+  }
+
   // Sigrid Achterberg (H2H-Spezialistin) gräbt für jedes upcoming-Fixture den
   // Direktvergleich aus den letzten Liga-Spielen.
   const h2hById = new Map<string, import('@/lib/sport/h2h').HeadToHeadResult>();
@@ -268,7 +277,8 @@ export default async function SportPage() {
         leagueGoalsPerMatch: lstats?.goalsPerMatch ?? null,
         finishedPool: lf.last,
         leagueName: lf.league.name,
-        leagueStats: fullLstats
+        leagueStats: fullLstats,
+        hitRates
       });
       consensusEnriched.push({ verdict, fixture: f, leagueName: lf.league.name });
     }
