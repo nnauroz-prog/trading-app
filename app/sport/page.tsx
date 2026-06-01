@@ -313,12 +313,20 @@ export default async function SportPage() {
         </p>
       </section>
 
-      <Link
-        href="/sport/firma"
-        className="block rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 text-center text-[12px] text-emerald-300 hover:border-emerald-400/60 hover:bg-slate-900/60"
-      >
-        Personalakte aller {firmaSynth.totalEmployees} Mitarbeiter ansehen →
-      </Link>
+      <div className="grid grid-cols-2 gap-2">
+        <Link
+          href="/sport/firma"
+          className="block rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 text-center text-[12px] text-emerald-300 hover:border-emerald-400/60 hover:bg-slate-900/60"
+        >
+          Personalakte → {firmaSynth.totalEmployees} Mitarbeiter
+        </Link>
+        <Link
+          href="/sport/ueberblick"
+          className="block rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 text-center text-[12px] text-emerald-300 hover:border-emerald-400/60 hover:bg-slate-900/60"
+        >
+          Überblick → was geht hier?
+        </Link>
+      </div>
 
       <TeamWatchlistPanel candidates={teamCandidates} />
 
