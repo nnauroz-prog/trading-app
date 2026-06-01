@@ -5,9 +5,10 @@ import { ProbabilityCard } from '@/components/probability-card';
 import { SportTipJournal } from '@/components/sport-tip-journal';
 import { StandingsTable } from '@/components/standings-table';
 import { computeStandings } from '@/lib/sport/standings';
+import { bucketByDay } from '@/lib/sport/day-buckets';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 3600;
+export const revalidate = 900;
 
 function fmtDate(iso: string): string {
   const d = new Date(iso + 'T00:00:00');
@@ -107,13 +108,14 @@ function TopTipp({ leagues }: { leagues: LeagueFixtures[] }) {
   );
 }
 
-function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
+function UpcomingFixtureRow({ f, leagueLabel }: { f: UpcomingFixture; leagueLabel?: string }) {
   return (
     <li className="rounded-lg border border-slate-800 bg-slate-950/40 p-2.5">
       <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
         <span className="font-mono text-[10px] text-slate-500">
           {fmtDate(f.date)}
           {f.time && <span className="ml-1 text-slate-600">{fmtLocalTime(f.date, f.time)}</span>}
+          {leagueLabel && <span className="ml-1 block text-[9px] uppercase tracking-wider text-slate-600">{leagueLabel}</span>}
         </span>
         <span className="text-[13px] text-slate-100">
           <span className="font-semibold">{f.homeTeam}</span>
@@ -147,9 +149,54 @@ function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
   );
 }
 
+function DaySection({
+  title,
+  subtitle,
+  fixtures,
+  leagueNameById
+}: {
+  title: string;
+  subtitle: string;
+  fixtures: { fixture: UpcomingFixture; leagueName: string }[];
+  leagueNameById: Map<string, string>;
+}) {
+  if (fixtures.length === 0) return null;
+  return (
+    <section className="space-y-2 rounded-2xl border border-emerald-400/30 bg-emerald-950/10 p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{title}</h2>
+        <span className="text-[10px] text-slate-500">{fixtures.length} {fixtures.length === 1 ? 'Spiel' : 'Spiele'}</span>
+      </div>
+      <p className="text-[10.5px] leading-snug text-slate-500">{subtitle}</p>
+      <ul className="space-y-1.5">
+        {fixtures.map(({ fixture: f, leagueName }) => (
+          <UpcomingFixtureRow key={f.id} f={f} leagueLabel={leagueName || leagueNameById.get(f.league) || f.league} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default async function SportPage() {
   const leagues = await getFootballFixtures();
   const anyData = leagues.some((l) => l.next.length > 0 || l.last.length > 0);
+
+  const flatUpcoming: { fixture: UpcomingFixture; leagueName: string }[] = [];
+  const leagueNameById = new Map<string, string>();
+  for (const lf of leagues) {
+    leagueNameById.set(lf.league.id, lf.league.name);
+    for (const f of lf.next) flatUpcoming.push({ fixture: f, leagueName: lf.league.name });
+  }
+  const buckets = bucketByDay(flatUpcoming.map((x) => x.fixture));
+  const wrap = (fxs: UpcomingFixture[]) =>
+    fxs.map((f) => {
+      const entry = flatUpcoming.find((x) => x.fixture.id === f.id);
+      return { fixture: f, leagueName: entry?.leagueName ?? '' };
+    });
+  const todayFixtures = wrap(buckets.today);
+  const tomorrowFixtures = wrap(buckets.tomorrow);
+  const laterFirstFixtures = wrap(buckets.laterFirst);
+  const laterDateLabel = buckets.laterFirstDate ? fmtDate(buckets.laterFirstDate) : null;
 
   // Flatten all finished fixtures across leagues for the tip-journal resolver.
   const finishedLite = leagues.flatMap((lf) => lf.last
@@ -169,6 +216,47 @@ export default async function SportPage() {
       </header>
 
       <TopTipp leagues={leagues} />
+
+      <DaySection
+        title={`Heute · ${fmtDate(buckets.todayIso)}`}
+        subtitle="Anstoßzeit in Europe/Berlin. Vorhersagen pro Spiel direkt aufklappbar."
+        fixtures={todayFixtures}
+        leagueNameById={leagueNameById}
+      />
+
+      {todayFixtures.length === 0 && tomorrowFixtures.length > 0 && (
+        <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Heute · {fmtDate(buckets.todayIso)}</h2>
+          <p className="mt-1 text-[12px] leading-snug text-slate-400">
+            Heute keine Spiele in den Top-Ligen. Nächste Anstöße morgen — siehe unten.
+          </p>
+        </section>
+      )}
+
+      {todayFixtures.length === 0 && tomorrowFixtures.length === 0 && laterFirstFixtures.length > 0 && (
+        <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Heute &amp; morgen · {fmtDate(buckets.todayIso)}</h2>
+          <p className="mt-1 text-[12px] leading-snug text-slate-400">
+            Spielpause. Nächster Anstoßtag: <span className="font-semibold text-emerald-300">{laterDateLabel}</span>.
+          </p>
+        </section>
+      )}
+
+      <DaySection
+        title={`Morgen · ${fmtDate(buckets.tomorrowIso)}`}
+        subtitle="Schon mal vorab planen — die Tipps werden über Nacht aktualisiert, wenn neue Form-Daten reinkommen."
+        fixtures={tomorrowFixtures}
+        leagueNameById={leagueNameById}
+      />
+
+      {todayFixtures.length === 0 && tomorrowFixtures.length === 0 && laterFirstFixtures.length > 0 && laterDateLabel && (
+        <DaySection
+          title={`Nächster Spieltag · ${laterDateLabel}`}
+          subtitle="Kein Spiel heute oder morgen — hier die erste anstehende Runde."
+          fixtures={laterFirstFixtures}
+          leagueNameById={leagueNameById}
+        />
+      )}
 
       <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
         <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Tipp-Spiel mit Freunden</div>
