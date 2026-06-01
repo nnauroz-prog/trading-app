@@ -29,6 +29,8 @@ import { SportSectionNav } from '@/components/sport-section-nav';
 import { WochenErgebnisse } from '@/components/wochen-ergebnisse';
 import { LeagueSeasonStatsCard } from '@/components/league-season-stats';
 import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
+import { computeConsensus } from '@/lib/sport/firma/consensus';
+import { ConsensusPicks } from '@/components/consensus-picks';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -235,6 +237,8 @@ export default async function SportPage() {
   const laterDateLabel = buckets.laterFirstDate ? fmtDate(buckets.laterFirstDate) : null;
   const firmaSynth = buildFirmaSynthesis(leagues, buckets.todayIso);
   const leagueSeasonStats = computeLeagueSeasonStats(leagues);
+  const leagueStatsMap = new Map<string, { homeWinPct: number; goalsPerMatch: number }>();
+  for (const s of leagueSeasonStats) leagueStatsMap.set(s.league, { homeWinPct: s.homeWinPct, goalsPerMatch: s.goalsPerMatch });
 
   // Sigrid Achterberg (H2H-Spezialistin) gräbt für jedes upcoming-Fixture den
   // Direktvergleich aus den letzten Liga-Spielen.
@@ -244,6 +248,27 @@ export default async function SportPage() {
       h2hById.set(f.id, computeHeadToHead(f.homeTeam, f.awayTeam, lf.last));
     }
   }
+
+  // Consensus-Engine: 5-Signal-Konsens pro upcoming Fixture aus 3 Saisons.
+  const consensusEnriched: { verdict: import('@/lib/sport/firma/consensus').ConsensusVerdict; fixture: import('@/lib/sport/fetcher').UpcomingFixture; leagueName: string }[] = [];
+  for (const lf of leagues) {
+    for (const f of lf.next) {
+      const homeForm = firmaSynth.forms.find((x) => x.team === f.homeTeam && x.league === lf.league.name) ?? null;
+      const awayForm = firmaSynth.forms.find((x) => x.team === f.awayTeam && x.league === lf.league.name) ?? null;
+      const h2h = h2hById.get(f.id) ?? null;
+      const lstats = leagueStatsMap.get(lf.league.name) ?? null;
+      const verdict = computeConsensus({
+        fixture: f,
+        homeForm,
+        awayForm,
+        h2h,
+        leagueHomeWinPct: lstats?.homeWinPct ?? null,
+        leagueGoalsPerMatch: lstats?.goalsPerMatch ?? null
+      });
+      consensusEnriched.push({ verdict, fixture: f, leagueName: lf.league.name });
+    }
+  }
+  consensusEnriched.sort((a, b) => b.verdict.consensusScore - a.verdict.consensusScore);
 
   // Liefere für die Team-Watchlist Form + nächstes Spiel pro Team, damit der
   // Client das ohne Re-Fetch anzeigen kann.
@@ -287,6 +312,9 @@ export default async function SportPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Vorhergesagte Ergebnisse</h1>
         <p className="text-sm text-slate-400">Jedes anstehende Spiel der nächsten 14 Tage mit voraussichtlichem Endstand — basierend auf 3 Saisons echter Daten.</p>
       </header>
+
+      <div id="maximal-sicher" />
+      <ConsensusPicks picks={consensusEnriched} />
 
       <div id="ergebnisse" />
       <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} />
