@@ -22,6 +22,8 @@ export function SportBriefingCard({ synth, todayFixtures }: { synth: FirmaSynthe
         <span className="font-mono text-emerald-300">{todayFixtures} heute</span>
         <span className="mx-1 text-slate-600">·</span>
         <span className="font-mono text-slate-300">{synth.weekAhead.reduce((s, d) => s + d.fixtures.length, 0)} in 7 Tagen</span>
+        <span className="mx-1 text-slate-600">·</span>
+        <span className="font-mono text-amber-300">{synth.highConfidencePicks.length} sicher</span>
         {dangerous && (
           <>
             <br />

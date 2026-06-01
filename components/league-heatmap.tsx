@@ -33,11 +33,15 @@ export function LeagueHeatmap({ synth }: { synth: FirmaSynthesis }) {
         </p>
       </div>
       <ul className="space-y-1">
-        {rows.map((r) => {
+        {rows.map((r, idx) => {
           const tone = r.safe > 0 ? 'text-emerald-300' : r.bestConf >= 0.5 ? 'text-amber-300' : 'text-slate-500';
+          const isHottest = idx === 0 && r.safe > 0;
           return (
-            <li key={r.league} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
-              <span className="text-slate-200">{r.league}</span>
+            <li key={r.league} className={`grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[11px] ${isHottest ? 'border-emerald-400/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-950/40'}`}>
+              <span className="text-slate-200">
+                {isHottest && <span className="mr-1">🔥</span>}
+                {r.league}
+              </span>
               <span className="text-[10px] text-slate-500">{r.fixtures} Spiele</span>
               <span className={`font-mono text-[10.5px] ${tone}`}>
                 {r.safe} sicher · best {Math.round(r.bestConf * 100)}%

@@ -16,8 +16,20 @@ function fmtTime(time: string | null, date: string): string {
 export function SportTodayBanner({ leagues }: { leagues: LeagueFixtures[] }) {
   const flat: UpcomingFixture[] = [];
   for (const lf of leagues) for (const f of lf.next) flat.push(f);
-  const todayFixtures = bucketByDay(flat).today;
-  if (todayFixtures.length === 0) return null;
+  const buckets = bucketByDay(flat);
+  const todayFixtures = buckets.today;
+  if (todayFixtures.length === 0) {
+    if (buckets.tomorrow.length === 0) return null;
+    return (
+      <Link
+        href="/sport"
+        className="block rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-300 hover:border-emerald-400/60"
+      >
+        <span className="font-semibold text-emerald-300">⚽ Heute kein Sport.</span>{' '}
+        <span className="text-slate-400">Morgen schon {buckets.tomorrow.length} Spiele — zum Sport-Reiter →</span>
+      </Link>
+    );
+  }
   const first3 = todayFixtures.slice(0, 3);
   return (
     <Link
