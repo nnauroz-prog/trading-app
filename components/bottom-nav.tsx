@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { RiskBadge } from '@/components/bottom-nav-badge';
+import { SportNavBadge } from '@/components/sport-nav-badge';
 
 // Mobile-first sticky bottom-nav. Five primary destinations, fits one-handed
 // thumb reach on iPhone. Stays out of the way on >= md.
@@ -23,8 +24,11 @@ export function BottomNav() {
           </Link>
         </li>
         <li>
-          <Link href="/sport" className="flex flex-col items-center gap-0.5 py-2 text-slate-300 hover:text-emerald-300">
-            <span aria-hidden className="text-base leading-none">⚽</span>
+          <Link href="/sport" className="relative flex flex-col items-center gap-0.5 py-2 text-slate-300 hover:text-emerald-300">
+            <span aria-hidden className="relative text-base leading-none">
+              ⚽
+              <SportNavBadge />
+            </span>
             <span>Sport</span>
           </Link>
         </li>
