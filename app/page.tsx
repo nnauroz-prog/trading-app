@@ -60,6 +60,7 @@ import { IntelStrip } from '@/components/intel-strip';
 import { todayIsoBerlin } from '@/lib/agent-memory';
 import { SafetyCheck } from '@/components/safety-check';
 import { SafetyHistoryStrip } from '@/components/safety-history-strip';
+import { LastSafeBuyCard } from '@/components/last-safe-buy-card';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
@@ -367,6 +368,7 @@ export default async function HomePage() {
       </div>
 
       <SafetyCheck report={masterSignal} backtest={backtestSummary} />
+      <LastSafeBuyCard />
       <SafetyHistoryStrip />
       <ProofCard summary={backtestSummary} />
 
