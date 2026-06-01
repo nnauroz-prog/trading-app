@@ -119,27 +119,40 @@ function mergeFixtures(...lists: Fixture[][]): Fixture[] {
 
 async function compute(): Promise<LeagueFixtures[]> {
   const seasons = recentSeasonTags();
+  const todayIso = new Date().toISOString().slice(0, 10);
   const results = await Promise.all(
     FOOTBALL_LEAGUES.map(async (league) => {
       // Parallel: anstehende Spiele + letzte 15 Tage + drei letzte Saisons.
-      const [next, past, ...seasonalLists] = await Promise.all([
+      const [nextRaw, pastRaw, ...seasonalLists] = await Promise.all([
         fetchEvents(league.id, 'next'),
         fetchEvents(league.id, 'past'),
         ...seasons.map((s) => fetchSeasonEvents(league.id, s))
       ]);
-      // Volle Historie aus Saisons + jüngste Form-Spiele zusammenführen.
-      const finishedPool = mergeFixtures(past, ...seasonalLists);
-      const upcoming: UpcomingFixture[] = next.slice(0, 50).map((f) => {
+      // STRIKTE Datums-Sortierung: TheSportsDB schiebt manchmal zukünftige
+      // Quali-/Test-Spiele in den "past"-Endpoint mit pseudo-Ergebnissen.
+      // Wir vertrauen NUR dem Datum: alles ab heute = upcoming, alles
+      // vorher = finished.
+      const everyEvent = mergeFixtures(nextRaw, pastRaw, ...seasonalLists);
+      const future = everyEvent.filter((f) => f.date >= todayIso);
+      const finishedPool = everyEvent.filter((f) => f.date < todayIso && f.homeScore !== null && f.awayScore !== null);
+
+      // Sortiert die zukünftigen nach Datum aufsteigend (frühestes zuerst).
+      future.sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''));
+
+      const upcoming: UpcomingFixture[] = future.slice(0, 50).map((f) => {
         const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, finishedPool);
         const tips = probabilities ? generateTips(probabilities, f.homeTeam, f.awayTeam) : null;
         return {
           ...f,
+          status: 'upcoming',
+          homeScore: null, // explizit löschen, falls TheSportsDB-Phantomwerte da waren
+          awayScore: null,
           prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool),
           probabilities,
           tips
         };
       });
-      // Sortiert nach Datum absteigend, damit "letzte Ergebnisse" wirklich die neuesten sind.
+      // Vergangenheit: die neuesten zuerst.
       const sortedPast = finishedPool.slice().sort((a, b) => b.date.localeCompare(a.date));
       return {
         league,
@@ -154,4 +167,4 @@ async function compute(): Promise<LeagueFixtures[]> {
 // Live-Daten: alle 10 Minuten frischer Pull. Vergangenheit (Saisonalcalls
 // einzeln gecacht in fetchSeasonEvents) wird intern 24 h gehalten.
 // v4-Cache-Key, weil sich das Schema durch Saison-Aggregation verändert.
-export const getFootballFixtures = unstable_cache(compute, ['football-fixtures-v5-45d'], { revalidate: 600 });
+export const getFootballFixtures = unstable_cache(compute, ['football-fixtures-v6-date-strict'], { revalidate: 600 });
