@@ -28,7 +28,11 @@ export const FOOTBALL_LEAGUES: League[] = [
   { id: '4406', name: 'Primera División', country: 'Argentinien' },
   { id: '4396', name: 'Indian Super League', country: 'Indien' },
   { id: '4391', name: 'Chinese Super League', country: 'China' },
-  { id: '4429', name: 'FIFA World Cup', country: 'International' }
+  { id: '4429', name: 'FIFA World Cup', country: 'International' },
+  { id: '4503', name: 'International Friendlies', country: 'International' },
+  { id: '4548', name: 'UEFA Nations League', country: 'Europa' }
 ];
 
-export const WORLD_CUP_LEAGUE_ID = '4429';
+// Mehrere mögliche IDs für die WM 2026 — TheSportsDB pflegt sie oft unter
+// verschiedenen IDs (Hauptturnier, Qualifikation, Friendlies).
+export const WORLD_CUP_LEAGUE_IDS = ['4429', '4503'];

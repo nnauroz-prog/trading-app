@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { getFootballFixtures } from '@/lib/sport/fetcher';
-import { WORLD_CUP_LEAGUE_ID } from '@/lib/sport/leagues';
+import { WORLD_CUP_LEAGUE_IDS } from '@/lib/sport/leagues';
 import { bucketByDay } from '@/lib/sport/day-buckets';
-import type { UpcomingFixture } from '@/lib/sport/fetcher';
+import type { UpcomingFixture, Fixture } from '@/lib/sport/fetcher';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -66,7 +66,21 @@ function winnerVerdict(f: UpcomingFixture): WinnerVerdict {
 
 export default async function WorldCupPage() {
   const leagues = await getFootballFixtures();
-  const wm = leagues.find((l) => l.league.id === WORLD_CUP_LEAGUE_ID) ?? null;
+  // Sammle Spiele aus allen WM-relevanten Liga-IDs (Hauptturnier + Friendlies).
+  const wmCandidates = leagues.filter((l) => WORLD_CUP_LEAGUE_IDS.includes(l.league.id));
+  const allNext: UpcomingFixture[] = [];
+  const allLast: Fixture[] = [];
+  for (const lf of wmCandidates) {
+    for (const f of lf.next) allNext.push(f);
+    for (const f of lf.last) allLast.push(f);
+  }
+  // Deduplizieren nach Event-ID — gleiche Spiele könnten in mehreren Pseudo-Ligen liegen.
+  const seenNext = new Set<string>();
+  const uniqueNext = allNext.filter((f) => { if (seenNext.has(f.id)) return false; seenNext.add(f.id); return true; });
+  const seenLast = new Set<string>();
+  const uniqueLast = allLast.filter((f) => { if (seenLast.has(f.id)) return false; seenLast.add(f.id); return true; });
+
+  const wm = wmCandidates.length > 0 ? { league: wmCandidates[0].league, next: uniqueNext, last: uniqueLast } : null;
 
   return (
     <main className="mx-auto max-w-4xl space-y-5 p-4 md:p-6">
@@ -86,7 +100,7 @@ export default async function WorldCupPage() {
         <section className="rounded-2xl border border-amber-500/40 bg-amber-950/15 p-4">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-amber-300">Keine WM-Daten verfügbar</h2>
           <p className="mt-1 text-[12px] leading-snug text-amber-100/90">
-            TheSportsDB liefert aktuell keine Spielansetzungen für die FIFA-WM-Liga ({WORLD_CUP_LEAGUE_ID}). Möglich, dass die ID sich ändert sobald das Turnier näher rückt oder ein anderer Endpoint gepflegt wird. Sobald Daten reinkommen, erscheinen sie hier.
+            TheSportsDB liefert aktuell keine Spielansetzungen für die geprüften WM-Liga-IDs ({WORLD_CUP_LEAGUE_IDS.join(', ')}). Möglich, dass das Turnier in deren Pool unter einer anderen ID läuft oder die Daten erst kurz vor Turnier-Beginn (11. Juni 2026) gepflegt werden. Sobald Daten reinkommen, erscheinen sie hier — der Reiter ist schon vollständig fertig.
           </p>
         </section>
       ) : (() => {
