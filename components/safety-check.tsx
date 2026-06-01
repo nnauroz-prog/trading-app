@@ -1,6 +1,7 @@
 import { MasterSignalReport } from '@/lib/analysis/master-signal-engine';
 import { BacktestSummary } from '@/lib/analysis/backtest-summary';
-import { SafetyAssessment, evaluateSafety } from '@/lib/analysis/safety-gate';
+import { SafetyAssessment } from '@/lib/analysis/safety-gate';
+import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
 
 const GRADE_STYLE: Record<SafetyAssessment['grade'], string> = {
   A: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200',
@@ -14,27 +15,7 @@ export function SafetyCheck({ report, backtest }: { report: MasterSignalReport; 
 
   // Pro move: pick the candidate with the highest safety score, not just the
   // raw-confluence leader. Ties broken by passedCount.
-  const scored = report.candidates.map((c) => {
-    const userBrokerAvailable = c.brokers.includes('Coinbase') || c.brokers.includes('Scalable Capital');
-    const safety = evaluateSafety({
-      passedCount: c.passedCount,
-      marketMood: report.marketMood,
-      btcRegime: report.btcRegime,
-      isBtc: c.coinId === 'btc',
-      structure: c.structure,
-      nearSupport: c.nearSupport,
-      crowdCautious: report.crowd.cautious,
-      quoteVolume: c.quoteVolume,
-      stopDistancePct: c.stopDistancePct,
-      confirmed: c.confirmed,
-      userBrokerAvailable,
-      priceChangePct24h: c.priceChangePct24h,
-      mode: report.mode,
-      relStrengthVsBtc: c.relStrengthVsBtc,
-      backtestEdge: backtest.perAssetEdge[c.coinId] ?? null
-    });
-    return { c, safety };
-  });
+  const scored = report.candidates.map((c) => ({ c, safety: scoreCandidateSafety(c, report, backtest) }));
   scored.sort((x, y) => y.safety.score - x.safety.score || y.c.passedCount - x.c.passedCount);
   const { c: target, safety: a } = scored[0];
   const confluenceLeader = report.candidates[0];
