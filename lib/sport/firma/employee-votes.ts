@@ -14,6 +14,8 @@ export interface EmployeeVote {
   side: VoteSide;
   confidence: number; // 0..1 — wie überzeugt der Mitarbeiter ist
   reasoning: string;  // Begründung in einem Satz
+  // Historische Trefferquote aus dem Backtest (0..100), optional.
+  hitRatePct?: number;
 }
 
 export interface MatchVoteContext {
@@ -307,7 +309,12 @@ export function collectFirmaVotes(ctx: MatchVoteContext): FirmaVoteResult {
     if (!voteFn && isTeamAnalyst(employee.id)) voteFn = teamAnalystVote;
     if (!voteFn) continue;
     const vote = voteFn(employee, ctx);
-    if (vote) votes.push(vote);
+    if (vote) {
+      // Hit-Rate auf jede Stimme anhängen, damit das UI das Skill-Niveau zeigen kann.
+      const hr = ctx.hitRates?.get(vote.employeeId);
+      if (hr !== undefined) vote.hitRatePct = hr;
+      votes.push(vote);
+    }
   }
 
   let homeWeight = 0, drawWeight = 0, awayWeight = 0;

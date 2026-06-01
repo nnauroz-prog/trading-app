@@ -31,7 +31,7 @@ export function FirmaVotesCard({ fixture, voteResult }: Props) {
       <header>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-sky-300">Firma-Abstimmung · {voteResult.totalActiveVotes} aktive Stimmen</h3>
         <p className="mt-0.5 text-[10.5px] leading-snug text-slate-400">
-          Die 100 Mitarbeiter:innen geben jede ihre eigene Stimme ab, jede mit anderer Methodik. Die meisten passen — die geben dann „Enthaltung“. Wer eine Meinung hat, taucht hier auf.
+          Die 100 Mitarbeiter:innen geben jede ihre eigene Stimme ab, jede mit anderer Methodik. Stimmen werden mit der historischen Trefferquote der Person gewichtet — gute Mitarbeiter zählen mehr. Die Hit-Rate-Pille rechts neben jedem Namen zeigt das Skill-Niveau.
         </p>
       </header>
 
@@ -55,19 +55,29 @@ export function FirmaVotesCard({ fixture, voteResult }: Props) {
           ▸ Top {topActive.length} aktive Stimmen lesen ({active.length} insgesamt aktiv)
         </summary>
         <ul className="space-y-1.5 p-2.5 pt-0">
-          {topActive.map((v) => (
-            <li key={v.employeeId} className="grid grid-cols-[auto_1fr_auto] gap-2 rounded border border-slate-800 bg-slate-950/60 p-2 text-[11px]">
-              <span className={`font-mono text-[10px] uppercase tracking-wider ${sideColor(v.side)}`}>
-                {v.side === 'home' ? '➤ Heim' : v.side === 'away' ? '➤ Ausw' : v.side === 'draw' ? '➤ Remis' : '—'}
-              </span>
-              <div className="min-w-0">
-                <div className="truncate font-semibold text-slate-100">{v.employeeName}</div>
-                <div className="truncate text-[10px] text-slate-500">{v.role.split('·')[0].trim()}</div>
-                <div className="text-[10px] text-slate-300">{v.reasoning}</div>
-              </div>
-              <span className="font-mono text-[10px] text-slate-400">{Math.round(v.confidence * 100)} %</span>
-            </li>
-          ))}
+          {topActive.map((v) => {
+            const hr = v.hitRatePct;
+            const hrTone = hr === undefined ? 'text-slate-600 border-slate-800' :
+              hr >= 60 ? 'text-emerald-300 border-emerald-400/40' :
+              hr >= 50 ? 'text-amber-300 border-amber-400/40' :
+              'text-rose-300 border-rose-400/40';
+            return (
+              <li key={v.employeeId} className="grid grid-cols-[auto_1fr_auto_auto] gap-2 rounded border border-slate-800 bg-slate-950/60 p-2 text-[11px]">
+                <span className={`font-mono text-[10px] uppercase tracking-wider ${sideColor(v.side)}`}>
+                  {v.side === 'home' ? '➤ Heim' : v.side === 'away' ? '➤ Ausw' : v.side === 'draw' ? '➤ Remis' : '—'}
+                </span>
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-slate-100">{v.employeeName}</div>
+                  <div className="truncate text-[10px] text-slate-500">{v.role.split('·')[0].trim()}</div>
+                  <div className="text-[10px] text-slate-300">{v.reasoning}</div>
+                </div>
+                <span className={`rounded-md border px-1.5 py-0.5 font-mono text-[9px] ${hrTone}`} title="historische Trefferquote dieses Mitarbeiters">
+                  {hr === undefined ? '—' : `${hr.toFixed(0)} %`}
+                </span>
+                <span className="font-mono text-[10px] text-slate-400">{Math.round(v.confidence * 100)} %</span>
+              </li>
+            );
+          })}
         </ul>
         {abstain.length > 0 && (
           <p className="border-t border-slate-800 p-2.5 pt-2 text-[10px] text-slate-500">
