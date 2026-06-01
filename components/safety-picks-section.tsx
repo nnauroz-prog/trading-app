@@ -1,4 +1,5 @@
 import type { FirmaSynthesis } from '@/lib/sport/firma/synthesis';
+import { ExtraTipsChips } from '@/components/extra-tips-chips';
 
 function fmtTime(time: string | null, date: string): string {
   if (!time) return '';
@@ -63,6 +64,7 @@ export function SafetyPicksSection({ synth }: { synth: FirmaSynthesis }) {
                 </div>
                 <div className="text-[13px] font-semibold text-slate-100">{p.fixture.awayTeam}</div>
               </div>
+              <ExtraTipsChips btts={p.btts} over25={p.over25} />
               <p className="text-[10px] leading-snug text-slate-500">
                 Modell-Schätzung aus den letzten Liga-Spielen — perfekt fürs Tippspiel mit Freunden.
               </p>

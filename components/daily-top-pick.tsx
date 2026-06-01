@@ -1,4 +1,5 @@
 import type { FirmaSynthesis } from '@/lib/sport/firma/synthesis';
+import { ExtraTipsChips } from '@/components/extra-tips-chips';
 
 function fmtTime(time: string | null, date: string): string {
   if (!time) return '';
@@ -63,6 +64,8 @@ export function DailyTopPickCard({ synth }: { synth: FirmaSynthesis }) {
         </div>
         <div className="text-[13px] font-semibold text-slate-100">{pick.fixture.awayTeam}</div>
       </div>
+
+      <ExtraTipsChips btts={pick.btts} over25={pick.over25} />
 
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[10.5px] text-slate-400">
         <span>{fmtDate(pick.fixture.date)}</span>

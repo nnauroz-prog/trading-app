@@ -39,6 +39,9 @@ export interface HighConfidencePick {
   // Exakter wahrscheinlichster Score laut Poisson — präzise Vorhersage,
   // KEINE Garantie. Die UI muss das ehrlich labeln.
   likelyScore: { home: number; away: number };
+  // Zusatz-Wahrscheinlichkeiten fürs Tippspiel: beide Teams treffen + Über/Unter 2.5 Tore.
+  btts: number | null;
+  over25: number | null;
 }
 
 export interface HonestyNote {
@@ -92,7 +95,9 @@ function pickBestOfAll(weekAhead: WeekAheadDay[]): HighConfidencePick | null {
           leagueName,
           pickPlain: pred.pickPlain,
           confidence: pred.pickConfidence,
-          likelyScore: pred.likelyScore
+          likelyScore: pred.likelyScore,
+          btts: fixture.probabilities?.btts ?? null,
+          over25: fixture.probabilities?.over25 ?? null
         };
       }
     }
@@ -123,7 +128,9 @@ function pickHighConfidence(weekAhead: WeekAheadDay[]): HighConfidencePick[] {
         leagueName,
         pickPlain: pred.pickPlain,
         confidence: pred.pickConfidence,
-        likelyScore: pred.likelyScore
+        likelyScore: pred.likelyScore,
+        btts: fixture.probabilities?.btts ?? null,
+        over25: fixture.probabilities?.over25 ?? null
       });
     }
   }
