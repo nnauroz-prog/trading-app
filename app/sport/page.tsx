@@ -12,6 +12,8 @@ import { WeekAheadList } from '@/components/week-ahead-list';
 import { TeamWatchlistPanel } from '@/components/team-watchlist-panel';
 import { TeamWatchToggle } from '@/components/team-watch-toggle';
 import { SafetyPicksSection } from '@/components/safety-picks-section';
+import { H2HBadge } from '@/components/h2h-badge';
+import { computeHeadToHead } from '@/lib/sport/h2h';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -114,7 +116,7 @@ function TopTipp({ leagues }: { leagues: LeagueFixtures[] }) {
   );
 }
 
-function UpcomingFixtureRow({ f, leagueLabel }: { f: UpcomingFixture; leagueLabel?: string }) {
+function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagueLabel?: string; h2h?: import('@/lib/sport/h2h').HeadToHeadResult }) {
   return (
     <li className="rounded-lg border border-slate-800 bg-slate-950/40 p-2.5">
       <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
@@ -134,6 +136,11 @@ function UpcomingFixtureRow({ f, leagueLabel }: { f: UpcomingFixture; leagueLabe
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800/60 pt-1.5 text-[10px] text-slate-500">
           <span>Form Heim: <FormChips form={f.prediction.homeForm} /></span>
           <span>Form Auswärts: <FormChips form={f.prediction.awayForm} /></span>
+        </div>
+      )}
+      {h2h && (
+        <div className="mt-1.5">
+          <H2HBadge h2h={h2h} />
         </div>
       )}
       {f.probabilities && f.tips ? (
@@ -159,12 +166,14 @@ function DaySection({
   title,
   subtitle,
   fixtures,
-  leagueNameById
+  leagueNameById,
+  h2hById
 }: {
   title: string;
   subtitle: string;
   fixtures: { fixture: UpcomingFixture; leagueName: string }[];
   leagueNameById: Map<string, string>;
+  h2hById: Map<string, import('@/lib/sport/h2h').HeadToHeadResult>;
 }) {
   if (fixtures.length === 0) return null;
   return (
@@ -176,7 +185,12 @@ function DaySection({
       <p className="text-[10.5px] leading-snug text-slate-500">{subtitle}</p>
       <ul className="space-y-1.5">
         {fixtures.map(({ fixture: f, leagueName }) => (
-          <UpcomingFixtureRow key={f.id} f={f} leagueLabel={leagueName || leagueNameById.get(f.league) || f.league} />
+          <UpcomingFixtureRow
+            key={f.id}
+            f={f}
+            leagueLabel={leagueName || leagueNameById.get(f.league) || f.league}
+            h2h={h2hById.get(f.id)}
+          />
         ))}
       </ul>
     </section>
@@ -204,6 +218,15 @@ export default async function SportPage() {
   const laterFirstFixtures = wrap(buckets.laterFirst);
   const laterDateLabel = buckets.laterFirstDate ? fmtDate(buckets.laterFirstDate) : null;
   const firmaSynth = buildFirmaSynthesis(leagues, buckets.todayIso);
+
+  // Sigrid Achterberg (H2H-Spezialistin) gräbt für jedes upcoming-Fixture den
+  // Direktvergleich aus den letzten Liga-Spielen.
+  const h2hById = new Map<string, import('@/lib/sport/h2h').HeadToHeadResult>();
+  for (const lf of leagues) {
+    for (const f of lf.next) {
+      h2hById.set(f.id, computeHeadToHead(f.homeTeam, f.awayTeam, lf.last));
+    }
+  }
 
   // Liefere für die Team-Watchlist Form + nächstes Spiel pro Team, damit der
   // Client das ohne Re-Fetch anzeigen kann.
@@ -271,6 +294,7 @@ export default async function SportPage() {
         subtitle="Anstoßzeit in Europe/Berlin. Vorhersagen pro Spiel direkt aufklappbar."
         fixtures={todayFixtures}
         leagueNameById={leagueNameById}
+        h2hById={h2hById}
       />
 
       {todayFixtures.length === 0 && tomorrowFixtures.length > 0 && (
@@ -296,6 +320,7 @@ export default async function SportPage() {
         subtitle="Schon mal vorab planen — die Tipps werden über Nacht aktualisiert, wenn neue Form-Daten reinkommen."
         fixtures={tomorrowFixtures}
         leagueNameById={leagueNameById}
+        h2hById={h2hById}
       />
 
       {todayFixtures.length === 0 && tomorrowFixtures.length === 0 && laterFirstFixtures.length > 0 && laterDateLabel && (
@@ -304,6 +329,7 @@ export default async function SportPage() {
           subtitle="Kein Spiel heute oder morgen — hier die erste anstehende Runde."
           fixtures={laterFirstFixtures}
           leagueNameById={leagueNameById}
+          h2hById={h2hById}
         />
       )}
 
@@ -337,7 +363,7 @@ export default async function SportPage() {
                   <div>
                     <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Nächste Spiele · mit Tipp</h3>
                     <ul className="space-y-1.5">
-                      {lf.next.map((f) => <UpcomingFixtureRow key={f.id} f={f} />)}
+                      {lf.next.map((f) => <UpcomingFixtureRow key={f.id} f={f} h2h={h2hById.get(f.id)} />)}
                     </ul>
                   </div>
                 )}

@@ -13,7 +13,8 @@ export type SportDepartment =
   | 'transfer_watch'
   | 'politik_watch'
   | 'schedule_gatekeeper'
-  | 'safety_picker';
+  | 'safety_picker'
+  | 'h2h_specialist';
 
 export interface SportEmployee {
   id: string;
@@ -117,8 +118,16 @@ const FORM_ANALYSTS: SportEmployee[] = [
   { id: 'fa-4', name: 'Sebastián Ortega', role: 'Form-Analyst · Gegen-Tor-Quote', department: 'form_analyst' },
   { id: 'fa-5', name: 'Heike Tollner', role: 'Form-Analyst · Heim-Form', department: 'form_analyst' },
   { id: 'fa-6', name: 'Phil Karras', role: 'Form-Analyst · Auswärts-Form', department: 'form_analyst' },
-  { id: 'fa-7', name: 'Margit Wiesinger', role: 'Form-Analyst · Aufholjagden', department: 'form_analyst' },
-  { id: 'fa-8', name: 'Bo-Yeon Lee', role: 'Form-Analyst · Knappe Spiele', department: 'form_analyst' }
+  { id: 'fa-7', name: 'Margit Wiesinger', role: 'Form-Analyst · Aufholjagden', department: 'form_analyst' }
+];
+
+const H2H_SPECIALIST: SportEmployee[] = [
+  {
+    id: 'h2h-1',
+    name: 'Sigrid Achterberg',
+    role: 'Direktvergleichs-Spezialistin · gräbt zu jedem Aufeinandertreffen die gesamte H2H-Historie aus dem Datenpool aus.',
+    department: 'h2h_specialist'
+  }
 ];
 
 const SCHEDULE_GATEKEEPER: SportEmployee[] = [
@@ -191,8 +200,11 @@ export const SPORT_FIRMA: SportEmployee[] = [
   ...TRANSFER_WATCH,
   ...POLITIK_WATCH,
   ...SCHEDULE_GATEKEEPER,
-  ...SAFETY_PICKER
+  ...SAFETY_PICKER,
+  ...H2H_SPECIALIST
 ];
+
+export const H2H_SPECIALIST_EMPLOYEE: SportEmployee = H2H_SPECIALIST[0];
 
 // Praktischer Zugriff auf die zwei „Einzelplatz"-Rollen, deren Namen die UI
 // neben ihrer Auswertung ausweist.
@@ -209,7 +221,7 @@ export function countByDepartment(): Record<SportDepartment, number> {
   const out = {
     chef: 0, league_scout: 0, team_analyst: 0, form_analyst: 0,
     tactical_analyst: 0, international_watch: 0, transfer_watch: 0, politik_watch: 0,
-    schedule_gatekeeper: 0, safety_picker: 0
+    schedule_gatekeeper: 0, safety_picker: 0, h2h_specialist: 0
   } as Record<SportDepartment, number>;
   for (const e of SPORT_FIRMA) out[e.department]++;
   return out;
