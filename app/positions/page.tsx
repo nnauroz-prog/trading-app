@@ -1,17 +1,35 @@
 import Link from 'next/link';
 import { PositionsPanel } from '@/components/positions-panel';
+import { PositionHealthStrip, type CoinHealth } from '@/components/position-health-strip';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
+import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
+import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
+import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PositionsPage() {
-  const tickers = await fetchAllTickers();
+  const [tickers, masterSignal, backtestSummary] = await Promise.all([
+    fetchAllTickers(),
+    buildMasterSignal('swing'),
+    getBacktestSummary()
+  ]);
+
   const latestPrices: Record<string, number | null> = {};
   if (tickers) {
     for (const [symbol, t] of tickers.entries()) {
       const key = symbol.replace('USDT', '').toLowerCase();
       latestPrices[key] = t.price;
     }
+  }
+
+  const healthByCoin: Record<string, CoinHealth> = {};
+  for (const c of masterSignal.candidates) {
+    healthByCoin[c.symbol.toLowerCase()] = {
+      symbol: c.symbol,
+      safety: scoreCandidateSafety(c, masterSignal, backtestSummary),
+      priceChangePct24h: c.priceChangePct24h
+    };
   }
 
   return (
@@ -30,6 +48,8 @@ export default async function PositionsPage() {
           Erfasse hier alle echten Käufe — Crypto auf Coinbase, Aktien/Optionsscheine auf Scalable oder Trade Republic. Live-PnL für Crypto via Bybit Spot. Für Aktien/Hebelprodukte den Exit-Preis manuell setzen, dann wird der realisierte Gewinn/Verlust berechnet.
         </p>
       </header>
+
+      <PositionHealthStrip healthByCoin={healthByCoin} />
 
       <PositionsPanel latestPrices={latestPrices} />
     </main>
