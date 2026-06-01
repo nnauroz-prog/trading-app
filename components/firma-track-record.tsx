@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { SPORT_TIP_JOURNAL_CHANGED_EVENT, loadTipJournal, summariseTips } from '@/lib/sport/tip-journal';
+import { computeTipStreak } from '@/lib/sport/tip-streak';
 
 interface Props {
   safetyPickerName: string;
@@ -13,10 +14,15 @@ interface Props {
 // Track-Record, den die Firma Kunden wirklich zeigen kann.
 export function FirmaTrackRecord({ safetyPickerName }: Props) {
   const [stats, setStats] = useState(() => summariseTips([]));
+  const [streak, setStreak] = useState(() => computeTipStreak([]));
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const sync = () => setStats(summariseTips(loadTipJournal()));
+    const sync = () => {
+      const log = loadTipJournal();
+      setStats(summariseTips(log));
+      setStreak(computeTipStreak(log));
+    };
     sync();
     setMounted(true);
     window.addEventListener(SPORT_TIP_JOURNAL_CHANGED_EVENT, sync);
@@ -44,6 +50,33 @@ export function FirmaTrackRecord({ safetyPickerName }: Props) {
           tone={stats.hitRatePct !== null && stats.hitRatePct >= 60 ? 'good' : stats.hitRatePct !== null && stats.hitRatePct < 40 ? 'bad' : 'neutral'}
         />
       </div>
+
+      {streak.recent.length > 0 && (
+        <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Letzte aufgelöste Tipps</div>
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[10px] text-slate-400">
+              {streak.current !== 0 && (
+                <span className={streak.current > 0 ? 'text-emerald-300' : 'text-rose-300'}>
+                  Aktuell: {streak.current > 0 ? `${streak.current} Treffer in Folge` : `${Math.abs(streak.current)} daneben in Folge`}
+                </span>
+              )}
+              <span>Beste Serie: <span className="font-mono text-emerald-300">{streak.bestWinStreak}</span></span>
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {streak.recent.map((r, i) => (
+              <span
+                key={i}
+                title={r === 'W' ? 'Treffer' : r === 'L' ? 'Daneben' : 'Push'}
+                className={`inline-block h-3 w-3 rounded-sm text-center text-[8.5px] font-bold leading-3 ${r === 'W' ? 'bg-emerald-500/80 text-emerald-50' : r === 'L' ? 'bg-rose-500/80 text-rose-50' : 'bg-slate-600 text-slate-100'}`}
+              >
+                {r === 'W' ? '✓' : r === 'L' ? '✗' : '~'}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {stats.resolved < 10 && (
         <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-2.5 text-[10.5px] leading-snug text-amber-100/90">
