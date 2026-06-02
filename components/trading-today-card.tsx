@@ -1,5 +1,6 @@
 import type { AgentVerdict } from '@/lib/agents/personas';
 import type { TradeTier90Result } from '@/lib/agents/trade-tier-90';
+import { PositionSizeHelper } from '@/components/position-size-helper';
 
 interface Props {
   tier90: TradeTier90Result;
@@ -92,22 +93,25 @@ export function TradingTodayCard(props: Props) {
       </header>
 
       {symbol && entry !== null && stop !== null && tp !== null && (
-        <div className="grid grid-cols-3 gap-2 rounded-xl border border-slate-800/60 bg-slate-950/50 p-3">
-          <div className="text-center">
-            <div className="text-[9px] uppercase tracking-wider text-slate-500">Einstieg</div>
-            <div className="mt-0.5 font-mono text-base font-bold text-slate-100">{fmtPrice(entry)}</div>
+        <>
+          <div className="grid grid-cols-3 gap-2 rounded-xl border border-slate-800/60 bg-slate-950/50 p-3">
+            <div className="text-center">
+              <div className="text-[9px] uppercase tracking-wider text-slate-500">Einstieg</div>
+              <div className="mt-0.5 font-mono text-base font-bold text-slate-100">{fmtPrice(entry)}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[9px] uppercase tracking-wider text-rose-400">Stop</div>
+              <div className="mt-0.5 font-mono text-base font-bold text-rose-200">{fmtPrice(stop)}</div>
+              <div className="text-[9px] text-rose-400/70">−{(Math.abs((entry - stop) / entry) * 100).toFixed(1)} %</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[9px] uppercase tracking-wider text-emerald-400">Ziel</div>
+              <div className="mt-0.5 font-mono text-base font-bold text-emerald-200">{fmtPrice(tp)}</div>
+              <div className="text-[9px] text-emerald-400/70">+{(Math.abs((tp - entry) / entry) * 100).toFixed(1)} %</div>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-[9px] uppercase tracking-wider text-rose-400">Stop</div>
-            <div className="mt-0.5 font-mono text-base font-bold text-rose-200">{fmtPrice(stop)}</div>
-            <div className="text-[9px] text-rose-400/70">−{(Math.abs((entry - stop) / entry) * 100).toFixed(1)} %</div>
-          </div>
-          <div className="text-center">
-            <div className="text-[9px] uppercase tracking-wider text-emerald-400">Ziel</div>
-            <div className="mt-0.5 font-mono text-base font-bold text-emerald-200">{fmtPrice(tp)}</div>
-            <div className="text-[9px] text-emerald-400/70">+{(Math.abs((tp - entry) / entry) * 100).toFixed(1)} %</div>
-          </div>
-        </div>
+          <PositionSizeHelper entry={entry} stop={stop} symbol={symbol} />
+        </>
       )}
 
       <p className="text-[10px] leading-snug text-slate-500">
