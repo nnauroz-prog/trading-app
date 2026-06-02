@@ -53,6 +53,7 @@ import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
 import { TradeTier90Card } from '@/components/trade-tier-90-card';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
+import { AppOverviewStats } from '@/components/app-overview-stats';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getLehrlingReport } from '@/lib/akademie/lehrling';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
@@ -510,6 +511,12 @@ export default async function HomePage() {
       <WocheVoraus events={upcomingMacro} today={todayIso} />
 
       <SportBriefingCard synth={sportSynth} todayFixtures={sportTodayCount} />
+
+      <AppOverviewStats
+        todayFixtureCount={sportTodayCount}
+        weekFixtureCount={sportSynth.totalFixturesNext7d}
+        totalFirmenMitarbeiter={sportSynth.totalEmployees}
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
