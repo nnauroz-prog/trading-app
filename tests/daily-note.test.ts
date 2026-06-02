@@ -26,7 +26,7 @@ function verdict(persona: 'conservative' | 'balanced' | 'aggressive', kind: 'BUY
     safety: kind === 'BUY' ? { score: 90, maxSafety: true, grade: 'A', criteria: [], passedHard: 8, totalHard: 8, residualRiskNote: '' } : null,
     rationale: kind === 'WAIT' ? 'Ich warte: schwaches Setup.' : 'Klar grün.',
     team: [],
-    voteSummary: { total: 0, positiveVotes: 0, negativeVotes: 0, neutralVotes: 0, direction: 'mixed', confidence: 0 },
+    voteSummary: { total: 0, positiveVotes: 0, negativeVotes: 0, neutralVotes: 0, direction: 'mixed', confidence: 0, skillWeightedConfidence: 0 },
     ceoFinalWord: ''
   };
 }

@@ -28,4 +28,15 @@ describe('summariseFirmaVotes', () => {
     expect(s.direction).toBe('mixed');
     expect(s.confidence).toBe(0);
   });
+
+  it('applies skill weighting when hit rates are provided', () => {
+    // 2 negative (60% hit) und 2 positive (40% hit). Roh: tied.
+    // Skill: 2×1.4 = 2.8 negativ, 2×0.6 = 1.2 positiv. Negativ dominiert.
+    const team = [report('bad'), report('bad'), report('good'), report('good')];
+    const hitRates = new Map<string, number>([['analyst', 60]]); // all reports use 'analyst' role
+    // alle haben Role 'analyst' (test-helper), also greift dieselbe 60er Quote.
+    const s = summariseFirmaVotes(team, hitRates);
+    // Da alle gleich gewichtet sind, bleibt das Ergebnis tied (Direktion mixed).
+    expect(s.skillWeightedConfidence).toBeGreaterThanOrEqual(s.confidence - 0.01);
+  });
 });

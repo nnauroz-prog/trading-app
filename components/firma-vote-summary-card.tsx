@@ -1,7 +1,14 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import type { FirmaVoteSummary } from '@/lib/agents/firma-vote-aggregator';
+import { summariseFirmaVotes } from '@/lib/agents/firma-vote-aggregator';
 import type { SubAgentReport } from '@/lib/agents/sub-agents';
 import type { PersonaId } from '@/lib/agents/personas';
 import { SubAgentHitRateBadge } from '@/components/sub-agent-hit-rate-badge';
+import { FIRMA_DECISIONS_CHANGED_EVENT, loadFirmaLog } from '@/lib/firma-memory';
+import { INTEL_LOG_CHANGED_EVENT, loadIntelLog } from '@/lib/intel/memory';
+import { computeSubAgentAccuracy } from '@/lib/agents/sub-agent-accuracy';
 
 interface Props {
   voteSummary: FirmaVoteSummary;
@@ -30,7 +37,35 @@ const ROLE_LABEL: Record<string, string> = {
 // Jede Firma hat 7 Sub-Agenten — ihre Stimmen werden aggregiert und mit jeder
 // einzelnen Begründung sichtbar gemacht.
 export function FirmaVoteSummaryCard({ voteSummary, team, firmaName, firmaId }: Props) {
-  const style = DIRECTION_STYLE[voteSummary.direction];
+  // Client-seitig: lokale Hit-Rates dazuholen und skill-gewichteten Konsens
+  // berechnen. Wenn keine Daten vorhanden sind, identisch zum Server-Aggregat.
+  const [skillSummary, setSkillSummary] = useState<FirmaVoteSummary>(voteSummary);
+  useEffect(() => {
+    const sync = () => {
+      const firmaLog = loadFirmaLog();
+      const intelLog = loadIntelLog();
+      const priceMap = new Map<string, number>();
+      for (const s of intelLog) if (s.btcPriceAtRecord !== null) priceMap.set(s.date, s.btcPriceAtRecord);
+      const rows = computeSubAgentAccuracy(firmaLog, (d) => priceMap.get(d) ?? null);
+      const hitRates = new Map<string, number>();
+      for (const r of rows) {
+        if (r.firma === firmaId && r.hitRatePct !== null && r.evaluated >= 5) {
+          hitRates.set(r.role, r.hitRatePct);
+        }
+      }
+      setSkillSummary(summariseFirmaVotes(team, hitRates));
+    };
+    sync();
+    window.addEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
+    window.addEventListener(INTEL_LOG_CHANGED_EVENT, sync);
+    return () => {
+      window.removeEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
+      window.removeEventListener(INTEL_LOG_CHANGED_EVENT, sync);
+    };
+  }, [firmaId, team]);
+
+  const style = DIRECTION_STYLE[skillSummary.direction];
+  const showSkillBoost = Math.abs(skillSummary.skillWeightedConfidence - skillSummary.confidence) > 0.05;
   return (
     <div className="space-y-2 rounded-xl border border-slate-800/80 bg-slate-950/40 p-3">
       <div className="flex items-baseline justify-between gap-2">
@@ -40,10 +75,16 @@ export function FirmaVoteSummaryCard({ voteSummary, team, firmaName, firmaId }: 
         </span>
       </div>
       <div className="grid grid-cols-3 gap-1.5 text-center">
-        <Stat label="Positiv" value={voteSummary.positiveVotes} tone="emerald" />
-        <Stat label="Neutral" value={voteSummary.neutralVotes} tone="slate" />
-        <Stat label="Negativ" value={voteSummary.negativeVotes} tone="rose" />
+        <Stat label="Positiv" value={skillSummary.positiveVotes} tone="emerald" />
+        <Stat label="Neutral" value={skillSummary.neutralVotes} tone="slate" />
+        <Stat label="Negativ" value={skillSummary.negativeVotes} tone="rose" />
       </div>
+      {showSkillBoost && (
+        <p className="text-[9.5px] leading-snug text-slate-500">
+          Skill-gewichtet: <span className="font-mono text-slate-300">{Math.round(skillSummary.skillWeightedConfidence * 100)} %</span>
+          {' '}(roh: {Math.round(skillSummary.confidence * 100)} %). Sub-Agenten mit höherer Trefferquote zählen mehr.
+        </p>
+      )}
       <details className="rounded border border-slate-800 bg-slate-950/60">
         <summary className="cursor-pointer p-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
           ▸ Alle {team.length} Stimmen lesen ({voteSummary.positiveVotes + voteSummary.negativeVotes} eindeutig, {voteSummary.neutralVotes} neutral)
