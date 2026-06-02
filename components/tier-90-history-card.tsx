@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { TIER_90_JOURNAL_CHANGED_EVENT, loadTier90Journal, summariseTier90, type Tier90JournalEntry } from '@/lib/agents/tier-90-journal';
+import { computeTier90Streak } from '@/lib/agents/tier-90-streak';
 
 // Zeigt das Tier-90-Tagebuch: wie oft sind alle 5 Säulen historisch grün
 // gewesen und wie hat es sich aufgelöst.
@@ -21,6 +22,7 @@ export function Tier90HistoryCard() {
     return null;
   }
   const stats = summariseTier90(log);
+  const streak = computeTier90Streak(log);
   const sorted = [...log].sort((a, b) => b.recordedAt - a.recordedAt).slice(0, 14);
 
   return (
@@ -38,6 +40,18 @@ export function Tier90HistoryCard() {
         <Stat label="Stop ausgelöst" value={stats.stopHit} tone="bad" />
         <Stat label="Trefferquote" value={stats.hitRatePct !== null ? `${stats.hitRatePct} %` : '—'} tone={stats.hitRatePct !== null && stats.hitRatePct >= 60 ? 'good' : 'neutral'} />
       </div>
+
+      {(streak.bestWinStreak > 0 || streak.worstLossStreak > 0) && (
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[10.5px] text-slate-300">
+          {streak.current !== 0 && (
+            <span className={streak.current > 0 ? 'text-emerald-300' : 'text-rose-300'}>
+              Aktuelle Serie: {streak.current > 0 ? `${streak.current}× Ziel in Folge` : `${Math.abs(streak.current)}× Stop in Folge`}
+            </span>
+          )}
+          <span>Beste Sieg-Serie: <span className="font-mono text-emerald-300">{streak.bestWinStreak}</span></span>
+          <span>Schlechteste Stop-Serie: <span className="font-mono text-rose-300">{streak.worstLossStreak}</span></span>
+        </div>
+      )}
 
       <details className="rounded-lg border border-slate-800 bg-slate-950/40">
         <summary className="cursor-pointer p-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
