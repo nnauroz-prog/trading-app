@@ -28,6 +28,8 @@ import { LeagueHitRate } from '@/components/league-hit-rate';
 import { SportSectionNav } from '@/components/sport-section-nav';
 import { WochenErgebnisse } from '@/components/wochen-ergebnisse';
 import { SportTodayLive } from '@/components/sport-today-live';
+import { SportLeagueFilter } from '@/components/sport-league-filter';
+import { DataRefreshIndicator } from '@/components/data-refresh-indicator';
 import { LeagueSeasonStatsCard } from '@/components/league-season-stats';
 import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 import { computeConsensus } from '@/lib/sport/firma/consensus';
@@ -338,6 +340,10 @@ export default async function SportPage() {
       <ConsensusPicks picks={consensusEnriched} />
 
       <SportTodayLive leagues={leagues} />
+
+      <DataRefreshIndicator initialTimestamp={Date.now()} refreshIntervalMs={600_000} />
+
+      <SportLeagueFilter leagues={leagues} />
 
       <div id="ergebnisse" />
       <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} consensusById={consensusById} />
