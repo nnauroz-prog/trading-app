@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { FirmaSynthesis } from '@/lib/sport/firma/synthesis';
 import type { HeadToHeadResult } from '@/lib/sport/h2h';
 import type { ConsensusVerdict } from '@/lib/sport/firma/consensus';
+import { fmtOdds } from '@/lib/sport/implied-odds';
 
 function fmtDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00`);
@@ -94,9 +95,9 @@ export function WochenErgebnisse({
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[10px] text-slate-400">
                       <span className="font-mono">{Math.round(pred.pickConfidence * 100)}% Konfidenz</span>
                       <span>· Tipp: <span className="font-semibold text-slate-200">{pred.pickPlain}</span></span>
-                      <span>· Heimsieg <span className="font-mono">{Math.round(pred.pHome * 100)}%</span></span>
-                      <span>· Remis <span className="font-mono">{Math.round(pred.pDraw * 100)}%</span></span>
-                      <span>· Auswärts <span className="font-mono">{Math.round(pred.pAway * 100)}%</span></span>
+                      <span>· Heim <span className="font-mono">{Math.round(pred.pHome * 100)}%</span> <span className="font-mono text-amber-300">@ {fmtOdds(pred.pHome)}</span></span>
+                      <span>· Remis <span className="font-mono">{Math.round(pred.pDraw * 100)}%</span> <span className="font-mono text-amber-300">@ {fmtOdds(pred.pDraw)}</span></span>
+                      <span>· Auswärts <span className="font-mono">{Math.round(pred.pAway * 100)}%</span> <span className="font-mono text-amber-300">@ {fmtOdds(pred.pAway)}</span></span>
                       {(() => {
                         const h2h = h2hById?.get(f.id);
                         if (!h2h || h2h.meetings === 0) return null;

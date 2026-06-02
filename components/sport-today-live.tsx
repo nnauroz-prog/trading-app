@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { UpcomingFixture, LeagueFixtures } from '@/lib/sport/fetcher';
 import { bucketByDay } from '@/lib/sport/day-buckets';
+import { fmtOdds } from '@/lib/sport/implied-odds';
 
 function fmtTime(time: string | null, date: string): string {
   if (!time) return '—';
@@ -56,20 +57,31 @@ export function SportTodayLive({ leagues }: Props) {
             : p && p.pickConfidence >= 0.4 ? 'border-amber-400/50 bg-amber-500/10 text-amber-100'
             : 'border-slate-700 bg-slate-900/40 text-slate-300';
           return (
-            <li key={f.id} className="grid grid-cols-[auto_1fr_auto_1fr_auto] items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-2.5 py-2 text-[11.5px]">
-              <span className="font-mono text-[10px] text-emerald-300">{fmtTime(f.time, f.date)}</span>
-              <Link href={`/sport/team/${encodeURIComponent(f.homeTeam)}`} className="truncate text-right font-semibold text-slate-100 hover:text-emerald-300">{f.homeTeam}</Link>
-              <span className={`rounded-md border-2 px-2 py-0.5 font-mono text-sm font-bold ${tone}`}>
-                {p ? `${p.likelyScore.home} : ${p.likelyScore.away}` : '? : ?'}
-              </span>
-              <Link href={`/sport/team/${encodeURIComponent(f.awayTeam)}`} className="truncate font-semibold text-slate-100 hover:text-emerald-300">{f.awayTeam}</Link>
-              <span className="text-[9.5px] uppercase tracking-wider text-slate-500">{byLeague.get(f.id) ?? '—'}</span>
+            <li key={f.id} className="space-y-1 rounded-lg border border-slate-800 bg-slate-950/40 px-2.5 py-2 text-[11.5px]">
+              <div className="grid grid-cols-[auto_1fr_auto_1fr_auto] items-center gap-2">
+                <span className="font-mono text-[10px] text-emerald-300">{fmtTime(f.time, f.date)}</span>
+                <Link href={`/sport/team/${encodeURIComponent(f.homeTeam)}`} className="truncate text-right font-semibold text-slate-100 hover:text-emerald-300">{f.homeTeam}</Link>
+                <span className={`rounded-md border-2 px-2 py-0.5 font-mono text-sm font-bold ${tone}`}>
+                  {p ? `${p.likelyScore.home} : ${p.likelyScore.away}` : '? : ?'}
+                </span>
+                <Link href={`/sport/team/${encodeURIComponent(f.awayTeam)}`} className="truncate font-semibold text-slate-100 hover:text-emerald-300">{f.awayTeam}</Link>
+                <span className="text-[9.5px] uppercase tracking-wider text-slate-500">{byLeague.get(f.id) ?? '—'}</span>
+              </div>
+              {p && (
+                <div className="flex flex-wrap items-baseline gap-x-3 text-[9.5px] text-slate-500">
+                  <span>Heim <span className="font-mono text-amber-300">{fmtOdds(p.pHome)}</span></span>
+                  <span>· Remis <span className="font-mono text-amber-300">{fmtOdds(p.pDraw)}</span></span>
+                  <span>· Auswärts <span className="font-mono text-amber-300">{fmtOdds(p.pAway)}</span></span>
+                  <span className="text-slate-600">— faire Modell-Quoten (Tipico-Vergleichswert)</span>
+                </div>
+              )}
             </li>
           );
         })}
       </ul>
       <p className="text-[10px] leading-snug text-slate-500">
-        Farbcode nach Konfidenz: grün ≥65 % (sicher), blau ≥50 % (Favorit), gelb ≥40 % (Tendenz), grau offen.
+        Farbcode nach Konfidenz: grün ≥65 % (sicher), blau ≥50 % (Favorit), gelb ≥40 % (Tendenz), grau offen.{' '}
+        Die Modell-Quote (1/Wahrscheinlichkeit) zeigt den fairen Wert ohne Buchmacher-Margin — Tipico-Quoten liegen typisch 5-8 % darunter.
       </p>
     </section>
   );

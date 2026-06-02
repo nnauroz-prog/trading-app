@@ -65,6 +65,14 @@ export const FOOTBALL_LEAGUES: League[] = [
   { id: '4503', name: 'International Friendlies', country: 'International' }
 ];
 
+// Basketball-Ligen — TheSportsDB-IDs für die wichtigsten Wett-Märkte.
+export const BASKETBALL_LEAGUES: League[] = [
+  { id: '4387', name: 'NBA', country: 'USA' },
+  { id: '4408', name: 'EuroLeague', country: 'Europa' },
+  { id: '4607', name: 'BBL', country: 'Deutschland' },
+  { id: '4477', name: 'NCAA', country: 'USA' }
+];
+
 // Mehrere mögliche IDs für die WM 2026 — TheSportsDB pflegt sie oft unter
 // verschiedenen IDs (Hauptturnier, Qualifikation, Friendlies).
 export const WORLD_CUP_LEAGUE_IDS = ['4429', '4503'];

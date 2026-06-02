@@ -1,0 +1,84 @@
+import { unstable_cache } from 'next/cache';
+import { BASKETBALL_LEAGUES, League } from '@/lib/sport/leagues';
+
+// Schlankerer Basketball-Fetcher: nur kommende Spiele, kein Poisson-Modell
+// (Basketball-Tippergebnisse via Poisson sind nicht sinnvoll). Wir zeigen
+// nur Anstoßzeit, Mannschaften, Liga.
+
+export interface BasketballFixture {
+  id: string;
+  league: string;
+  date: string;
+  time: string | null;
+  venue: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: 'upcoming' | 'finished';
+}
+
+export interface BasketballLeagueFixtures {
+  league: League;
+  next: BasketballFixture[];
+  last: BasketballFixture[];
+}
+
+interface ApiEvent {
+  idEvent?: string;
+  strHomeTeam?: string;
+  strAwayTeam?: string;
+  strLeague?: string;
+  dateEvent?: string;
+  strTime?: string;
+  strVenue?: string;
+  intHomeScore?: string | null;
+  intAwayScore?: string | null;
+}
+
+function normalize(e: ApiEvent, status: 'upcoming' | 'finished'): BasketballFixture | null {
+  if (!e.idEvent || !e.strHomeTeam || !e.strAwayTeam || !e.dateEvent) return null;
+  const home = e.intHomeScore != null && e.intHomeScore !== '' ? Number(e.intHomeScore) : null;
+  const away = e.intAwayScore != null && e.intAwayScore !== '' ? Number(e.intAwayScore) : null;
+  return {
+    id: e.idEvent,
+    homeTeam: e.strHomeTeam,
+    awayTeam: e.strAwayTeam,
+    league: e.strLeague ?? '',
+    date: e.dateEvent,
+    time: e.strTime ? e.strTime.slice(0, 5) : null,
+    venue: e.strVenue ?? null,
+    homeScore: home,
+    awayScore: away,
+    status
+  };
+}
+
+async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<BasketballFixture[]> {
+  const url = `https://www.thesportsdb.com/api/v1/json/3/events${kind}league.php?id=${leagueId}`;
+  try {
+    const res = await fetch(url, { next: { revalidate: 600 } });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { events?: ApiEvent[] | null };
+    const events = data.events ?? [];
+    return events
+      .map((e) => normalize(e, kind === 'next' ? 'upcoming' : 'finished'))
+      .filter((f): f is BasketballFixture => f !== null);
+  } catch {
+    return [];
+  }
+}
+
+async function compute(): Promise<BasketballLeagueFixtures[]> {
+  const todayIso = new Date().toISOString().slice(0, 10);
+  return Promise.all(
+    BASKETBALL_LEAGUES.map(async (league) => {
+      const [next, past] = await Promise.all([fetchEvents(league.id, 'next'), fetchEvents(league.id, 'past')]);
+      const future = next.filter((f) => f.date >= todayIso);
+      future.sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''));
+      return { league, next: future.slice(0, 30), last: past.slice(0, 30) };
+    })
+  );
+}
+
+export const getBasketballFixtures = unstable_cache(compute, ['basketball-fixtures-v1'], { revalidate: 600 });
