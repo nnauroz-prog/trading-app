@@ -228,7 +228,7 @@ export default async function AgentPage() {
                 </div>
               )}
 
-              <FirmaVoteSummaryCard voteSummary={p.voteSummary} team={p.team} firmaName={p.name} />
+              <FirmaVoteSummaryCard voteSummary={p.voteSummary} team={p.team} firmaName={p.name} firmaId={p.persona} />
 
               <div className="space-y-1.5">
                 <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Team</div>

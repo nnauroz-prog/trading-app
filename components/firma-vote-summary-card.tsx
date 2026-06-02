@@ -1,10 +1,13 @@
 import type { FirmaVoteSummary } from '@/lib/agents/firma-vote-aggregator';
 import type { SubAgentReport } from '@/lib/agents/sub-agents';
+import type { PersonaId } from '@/lib/agents/personas';
+import { SubAgentHitRateBadge } from '@/components/sub-agent-hit-rate-badge';
 
 interface Props {
   voteSummary: FirmaVoteSummary;
   team: SubAgentReport[];
   firmaName: string;
+  firmaId: PersonaId;
 }
 
 const DIRECTION_STYLE: Record<FirmaVoteSummary['direction'], { tone: string; label: string }> = {
@@ -26,7 +29,7 @@ const ROLE_LABEL: Record<string, string> = {
 // Übertragung des Sport-Firma-Vote-Patterns auf die drei Trading-Firmen.
 // Jede Firma hat 7 Sub-Agenten — ihre Stimmen werden aggregiert und mit jeder
 // einzelnen Begründung sichtbar gemacht.
-export function FirmaVoteSummaryCard({ voteSummary, team, firmaName }: Props) {
+export function FirmaVoteSummaryCard({ voteSummary, team, firmaName, firmaId }: Props) {
   const style = DIRECTION_STYLE[voteSummary.direction];
   return (
     <div className="space-y-2 rounded-xl border border-slate-800/80 bg-slate-950/40 p-3">
@@ -56,7 +59,7 @@ export function FirmaVoteSummaryCard({ voteSummary, team, firmaName }: Props) {
                 <span className="ml-1 text-slate-500">→ {r.vote}</span>
                 <div className="text-[10px] text-slate-400">{r.reason}</div>
               </span>
-              <span className="font-mono text-[9px] text-slate-500">{r.role}</span>
+              <SubAgentHitRateBadge firma={firmaId} role={r.role} />
             </li>
           ))}
         </ul>
