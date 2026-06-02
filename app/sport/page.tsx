@@ -30,6 +30,7 @@ import { WochenErgebnisse } from '@/components/wochen-ergebnisse';
 import { SportTodayLive } from '@/components/sport-today-live';
 import { SportLeagueFilter } from '@/components/sport-league-filter';
 import { DataRefreshIndicator } from '@/components/data-refresh-indicator';
+import { ManualRefreshButton } from '@/components/manual-refresh-button';
 import { LeagueSeasonStatsCard } from '@/components/league-season-stats';
 import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 import { computeConsensus } from '@/lib/sport/firma/consensus';
@@ -347,7 +348,10 @@ export default async function SportPage() {
 
       <SportTodayLive leagues={leagues} />
 
-      <DataRefreshIndicator initialTimestamp={Date.now()} refreshIntervalMs={600_000} />
+      <div className="flex items-center gap-2">
+        <DataRefreshIndicator initialTimestamp={Date.now()} refreshIntervalMs={600_000} />
+        <ManualRefreshButton />
+      </div>
 
       <SportLeagueFilter leagues={leagues} />
 
