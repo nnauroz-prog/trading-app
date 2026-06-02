@@ -23,6 +23,8 @@ import { computeEventWindow } from '@/lib/calendar/event-window';
 import { AgentLog } from '@/components/agent-log';
 import { FirmaVoteSummaryCard } from '@/components/firma-vote-summary-card';
 import { SubAgentLeaderboard } from '@/components/sub-agent-leaderboard';
+import { TradeTier90Card } from '@/components/trade-tier-90-card';
+import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { FirmaStandings } from '@/components/firma-standings';
 import { FirmaRankingPanel } from '@/components/firma-ranking';
@@ -117,6 +119,8 @@ export default async function AgentPage() {
   const spaeher = runSpaeher(newsItems);
   const eventWindow = computeEventWindow(listMacroEventsThisWeek());
   const personas = evaluatePersonas(report, backtest, spaeher, eventWindow);
+  const tier90 = evaluateTradeTier90(personas);
+  const tier90Showcase = personas.find((p) => p.verdict === 'BUY' && p.safety?.grade === 'A') ?? personas.find((p) => p.target) ?? null;
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
@@ -167,6 +171,8 @@ export default async function AgentPage() {
           </section>
         );
       })()}
+
+      <TradeTier90Card result={tier90} showcaseVerdict={tier90Showcase} />
 
       <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {personas.map((p) => {
