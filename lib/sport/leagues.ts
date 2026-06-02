@@ -20,6 +20,7 @@ export const FOOTBALL_LEAGUES: League[] = [
   // === Italien ===
   { id: '4332', name: 'Serie A', country: 'Italien' },
   { id: '4333', name: 'Serie B', country: 'Italien' },
+  { id: '4470', name: 'Serie C', country: 'Italien' },
   // === Frankreich ===
   { id: '4334', name: 'Ligue 1', country: 'Frankreich' },
   { id: '4393', name: 'Ligue 2', country: 'Frankreich' },
@@ -42,8 +43,18 @@ export const FOOTBALL_LEAGUES: League[] = [
   // === Amerika ===
   { id: '4346', name: 'MLS', country: 'USA' },
   { id: '4351', name: 'Brasileirão Série A', country: 'Brasilien' },
+  { id: '4352', name: 'Brasileirão Série B', country: 'Brasilien' },
   { id: '4344', name: 'Liga MX', country: 'Mexiko' },
   { id: '4406', name: 'Primera División', country: 'Argentinien' },
+  { id: '4407', name: 'Primera Nacional', country: 'Argentinien' },
+  { id: '4413', name: 'Primera B Metropolitana', country: 'Argentinien' },
+  { id: '4502', name: 'Copa Colombia', country: 'Kolumbien' },
+  { id: '4501', name: 'Categoría Primera A', country: 'Kolumbien' },
+  // === Afrika / Naher Osten ===
+  { id: '4341', name: 'Ligue Professionnelle 1', country: 'Algerien' },
+  { id: '4505', name: 'Botola Pro', country: 'Marokko' },
+  { id: '4378', name: 'Egyptian Premier League', country: 'Ägypten' },
+  { id: '4477', name: 'Saudi Pro League', country: 'Saudi-Arabien' },
   // === Asien / Australien ===
   { id: '4339', name: 'J1 League', country: 'Japan' },
   { id: '4356', name: 'A-League Men', country: 'Australien' },
