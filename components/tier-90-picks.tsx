@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ConsensusVerdict } from '@/lib/sport/firma/consensus';
 import type { UpcomingFixture } from '@/lib/sport/fetcher';
+import { SportTier90HeadlineStat } from '@/components/sport-tier-90-headline-stat';
 import { FirmaVotesCard } from '@/components/firma-votes-card';
 
 interface EnrichedPick {
@@ -25,11 +26,12 @@ export function Tier90Picks({ picks }: { picks: EnrichedPick[] }) {
   return (
     <section className="space-y-3 rounded-2xl border-2 border-yellow-300/60 bg-gradient-to-br from-yellow-950/30 via-slate-900/70 to-slate-900/70 p-4">
       <header className="space-y-1">
-        <div className="flex items-baseline gap-2">
+        <div className="flex flex-wrap items-baseline gap-2">
           <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-yellow-300">⚜ Höchstes Vertrauen</span>
           <span className="rounded-md border border-yellow-300/60 bg-yellow-500/15 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-yellow-100">
             Ziel-Quote ≥ 90 %
           </span>
+          <SportTier90HeadlineStat />
         </div>
         <h2 className="text-xl font-bold tracking-tight text-white">Tier 90 — die strengste Stufe</h2>
         <p className="text-[11px] leading-snug text-slate-300">
