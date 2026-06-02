@@ -54,6 +54,7 @@ import { TradeTier90Card } from '@/components/trade-tier-90-card';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
 import { AppOverviewStats } from '@/components/app-overview-stats';
+import { WmBriefingCard } from '@/components/wm-briefing-card';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getLehrlingReport } from '@/lib/akademie/lehrling';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
@@ -511,6 +512,8 @@ export default async function HomePage() {
       <WocheVoraus events={upcomingMacro} today={todayIso} />
 
       <SportBriefingCard synth={sportSynth} todayFixtures={sportTodayCount} />
+
+      <WmBriefingCard />
 
       <AppOverviewStats
         todayFixtureCount={sportTodayCount}

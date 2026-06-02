@@ -25,7 +25,6 @@ import { SportCuratorsQuote } from '@/components/sport-curators-quote';
 import { WeekHighlights } from '@/components/week-highlights';
 import { TeamSearch } from '@/components/team-search';
 import { LeagueHitRate } from '@/components/league-hit-rate';
-import { SportSectionNav } from '@/components/sport-section-nav';
 import { WochenErgebnisse } from '@/components/wochen-ergebnisse';
 import { SportTodayLive } from '@/components/sport-today-live';
 import { SportLeagueFilter } from '@/components/sport-league-filter';
@@ -337,66 +336,68 @@ export default async function SportPage() {
         <p className="text-sm text-slate-400">Jedes anstehende Spiel der nächsten 14 Tage mit voraussichtlichem Endstand — basierend auf 3 Saisons echter Daten.</p>
       </header>
 
+      {/* Drei Kern-Blöcke ganz oben — alles andere unter „Details ansehen". */}
+
       <div id="tier-90" />
       <Tier90Picks picks={consensusEnriched} />
       <SportTier90Recorder picks={consensusEnriched} />
-      <SportTier90HistoryStrip />
-      <SportTier90History finishedFixtures={finishedLite} />
-
-      <div id="maximal-sicher" />
-      <ConsensusPicks picks={consensusEnriched} />
 
       <SportTodayLive leagues={leagues} />
-
-      <div className="flex items-center gap-2">
-        <DataRefreshIndicator initialTimestamp={Date.now()} refreshIntervalMs={600_000} />
-        <ManualRefreshButton />
-      </div>
-
-      <SportLeagueFilter leagues={leagues} />
 
       <div id="ergebnisse" />
       <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} consensusById={consensusById} />
 
       <SeasonPauseBanner leagues={leagues} />
 
-      <SportSectionNav />
-
-      <div id="historie" />
-      <LeagueSeasonStatsCard stats={leagueSeasonStats} />
-
-      <div id="redaktion">
-      <SportFirmaCard synth={firmaSynth} />
+      <div className="flex items-center gap-2">
+        <DataRefreshIndicator initialTimestamp={Date.now()} refreshIntervalMs={600_000} />
+        <ManualRefreshButton />
       </div>
 
-      <div id="sicher" />
-      <SafetyPicksSection synth={firmaSynth} />
-      <div id="tag" />
-      <DailyTopPickCard synth={firmaSynth} />
+      <details className="rounded-2xl border border-slate-800/80 bg-slate-900/40">
+        <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+          ▸ Mehr Details (Filter, Maximal-Sicher, Tipp-Tagebuch, Liga-Statistik, Redaktion …)
+        </summary>
+        <div className="space-y-4 p-4 pt-0">
+          <SportLeagueFilter leagues={leagues} />
 
-      <SportCuratorsQuote synth={firmaSynth} />
+          <div id="maximal-sicher" />
+          <ConsensusPicks picks={consensusEnriched} />
 
-      <div id="liga" />
-      <PerLeagueTopPicks synth={firmaSynth} />
+          <SportTier90HistoryStrip />
+          <SportTier90History finishedFixtures={finishedLite} />
 
-      <LeagueHeatmap synth={firmaSynth} />
+          <div id="historie" />
+          <LeagueSeasonStatsCard stats={leagueSeasonStats} />
 
-      <FirmaTrackRecord safetyPickerName={firmaSynth.safetyPicker.name} />
+          <div id="redaktion">
+          <SportFirmaCard synth={firmaSynth} />
+          </div>
 
-      <LeagueHitRate />
+          <div id="sicher" />
+          <SafetyPicksSection synth={firmaSynth} />
+          <div id="tag" />
+          <DailyTopPickCard synth={firmaSynth} />
 
-      <PendingTipsCounter />
+          <SportCuratorsQuote synth={firmaSynth} />
 
-      <div id="kombi" />
-      <MultiTipCombo synth={firmaSynth} />
+          <div id="liga" />
+          <PerLeagueTopPicks synth={firmaSynth} />
 
-      <WeekHighlights synth={firmaSynth} />
+          <LeagueHeatmap synth={firmaSynth} />
 
-      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3">
-        <p className="text-[11px] leading-snug text-slate-300">
-          <span className="font-semibold text-emerald-300">{firmaSynth.scheduleGatekeeper.name}</span> ({firmaSynth.scheduleGatekeeper.role.split('·')[0].trim()}) sorgt dafür, dass auf dieser Seite ausschließlich Spiele auftauchen, die in Europe/Berlin noch nicht angefangen haben. Alles, was vorbei ist, wird unsichtbar — vergangene Begegnungen liegen nur noch hinter dem „Vergangenheit ansehen“-Aufklapper jeder Liga, falls du sie für die Tabelle brauchst.
-        </p>
-      </section>
+          <FirmaTrackRecord safetyPickerName={firmaSynth.safetyPicker.name} />
+
+          <LeagueHitRate />
+
+          <PendingTipsCounter />
+
+          <div id="kombi" />
+          <MultiTipCombo synth={firmaSynth} />
+
+          <WeekHighlights synth={firmaSynth} />
+        </div>
+      </details>
 
       <div className="grid grid-cols-2 gap-2">
         <Link
@@ -413,13 +414,18 @@ export default async function SportPage() {
         </Link>
       </div>
 
-      <div id="meine-teams" />
-      <TeamWatchlistPanel candidates={teamCandidates} />
-
-      <TeamSearch teams={teamCandidates.map((c) => ({ team: c.team, league: c.league }))} />
-
-      <div id="woche" />
-      <WeekAheadList days={firmaSynth.weekAhead} />
+      <details className="rounded-2xl border border-slate-800/80 bg-slate-900/40">
+        <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+          ▸ Meine Teams & Mannschafts-Suche
+        </summary>
+        <div className="space-y-4 p-4 pt-0">
+          <div id="meine-teams" />
+          <TeamWatchlistPanel candidates={teamCandidates} />
+          <TeamSearch teams={teamCandidates.map((c) => ({ team: c.team, league: c.league }))} />
+          <div id="woche" />
+          <WeekAheadList days={firmaSynth.weekAhead} />
+        </div>
+      </details>
 
       <TopTipp leagues={leagues} />
 
