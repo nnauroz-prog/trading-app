@@ -183,7 +183,9 @@ export default async function AgentPage() {
               <div className="flex items-baseline justify-between">
                 <div>
                   <div className="text-[9px] uppercase tracking-[0.2em] text-slate-500">Firma</div>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-white">{p.name}</h2>
+                  <Link href={`/agent/${p.persona}`} className="text-sm font-bold uppercase tracking-wider text-white hover:text-emerald-300">
+                    {p.name} →
+                  </Link>
                 </div>
                 <span className={`rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${isBuy ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-100' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
                   CEO: {isBuy ? 'KAUFEN' : 'WARTEN'}

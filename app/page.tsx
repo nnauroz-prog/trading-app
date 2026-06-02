@@ -49,6 +49,8 @@ import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 import { AkademieStrip } from '@/components/akademie-strip';
 import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
+import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
+import { TradeTier90Card } from '@/components/trade-tier-90-card';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getLehrlingReport } from '@/lib/akademie/lehrling';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
@@ -216,6 +218,8 @@ export default async function HomePage() {
   const upcomingMacroAll = listMacroEventsThisWeek();
   const eventWindow = computeEventWindow(upcomingMacroAll);
   const personas = evaluatePersonas(masterSignal, backtestSummary, spaeherReport, eventWindow);
+  const tier90 = evaluateTradeTier90(personas);
+  const tier90Showcase = personas.find((p) => p.verdict === 'BUY' && p.safety?.grade === 'A') ?? personas.find((p) => p.target) ?? null;
   const vorstandReport = vorstandMediation(personas);
   // Historical similarity for the headline coin (use the conservative firma's
   // pick if it BUYs, else the best-scoring candidate).
@@ -408,6 +412,10 @@ export default async function HomePage() {
       </header>
 
       <HeuteMachen cards={heuteCards} />
+
+      {tier90.qualified && (
+        <TradeTier90Card result={tier90} showcaseVerdict={tier90Showcase} />
+      )}
 
       <ScorePredictionsStrip synth={sportSynth} />
 
