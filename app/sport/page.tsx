@@ -35,6 +35,8 @@ import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 import { computeConsensus } from '@/lib/sport/firma/consensus';
 import { ConsensusPicks } from '@/components/consensus-picks';
 import { Tier90Picks } from '@/components/tier-90-picks';
+import { SportTier90Recorder } from '@/components/sport-tier-90-recorder';
+import { SportTier90History } from '@/components/sport-tier-90-history';
 import { getEmployeeBacktest } from '@/lib/sport/firma/employee-backtest-cache';
 
 export const dynamic = 'force-dynamic';
@@ -335,6 +337,8 @@ export default async function SportPage() {
 
       <div id="tier-90" />
       <Tier90Picks picks={consensusEnriched} />
+      <SportTier90Recorder picks={consensusEnriched} />
+      <SportTier90History finishedFixtures={finishedLite} />
 
       <div id="maximal-sicher" />
       <ConsensusPicks picks={consensusEnriched} />
