@@ -25,6 +25,9 @@ import { FirmaVoteSummaryCard } from '@/components/firma-vote-summary-card';
 import { SubAgentLeaderboard } from '@/components/sub-agent-leaderboard';
 import { TradeTier90Card } from '@/components/trade-tier-90-card';
 import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
+import { Tier90Recorder } from '@/components/tier-90-recorder';
+import { Tier90HistoryCard } from '@/components/tier-90-history-card';
+import { todayIsoBerlin } from '@/lib/agent-memory';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { FirmaStandings } from '@/components/firma-standings';
 import { FirmaRankingPanel } from '@/components/firma-ranking';
@@ -173,6 +176,17 @@ export default async function AgentPage() {
       })()}
 
       <TradeTier90Card result={tier90} showcaseVerdict={tier90Showcase} />
+
+      <Tier90Recorder
+        qualified={tier90.qualified}
+        date={todayIsoBerlin()}
+        coinSymbol={tier90Showcase?.target?.symbol ?? null}
+        entry={tier90Showcase?.target?.entry ?? null}
+        stopLoss={tier90Showcase?.target?.stopLoss ?? null}
+        takeProfit1={tier90Showcase?.target?.takeProfit1 ?? null}
+      />
+
+      <Tier90HistoryCard />
 
       <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {personas.map((p) => {
