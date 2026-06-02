@@ -22,6 +22,7 @@ import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import { computeEventWindow } from '@/lib/calendar/event-window';
 import { AgentLog } from '@/components/agent-log';
 import { FirmaVoteSummaryCard } from '@/components/firma-vote-summary-card';
+import { SubAgentLeaderboard } from '@/components/sub-agent-leaderboard';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { FirmaStandings } from '@/components/firma-standings';
 import { FirmaRankingPanel } from '@/components/firma-ranking';
@@ -278,6 +279,8 @@ export default async function AgentPage() {
       <FirmaRankingPanel />
       <FirmaStandings />
       <VorstandLog />
+
+      <SubAgentLeaderboard />
 
       <AgentLog />
 
