@@ -51,6 +51,7 @@ import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
 import { TradeTier90Card } from '@/components/trade-tier-90-card';
+import { TradingTodayCard } from '@/components/trading-today-card';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
 import { AppOverviewStats } from '@/components/app-overview-stats';
@@ -416,6 +417,14 @@ export default async function HomePage() {
           <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Mehr</Link>
         </nav>
       </header>
+
+      <TradingTodayCard
+        tier90={tier90}
+        consensusPersona={tier90Showcase}
+        conservative={personas.find((p) => p.persona === 'conservative') ?? null}
+        balanced={personas.find((p) => p.persona === 'balanced') ?? null}
+        aggressive={personas.find((p) => p.persona === 'aggressive') ?? null}
+      />
 
       <HeuteMachen cards={heuteCards} />
 

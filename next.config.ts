@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
 // Last bumped: 2026-06-01 — Welle 58.
-const BUILD_MARKER = 'welle-321-330-sport-radikal-aufgeraeumt';
+const BUILD_MARKER = 'welle-331-335-trading-today-card';
 
 const nextConfig: NextConfig = {
   env: {
