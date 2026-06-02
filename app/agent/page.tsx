@@ -27,6 +27,7 @@ import { TradeTier90Card } from '@/components/trade-tier-90-card';
 import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
 import { Tier90Recorder } from '@/components/tier-90-recorder';
 import { Tier90HistoryCard } from '@/components/tier-90-history-card';
+import { Tier90HistoryStrip } from '@/components/tier-90-history-strip';
 import { todayIsoBerlin } from '@/lib/agent-memory';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { FirmaStandings } from '@/components/firma-standings';
@@ -185,6 +186,8 @@ export default async function AgentPage() {
         stopLoss={tier90Showcase?.target?.stopLoss ?? null}
         takeProfit1={tier90Showcase?.target?.takeProfit1 ?? null}
       />
+
+      <Tier90HistoryStrip />
 
       <Tier90HistoryCard />
 

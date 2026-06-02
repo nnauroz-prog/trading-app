@@ -51,6 +51,7 @@ import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
 import { TradeTier90Card } from '@/components/trade-tier-90-card';
+import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getLehrlingReport } from '@/lib/akademie/lehrling';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
@@ -416,6 +417,17 @@ export default async function HomePage() {
       {tier90.qualified && (
         <TradeTier90Card result={tier90} showcaseVerdict={tier90Showcase} />
       )}
+
+      <Tier90Resolver
+        latestPrices={(() => {
+          const upper: Record<string, number> = {};
+          for (const t of report.tickers) {
+            const symbol = t.symbol.replace('USDT', '').toUpperCase();
+            if (Number.isFinite(t.price)) upper[symbol] = t.price;
+          }
+          return upper;
+        })()}
+      />
 
       <ScorePredictionsStrip synth={sportSynth} />
 
