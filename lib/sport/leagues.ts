@@ -4,33 +4,54 @@ export interface League {
   country: string;
 }
 
-// TheSportsDB free league IDs.
-// Europäische Top-Ligen + Sommer-aktive Ligen (Mai–November). Damit ist auch
-// in der europäischen Sommerpause (Juni–Juli) immer was zum Tippen da.
+// TheSportsDB free league IDs. Breite Abdeckung — alles was typischerweise
+// auf Tipico handelbar ist: Top-Ligen + Unterklasse-Ligen + Sommer-aktive
+// Ligen + nationale Spielklassen. Doppelte IDs sind streng vermieden.
 export const FOOTBALL_LEAGUES: League[] = [
+  // === Deutschland ===
   { id: '4331', name: 'Bundesliga', country: 'Deutschland' },
+  { id: '4329', name: '2. Bundesliga', country: 'Deutschland' },
+  // === England ===
   { id: '4328', name: 'Premier League', country: 'England' },
+  { id: '4395', name: 'Championship', country: 'England' },
+  // === Spanien ===
   { id: '4335', name: 'La Liga', country: 'Spanien' },
+  { id: '4336', name: 'Segunda División', country: 'Spanien' },
+  // === Italien ===
   { id: '4332', name: 'Serie A', country: 'Italien' },
+  { id: '4333', name: 'Serie B', country: 'Italien' },
+  // === Frankreich ===
   { id: '4334', name: 'Ligue 1', country: 'Frankreich' },
+  { id: '4393', name: 'Ligue 2', country: 'Frankreich' },
+  // === Niederlande / Portugal / Belgien / Schweiz / Österreich ===
   { id: '4337', name: 'Eredivisie', country: 'Niederlande' },
   { id: '4338', name: 'Liga Portugal', country: 'Portugal' },
-  { id: '4480', name: 'UEFA Champions League', country: 'Europa' },
-  { id: '4481', name: 'UEFA Europa League', country: 'Europa' },
-  // Sommer-aktive Ligen:
-  { id: '4346', name: 'MLS', country: 'USA' },
-  { id: '4351', name: 'Brasileirão Série A', country: 'Brasilien' },
+  { id: '4399', name: 'Jupiler Pro League', country: 'Belgien' },
+  { id: '4392', name: 'Super League', country: 'Schweiz' },
+  { id: '4385', name: 'Bundesliga', country: 'Österreich' },
+  // === Skandinavien ===
   { id: '4347', name: 'Eliteserien', country: 'Norwegen' },
   { id: '4330', name: 'Allsvenskan', country: 'Schweden' },
-  { id: '4339', name: 'J1 League', country: 'Japan' },
-  { id: '4356', name: 'A-League Men', country: 'Australien' },
+  // === Süd-Europa / Osteuropa ===
+  { id: '4388', name: 'Super League', country: 'Griechenland' },
+  { id: '4380', name: 'Premier Liga', country: 'Russland' },
+  // === Europa-Pokale ===
+  { id: '4480', name: 'UEFA Champions League', country: 'Europa' },
+  { id: '4481', name: 'UEFA Europa League', country: 'Europa' },
+  { id: '4548', name: 'UEFA Nations League', country: 'Europa' },
+  // === Amerika ===
+  { id: '4346', name: 'MLS', country: 'USA' },
+  { id: '4351', name: 'Brasileirão Série A', country: 'Brasilien' },
   { id: '4344', name: 'Liga MX', country: 'Mexiko' },
   { id: '4406', name: 'Primera División', country: 'Argentinien' },
-  { id: '4396', name: 'Indian Super League', country: 'Indien' },
+  // === Asien / Australien ===
+  { id: '4339', name: 'J1 League', country: 'Japan' },
+  { id: '4356', name: 'A-League Men', country: 'Australien' },
   { id: '4391', name: 'Chinese Super League', country: 'China' },
+  { id: '4396', name: 'Indian Super League', country: 'Indien' },
+  // === International ===
   { id: '4429', name: 'FIFA World Cup', country: 'International' },
-  { id: '4503', name: 'International Friendlies', country: 'International' },
-  { id: '4548', name: 'UEFA Nations League', country: 'Europa' }
+  { id: '4503', name: 'International Friendlies', country: 'International' }
 ];
 
 // Mehrere mögliche IDs für die WM 2026 — TheSportsDB pflegt sie oft unter

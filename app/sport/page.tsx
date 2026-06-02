@@ -27,6 +27,7 @@ import { TeamSearch } from '@/components/team-search';
 import { LeagueHitRate } from '@/components/league-hit-rate';
 import { SportSectionNav } from '@/components/sport-section-nav';
 import { WochenErgebnisse } from '@/components/wochen-ergebnisse';
+import { SportTodayLive } from '@/components/sport-today-live';
 import { LeagueSeasonStatsCard } from '@/components/league-season-stats';
 import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 import { computeConsensus } from '@/lib/sport/firma/consensus';
@@ -335,6 +336,8 @@ export default async function SportPage() {
 
       <div id="maximal-sicher" />
       <ConsensusPicks picks={consensusEnriched} />
+
+      <SportTodayLive leagues={leagues} />
 
       <div id="ergebnisse" />
       <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} consensusById={consensusById} />
