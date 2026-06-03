@@ -64,6 +64,7 @@ import { WmNextMatches } from '@/components/wm-next-matches';
 import { WmGroupsOverview } from '@/components/wm-groups-overview';
 import { WmVenuesList } from '@/components/wm-venues-list';
 import { WmTipprundeStats } from '@/components/wm-tipprunde-stats';
+import { WmPhasesTimeline } from '@/components/wm-phases-timeline';
 import { SportDataReset } from '@/components/sport-data-reset';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 import { SeasonStartsCard } from '@/components/season-starts-card';
@@ -379,6 +380,7 @@ export default async function SportPage() {
       <WmCountdownBanner todayIso={buckets.todayIso} />
       <WmNextMatches todayIso={buckets.todayIso} />
       <WmGroupsOverview todayIso={buckets.todayIso} />
+      <WmPhasesTimeline todayIso={buckets.todayIso} />
       <WmTipprundeStats todayIso={buckets.todayIso} />
       <WmVenuesList todayIso={buckets.todayIso} />
 
