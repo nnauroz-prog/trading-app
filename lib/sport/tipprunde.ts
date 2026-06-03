@@ -10,7 +10,13 @@ const PROFILE_KEY = 'trading-app.tipprunde-profile-v1';
 export interface TipprundeProfile {
   displayName: string;
   joinedAt: number;
+  // Freitext-Notiz, max 200 Zeichen. Z. B. Liga-Fokus oder Wochenziel.
+  note?: string;
 }
+
+export const MAX_NOTE_LENGTH = 200;
+export const MIN_NAME_LENGTH = 2;
+export const MAX_NAME_LENGTH = 32;
 
 export const TIPPRUNDE_CHANGED_EVENT = 'trading-app:tipprunde-changed';
 
