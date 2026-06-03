@@ -46,6 +46,7 @@ import { BestPredictionCard } from '@/components/best-prediction-card';
 import { TopPredictionsRanking } from '@/components/top-predictions-ranking';
 import { QualityBandDistribution } from '@/components/quality-band-distribution';
 import { QualityScoreFilter } from '@/components/quality-score-filter';
+import { QualityCompare } from '@/components/quality-compare';
 import { TipprundeCard } from '@/components/tipprunde-card';
 import { WochenzielCard } from '@/components/wochenziel-card';
 import { HitRateSparkline } from '@/components/hit-rate-sparkline';
@@ -66,6 +67,7 @@ import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { WmNextMatches } from '@/components/wm-next-matches';
 import { WmGroupsOverview } from '@/components/wm-groups-overview';
 import { WmVenuesList } from '@/components/wm-venues-list';
+import { WmCitiesCard } from '@/components/wm-cities-card';
 import { WmTipprundeStats } from '@/components/wm-tipprunde-stats';
 import { WmPhasesTimeline } from '@/components/wm-phases-timeline';
 import { SportDataReset } from '@/components/sport-data-reset';
@@ -391,6 +393,7 @@ export default async function SportPage() {
       <WmGroupsOverview todayIso={buckets.todayIso} />
       <WmPhasesTimeline todayIso={buckets.todayIso} />
       <WmTipprundeStats todayIso={buckets.todayIso} />
+      <WmCitiesCard todayIso={buckets.todayIso} />
       <WmVenuesList todayIso={buckets.todayIso} />
 
       {/* Sommer-Banner steht VOR der besten Prognose: wenn nichts läuft,
@@ -413,6 +416,7 @@ export default async function SportPage() {
       <div id="schwelle" />
       <SportQuickFilter ranked={rankedPredictions} todayIso={buckets.todayIso} tomorrowIso={buckets.tomorrowIso} />
       <QualityScoreFilter ranked={rankedPredictions} />
+      <QualityCompare ranked={rankedPredictions} />
       <div id="tipprunde" />
       <TipprundeCard />
       <WochenzielCard />

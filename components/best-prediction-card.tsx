@@ -6,6 +6,7 @@
 import type { RankedPrediction } from '@/lib/sport/quality-ranking';
 import { TipSaveButton } from '@/components/tip-save-button';
 import { CustomTipInput } from '@/components/custom-tip-input';
+import { ScoreExplainerToggle } from '@/components/score-explainer-toggle';
 
 interface Props {
   ranked: RankedPrediction[];
@@ -133,6 +134,8 @@ export function BestPredictionCard({ ranked, todayIso }: Props) {
           <dd className="mt-0.5 font-semibold">{recommendation.isStableMarket ? 'stabil' : 'eng / 1X2'}</dd>
         </div>
       </dl>
+
+      <ScoreExplainerToggle quality={quality} />
 
       {warnings.length > 0 && (
         <ul className="mt-3 space-y-1 text-[10.5px] leading-snug opacity-85">
