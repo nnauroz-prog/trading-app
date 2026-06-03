@@ -49,10 +49,12 @@ import { QualityScoreFilter } from '@/components/quality-score-filter';
 import { TipprundeCard } from '@/components/tipprunde-card';
 import { WochenzielCard } from '@/components/wochenziel-card';
 import { HitRateSparkline } from '@/components/hit-rate-sparkline';
+import { TipprundeWeeklyHistory } from '@/components/tipprunde-weekly-history';
 import { DailyRecapCard } from '@/components/daily-recap-card';
 import { LigaAccordionControls } from '@/components/liga-accordion-controls';
 import { ScoreColorKey } from '@/components/score-color-key';
 import { SportTopNav } from '@/components/sport-top-nav';
+import { SportOnboardingHint } from '@/components/sport-onboarding-hint';
 import { LigaTop3Snapshot } from '@/components/liga-top3-snapshot';
 import { SportQuickFilter } from '@/components/sport-quick-filter';
 import { SummerModeBanner } from '@/components/summer-mode-banner';
@@ -366,6 +368,7 @@ export default async function SportPage() {
       </header>
 
       <SportTopNav />
+      <SportOnboardingHint />
 
       {/* WM-Countdown VOR allem anderen, wenn ≤ 30 Tage bis Eröffnung — die
           beste Antwort auf „nichts in den Ligen" ist „WM kommt". */}
@@ -395,6 +398,7 @@ export default async function SportPage() {
       <TipprundeCard />
       <WochenzielCard />
       <HitRateSparkline />
+      <TipprundeWeeklyHistory />
       <DailyRecapCard todayIso={buckets.todayIso} />
 
       {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}
