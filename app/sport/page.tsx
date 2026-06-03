@@ -50,6 +50,7 @@ import { TipprundeCard } from '@/components/tipprunde-card';
 import { DailyRecapCard } from '@/components/daily-recap-card';
 import { LigaAccordionControls } from '@/components/liga-accordion-controls';
 import { ScoreColorKey } from '@/components/score-color-key';
+import { SportTopNav } from '@/components/sport-top-nav';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -353,12 +354,19 @@ export default async function SportPage() {
         <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>
       </header>
 
+      <SportTopNav />
+
       {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking + Band-Verteilung. */}
+      <div id="top" />
       <BestPredictionCard ranked={rankedPredictions} todayIso={buckets.todayIso} />
+      <div id="top-prognosen" />
       <TopPredictionsRanking ranked={rankedPredictions} limit={5} />
       <ScoreColorKey />
+      <div id="verteilung" />
       <QualityBandDistribution ranked={rankedPredictions} todayIso={buckets.todayIso} />
+      <div id="schwelle" />
       <QualityScoreFilter ranked={rankedPredictions} />
+      <div id="tipprunde" />
       <TipprundeCard />
       <DailyRecapCard todayIso={buckets.todayIso} />
 
@@ -514,6 +522,7 @@ export default async function SportPage() {
         </p>
       )}
 
+      <div id="ligen" />
       <LigaAccordionControls />
       <div className="space-y-3">
         {(() => {

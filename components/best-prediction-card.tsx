@@ -5,6 +5,7 @@
 
 import type { RankedPrediction } from '@/lib/sport/quality-ranking';
 import { TipSaveButton } from '@/components/tip-save-button';
+import { CustomTipInput } from '@/components/custom-tip-input';
 
 interface Props {
   ranked: RankedPrediction[];
@@ -139,6 +140,24 @@ export function BestPredictionCard({ ranked, todayIso }: Props) {
             <li key={i}>· {w}</li>
           ))}
         </ul>
+      )}
+
+      {fixture.prediction && (
+        <div className="mt-3">
+          <CustomTipInput
+            fixtureId={fixture.id}
+            fixtureDate={fixture.date}
+            league={leagueName}
+            homeTeam={fixture.homeTeam}
+            awayTeam={fixture.awayTeam}
+            modelHomeProbability={fixture.prediction.pHome}
+            modelDrawProbability={fixture.prediction.pDraw}
+            modelAwayProbability={fixture.prediction.pAway}
+            qualityScore={score}
+            qualityBand={band}
+            dataQuality={dataQuality}
+          />
+        </div>
       )}
 
       <p className="mt-3 text-[10px] leading-snug opacity-70">

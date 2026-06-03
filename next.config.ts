@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
 // Last bumped: 2026-06-01 — Welle 58.
-const BUILD_MARKER = 'welle-801-950-accordion-controls-legende';
+const BUILD_MARKER = 'welle-951-1150-custom-tipp-section-nav';
 
 const nextConfig: NextConfig = {
   env: {
