@@ -73,6 +73,16 @@ export const BASKETBALL_LEAGUES: League[] = [
   { id: '4477', name: 'NCAA', country: 'USA' }
 ];
 
+// Tennis-Turniere — die vier Grand Slams + ATP/WTA-Top.
+export const TENNIS_LEAGUES: League[] = [
+  { id: '4464', name: 'ATP Tour', country: 'International' },
+  { id: '4465', name: 'WTA Tour', country: 'International' },
+  { id: '4466', name: 'Australian Open', country: 'Australien' },
+  { id: '4467', name: 'French Open', country: 'Frankreich' },
+  { id: '4468', name: 'Wimbledon', country: 'England' },
+  { id: '4469', name: 'US Open', country: 'USA' }
+];
+
 // Mehrere mögliche IDs für die WM 2026 — TheSportsDB pflegt sie oft unter
 // verschiedenen IDs (Hauptturnier, Qualifikation, Friendlies).
 export const WORLD_CUP_LEAGUE_IDS = ['4429', '4503'];
