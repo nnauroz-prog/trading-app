@@ -40,6 +40,9 @@ import { SportTier90Recorder } from '@/components/sport-tier-90-recorder';
 import { SportTier90History } from '@/components/sport-tier-90-history';
 import { SportTier90HistoryStrip } from '@/components/sport-tier-90-history-strip';
 import { getEmployeeBacktest } from '@/lib/sport/firma/employee-backtest-cache';
+import { rankPredictionsByQuality, summarizeLeagueQuality } from '@/lib/sport/quality-ranking';
+import { BestPredictionCard } from '@/components/best-prediction-card';
+import { TopPredictionsRanking } from '@/components/top-predictions-ranking';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -320,6 +323,11 @@ export default async function SportPage() {
     };
   });
 
+  // Quality-Score-Ranking: alle anstehenden Spiele gerankt — beste Einzel-Prognose
+  // (BestPredictionCard) und Top-5 (TopPredictionsRanking) lesen daraus.
+  const rankedPredictions = rankPredictionsByQuality({ leagues });
+  const leagueQuality = summarizeLeagueQuality(leagues);
+
   // Flatten all finished fixtures across leagues for the tip-journal resolver.
   const finishedLite = leagues.flatMap((lf) => lf.last
     .filter((f) => f.homeScore !== null && f.awayScore !== null)
@@ -332,12 +340,16 @@ export default async function SportPage() {
       </Link>
 
       <header className="space-y-2">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Sport · Fußball</div>
-        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Vorhergesagte Ergebnisse</h1>
-        <p className="text-sm text-slate-400">Jedes anstehende Spiel der nächsten 14 Tage mit voraussichtlichem Endstand — basierend auf 3 Saisons echter Daten.</p>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Sport · Fußball-Prognosen</div>
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Fußball-Prognosen für Tipprunden</h1>
+        <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>
       </header>
 
-      {/* Drei Kern-Blöcke ganz oben — alles andere unter „Details ansehen". */}
+      {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking. */}
+      <BestPredictionCard ranked={rankedPredictions} todayIso={buckets.todayIso} />
+      <TopPredictionsRanking ranked={rankedPredictions} limit={5} />
+
+      {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}
 
       <div id="tier-90" />
       <Tier90Picks picks={consensusEnriched} />
@@ -500,12 +512,27 @@ export default async function SportPage() {
           const hasNext = lf.next.length > 0;
           return (
             <details key={lf.league.id} open={hasNext && leagueIdx < 3} className={`rounded-2xl border bg-slate-900/40 ${hasNext ? 'border-emerald-400/40' : 'border-slate-800/80'}`}>
-              <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider hover:text-slate-100">
-                <span className={hasNext ? 'text-emerald-300' : 'text-slate-500'}>
+              <summary className="cursor-pointer p-4 hover:text-slate-100">
+                <span className={`text-xs font-semibold uppercase tracking-wider ${hasNext ? 'text-emerald-300' : 'text-slate-500'}`}>
                   ▸ {lf.league.name} <span className="text-slate-500">· {lf.league.country}</span>
-                  {hasNext && <span className="ml-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] text-emerald-200 normal-case">{lf.next.length} Spiele kommen</span>}
-                  {!hasNext && <span className="ml-2 text-[9px] normal-case text-slate-600">Saisonpause</span>}
                 </span>
+                {hasNext && (() => {
+                  const q = leagueQuality.get(lf.league.id);
+                  return (
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] normal-case">
+                      <span className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">{lf.next.length} Spiele</span>
+                      {q?.bestLabel && q.bestMarketLabel && (
+                        <span className="rounded-md border border-slate-700 bg-slate-900/60 px-1.5 py-0.5 text-slate-300">
+                          bester Tipp: <span className="text-slate-100">{q.bestMarketLabel}</span>
+                        </span>
+                      )}
+                      {q?.bestScore !== null && q?.bestScore !== undefined && (
+                        <span className="rounded-md border border-sky-400/40 bg-sky-500/10 px-1.5 py-0.5 font-mono text-sky-200">Score {q.bestScore}/100</span>
+                      )}
+                    </span>
+                  );
+                })()}
+                {!hasNext && <span className="ml-2 text-[9px] uppercase tracking-wider text-slate-600">· Saisonpause</span>}
               </summary>
               <div className="space-y-4 p-4 pt-0">
                 {hasNext ? (

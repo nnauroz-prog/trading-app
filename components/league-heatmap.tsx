@@ -29,7 +29,7 @@ export function LeagueHeatmap({ synth }: { synth: FirmaSynthesis }) {
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Liga-Heatmap (7 Tage)</h2>
         <p className="mt-0.5 text-[10.5px] leading-snug text-slate-500">
-          Wo gibt es jetzt klare Tipps? Sortiert nach Anzahl sicherer Tipps in dieser Liga, dann nach bester Konfidenz.
+          Wo gibt es jetzt klare Tipps? Sortiert nach Anzahl klarer Modell-Tipps in dieser Liga, dann nach bester Konfidenz.
         </p>
       </div>
       <ul className="space-y-1">

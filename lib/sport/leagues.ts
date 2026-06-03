@@ -99,6 +99,24 @@ export const HANDBALL_LEAGUES: League[] = [
   { id: '4644', name: 'LNH Division 1', country: 'Frankreich' }
 ];
 
+// Motorsport — Formel 1, MotoGP (best-guess IDs)
+export const MOTORSPORT_LEAGUES: League[] = [
+  { id: '4370', name: 'Formula 1', country: 'International' },
+  { id: '4371', name: 'MotoGP', country: 'International' },
+  { id: '4372', name: 'IndyCar Series', country: 'USA' }
+];
+
+// Baseball — MLB
+export const BASEBALL_LEAGUES: League[] = [
+  { id: '4424', name: 'MLB', country: 'USA' },
+  { id: '4830', name: 'NPB', country: 'Japan' }
+];
+
+// American Football — NFL (best-guess ID)
+export const NFL_LEAGUES: League[] = [
+  { id: '4391', name: 'NFL', country: 'USA' }
+];
+
 // Mehrere mögliche IDs für die WM 2026 — TheSportsDB pflegt sie oft unter
 // verschiedenen IDs (Hauptturnier, Qualifikation, Friendlies).
 export const WORLD_CUP_LEAGUE_IDS = ['4429', '4503'];

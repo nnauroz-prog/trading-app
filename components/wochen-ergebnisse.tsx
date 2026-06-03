@@ -54,10 +54,10 @@ export function WochenErgebnisse({
   return (
     <section className="space-y-3 rounded-2xl border-2 border-emerald-400/40 bg-slate-900/60 p-4">
       <header className="space-y-1">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300">Voraussichtliche Ergebnisse · 45 Tage</div>
-        <h2 className="text-xl font-bold tracking-tight text-white">Wahrscheinliches Endergebnis pro Spiel</h2>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300">Top-Ergebnis-Schätzungen · 45 Tage</div>
+        <h2 className="text-xl font-bold tracking-tight text-white">Mögliche Ergebnis-Tendenz pro Spiel</h2>
         <p className="text-[11px] leading-snug text-slate-400">
-          Das Hauptprodukt der Sport-Firma. Pro Tag jedes anstehende Spiel mit dem wahrscheinlichsten Score, gerechnet aus <span className="font-semibold text-slate-200">{totalHistory.toLocaleString('de-DE')} ausgewerteten Spielen der letzten drei Saisons</span>. Farbe zeigt die Konfidenz: grün = sicher, blau = leichter Favorit, gelb = leichter Trend, grau = offen.
+          Pro Tag jede Begegnung mit der wahrscheinlichsten Tendenz, gerechnet aus <span className="font-semibold text-slate-200">{totalHistory.toLocaleString('de-DE')} ausgewerteten Spielen der letzten drei Saisons</span>. Farbe zeigt nur die Modell-Konfidenz — kein Garantie-Versprechen: grün = klare Tendenz, blau = leichter Favorit, gelb = leichter Trend, grau = offen.
         </p>
       </header>
       <div className="space-y-4">
