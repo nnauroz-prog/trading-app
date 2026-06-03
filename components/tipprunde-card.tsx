@@ -11,6 +11,7 @@ import {
   type TipprundeStats
 } from '@/lib/sport/tipprunde';
 import { SPORT_TIP_JOURNAL_CHANGED_EVENT } from '@/lib/sport/tip-journal';
+import { TipprundeShare } from '@/components/tipprunde-share';
 
 const BAND_LABEL: Record<string, string> = {
   sehr_stark: 'sehr starke Prognose',
@@ -146,6 +147,8 @@ export function TipprundeCard() {
           )}
         </>
       ) : null}
+
+      <TipprundeShare />
 
       <button
         type="button"
