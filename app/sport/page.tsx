@@ -51,6 +51,8 @@ import { WochenzielCard } from '@/components/wochenziel-card';
 import { HitRateSparkline } from '@/components/hit-rate-sparkline';
 import { TipprundeWeeklyHistory } from '@/components/tipprunde-weekly-history';
 import { TipprundeByLeague } from '@/components/tipprunde-by-league';
+import { AchievementsCard } from '@/components/achievements-card';
+import { WeekdayHeatmap } from '@/components/weekday-heatmap';
 import { DailyRecapCard } from '@/components/daily-recap-card';
 import { LigaAccordionControls } from '@/components/liga-accordion-controls';
 import { ScoreColorKey } from '@/components/score-color-key';
@@ -410,6 +412,8 @@ export default async function SportPage() {
       <HitRateSparkline />
       <TipprundeWeeklyHistory />
       <TipprundeByLeague />
+      <WeekdayHeatmap />
+      <AchievementsCard />
       <DailyRecapCard todayIso={buckets.todayIso} />
 
       {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}
