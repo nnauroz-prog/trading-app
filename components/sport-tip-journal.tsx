@@ -12,6 +12,7 @@ import {
 } from '@/lib/sport/tip-journal';
 import { TipJournalExport } from '@/components/tip-journal-export';
 import { TipJournalImport } from '@/components/tip-journal-import';
+import { TipJournalSearch } from '@/components/tip-journal-search';
 
 function fmtDate(iso: string): string {
   const d = new Date(iso + 'T12:00:00');
@@ -160,6 +161,7 @@ export function SportTipJournal({ finishedFixtures }: Props) {
           </ul>
         </>
       )}
+      <TipJournalSearch />
       <TipJournalImport />
     </section>
   );
