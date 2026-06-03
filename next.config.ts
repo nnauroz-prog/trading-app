@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
 // Last bumped: 2026-06-01 — Welle 58.
-const BUILD_MARKER = 'welle-2751-2850-trefferquote-sparkline';
+const BUILD_MARKER = 'welle-2851-3150-wm-gruppen-saisonstart';
 
 const nextConfig: NextConfig = {
   env: {

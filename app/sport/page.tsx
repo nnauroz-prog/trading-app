@@ -58,7 +58,9 @@ import { SportQuickFilter } from '@/components/sport-quick-filter';
 import { SummerModeBanner } from '@/components/summer-mode-banner';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { WmNextMatches } from '@/components/wm-next-matches';
+import { WmGroupsOverview } from '@/components/wm-groups-overview';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
+import { SeasonStartsCard } from '@/components/season-starts-card';
 import { PendingTipsReminder } from '@/components/pending-tips-reminder';
 
 export const dynamic = 'force-dynamic';
@@ -369,10 +371,12 @@ export default async function SportPage() {
           beste Antwort auf „nichts in den Ligen" ist „WM kommt". */}
       <WmCountdownBanner todayIso={buckets.todayIso} />
       <WmNextMatches todayIso={buckets.todayIso} />
+      <WmGroupsOverview todayIso={buckets.todayIso} />
 
       {/* Sommer-Banner steht VOR der besten Prognose: wenn nichts läuft,
           braucht der User die ehrliche Antwort zuerst statt eine leere Top-Karte. */}
       <SummerModeBanner leagues={leagues} todayIso={buckets.todayIso} />
+      {rankedPredictions.length < 5 && <SeasonStartsCard todayIso={buckets.todayIso} />}
       <OtherSportsShortcut upcomingFootballCount={rankedPredictions.length} />
       <PendingTipsReminder />
 
