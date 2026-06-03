@@ -47,6 +47,7 @@ import { TopPredictionsRanking } from '@/components/top-predictions-ranking';
 import { QualityBandDistribution } from '@/components/quality-band-distribution';
 import { QualityScoreFilter } from '@/components/quality-score-filter';
 import { QualityCompare } from '@/components/quality-compare';
+import { LigaSpotlight } from '@/components/liga-spotlight';
 import { TipprundeCard } from '@/components/tipprunde-card';
 import { WochenzielCard } from '@/components/wochenziel-card';
 import { HitRateSparkline } from '@/components/hit-rate-sparkline';
@@ -418,6 +419,7 @@ export default async function SportPage() {
       <SportQuickFilter ranked={rankedPredictions} todayIso={buckets.todayIso} tomorrowIso={buckets.tomorrowIso} />
       <QualityScoreFilter ranked={rankedPredictions} />
       <QualityCompare ranked={rankedPredictions} />
+      <LigaSpotlight leagues={leagues} />
       <div id="tipprunde" />
       <TipprundeCard />
       <WochenzielCard />
