@@ -7,6 +7,9 @@ import {
   loadProfile,
   saveProfile,
   clearProfile,
+  MAX_NAME_LENGTH,
+  MIN_NAME_LENGTH,
+  MAX_NOTE_LENGTH,
   type TipprundeProfile,
   type TipprundeStats
 } from '@/lib/sport/tipprunde';
@@ -26,6 +29,7 @@ export function TipprundeCard() {
   const [profile, setProfile] = useState<TipprundeProfile | null>(null);
   const [stats, setStats] = useState<TipprundeStats | null>(null);
   const [draftName, setDraftName] = useState<string>('');
+  const [draftNote, setDraftNote] = useState<string>('');
   const [editing, setEditing] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -47,9 +51,10 @@ export function TipprundeCard() {
   if (!mounted) return null;
 
   const submit = () => {
-    const name = draftName.trim().slice(0, 32);
-    if (name.length < 2) return;
-    saveProfile({ displayName: name, joinedAt: profile?.joinedAt ?? Date.now() });
+    const name = draftName.trim().slice(0, MAX_NAME_LENGTH);
+    if (name.length < MIN_NAME_LENGTH) return;
+    const note = draftNote.trim().slice(0, MAX_NOTE_LENGTH) || undefined;
+    saveProfile({ displayName: name, joinedAt: profile?.joinedAt ?? Date.now(), note });
     setEditing(false);
   };
 
@@ -68,18 +73,29 @@ export function TipprundeCard() {
             value={draftName}
             onChange={(e) => setDraftName(e.target.value)}
             placeholder={profile?.displayName ?? 'z. B. „Tom" oder „Tipp-Wölfin"'}
-            maxLength={32}
+            maxLength={MAX_NAME_LENGTH}
             className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-400/60 focus:outline-none"
           />
           <button
             type="button"
             onClick={submit}
-            disabled={draftName.trim().length < 2}
+            disabled={draftName.trim().length < MIN_NAME_LENGTH}
             className="rounded-md border border-emerald-400/50 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Speichern
           </button>
         </div>
+        <label className="block">
+          <span className="text-[9px] uppercase tracking-wider text-slate-500">Notiz (optional, {MAX_NOTE_LENGTH} Zeichen)</span>
+          <textarea
+            value={draftNote}
+            onChange={(e) => setDraftNote(e.target.value)}
+            maxLength={MAX_NOTE_LENGTH}
+            placeholder={'z. B. „Bundesliga-Fokus" oder „Wochenziel 4/5 Treffer"'}
+            className="mt-0.5 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-[11.5px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-400/60 focus:outline-none"
+            rows={2}
+          />
+        </label>
         {profile && (
           <button
             type="button"
@@ -102,12 +118,17 @@ export function TipprundeCard() {
         </div>
         <button
           type="button"
-          onClick={() => { setDraftName(profile.displayName); setEditing(true); }}
+          onClick={() => { setDraftName(profile.displayName); setDraftNote(profile.note ?? ''); setEditing(true); }}
           className="rounded-md border border-emerald-400/30 bg-emerald-500/5 px-2 py-0.5 text-[10px] text-emerald-200 hover:bg-emerald-500/15"
         >
-          umbenennen
+          bearbeiten
         </button>
       </div>
+      {profile.note && (
+        <p className="rounded-md border border-emerald-400/20 bg-emerald-500/5 p-2 text-[10.5px] italic leading-snug text-emerald-100/80">
+          „{profile.note}“
+        </p>
+      )}
 
       {stats && stats.resolved === 0 ? (
         <p className="rounded-lg border border-dashed border-slate-700 bg-slate-950/40 p-3 text-[11px] leading-snug text-slate-400">
