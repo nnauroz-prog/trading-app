@@ -10,6 +10,7 @@ import {
   resolvePendingTips,
   summariseTips
 } from '@/lib/sport/tip-journal';
+import { TipJournalExport } from '@/components/tip-journal-export';
 
 function fmtDate(iso: string): string {
   const d = new Date(iso + 'T12:00:00');
@@ -62,12 +63,15 @@ export function SportTipJournal({ finishedFixtures }: Props) {
           </p>
         </div>
         {log.length > 0 && (
-          <button
-            onClick={() => { if (window.confirm('Tipp-Tagebuch wirklich löschen?')) clearTipJournal(); }}
-            className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-400 hover:border-rose-500/40 hover:text-rose-300"
-          >
-            Löschen
-          </button>
+          <div className="flex gap-1.5">
+            <TipJournalExport />
+            <button
+              onClick={() => { if (window.confirm('Tipp-Tagebuch wirklich löschen?')) clearTipJournal(); }}
+              className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-400 hover:border-rose-500/40 hover:text-rose-300"
+            >
+              Löschen
+            </button>
+          </div>
         )}
       </div>
 
