@@ -52,6 +52,8 @@ import { LigaAccordionControls } from '@/components/liga-accordion-controls';
 import { ScoreColorKey } from '@/components/score-color-key';
 import { SportTopNav } from '@/components/sport-top-nav';
 import { CoverageOverview } from '@/components/coverage-overview';
+import { LigaTop3Snapshot } from '@/components/liga-top3-snapshot';
+import { SportQuickFilter } from '@/components/sport-quick-filter';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -366,6 +368,7 @@ export default async function SportPage() {
       <div id="verteilung" />
       <QualityBandDistribution ranked={rankedPredictions} todayIso={buckets.todayIso} />
       <div id="schwelle" />
+      <SportQuickFilter ranked={rankedPredictions} todayIso={buckets.todayIso} tomorrowIso={buckets.tomorrowIso} />
       <QualityScoreFilter ranked={rankedPredictions} />
       <div id="tipprunde" />
       <TipprundeCard />
@@ -577,11 +580,14 @@ export default async function SportPage() {
               </summary>
               <div className="space-y-4 p-4 pt-0">
                 {hasNext ? (
-                  <div>
-                    <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">🎯 Vorhergesagte Ergebnisse · {lf.next.length} Spiele</h3>
-                    <ul className="space-y-1.5">
-                      {lf.next.map((f) => <UpcomingFixtureRow key={f.id} f={f} h2h={h2hById.get(f.id)} />)}
-                    </ul>
+                  <div className="space-y-3">
+                    <LigaTop3Snapshot league={lf} />
+                    <div>
+                      <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Alle Begegnungen · {lf.next.length} Spiele</h3>
+                      <ul className="space-y-1.5">
+                        {lf.next.map((f) => <UpcomingFixtureRow key={f.id} f={f} h2h={h2hById.get(f.id)} />)}
+                      </ul>
+                    </div>
                   </div>
                 ) : (
                   <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-3 text-[11.5px] leading-snug text-amber-100/90">
