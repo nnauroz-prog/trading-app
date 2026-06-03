@@ -26,7 +26,7 @@ export function SafetyPicksSection({ synth }: { synth: FirmaSynthesis }) {
       <header className="space-y-1">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
-            Sehr sichere Tipps · 7 Tage
+            Top-Konfidenz-Liste · 7 Tage
           </h2>
           <span className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-mono text-emerald-200">
             ≥ {thresholdPct}% Konfidenz

@@ -34,7 +34,7 @@ export function SportFirmaCard({ synth }: { synth: FirmaSynthesis }) {
       <div className="rounded-lg border border-emerald-400/30 bg-emerald-950/15 p-3">
         <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Auftrag jedes Mitarbeiters</div>
         <p className="mt-1 text-[11.5px] leading-snug text-slate-100">
-          So präzise wie möglich tippen — inklusive exaktem wahrscheinlichsten Ergebnis fürs Tippspiel. <span className="font-semibold text-emerald-200">Erfolg = wachsende Trefferquote über viele Spiele.</span> Nur Begegnungen mit ≥ {Math.round(synth.safetyPickThreshold * 100)} % Konfidenz dürfen unter „Sehr sichere Tipps“ landen.
+          So präzise wie möglich tippen — inklusive plausibelstem Ergebnis fürs Tippspiel. <span className="font-semibold text-emerald-200">Erfolg = wachsende Trefferquote über viele Spiele.</span> Nur Begegnungen mit ≥ {Math.round(synth.safetyPickThreshold * 100)} % Konfidenz landen in der Top-Konfidenz-Liste.
         </p>
       </div>
 

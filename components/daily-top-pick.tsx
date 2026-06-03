@@ -97,8 +97,8 @@ export function DailyTopPickCard({ synth }: { synth: FirmaSynthesis }) {
       <p className="rounded-lg border border-slate-800 bg-slate-950/40 p-2.5 text-[10.5px] leading-snug text-slate-300">
         <span className="font-semibold text-slate-200">{curator.name}</span> hat das aus allen kommenden Spielen als bestes Setup rausgesucht.{' '}
         {isSafety
-          ? `Es schafft die ≥ ${Math.round(synth.safetyPickThreshold * 100)} %-Schwelle und steht damit auch oben unter „Sehr sichere Tipps“.`
-          : `Liegt unter der ${Math.round(synth.safetyPickThreshold * 100)} %-Sicherheitsschwelle — ${band.explanation} Trotzdem die beste verfügbare Begegnung für dein Tippspiel.`}
+          ? `Es schafft die ≥ ${Math.round(synth.safetyPickThreshold * 100)} %-Schwelle und steht damit auch oben in der Top-Konfidenz-Liste.`
+          : `Liegt unter der ${Math.round(synth.safetyPickThreshold * 100)} %-Konfidenz-Schwelle — ${band.explanation} Trotzdem die plausibelste verfügbare Begegnung für dein Tippspiel.`}
       </p>
     </section>
   );

@@ -51,6 +51,7 @@ import { DailyRecapCard } from '@/components/daily-recap-card';
 import { LigaAccordionControls } from '@/components/liga-accordion-controls';
 import { ScoreColorKey } from '@/components/score-color-key';
 import { SportTopNav } from '@/components/sport-top-nav';
+import { CoverageOverview } from '@/components/coverage-overview';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -369,6 +370,7 @@ export default async function SportPage() {
       <div id="tipprunde" />
       <TipprundeCard />
       <DailyRecapCard todayIso={buckets.todayIso} />
+      <CoverageOverview leagues={leagues} todayIso={buckets.todayIso} />
 
       {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}
 
