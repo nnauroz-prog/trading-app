@@ -21,6 +21,10 @@ import { WatchlistToggle } from '@/components/watchlist-toggle';
 import { DataQualityBadge } from '@/components/data-quality-badge';
 import { QuickPositionButton } from '@/components/quick-position-button';
 import { CoinAlertForm } from '@/components/coin-alert-form';
+import { AssetSafetyCard } from '@/components/asset-safety-card';
+import { AssetTier90Status } from '@/components/asset-tier-90-status';
+import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
+import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
 import { deriveCoinAction } from '@/lib/coin-action';
 import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 
@@ -268,6 +272,14 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
         <p className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-500">
           Keine Preisdaten verfügbar.
         </p>
+      )}
+
+      {candidate && masterSignal && backtestSummary && (
+        <AssetSafetyCard symbol={asset.ticker} safety={scoreCandidateSafety(candidate, masterSignal, backtestSummary)} />
+      )}
+
+      {personas.length > 0 && (
+        <AssetTier90Status result={evaluateTradeTier90(personas)} coinSymbol={asset.ticker} />
       )}
 
       {snapshot && (

@@ -63,7 +63,7 @@ function normalize(e: ApiEvent, status: 'upcoming' | 'finished'): Fixture | null
 async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<Fixture[]> {
   const url = `https://www.thesportsdb.com/api/v1/json/3/events${kind}league.php?id=${leagueId}`;
   try {
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    const res = await fetch(url, { next: { revalidate: 600 } });
     if (!res.ok) return [];
     const data = (await res.json()) as { events?: ApiEvent[] | null };
     const events = data.events ?? [];
@@ -75,30 +75,96 @@ async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<Fix
   }
 }
 
+// Volle Saison einer Liga: ein einziger Call zieht alle Begegnungen einer
+// Spielzeit. Cache 24 h, weil Vergangenheits-Daten sich nicht ändern. So füttern
+// wir das Modell mit hunderten statt nur den letzten 15 Spielen.
+async function fetchSeasonEvents(leagueId: string, season: string): Promise<Fixture[]> {
+  const url = `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=${leagueId}&s=${season}`;
+  try {
+    const res = await fetch(url, { next: { revalidate: 86400 } });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { events?: ApiEvent[] | null };
+    const events = data.events ?? [];
+    return events
+      .map((e) => normalize(e, 'finished'))
+      .filter((f): f is Fixture => f !== null)
+      // Nur tatsächlich gespielte Begegnungen mit Endstand zählen für die Form-Statistik.
+      .filter((f) => f.homeScore !== null && f.awayScore !== null);
+  } catch {
+    return [];
+  }
+}
+
+// Drei zurückliegende Saisons abdecken, damit wir auch bei Sommerpause
+// massig Vergangenheitsdaten haben. Format: "YYYY-YYYY".
+function recentSeasonTags(now: Date = new Date()): string[] {
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth() + 1;
+  // Bis Juni gehört das aktuelle Spieljahr noch zur Vor-Saison.
+  const currentSeasonStart = month >= 7 ? year : year - 1;
+  return [
+    `${currentSeasonStart}-${currentSeasonStart + 1}`,
+    `${currentSeasonStart - 1}-${currentSeasonStart}`,
+    `${currentSeasonStart - 2}-${currentSeasonStart - 1}`
+  ];
+}
+
+// Dedupliziert nach Event-ID — Saisons können sich überlappen, wenn TheSportsDB
+// Test-Daten anders einsortiert.
+function mergeFixtures(...lists: Fixture[][]): Fixture[] {
+  const seen = new Map<string, Fixture>();
+  for (const list of lists) for (const f of list) seen.set(f.id, f);
+  return Array.from(seen.values());
+}
+
 async function compute(): Promise<LeagueFixtures[]> {
+  const seasons = recentSeasonTags();
+  const todayIso = new Date().toISOString().slice(0, 10);
   const results = await Promise.all(
     FOOTBALL_LEAGUES.map(async (league) => {
-      const [next, past] = await Promise.all([fetchEvents(league.id, 'next'), fetchEvents(league.id, 'past')]);
-      const upcoming: UpcomingFixture[] = next.slice(0, 8).map((f) => {
-        const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, past);
+      // Parallel: anstehende Spiele + letzte 15 Tage + drei letzte Saisons.
+      const [nextRaw, pastRaw, ...seasonalLists] = await Promise.all([
+        fetchEvents(league.id, 'next'),
+        fetchEvents(league.id, 'past'),
+        ...seasons.map((s) => fetchSeasonEvents(league.id, s))
+      ]);
+      // STRIKTE Datums-Sortierung: TheSportsDB schiebt manchmal zukünftige
+      // Quali-/Test-Spiele in den "past"-Endpoint mit pseudo-Ergebnissen.
+      // Wir vertrauen NUR dem Datum: alles ab heute = upcoming, alles
+      // vorher = finished.
+      const everyEvent = mergeFixtures(nextRaw, pastRaw, ...seasonalLists);
+      const future = everyEvent.filter((f) => f.date >= todayIso);
+      const finishedPool = everyEvent.filter((f) => f.date < todayIso && f.homeScore !== null && f.awayScore !== null);
+
+      // Sortiert die zukünftigen nach Datum aufsteigend (frühestes zuerst).
+      future.sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''));
+
+      const upcoming: UpcomingFixture[] = future.slice(0, 50).map((f) => {
+        const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, finishedPool);
         const tips = probabilities ? generateTips(probabilities, f.homeTeam, f.awayTeam) : null;
         return {
           ...f,
-          prediction: predictMatch(f.homeTeam, f.awayTeam, past),
+          status: 'upcoming',
+          homeScore: null, // explizit löschen, falls TheSportsDB-Phantomwerte da waren
+          awayScore: null,
+          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool),
           probabilities,
           tips
         };
       });
+      // Vergangenheit: die neuesten zuerst.
+      const sortedPast = finishedPool.slice().sort((a, b) => b.date.localeCompare(a.date));
       return {
         league,
         next: upcoming,
-        last: past.slice(0, 8)
+        last: sortedPast.slice(0, 200)
       };
     })
   );
   return results;
 }
 
-// Fixtures don't change minute-to-minute; cache for an hour.
-// Bumped cache key to v2: response schema gained probability + tip fields.
-export const getFootballFixtures = unstable_cache(compute, ['football-fixtures-v2'], { revalidate: 3600 });
+// Live-Daten: alle 10 Minuten frischer Pull. Vergangenheit (Saisonalcalls
+// einzeln gecacht in fetchSeasonEvents) wird intern 24 h gehalten.
+// v4-Cache-Key, weil sich das Schema durch Saison-Aggregation verändert.
+export const getFootballFixtures = unstable_cache(compute, ['football-fixtures-v6-date-strict'], { revalidate: 600 });

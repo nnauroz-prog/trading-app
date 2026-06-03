@@ -5,9 +5,47 @@ import { ProbabilityCard } from '@/components/probability-card';
 import { SportTipJournal } from '@/components/sport-tip-journal';
 import { StandingsTable } from '@/components/standings-table';
 import { computeStandings } from '@/lib/sport/standings';
+import { bucketByDay } from '@/lib/sport/day-buckets';
+import { buildFirmaSynthesis } from '@/lib/sport/firma/synthesis';
+import { SportFirmaCard } from '@/components/sport-firma-card';
+import { WeekAheadList } from '@/components/week-ahead-list';
+import { TeamWatchlistPanel } from '@/components/team-watchlist-panel';
+import { TeamWatchToggle } from '@/components/team-watch-toggle';
+import { SafetyPicksSection } from '@/components/safety-picks-section';
+import { H2HBadge } from '@/components/h2h-badge';
+import { computeHeadToHead } from '@/lib/sport/h2h';
+import { FirmaTrackRecord } from '@/components/firma-track-record';
+import { DailyTopPickCard } from '@/components/daily-top-pick';
+import { PerLeagueTopPicks } from '@/components/per-league-top-picks';
+import { MultiTipCombo } from '@/components/multi-tip-combo';
+import { PendingTipsCounter } from '@/components/pending-tips-counter';
+import { LeagueHeatmap } from '@/components/league-heatmap';
+import { SeasonPauseBanner } from '@/components/season-pause-banner';
+import { SportCuratorsQuote } from '@/components/sport-curators-quote';
+import { WeekHighlights } from '@/components/week-highlights';
+import { TeamSearch } from '@/components/team-search';
+import { LeagueHitRate } from '@/components/league-hit-rate';
+import { WochenErgebnisse } from '@/components/wochen-ergebnisse';
+import { SportTodayLive } from '@/components/sport-today-live';
+import { SportTodayResolved } from '@/components/sport-today-resolved';
+import { SportLeagueFilter } from '@/components/sport-league-filter';
+import { DataRefreshIndicator } from '@/components/data-refresh-indicator';
+import { ManualRefreshButton } from '@/components/manual-refresh-button';
+import { LeagueSeasonStatsCard } from '@/components/league-season-stats';
+import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
+import { computeConsensus } from '@/lib/sport/firma/consensus';
+import { ConsensusPicks } from '@/components/consensus-picks';
+import { Tier90Picks } from '@/components/tier-90-picks';
+import { SportTier90Recorder } from '@/components/sport-tier-90-recorder';
+import { SportTier90History } from '@/components/sport-tier-90-history';
+import { SportTier90HistoryStrip } from '@/components/sport-tier-90-history-strip';
+import { getEmployeeBacktest } from '@/lib/sport/firma/employee-backtest-cache';
+import { rankPredictionsByQuality, summarizeLeagueQuality } from '@/lib/sport/quality-ranking';
+import { BestPredictionCard } from '@/components/best-prediction-card';
+import { TopPredictionsRanking } from '@/components/top-predictions-ranking';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 3600;
+export const revalidate = 600;
 
 function fmtDate(iso: string): string {
   const d = new Date(iso + 'T00:00:00');
@@ -107,13 +145,14 @@ function TopTipp({ leagues }: { leagues: LeagueFixtures[] }) {
   );
 }
 
-function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
+function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagueLabel?: string; h2h?: import('@/lib/sport/h2h').HeadToHeadResult }) {
   return (
     <li className="rounded-lg border border-slate-800 bg-slate-950/40 p-2.5">
       <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
         <span className="font-mono text-[10px] text-slate-500">
           {fmtDate(f.date)}
           {f.time && <span className="ml-1 text-slate-600">{fmtLocalTime(f.date, f.time)}</span>}
+          {leagueLabel && <span className="ml-1 block text-[9px] uppercase tracking-wider text-slate-600">{leagueLabel}</span>}
         </span>
         <span className="text-[13px] text-slate-100">
           <span className="font-semibold">{f.homeTeam}</span>
@@ -126,6 +165,12 @@ function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-800/60 pt-1.5 text-[10px] text-slate-500">
           <span>Form Heim: <FormChips form={f.prediction.homeForm} /></span>
           <span>Form Auswärts: <FormChips form={f.prediction.awayForm} /></span>
+          {f.venue && <span className="text-slate-600">· 📍 {f.venue}</span>}
+        </div>
+      )}
+      {h2h && (
+        <div className="mt-1.5">
+          <H2HBadge h2h={h2h} />
         </div>
       )}
       {f.probabilities && f.tips ? (
@@ -147,9 +192,141 @@ function UpcomingFixtureRow({ f }: { f: UpcomingFixture }) {
   );
 }
 
+function DaySection({
+  title,
+  subtitle,
+  fixtures,
+  leagueNameById,
+  h2hById
+}: {
+  title: string;
+  subtitle: string;
+  fixtures: { fixture: UpcomingFixture; leagueName: string }[];
+  leagueNameById: Map<string, string>;
+  h2hById: Map<string, import('@/lib/sport/h2h').HeadToHeadResult>;
+}) {
+  if (fixtures.length === 0) return null;
+  return (
+    <section className="space-y-2 rounded-2xl border border-emerald-400/30 bg-emerald-950/10 p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{title}</h2>
+        <span className="text-[10px] text-slate-500">{fixtures.length} {fixtures.length === 1 ? 'Spiel' : 'Spiele'}</span>
+      </div>
+      <p className="text-[10.5px] leading-snug text-slate-500">{subtitle}</p>
+      <ul className="space-y-1.5">
+        {fixtures.map(({ fixture: f, leagueName }) => (
+          <UpcomingFixtureRow
+            key={f.id}
+            f={f}
+            leagueLabel={leagueName || leagueNameById.get(f.league) || f.league}
+            h2h={h2hById.get(f.id)}
+          />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default async function SportPage() {
   const leagues = await getFootballFixtures();
   const anyData = leagues.some((l) => l.next.length > 0 || l.last.length > 0);
+
+  const flatUpcoming: { fixture: UpcomingFixture; leagueName: string }[] = [];
+  const leagueNameById = new Map<string, string>();
+  for (const lf of leagues) {
+    leagueNameById.set(lf.league.id, lf.league.name);
+    for (const f of lf.next) flatUpcoming.push({ fixture: f, leagueName: lf.league.name });
+  }
+  const buckets = bucketByDay(flatUpcoming.map((x) => x.fixture));
+  const wrap = (fxs: UpcomingFixture[]) =>
+    fxs.map((f) => {
+      const entry = flatUpcoming.find((x) => x.fixture.id === f.id);
+      return { fixture: f, leagueName: entry?.leagueName ?? '' };
+    });
+  const todayFixtures = wrap(buckets.today);
+  const tomorrowFixtures = wrap(buckets.tomorrow);
+  const laterFirstFixtures = wrap(buckets.laterFirst);
+  const laterDateLabel = buckets.laterFirstDate ? fmtDate(buckets.laterFirstDate) : null;
+  const firmaSynth = buildFirmaSynthesis(leagues, buckets.todayIso);
+  const leagueSeasonStats = computeLeagueSeasonStats(leagues);
+  const leagueStatsMap = new Map<string, { homeWinPct: number; goalsPerMatch: number }>();
+  for (const s of leagueSeasonStats) leagueStatsMap.set(s.league, { homeWinPct: s.homeWinPct, goalsPerMatch: s.goalsPerMatch });
+
+  // Hit-Rate-Map aus dem Mitarbeiter-Backtest: jede Stimme wird mit dieser
+  // historischen Trefferquote gewichtet (Welle 227).
+  const backtestStats = await getEmployeeBacktest();
+  const hitRates = new Map<string, number>();
+  for (const s of backtestStats) {
+    if (s.hitRatePct !== null && s.totalVotes >= 15) hitRates.set(s.employeeId, s.hitRatePct);
+  }
+
+  // Sigrid Achterberg (H2H-Spezialistin) gräbt für jedes upcoming-Fixture den
+  // Direktvergleich aus den letzten Liga-Spielen.
+  const h2hById = new Map<string, import('@/lib/sport/h2h').HeadToHeadResult>();
+  for (const lf of leagues) {
+    for (const f of lf.next) {
+      h2hById.set(f.id, computeHeadToHead(f.homeTeam, f.awayTeam, lf.last));
+    }
+  }
+
+  // Consensus-Engine: 5-Signal-Konsens pro upcoming Fixture aus 3 Saisons.
+  const consensusEnriched: { verdict: import('@/lib/sport/firma/consensus').ConsensusVerdict; fixture: import('@/lib/sport/fetcher').UpcomingFixture; leagueName: string }[] = [];
+  for (const lf of leagues) {
+    for (const f of lf.next) {
+      const homeForm = firmaSynth.forms.find((x) => x.team === f.homeTeam && x.league === lf.league.name) ?? null;
+      const awayForm = firmaSynth.forms.find((x) => x.team === f.awayTeam && x.league === lf.league.name) ?? null;
+      const h2h = h2hById.get(f.id) ?? null;
+      const lstats = leagueStatsMap.get(lf.league.name) ?? null;
+      const fullLstats = leagueSeasonStats.find((s) => s.league === lf.league.name) ?? null;
+      const verdict = computeConsensus({
+        fixture: f,
+        homeForm,
+        awayForm,
+        h2h,
+        leagueHomeWinPct: lstats?.homeWinPct ?? null,
+        leagueGoalsPerMatch: lstats?.goalsPerMatch ?? null,
+        finishedPool: lf.last,
+        leagueName: lf.league.name,
+        leagueStats: fullLstats,
+        hitRates
+      });
+      consensusEnriched.push({ verdict, fixture: f, leagueName: lf.league.name });
+    }
+  }
+  consensusEnriched.sort((a, b) => b.verdict.consensusScore - a.verdict.consensusScore);
+  const consensusById = new Map<string, import('@/lib/sport/firma/consensus').ConsensusVerdict>();
+  for (const c of consensusEnriched) consensusById.set(c.fixture.id, c.verdict);
+
+  // Liefere für die Team-Watchlist Form + nächstes Spiel pro Team, damit der
+  // Client das ohne Re-Fetch anzeigen kann.
+  const teamCandidates = firmaSynth.forms.map((f) => {
+    const upcomingForThisTeam = flatUpcoming
+      .filter(({ fixture: fx, leagueName }) => leagueName === f.league && (fx.homeTeam === f.team || fx.awayTeam === f.team))
+      .sort((a, b) => a.fixture.date.localeCompare(b.fixture.date))[0];
+    const nextOpponent = upcomingForThisTeam
+      ? {
+          opponent: upcomingForThisTeam.fixture.homeTeam === f.team ? upcomingForThisTeam.fixture.awayTeam : upcomingForThisTeam.fixture.homeTeam,
+          date: upcomingForThisTeam.fixture.date,
+          isHome: upcomingForThisTeam.fixture.homeTeam === f.team
+        }
+      : undefined;
+    return {
+      team: f.team,
+      league: f.league,
+      form: {
+        wins: f.wins, draws: f.draws, losses: f.losses,
+        points: f.points, goalDiff: f.goalDiff, played: f.played,
+        streak: f.streak, sequence: f.sequence,
+        goalsFor: f.goalsFor, goalsAgainst: f.goalsAgainst
+      },
+      nextOpponent
+    };
+  });
+
+  // Quality-Score-Ranking: alle anstehenden Spiele gerankt — beste Einzel-Prognose
+  // (BestPredictionCard) und Top-5 (TopPredictionsRanking) lesen daraus.
+  const rankedPredictions = rankPredictionsByQuality({ leagues });
+  const leagueQuality = summarizeLeagueQuality(leagues);
 
   // Flatten all finished fixtures across leagues for the tip-journal resolver.
   const finishedLite = leagues.flatMap((lf) => lf.last
@@ -163,19 +340,158 @@ export default async function SportPage() {
       </Link>
 
       <header className="space-y-2">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Sport · Fußball</div>
-        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Spielpläne &amp; Ergebnisse</h1>
-        <p className="text-sm text-slate-400">Top-Ligen Europas — die nächsten und letzten Spiele.</p>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Sport · Fußball-Prognosen</div>
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Fußball-Prognosen für Tipprunden</h1>
+        <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>
       </header>
+
+      {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking. */}
+      <BestPredictionCard ranked={rankedPredictions} todayIso={buckets.todayIso} />
+      <TopPredictionsRanking ranked={rankedPredictions} limit={5} />
+
+      {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}
+
+      <div id="tier-90" />
+      <Tier90Picks picks={consensusEnriched} />
+      <SportTier90Recorder picks={consensusEnriched} />
+
+      <SportTodayLive leagues={leagues} />
+
+      <SportTodayResolved leagues={leagues} />
+
+      <div id="ergebnisse" />
+      <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} consensusById={consensusById} />
+
+      <SeasonPauseBanner leagues={leagues} />
+
+      <div className="flex items-center gap-2">
+        <DataRefreshIndicator initialTimestamp={Date.now()} refreshIntervalMs={600_000} />
+        <ManualRefreshButton />
+      </div>
+
+      <details className="rounded-2xl border border-slate-800/80 bg-slate-900/40">
+        <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+          ▸ Mehr Details (Filter, Maximal-Sicher, Tipp-Tagebuch, Liga-Statistik, Redaktion …)
+        </summary>
+        <div className="space-y-4 p-4 pt-0">
+          <SportLeagueFilter leagues={leagues} />
+
+          <div id="maximal-sicher" />
+          <ConsensusPicks picks={consensusEnriched} />
+
+          <SportTier90HistoryStrip />
+          <SportTier90History finishedFixtures={finishedLite} />
+
+          <div id="historie" />
+          <LeagueSeasonStatsCard stats={leagueSeasonStats} />
+
+          <div id="redaktion">
+          <SportFirmaCard synth={firmaSynth} />
+          </div>
+
+          <div id="sicher" />
+          <SafetyPicksSection synth={firmaSynth} />
+          <div id="tag" />
+          <DailyTopPickCard synth={firmaSynth} />
+
+          <SportCuratorsQuote synth={firmaSynth} />
+
+          <div id="liga" />
+          <PerLeagueTopPicks synth={firmaSynth} />
+
+          <LeagueHeatmap synth={firmaSynth} />
+
+          <FirmaTrackRecord safetyPickerName={firmaSynth.safetyPicker.name} />
+
+          <LeagueHitRate />
+
+          <PendingTipsCounter />
+
+          <div id="kombi" />
+          <MultiTipCombo synth={firmaSynth} />
+
+          <WeekHighlights synth={firmaSynth} />
+        </div>
+      </details>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Link
+          href="/sport/firma"
+          className="block rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 text-center text-[12px] text-emerald-300 hover:border-emerald-400/60 hover:bg-slate-900/60"
+        >
+          Personalakte → {firmaSynth.totalEmployees} Mitarbeiter
+        </Link>
+        <Link
+          href="/sport/ueberblick"
+          className="block rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 text-center text-[12px] text-emerald-300 hover:border-emerald-400/60 hover:bg-slate-900/60"
+        >
+          Überblick → was geht hier?
+        </Link>
+      </div>
+
+      <details className="rounded-2xl border border-slate-800/80 bg-slate-900/40">
+        <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+          ▸ Meine Teams & Mannschafts-Suche
+        </summary>
+        <div className="space-y-4 p-4 pt-0">
+          <div id="meine-teams" />
+          <TeamWatchlistPanel candidates={teamCandidates} />
+          <TeamSearch teams={teamCandidates.map((c) => ({ team: c.team, league: c.league }))} />
+          <div id="woche" />
+          <WeekAheadList days={firmaSynth.weekAhead} />
+        </div>
+      </details>
 
       <TopTipp leagues={leagues} />
 
+      <DaySection
+        title={`Heute · ${fmtDate(buckets.todayIso)}`}
+        subtitle="Anstoßzeit in Europe/Berlin. Vorhersagen pro Spiel direkt aufklappbar."
+        fixtures={todayFixtures}
+        leagueNameById={leagueNameById}
+        h2hById={h2hById}
+      />
+
+      {todayFixtures.length === 0 && tomorrowFixtures.length > 0 && (
+        <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Heute · {fmtDate(buckets.todayIso)}</h2>
+          <p className="mt-1 text-[12px] leading-snug text-slate-400">
+            Heute keine Spiele in den Top-Ligen. Nächste Anstöße morgen — siehe unten.
+          </p>
+        </section>
+      )}
+
+      {todayFixtures.length === 0 && tomorrowFixtures.length === 0 && laterFirstFixtures.length > 0 && (
+        <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Heute &amp; morgen · {fmtDate(buckets.todayIso)}</h2>
+          <p className="mt-1 text-[12px] leading-snug text-slate-400">
+            Spielpause. Nächster Anstoßtag: <span className="font-semibold text-emerald-300">{laterDateLabel}</span>.
+          </p>
+        </section>
+      )}
+
+      <DaySection
+        title={`Morgen · ${fmtDate(buckets.tomorrowIso)}`}
+        subtitle="Schon mal vorab planen — die Tipps werden über Nacht aktualisiert, wenn neue Form-Daten reinkommen."
+        fixtures={tomorrowFixtures}
+        leagueNameById={leagueNameById}
+        h2hById={h2hById}
+      />
+
+      {todayFixtures.length === 0 && tomorrowFixtures.length === 0 && laterFirstFixtures.length > 0 && laterDateLabel && (
+        <DaySection
+          title={`Nächster Spieltag · ${laterDateLabel}`}
+          subtitle="Kein Spiel heute oder morgen — hier die erste anstehende Runde."
+          fixtures={laterFirstFixtures}
+          leagueNameById={leagueNameById}
+          h2hById={h2hById}
+        />
+      )}
+
       <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Tipp-Spiel mit Freunden</div>
+        <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Tippspiel mit Freunden</div>
         <p className="mt-1 text-[12px] leading-relaxed text-slate-300">
-          Die „Tipp“-Schätzungen unter jedem Spiel sind ein einfaches <strong>Statistik-Modell</strong> (Poisson auf den letzten
-          Liga-Spielen) — gedacht für Gespräche und Tipp-Spiele unter Freunden, <strong>nicht</strong> für Wetten. Verletzungen,
-          Sperren, Aufstellungen und Tagesform sind nicht modelliert; die echte Welt schlägt das Modell oft.
+          Die Tipps pro Spiel kommen aus einem einfachen Poisson-Modell auf der letzten Liga-Form. Perfekt fürs Tippspiel im Freundeskreis — die Tagesform schlägt das Modell oft, das ist Teil des Spaßes.
         </p>
       </section>
 
@@ -186,31 +502,60 @@ export default async function SportPage() {
       )}
 
       <div className="space-y-3">
-        {leagues.map((lf, leagueIdx) => {
+        {(() => {
+          // Sortierung: Ligen mit anstehenden Spielen zuerst (die mit den meisten
+          // upcoming oben), dann die in Saisonpause. So sieht der User SOFORT
+          // wo Spiele laufen.
+          const sortedLeagues = [...leagues].sort((a, b) => b.next.length - a.next.length);
+          return sortedLeagues.map((lf, leagueIdx) => {
           if (lf.next.length === 0 && lf.last.length === 0) return null;
-          // First two leagues open by default so visitors see real content
-          // immediately. Remaining leagues stay collapsed to keep the page tight.
+          const hasNext = lf.next.length > 0;
           return (
-            <details key={lf.league.id} open={leagueIdx < 2} className="rounded-2xl border border-slate-800/80 bg-slate-900/40">
-              <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-300 hover:text-slate-100">
-                ▸ {lf.league.name} <span className="text-slate-500">· {lf.league.country}</span>
+            <details key={lf.league.id} open={hasNext && leagueIdx < 3} className={`rounded-2xl border bg-slate-900/40 ${hasNext ? 'border-emerald-400/40' : 'border-slate-800/80'}`}>
+              <summary className="cursor-pointer p-4 hover:text-slate-100">
+                <span className={`text-xs font-semibold uppercase tracking-wider ${hasNext ? 'text-emerald-300' : 'text-slate-500'}`}>
+                  ▸ {lf.league.name} <span className="text-slate-500">· {lf.league.country}</span>
+                </span>
+                {hasNext && (() => {
+                  const q = leagueQuality.get(lf.league.id);
+                  return (
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] normal-case">
+                      <span className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">{lf.next.length} Spiele</span>
+                      {q?.bestLabel && q.bestMarketLabel && (
+                        <span className="rounded-md border border-slate-700 bg-slate-900/60 px-1.5 py-0.5 text-slate-300">
+                          bester Tipp: <span className="text-slate-100">{q.bestMarketLabel}</span>
+                        </span>
+                      )}
+                      {q?.bestScore !== null && q?.bestScore !== undefined && (
+                        <span className="rounded-md border border-sky-400/40 bg-sky-500/10 px-1.5 py-0.5 font-mono text-sky-200">Score {q.bestScore}/100</span>
+                      )}
+                    </span>
+                  );
+                })()}
+                {!hasNext && <span className="ml-2 text-[9px] uppercase tracking-wider text-slate-600">· Saisonpause</span>}
               </summary>
               <div className="space-y-4 p-4 pt-0">
-                {lf.next.length > 0 && (
+                {hasNext ? (
                   <div>
-                    <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Nächste Spiele · mit Tipp</h3>
+                    <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">🎯 Vorhergesagte Ergebnisse · {lf.next.length} Spiele</h3>
                     <ul className="space-y-1.5">
-                      {lf.next.map((f) => <UpcomingFixtureRow key={f.id} f={f} />)}
+                      {lf.next.map((f) => <UpcomingFixtureRow key={f.id} f={f} h2h={h2hById.get(f.id)} />)}
                     </ul>
                   </div>
+                ) : (
+                  <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-3 text-[11.5px] leading-snug text-amber-100/90">
+                    Aktuell keine anstehenden Spiele in dieser Liga (Sommerpause / Pokal-Modus). Die Vergangenheit ist unten ausklappbar, die Liga-Tabelle ebenfalls. Sobald Spiele wieder angesetzt sind, erscheinen hier voraussagene Ergebnisse.
+                  </p>
                 )}
                 {lf.last.length > 0 && (
-                  <div>
-                    <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Letzte Ergebnisse</h3>
-                    <ul className="space-y-1.5">
+                  <details>
+                    <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300">
+                      ▸ Vergangenheit ansehen ({lf.last.length} Ergebnisse)
+                    </summary>
+                    <ul className="mt-2 space-y-1.5">
                       {lf.last.map((f) => <FixtureRow key={f.id} f={f} />)}
                     </ul>
-                  </div>
+                  </details>
                 )}
                 {lf.last.length >= 3 && (
                   <details>
@@ -222,16 +567,51 @@ export default async function SportPage() {
                     </div>
                   </details>
                 )}
+                {(() => {
+                  const teams = new Set<string>();
+                  for (const f of lf.last) {
+                    teams.add(f.homeTeam);
+                    teams.add(f.awayTeam);
+                  }
+                  for (const f of lf.next) {
+                    teams.add(f.homeTeam);
+                    teams.add(f.awayTeam);
+                  }
+                  if (teams.size === 0) return null;
+                  return (
+                    <details>
+                      <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-emerald-300 hover:text-emerald-200">
+                        Teams folgen ({teams.size})
+                      </summary>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {Array.from(teams).sort().map((team) => (
+                          <div key={team} className="flex items-center gap-1.5 rounded-md border border-slate-800 bg-slate-950/40 px-2 py-1 text-[10.5px] text-slate-300">
+                            <span>{team}</span>
+                            <TeamWatchToggle team={team} league={lf.league.name} />
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  );
+                })()}
               </div>
             </details>
           );
-        })}
+          });
+        })()}
       </div>
 
+      <div id="tagebuch" />
       <SportTipJournal finishedFixtures={finishedLite} />
 
-      <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
-        Daten: TheSportsDB (öffentlich, frei) · Zeiten in Europe/Berlin · Aktualisierung max. stündlich · keine Garantie auf Vollständigkeit/Korrektheit.
+      <footer className="space-y-1 border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
+        <p>
+          Daten: TheSportsDB (öffentlich, frei) · Zeiten in Europe/Berlin · Daten werden alle 10 Minuten aktualisiert · Stand:{' '}
+          {new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', dateStyle: 'short', timeStyle: 'short' })} (Berlin).
+        </p>
+        <p>
+          Build: <span className="font-mono text-slate-500">{process.env.BUILD_MARKER ?? '—'}</span> · Tippspiel-Modus aktiv, keine Wett-Empfehlung.
+        </p>
       </footer>
     </main>
   );

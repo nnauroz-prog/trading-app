@@ -21,6 +21,14 @@ import { getCryptoNews } from '@/lib/news/news-agent';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import { computeEventWindow } from '@/lib/calendar/event-window';
 import { AgentLog } from '@/components/agent-log';
+import { FirmaVoteSummaryCard } from '@/components/firma-vote-summary-card';
+import { SubAgentLeaderboard } from '@/components/sub-agent-leaderboard';
+import { TradeTier90Card } from '@/components/trade-tier-90-card';
+import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
+import { Tier90Recorder } from '@/components/tier-90-recorder';
+import { Tier90HistoryCard } from '@/components/tier-90-history-card';
+import { Tier90HistoryStrip } from '@/components/tier-90-history-strip';
+import { todayIsoBerlin } from '@/lib/agent-memory';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { FirmaStandings } from '@/components/firma-standings';
 import { FirmaRankingPanel } from '@/components/firma-ranking';
@@ -115,6 +123,8 @@ export default async function AgentPage() {
   const spaeher = runSpaeher(newsItems);
   const eventWindow = computeEventWindow(listMacroEventsThisWeek());
   const personas = evaluatePersonas(report, backtest, spaeher, eventWindow);
+  const tier90 = evaluateTradeTier90(personas);
+  const tier90Showcase = personas.find((p) => p.verdict === 'BUY' && p.safety?.grade === 'A') ?? personas.find((p) => p.target) ?? null;
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
@@ -166,6 +176,21 @@ export default async function AgentPage() {
         );
       })()}
 
+      <TradeTier90Card result={tier90} showcaseVerdict={tier90Showcase} />
+
+      <Tier90Recorder
+        qualified={tier90.qualified}
+        date={todayIsoBerlin()}
+        coinSymbol={tier90Showcase?.target?.symbol ?? null}
+        entry={tier90Showcase?.target?.entry ?? null}
+        stopLoss={tier90Showcase?.target?.stopLoss ?? null}
+        takeProfit1={tier90Showcase?.target?.takeProfit1 ?? null}
+      />
+
+      <Tier90HistoryStrip />
+
+      <Tier90HistoryCard />
+
       <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {personas.map((p) => {
           const isBuy = p.verdict === 'BUY';
@@ -175,7 +200,9 @@ export default async function AgentPage() {
               <div className="flex items-baseline justify-between">
                 <div>
                   <div className="text-[9px] uppercase tracking-[0.2em] text-slate-500">Firma</div>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-white">{p.name}</h2>
+                  <Link href={`/agent/${p.persona}`} className="text-sm font-bold uppercase tracking-wider text-white hover:text-emerald-300">
+                    {p.name} →
+                  </Link>
                 </div>
                 <span className={`rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${isBuy ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-100' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
                   CEO: {isBuy ? 'KAUFEN' : 'WARTEN'}
@@ -227,6 +254,8 @@ export default async function AgentPage() {
                 </div>
               )}
 
+              <FirmaVoteSummaryCard voteSummary={p.voteSummary} team={p.team} firmaName={p.name} firmaId={p.persona} />
+
               <div className="space-y-1.5">
                 <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Team</div>
                 <ul className="space-y-1.5">
@@ -275,6 +304,8 @@ export default async function AgentPage() {
       <FirmaRankingPanel />
       <FirmaStandings />
       <VorstandLog />
+
+      <SubAgentLeaderboard />
 
       <AgentLog />
 

@@ -22,6 +22,17 @@ import { StreitBanner } from '@/components/streit-banner';
 import { KonsensStreakCard } from '@/components/konsens-streak-card';
 import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
+import { CoinScoreRecorder } from '@/components/coin-score-recorder';
+import { CoinScoreTrend } from '@/components/coin-score-trend';
+import { SportBriefingCard } from '@/components/sport-briefing-card';
+import { SportTodayBanner } from '@/components/sport-today-banner';
+import { MarketQuickStats } from '@/components/market-quick-stats';
+import { HeuteMachen, type AssetCardData } from '@/components/heute-machen';
+import { ScorePredictionsStrip } from '@/components/score-predictions-strip';
+import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
+import { getFootballFixtures } from '@/lib/sport/fetcher';
+import { buildFirmaSynthesis } from '@/lib/sport/firma/synthesis';
+import { bucketByDay } from '@/lib/sport/day-buckets';
 import { DiffVsYesterday } from '@/components/diff-vs-yesterday';
 import { FirstVisitHint } from '@/components/first-visit-hint';
 import { TriggeredAlertsStrip } from '@/components/triggered-alerts-strip';
@@ -38,6 +49,17 @@ import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 import { AkademieStrip } from '@/components/akademie-strip';
 import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
+import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
+import { TradeTier90Card } from '@/components/trade-tier-90-card';
+import { TradingTodayCard } from '@/components/trading-today-card';
+import { Tier90Resolver } from '@/components/tier-90-resolver';
+import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
+import { AppOverviewStats } from '@/components/app-overview-stats';
+import { WmBriefingCard } from '@/components/wm-briefing-card';
+import { MultiSportBriefing } from '@/components/multi-sport-briefing';
+import { getBasketballFixtures } from '@/lib/sport/basketball-fetcher';
+import { getTennisFixtures } from '@/lib/sport/tennis-fetcher';
+import { getHockeyFixtures } from '@/lib/sport/multi-sport-fetcher';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getLehrlingReport } from '@/lib/akademie/lehrling';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
@@ -57,6 +79,8 @@ import { chefredakteurSynthesis } from '@/lib/intel/chefredakteur';
 import { IntelStrip } from '@/components/intel-strip';
 import { todayIsoBerlin } from '@/lib/agent-memory';
 import { SafetyCheck } from '@/components/safety-check';
+import { SafetyHistoryStrip } from '@/components/safety-history-strip';
+import { LastSafeBuyCard } from '@/components/last-safe-buy-card';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
@@ -79,7 +103,7 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources] = await Promise.all([
+  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources, sportLeagues, basketballLeagues, tennisLeagues, hockeyLeagues] = await Promise.all([
     buildTopPlayReport(),
     buildMasterSignal(tradeMode),
     fetchFearGreed(),
@@ -89,8 +113,120 @@ export default async function HomePage() {
     getBacktestSummary(),
     getCryptoNews(),
     getLehrlingReport(),
-    fetchBothTickerSources()
+    fetchBothTickerSources(),
+    getFootballFixtures(),
+    getBasketballFixtures(),
+    getTennisFixtures(),
+    getHockeyFixtures()
   ]);
+  const sportSynth = buildFirmaSynthesis(sportLeagues);
+  const sportTodayCount = bucketByDay(sportLeagues.flatMap((lf) => lf.next)).today.length;
+  const multiSportTodayIso = new Date().toISOString().slice(0, 10);
+  const basketballTodayCount = basketballLeagues.reduce((s, l) => s + l.next.filter((f) => f.date === multiSportTodayIso).length, 0);
+  const tennisTodayCount = tennisLeagues.reduce((s, l) => s + l.next.filter((f) => f.date === multiSportTodayIso).length, 0);
+  const hockeyTodayCount = hockeyLeagues.reduce((s, l) => s + l.next.filter((f) => f.date === multiSportTodayIso).length, 0);
+
+  // "Heute machen" — die EINE Empfehlung pro Asset-Klasse, ganz oben.
+  const cryptoScored = masterSignal.candidates.map((c) => ({ c, safety: scoreCandidateSafety(c, masterSignal, backtestSummary) }));
+  cryptoScored.sort((a, b) => b.safety.score - a.safety.score || b.c.passedCount - a.c.passedCount);
+  const cryptoTop = cryptoScored[0] ?? null;
+
+  const sportLead = sportSynth.highConfidencePicks[0] ?? sportSynth.dailyTopPick;
+  const todayBerlin = sportSynth.weekAhead[0]?.date;
+  const todaySportFixtures = todayBerlin === undefined ? [] : (sportSynth.weekAhead[0]?.fixtures ?? []);
+  const sportExtraTips = todaySportFixtures
+    .filter(({ fixture: f }) => f.prediction && (sportLead === null || sportLead === undefined || f.id !== sportLead.fixture.id))
+    .slice(0, 4)
+    .map(({ fixture: f }) => ({
+      home: f.homeTeam,
+      away: f.awayTeam,
+      score: `${f.prediction!.likelyScore.home}:${f.prediction!.likelyScore.away}`,
+      confidence: Math.round(f.prediction!.pickConfidence * 100)
+    }));
+
+  const heuteCards: AssetCardData[] = [
+    cryptoTop && cryptoTop.safety.maxSafety
+      ? {
+          klass: 'krypto',
+          emoji: '₿',
+          label: 'Krypto',
+          verdict: 'kaufen',
+          headline: `${cryptoTop.c.symbol} kaufen`,
+          detail: `Grade A · alle ${cryptoTop.safety.totalHard} Sicherheits-Kriterien erfüllt. Levels stehen direkt hier.`,
+          target: `${cryptoTop.c.symbol}`,
+          confidence: cryptoTop.safety.score,
+          href: `/assets/${cryptoTop.c.symbol.toLowerCase()}`,
+          levels: {
+            entry: cryptoTop.c.entry,
+            stopLoss: cryptoTop.c.stopLoss,
+            takeProfit1: cryptoTop.c.takeProfit1,
+            takeProfit2: cryptoTop.c.takeProfit2,
+            stopDistancePct: cryptoTop.c.stopDistancePct
+          }
+        }
+      : cryptoTop && cryptoTop.safety.grade === 'B'
+      ? {
+          klass: 'krypto',
+          emoji: '₿',
+          label: 'Krypto',
+          verdict: 'halten',
+          headline: `${cryptoTop.c.symbol} beobachten`,
+          detail: `Grade B · ${cryptoTop.safety.passedHard}/${cryptoTop.safety.totalHard} Kriterien. Noch nicht sicher genug zum Einstieg.`,
+          target: cryptoTop.c.symbol,
+          confidence: cryptoTop.safety.score,
+          href: `/assets/${cryptoTop.c.symbol.toLowerCase()}`
+        }
+      : {
+          klass: 'krypto',
+          emoji: '₿',
+          label: 'Krypto',
+          verdict: 'warten',
+          headline: 'Heute nicht kaufen',
+          detail: 'Kein Coin schafft die strengen Kriterien. Cash bleibt eine valide Position.',
+          href: '/screener'
+        },
+    {
+      klass: 'aktien',
+      emoji: '📈',
+      label: 'Aktien',
+      verdict: 'keine_daten',
+      headline: 'Daten-Quelle fehlt',
+      detail: 'Finnhub-API-Key nicht angebunden. Sobald er da ist, erscheint hier dieselbe Logik wie für Krypto.',
+      href: '/screener'
+    },
+    {
+      klass: 'gold',
+      emoji: '🥇',
+      label: 'Gold',
+      verdict: 'halten',
+      headline: 'Defensiv beibehalten',
+      detail: 'Gold bleibt der Stabilitäts-Anker. Kein schneller Trade, aber gut zur Risiko-Streuung.',
+      target: 'PAXG / XAUT',
+      href: '/gold'
+    },
+    sportLead
+      ? {
+          klass: 'sport',
+          emoji: '⚽',
+          label: 'Sport',
+          verdict: 'tippen',
+          headline: `${sportLead.fixture.homeTeam} – ${sportLead.fixture.awayTeam}`,
+          detail: `Vorhersage: ${sportLead.likelyScore.home}:${sportLead.likelyScore.away} (${sportLead.pickPlain}). Liga: ${sportLead.leagueName}.`,
+          target: `${sportLead.likelyScore.home}:${sportLead.likelyScore.away}`,
+          confidence: Math.round(sportLead.confidence * 100),
+          href: '/sport',
+          extraTips: sportExtraTips
+        }
+      : {
+          klass: 'sport',
+          emoji: '⚽',
+          label: 'Sport',
+          verdict: 'warten',
+          headline: 'Kein klarer Tipp',
+          detail: 'In den eingebundenen Ligen läuft gerade zu wenig — schau morgen wieder rein.',
+          href: '/sport'
+        }
+  ];
   const crossExchange = checkCrossExchangePrices(exchangeSources.binance, exchangeSources.bybit);
   const events = buildEventFeed(report);
   const halving = computeHalvingCyclePosition();
@@ -98,6 +234,8 @@ export default async function HomePage() {
   const upcomingMacroAll = listMacroEventsThisWeek();
   const eventWindow = computeEventWindow(upcomingMacroAll);
   const personas = evaluatePersonas(masterSignal, backtestSummary, spaeherReport, eventWindow);
+  const tier90 = evaluateTradeTier90(personas);
+  const tier90Showcase = personas.find((p) => p.verdict === 'BUY' && p.safety?.grade === 'A') ?? personas.find((p) => p.target) ?? null;
   const vorstandReport = vorstandMediation(personas);
   // Historical similarity for the headline coin (use the conservative firma's
   // pick if it BUYs, else the best-scoring candidate).
@@ -284,10 +422,45 @@ export default async function HomePage() {
           <Link href="/akademie" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Akademie</Link>
           <Link href="/positions" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Positionen</Link>
           <Link href="/gold" className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-200 transition hover:border-amber-400/50">Gold</Link>
-          <Link href="/sport" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Sport</Link>
+          <Link href="/sport" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">⚽ Sport</Link>
+          <Link href="/basketball" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">🏀 Basketball</Link>
+          <Link href="/tennis" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">🎾 Tennis</Link>
+          <Link href="/eishockey" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">🏒 Eishockey</Link>
+          <Link href="/handball" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">🤾 Handball</Link>
+          <Link href="/wm" className="shrink-0 rounded-md border border-yellow-400/40 bg-yellow-500/10 px-2.5 py-1 text-yellow-300 transition hover:border-yellow-300">🏆 WM</Link>
+          <Link href="/hilfe" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Hilfe</Link>
           <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Mehr</Link>
         </nav>
       </header>
+
+      <TradingTodayCard
+        tier90={tier90}
+        consensusPersona={tier90Showcase}
+        conservative={personas.find((p) => p.persona === 'conservative') ?? null}
+        balanced={personas.find((p) => p.persona === 'balanced') ?? null}
+        aggressive={personas.find((p) => p.persona === 'aggressive') ?? null}
+      />
+
+      <HeuteMachen cards={heuteCards} />
+
+      {tier90.qualified && (
+        <TradeTier90Card result={tier90} showcaseVerdict={tier90Showcase} />
+      )}
+
+      <Tier90HomeSummary />
+
+      <Tier90Resolver
+        latestPrices={(() => {
+          const upper: Record<string, number> = {};
+          for (const t of report.tickers) {
+            const symbol = t.symbol.replace('USDT', '').toUpperCase();
+            if (Number.isFinite(t.price)) upper[symbol] = t.price;
+          }
+          return upper;
+        })()}
+      />
+
+      <ScorePredictionsStrip synth={sportSynth} />
 
       <AgentRecorder report={masterSignal} backtest={backtestSummary} />
 
@@ -319,6 +492,15 @@ export default async function HomePage() {
         </section>
       )}
 
+      <SportTodayBanner leagues={sportLeagues} />
+
+      <MarketQuickStats
+        fearGreed={fearGreed?.value ?? null}
+        btcDominancePct={btcDominance?.btcDominancePct ?? null}
+        fundingBtcAnnualizedPct={fundingBtc?.fundingRateAnnualizedPct ?? null}
+        fundingEthAnnualizedPct={fundingEth?.fundingRateAnnualizedPct ?? null}
+      />
+
       <VorstandStrip report={vorstandReport} />
       <KonsensStreakCard />
       <StreitBanner />
@@ -340,6 +522,11 @@ export default async function HomePage() {
         structure: c.structure,
         nearSupport: c.nearSupport
       }))} />
+      <CoinScoreRecorder
+        date={todayIso}
+        candidates={masterSignal.candidates.map((c) => ({ coinId: c.coinId, symbol: c.symbol, passedCount: c.passedCount }))}
+      />
+      <CoinScoreTrend />
 
       <CrossExchangeWarning report={crossExchange} />
 
@@ -347,6 +534,23 @@ export default async function HomePage() {
       <IntelStrip ceo={intelCeo} />
       <ChaseWarning chase={chaseSignals} opportunity={opportunitySignals} />
       <WocheVoraus events={upcomingMacro} today={todayIso} />
+
+      <SportBriefingCard synth={sportSynth} todayFixtures={sportTodayCount} />
+
+      <MultiSportBriefing
+        fussballHeute={sportTodayCount}
+        basketballHeute={basketballTodayCount}
+        tennisHeute={tennisTodayCount}
+        eishockeyHeute={hockeyTodayCount}
+      />
+
+      <WmBriefingCard />
+
+      <AppOverviewStats
+        todayFixtureCount={sportTodayCount}
+        weekFixtureCount={sportSynth.totalFixturesNext7d}
+        totalFirmenMitarbeiter={sportSynth.totalEmployees}
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -357,6 +561,11 @@ export default async function HomePage() {
         </div>
         <ViewModeToggle />
       </div>
+
+      <SafetyCheck report={masterSignal} backtest={backtestSummary} />
+      <LastSafeBuyCard />
+      <SafetyHistoryStrip />
+      <ProofCard summary={backtestSummary} />
 
       <AdvancedOnly>
         <AccountConfigBar />
@@ -371,13 +580,9 @@ export default async function HomePage() {
 
         <DailyBriefing report={masterSignal} backtest={backtestSummary} />
 
-        <SafetyCheck report={masterSignal} backtest={backtestSummary} />
-
         <MarketBriefing report={masterSignal} />
 
         <NewsFeed items={newsItems} />
-
-        <ProofCard summary={backtestSummary} />
       </AdvancedOnly>
 
       <AdvancedOnly>

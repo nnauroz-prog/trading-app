@@ -33,6 +33,7 @@ function verdict(persona: 'conservative' | 'balanced' | 'aggressive', kind: 'BUY
       suggestedAccountRiskPct: persona === 'conservative' ? 1 : persona === 'balanced' ? 2 : 3,
       reason: ''
     }],
+    voteSummary: { total: 1, positiveVotes: 0, negativeVotes: 0, neutralVotes: 1, direction: 'mixed', confidence: 0, skillWeightedConfidence: 0 },
     ceoFinalWord: ''
   };
 }

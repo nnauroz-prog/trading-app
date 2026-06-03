@@ -1,5 +1,13 @@
 import type { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {};
+// Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
+// Last bumped: 2026-06-01 — Welle 58.
+const BUILD_MARKER = 'welle-396-405-quality-score';
+
+const nextConfig: NextConfig = {
+  env: {
+    BUILD_MARKER
+  }
+};
 
 export default nextConfig;
