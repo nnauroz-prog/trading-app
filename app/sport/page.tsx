@@ -70,6 +70,7 @@ import { WmTipprundeStats } from '@/components/wm-tipprunde-stats';
 import { WmPhasesTimeline } from '@/components/wm-phases-timeline';
 import { SportDataReset } from '@/components/sport-data-reset';
 import { SportTabTitle } from '@/components/sport-tab-title';
+import { SportTabsDock } from '@/components/sport-tabs-dock';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 import { SeasonStartsCard } from '@/components/season-starts-card';
 import { PendingTipsReminder } from '@/components/pending-tips-reminder';
@@ -379,6 +380,7 @@ export default async function SportPage() {
 
       <SportTabTitle />
       <SportTopNav todayIso={buckets.todayIso} />
+      <SportTabsDock />
       <SportOnboardingHint />
 
       {/* WM-Countdown VOR allem anderen, wenn ≤ 30 Tage bis Eröffnung — die
