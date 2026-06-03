@@ -1,5 +1,5 @@
 import { unstable_cache } from 'next/cache';
-import { HOCKEY_LEAGUES, League } from '@/lib/sport/leagues';
+import { HOCKEY_LEAGUES, HANDBALL_LEAGUES, League } from '@/lib/sport/leagues';
 
 // Wiederverwendbares Schema für jeden generischen Sport. Aktuell konkret für
 // Hockey instanziiert — kann später für Handball, Baseball, American Football
@@ -75,3 +75,17 @@ async function computeHockey(): Promise<GenericLeagueFixtures[]> {
 }
 
 export const getHockeyFixtures = unstable_cache(computeHockey, ['hockey-fixtures-v1'], { revalidate: 600 });
+
+async function computeHandball(): Promise<GenericLeagueFixtures[]> {
+  const todayIso = new Date().toISOString().slice(0, 10);
+  return Promise.all(
+    HANDBALL_LEAGUES.map(async (league) => {
+      const [next, past] = await Promise.all([fetchEvents(league.id, 'next'), fetchEvents(league.id, 'past')]);
+      const future = next.filter((f) => f.date >= todayIso);
+      future.sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''));
+      return { league, next: future.slice(0, 30), last: past.slice(0, 30) };
+    })
+  );
+}
+
+export const getHandballFixtures = unstable_cache(computeHandball, ['handball-fixtures-v1'], { revalidate: 600 });

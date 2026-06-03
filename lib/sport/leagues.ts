@@ -91,6 +91,14 @@ export const HOCKEY_LEAGUES: League[] = [
   { id: '4627', name: 'SHL', country: 'Schweden' }
 ];
 
+// Handball — Handball-Bundesliga, EHF Champions League, LIQUI MOLY HBL
+export const HANDBALL_LEAGUES: League[] = [
+  { id: '4641', name: 'Handball-Bundesliga', country: 'Deutschland' },
+  { id: '4642', name: 'EHF Champions League', country: 'Europa' },
+  { id: '4643', name: 'Liga ASOBAL', country: 'Spanien' },
+  { id: '4644', name: 'LNH Division 1', country: 'Frankreich' }
+];
+
 // Mehrere mögliche IDs für die WM 2026 — TheSportsDB pflegt sie oft unter
 // verschiedenen IDs (Hauptturnier, Qualifikation, Friendlies).
 export const WORLD_CUP_LEAGUE_IDS = ['4429', '4503'];
