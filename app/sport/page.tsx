@@ -50,6 +50,7 @@ import { TipprundeCard } from '@/components/tipprunde-card';
 import { WochenzielCard } from '@/components/wochenziel-card';
 import { HitRateSparkline } from '@/components/hit-rate-sparkline';
 import { TipprundeWeeklyHistory } from '@/components/tipprunde-weekly-history';
+import { TipprundeByLeague } from '@/components/tipprunde-by-league';
 import { DailyRecapCard } from '@/components/daily-recap-card';
 import { LigaAccordionControls } from '@/components/liga-accordion-controls';
 import { ScoreColorKey } from '@/components/score-color-key';
@@ -61,6 +62,7 @@ import { SummerModeBanner } from '@/components/summer-mode-banner';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { WmNextMatches } from '@/components/wm-next-matches';
 import { WmGroupsOverview } from '@/components/wm-groups-overview';
+import { WmVenuesList } from '@/components/wm-venues-list';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 import { SeasonStartsCard } from '@/components/season-starts-card';
 import { PendingTipsReminder } from '@/components/pending-tips-reminder';
@@ -375,6 +377,7 @@ export default async function SportPage() {
       <WmCountdownBanner todayIso={buckets.todayIso} />
       <WmNextMatches todayIso={buckets.todayIso} />
       <WmGroupsOverview todayIso={buckets.todayIso} />
+      <WmVenuesList todayIso={buckets.todayIso} />
 
       {/* Sommer-Banner steht VOR der besten Prognose: wenn nichts läuft,
           braucht der User die ehrliche Antwort zuerst statt eine leere Top-Karte. */}
@@ -399,6 +402,7 @@ export default async function SportPage() {
       <WochenzielCard />
       <HitRateSparkline />
       <TipprundeWeeklyHistory />
+      <TipprundeByLeague />
       <DailyRecapCard todayIso={buckets.todayIso} />
 
       {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}
