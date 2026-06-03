@@ -53,6 +53,7 @@ import { TipprundeWeeklyHistory } from '@/components/tipprunde-weekly-history';
 import { TipprundeByLeague } from '@/components/tipprunde-by-league';
 import { AchievementsCard } from '@/components/achievements-card';
 import { WeekdayHeatmap } from '@/components/weekday-heatmap';
+import { FriendsLeaderboard } from '@/components/friends-leaderboard';
 import { DailyRecapCard } from '@/components/daily-recap-card';
 import { LigaAccordionControls } from '@/components/liga-accordion-controls';
 import { ScoreColorKey } from '@/components/score-color-key';
@@ -72,6 +73,7 @@ import { SportTabTitle } from '@/components/sport-tab-title';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 import { SeasonStartsCard } from '@/components/season-starts-card';
 import { PendingTipsReminder } from '@/components/pending-tips-reminder';
+import { LastResolvedStrip } from '@/components/last-resolved-strip';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -394,6 +396,7 @@ export default async function SportPage() {
       {rankedPredictions.length < 5 && <SeasonStartsCard todayIso={buckets.todayIso} />}
       <OtherSportsShortcut upcomingFootballCount={rankedPredictions.length} />
       <PendingTipsReminder />
+      <LastResolvedStrip />
 
       {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking + Band-Verteilung. */}
       <div id="top" />
@@ -414,6 +417,7 @@ export default async function SportPage() {
       <TipprundeByLeague />
       <WeekdayHeatmap />
       <AchievementsCard />
+      <FriendsLeaderboard />
       <DailyRecapCard todayIso={buckets.todayIso} />
 
       {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}
