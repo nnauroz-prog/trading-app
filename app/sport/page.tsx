@@ -66,6 +66,7 @@ import { WmVenuesList } from '@/components/wm-venues-list';
 import { WmTipprundeStats } from '@/components/wm-tipprunde-stats';
 import { WmPhasesTimeline } from '@/components/wm-phases-timeline';
 import { SportDataReset } from '@/components/sport-data-reset';
+import { SportTabTitle } from '@/components/sport-tab-title';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 import { SeasonStartsCard } from '@/components/season-starts-card';
 import { PendingTipsReminder } from '@/components/pending-tips-reminder';
@@ -372,6 +373,7 @@ export default async function SportPage() {
         <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>
       </header>
 
+      <SportTabTitle />
       <SportTopNav todayIso={buckets.todayIso} />
       <SportOnboardingHint />
 
