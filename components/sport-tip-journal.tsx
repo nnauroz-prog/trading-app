@@ -97,6 +97,36 @@ export function SportTipJournal({ finishedFixtures }: Props) {
               })}
             </ul>
           </details>
+          {(() => {
+            const bands = ['sehr_stark', 'stark', 'brauchbar', 'orientierung', 'nicht_verwenden'] as const;
+            const hasAny = bands.some((b) => (stats.byQualityBand[b]?.resolved ?? 0) > 0);
+            if (!hasAny) return null;
+            const bandLabels: Record<string, string> = {
+              sehr_stark: 'sehr starke Prognose',
+              stark: 'starke Prognose',
+              brauchbar: 'brauchbare Prognose',
+              orientierung: 'nur grobe Orientierung',
+              nicht_verwenden: 'nicht verwenden'
+            };
+            return (
+              <details className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[11px]">
+                <summary className="cursor-pointer text-slate-300">Trefferquote pro Quality-Band</summary>
+                <p className="mt-1 text-[10px] text-slate-500">Zeigt, ob Tipps aus hohen Score-Bändern öfter aufgehen.</p>
+                <ul className="mt-2 space-y-0.5">
+                  {bands.map((band) => {
+                    const b = stats.byQualityBand[band];
+                    if (!b || b.resolved === 0) return null;
+                    return (
+                      <li key={band} className="flex justify-between font-mono text-[11px]">
+                        <span className="text-slate-400">{bandLabels[band]}</span>
+                        <span className="text-slate-300">{b.wins}/{b.resolved} {b.hitRatePct !== null ? `(${b.hitRatePct}%)` : ''}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </details>
+            );
+          })()}
           <ul className="space-y-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-950/40 p-2">
             {[...log].reverse().slice(0, 30).map((e) => {
               const o = outcomeBadge(e.outcome);
@@ -110,7 +140,12 @@ export function SportTipJournal({ finishedFixtures }: Props) {
                       <span className="ml-1 font-mono text-slate-400">[{e.finalHomeScore}:{e.finalAwayScore}]</span>
                     )}
                   </span>
-                  <span className="font-mono text-[10px] text-slate-400">{e.modelProbabilityPct}%</span>
+                  <span className="font-mono text-[10px] text-slate-400">
+                    {e.modelProbabilityPct}%
+                    {typeof e.qualityScore === 'number' && (
+                      <span className="ml-1 text-slate-500">· Q{e.qualityScore}</span>
+                    )}
+                  </span>
                   <span className={`rounded border px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider ${o.cls}`}>{o.label}</span>
                 </li>
               );

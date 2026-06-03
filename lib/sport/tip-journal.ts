@@ -11,6 +11,13 @@ export interface TipJournalEntry {
   tier: TipTier | 'custom';
   market: string;              // e.g. "Heimsieg Bayern" / "Over 2.5 Tore" / "1:1"
   modelProbabilityPct: number; // 0-100, what the model said
+  // Optionaler Quality-Score-Kontext (Welle 406-415): wird beim Speichern aus
+  // computePredictionQualityScore mitgegeben, damit Auswertungen zeigen, wie
+  // gut sich Tipps mit hohem Score gegenüber niedrigen schlagen.
+  qualityScore?: number;             // 0-100
+  qualityBand?: 'sehr_stark' | 'stark' | 'brauchbar' | 'orientierung' | 'nicht_verwenden';
+  dataQuality?: 'good' | 'medium' | 'weak';
+  isStableMarket?: boolean;
   outcome: 'pending' | 'win' | 'loss' | 'push';
   resolvedAt?: number;
   // Stored homeScore/awayScore once the match is over so the journal becomes
@@ -151,6 +158,9 @@ export interface TipStats {
   pushes: number;
   hitRatePct: number | null;
   byTier: Record<TipTier | 'custom', { resolved: number; wins: number; hitRatePct: number | null }>;
+  // Auswertung nach Quality-Score-Band — zeigt, ob „sehr stark"-Tipps
+  // tatsächlich öfter aufgehen als „orientierung"-Tipps.
+  byQualityBand: Record<string, { resolved: number; wins: number; hitRatePct: number | null }>;
 }
 
 export function summariseTips(log: TipJournalEntry[]): TipStats {
@@ -181,5 +191,18 @@ export function summariseTips(log: TipJournalEntry[]): TipStats {
     };
   }
 
-  return { total, pending, resolved, wins, losses, pushes, hitRatePct, byTier };
+  const bands: Array<NonNullable<TipJournalEntry['qualityBand']>> = ['sehr_stark', 'stark', 'brauchbar', 'orientierung', 'nicht_verwenden'];
+  const byQualityBand: TipStats['byQualityBand'] = {};
+  for (const band of bands) {
+    const bandLog = log.filter((e) => e.qualityBand === band && e.outcome !== 'pending');
+    const bandWins = bandLog.filter((e) => e.outcome === 'win').length;
+    const bandDecisive = bandLog.filter((e) => e.outcome !== 'push').length;
+    byQualityBand[band] = {
+      resolved: bandLog.length,
+      wins: bandWins,
+      hitRatePct: bandDecisive > 0 ? Math.round((bandWins / bandDecisive) * 100) : null
+    };
+  }
+
+  return { total, pending, resolved, wins, losses, pushes, hitRatePct, byTier, byQualityBand };
 }

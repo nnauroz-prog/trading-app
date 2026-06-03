@@ -63,4 +63,31 @@ describe('summariseTips', () => {
     expect(s.byTier.konservativ.hitRatePct).toBe(50);
     expect(s.byTier.standard.hitRatePct).toBe(100);
   });
+
+  it('splittet Trefferquote pro Quality-Band', () => {
+    const log: TipJournalEntry[] = [
+      entry({ id: '1', qualityBand: 'sehr_stark', outcome: 'win' }),
+      entry({ id: '2', qualityBand: 'sehr_stark', outcome: 'win' }),
+      entry({ id: '3', qualityBand: 'sehr_stark', outcome: 'loss' }),
+      entry({ id: '4', qualityBand: 'orientierung', outcome: 'loss' }),
+      entry({ id: '5', qualityBand: 'orientierung', outcome: 'loss' }),
+      entry({ id: '6', qualityBand: 'brauchbar', outcome: 'pending' })
+    ];
+    const s = summariseTips(log);
+    expect(s.byQualityBand.sehr_stark.resolved).toBe(3);
+    expect(s.byQualityBand.sehr_stark.hitRatePct).toBe(67);
+    expect(s.byQualityBand.orientierung.hitRatePct).toBe(0);
+    expect(s.byQualityBand.brauchbar.resolved).toBe(0);
+    expect(s.byQualityBand.stark.resolved).toBe(0);
+  });
+
+  it('Quality-Band-Bucket bleibt leer wenn Felder fehlen (Legacy-Einträge)', () => {
+    const log: TipJournalEntry[] = [
+      entry({ id: '1', outcome: 'win' }),
+      entry({ id: '2', outcome: 'loss' })
+    ];
+    const s = summariseTips(log);
+    expect(s.byQualityBand.sehr_stark.resolved).toBe(0);
+    expect(s.byQualityBand.orientierung.resolved).toBe(0);
+  });
 });
