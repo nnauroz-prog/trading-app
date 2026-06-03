@@ -414,6 +414,7 @@ export default async function HomePage() {
           <Link href="/sport" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">⚽ Sport</Link>
           <Link href="/basketball" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">🏀 Basketball</Link>
           <Link href="/tennis" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">🎾 Tennis</Link>
+          <Link href="/eishockey" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">🏒 Eishockey</Link>
           <Link href="/wm" className="shrink-0 rounded-md border border-yellow-400/40 bg-yellow-500/10 px-2.5 py-1 text-yellow-300 transition hover:border-yellow-300">🏆 WM</Link>
           <Link href="/hilfe" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Hilfe</Link>
           <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Mehr</Link>

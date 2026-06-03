@@ -83,6 +83,14 @@ export const TENNIS_LEAGUES: League[] = [
   { id: '4469', name: 'US Open', country: 'USA' }
 ];
 
+// Eishockey — NHL (USA), DEL (Deutschland), KHL (Russland), SHL (Schweden)
+export const HOCKEY_LEAGUES: League[] = [
+  { id: '4380', name: 'NHL', country: 'USA' },
+  { id: '4625', name: 'DEL', country: 'Deutschland' },
+  { id: '4626', name: 'KHL', country: 'Russland' },
+  { id: '4627', name: 'SHL', country: 'Schweden' }
+];
+
 // Mehrere mögliche IDs für die WM 2026 — TheSportsDB pflegt sie oft unter
 // verschiedenen IDs (Hauptturnier, Qualifikation, Friendlies).
 export const WORLD_CUP_LEAGUE_IDS = ['4429', '4503'];
