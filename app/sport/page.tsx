@@ -41,11 +41,13 @@ import { SportTier90History } from '@/components/sport-tier-90-history';
 import { SportTier90HistoryStrip } from '@/components/sport-tier-90-history-strip';
 import { getEmployeeBacktest } from '@/lib/sport/firma/employee-backtest-cache';
 import { rankPredictionsByQuality, summarizeLeagueQuality } from '@/lib/sport/quality-ranking';
+import { summarizeAllLeagueDataQuality } from '@/lib/sport/league-data-quality';
 import { BestPredictionCard } from '@/components/best-prediction-card';
 import { TopPredictionsRanking } from '@/components/top-predictions-ranking';
 import { QualityBandDistribution } from '@/components/quality-band-distribution';
 import { QualityScoreFilter } from '@/components/quality-score-filter';
 import { TipprundeCard } from '@/components/tipprunde-card';
+import { DailyRecapCard } from '@/components/daily-recap-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -330,6 +332,7 @@ export default async function SportPage() {
   // (BestPredictionCard) und Top-5 (TopPredictionsRanking) lesen daraus.
   const rankedPredictions = rankPredictionsByQuality({ leagues });
   const leagueQuality = summarizeLeagueQuality(leagues);
+  const leagueDataQualityMap = summarizeAllLeagueDataQuality(leagues);
 
   // Flatten all finished fixtures across leagues for the tip-journal resolver.
   const finishedLite = leagues.flatMap((lf) => lf.last
@@ -354,6 +357,7 @@ export default async function SportPage() {
       <QualityBandDistribution ranked={rankedPredictions} todayIso={buckets.todayIso} />
       <QualityScoreFilter ranked={rankedPredictions} />
       <TipprundeCard />
+      <DailyRecapCard todayIso={buckets.todayIso} />
 
       {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}
 
@@ -524,6 +528,11 @@ export default async function SportPage() {
                 </span>
                 {hasNext && (() => {
                   const q = leagueQuality.get(lf.league.id);
+                  const dq = leagueDataQualityMap.get(lf.league.id);
+                  const dqColor = dq?.grade === 'A' ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
+                    : dq?.grade === 'B' ? 'border-sky-400/40 bg-sky-500/10 text-sky-200'
+                    : dq?.grade === 'C' ? 'border-amber-400/40 bg-amber-500/10 text-amber-100'
+                    : 'border-rose-400/40 bg-rose-500/10 text-rose-200';
                   return (
                     <span className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] normal-case">
                       <span className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">{lf.next.length} Spiele</span>
@@ -534,6 +543,11 @@ export default async function SportPage() {
                       )}
                       {q?.bestScore !== null && q?.bestScore !== undefined && (
                         <span className="rounded-md border border-sky-400/40 bg-sky-500/10 px-1.5 py-0.5 font-mono text-sky-200">Score {q.bestScore}/100</span>
+                      )}
+                      {dq && (
+                        <span className={`rounded-md border px-1.5 py-0.5 font-mono ${dqColor}`} title={dq.gradeLabel}>
+                          Datenlage {dq.grade} ({dq.goodDataPct}% gut)
+                        </span>
                       )}
                     </span>
                   );

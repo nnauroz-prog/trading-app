@@ -13,7 +13,7 @@ import type { MatchPrediction } from '@/lib/sport/predictor';
 import type { FootballProbabilityModel } from '@/lib/sport/probabilities';
 import type { UpcomingFixture } from '@/lib/sport/fetcher';
 
-export type TipMarket = '1' | 'X' | '2' | '1X' | 'X2' | '12' | 'Over 1.5' | 'Over 2.5' | 'Under 4.5' | 'BTTS ja' | 'BTTS nein' | 'exakt';
+export type TipMarket = '1' | 'X' | '2' | '1X' | 'X2' | '12' | 'Over 0.5' | 'Over 1.5' | 'Over 2.5' | 'Under 2.5' | 'Under 4.5' | 'BTTS ja' | 'BTTS nein' | 'exakt';
 
 export interface PredictionRecommendation {
   market: TipMarket;
@@ -67,6 +67,24 @@ export function pickStablePrediction(prediction: MatchPrediction, probs: Footbal
 
   // Tor-Märkte (stabil)
   if (probs) {
+    if (probs.over05 >= 0.95) {
+      candidates.push({
+        market: 'Over 0.5',
+        probability: probs.over05,
+        label: 'Über 0,5 Tore',
+        rationale: 'Mindestens ein Tor ist die ruhigste Wahl.',
+        isStableMarket: true
+      });
+    }
+    if (probs.under25 >= 0.7) {
+      candidates.push({
+        market: 'Under 2.5',
+        probability: probs.under25,
+        label: 'Unter 2,5 Tore',
+        rationale: 'Beide Defensiven dominieren.',
+        isStableMarket: true
+      });
+    }
     if (probs.over15 >= 0.75) {
       candidates.push({
         market: 'Over 1.5',

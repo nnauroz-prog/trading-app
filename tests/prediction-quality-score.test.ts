@@ -95,6 +95,22 @@ describe('pickStablePrediction', () => {
     expect(pick.market).toBe('1');
   });
 
+  it('Over 0.5 ist Top-Kandidat bei sehr hoher Mindest-Tor-Wahrsch.', () => {
+    const prediction = buildPrediction({ pHome: 0.4, pDraw: 0.3, pAway: 0.3 });
+    const probs = buildProbs({ over05: 0.97, over15: 0.5, over25: 0.3, bothTeamsToScore: 0.5 });
+    const pick = pickStablePrediction(prediction, probs);
+    expect(pick.market).toBe('Over 0.5');
+    expect(pick.isStableMarket).toBe(true);
+  });
+
+  it('Under 2.5 wenn Defensive dominiert', () => {
+    const prediction = buildPrediction({ pHome: 0.35, pDraw: 0.35, pAway: 0.3 });
+    const probs = buildProbs({ over05: 0.6, over15: 0.4, over25: 0.2, under25: 0.8, bothTeamsToScore: 0.3 });
+    const pick = pickStablePrediction(prediction, probs);
+    expect(['Under 2.5', 'BTTS nein']).toContain(pick.market);
+    expect(pick.isStableMarket).toBe(true);
+  });
+
   it('funktioniert auch ohne Probabilities', () => {
     const prediction = buildPrediction({ pHome: 0.72, pDraw: 0.18, pAway: 0.10 });
     const pick = pickStablePrediction(prediction, null);
