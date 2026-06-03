@@ -125,7 +125,7 @@ export function ProbabilityCard({ homeTeam, awayTeam, model, tips, saveContext }
 
       {/* Top Scorelines */}
       <div className="space-y-1">
-        <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Wahrscheinlichste Ergebnisse</div>
+        <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">Mögliche Ergebnis-Tendenz</div>
         <ul className="flex flex-wrap gap-1.5">
           {model.topScorelines.map((s, i) => (
             <li key={i} className="rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 font-mono text-[11px]">
