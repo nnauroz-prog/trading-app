@@ -43,6 +43,9 @@ import { getEmployeeBacktest } from '@/lib/sport/firma/employee-backtest-cache';
 import { rankPredictionsByQuality, summarizeLeagueQuality } from '@/lib/sport/quality-ranking';
 import { BestPredictionCard } from '@/components/best-prediction-card';
 import { TopPredictionsRanking } from '@/components/top-predictions-ranking';
+import { QualityBandDistribution } from '@/components/quality-band-distribution';
+import { QualityScoreFilter } from '@/components/quality-score-filter';
+import { TipprundeCard } from '@/components/tipprunde-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -345,9 +348,12 @@ export default async function SportPage() {
         <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>
       </header>
 
-      {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking. */}
+      {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking + Band-Verteilung. */}
       <BestPredictionCard ranked={rankedPredictions} todayIso={buckets.todayIso} />
       <TopPredictionsRanking ranked={rankedPredictions} limit={5} />
+      <QualityBandDistribution ranked={rankedPredictions} todayIso={buckets.todayIso} />
+      <QualityScoreFilter ranked={rankedPredictions} />
+      <TipprundeCard />
 
       {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}
 
