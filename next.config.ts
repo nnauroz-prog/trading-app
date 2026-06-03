@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
 // Last bumped: 2026-06-01 — Welle 58.
-const BUILD_MARKER = 'welle-2051-2150-sommer-modus';
+const BUILD_MARKER = 'welle-2151-2250-wm-countdown-sportarten';
 
 const nextConfig: NextConfig = {
   env: {

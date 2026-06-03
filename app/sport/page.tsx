@@ -55,6 +55,8 @@ import { CoverageOverview } from '@/components/coverage-overview';
 import { LigaTop3Snapshot } from '@/components/liga-top3-snapshot';
 import { SportQuickFilter } from '@/components/sport-quick-filter';
 import { SummerModeBanner } from '@/components/summer-mode-banner';
+import { WmCountdownBanner } from '@/components/wm-countdown-banner';
+import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -360,9 +362,14 @@ export default async function SportPage() {
 
       <SportTopNav />
 
+      {/* WM-Countdown VOR allem anderen, wenn ≤ 30 Tage bis Eröffnung — die
+          beste Antwort auf „nichts in den Ligen" ist „WM kommt". */}
+      <WmCountdownBanner todayIso={buckets.todayIso} />
+
       {/* Sommer-Banner steht VOR der besten Prognose: wenn nichts läuft,
           braucht der User die ehrliche Antwort zuerst statt eine leere Top-Karte. */}
       <SummerModeBanner leagues={leagues} todayIso={buckets.todayIso} />
+      <OtherSportsShortcut upcomingFootballCount={rankedPredictions.length} />
 
       {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking + Band-Verteilung. */}
       <div id="top" />
