@@ -47,6 +47,7 @@ import { TopPredictionsRanking } from '@/components/top-predictions-ranking';
 import { QualityBandDistribution } from '@/components/quality-band-distribution';
 import { QualityScoreFilter } from '@/components/quality-score-filter';
 import { TipprundeCard } from '@/components/tipprunde-card';
+import { WochenzielCard } from '@/components/wochenziel-card';
 import { DailyRecapCard } from '@/components/daily-recap-card';
 import { LigaAccordionControls } from '@/components/liga-accordion-controls';
 import { ScoreColorKey } from '@/components/score-color-key';
@@ -387,6 +388,7 @@ export default async function SportPage() {
       <QualityScoreFilter ranked={rankedPredictions} />
       <div id="tipprunde" />
       <TipprundeCard />
+      <WochenzielCard />
       <DailyRecapCard todayIso={buckets.todayIso} />
 
       {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}

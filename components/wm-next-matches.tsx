@@ -4,6 +4,7 @@
 
 import Link from 'next/link';
 import { WM_2026_FIXTURES } from '@/lib/sport/wm-schedule-2026';
+import { WmTipButton } from '@/components/wm-tip-button';
 
 interface Props {
   todayIso: string;
@@ -41,18 +42,23 @@ export function WmNextMatches({ todayIso }: Props) {
       </div>
       <ul className="mt-2 space-y-1">
         {top5.map((f) => (
-          <li key={f.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5">
-            <span className="font-mono text-[10px] text-slate-500">
-              {fmtDate(f.date)}{f.time && <span className="ml-1">{f.time}</span>}
-            </span>
-            <span className="min-w-0 truncate text-[11.5px] text-slate-100">
-              <span className="font-semibold">{f.homeTeam}</span>
-              <span className="mx-1 text-slate-500">–</span>
-              <span className="font-semibold">{f.awayTeam}</span>
-            </span>
-            <span className="rounded-md border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-slate-400">
-              {f.phase}{f.group ? ` ${f.group}` : ''}
-            </span>
+          <li key={f.id} className="space-y-1 rounded-md border border-slate-800 bg-slate-950/40 p-2">
+            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+              <span className="font-mono text-[10px] text-slate-500">
+                {fmtDate(f.date)}{f.time && <span className="ml-1">{f.time}</span>}
+              </span>
+              <span className="min-w-0 truncate text-[11.5px] text-slate-100">
+                <span className="font-semibold">{f.homeTeam}</span>
+                <span className="mx-1 text-slate-500">–</span>
+                <span className="font-semibold">{f.awayTeam}</span>
+              </span>
+              <span className="rounded-md border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-slate-400">
+                {f.phase}{f.group ? ` ${f.group}` : ''}
+              </span>
+            </div>
+            {!f.homeTeam.includes('TBD') && !f.awayTeam.includes('TBD') && (
+              <WmTipButton fixture={f} />
+            )}
           </li>
         ))}
       </ul>
