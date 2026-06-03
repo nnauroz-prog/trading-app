@@ -61,6 +61,7 @@ import { ScoreColorKey } from '@/components/score-color-key';
 import { SportTopNav } from '@/components/sport-top-nav';
 import { SportOnboardingHint } from '@/components/sport-onboarding-hint';
 import { LigaTop3Snapshot } from '@/components/liga-top3-snapshot';
+import { LigaPhaseBadge } from '@/components/liga-phase-badge';
 import { SportQuickFilter } from '@/components/sport-quick-filter';
 import { SummerModeBanner } from '@/components/summer-mode-banner';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
@@ -623,6 +624,7 @@ export default async function SportPage() {
                       {q?.bestScore !== null && q?.bestScore !== undefined && (
                         <span className="rounded-md border border-sky-400/40 bg-sky-500/10 px-1.5 py-0.5 font-mono text-sky-200">Score {q.bestScore}/100</span>
                       )}
+                      <LigaPhaseBadge league={lf} />
                       {dq && (
                         <span className={`rounded-md border px-1.5 py-0.5 font-mono ${dqColor}`} title={dq.gradeLabel}>
                           Datenlage {dq.grade} ({dq.goodDataPct}% gut)
