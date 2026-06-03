@@ -54,6 +54,7 @@ import { SportTopNav } from '@/components/sport-top-nav';
 import { CoverageOverview } from '@/components/coverage-overview';
 import { LigaTop3Snapshot } from '@/components/liga-top3-snapshot';
 import { SportQuickFilter } from '@/components/sport-quick-filter';
+import { SummerModeBanner } from '@/components/summer-mode-banner';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -359,6 +360,10 @@ export default async function SportPage() {
 
       <SportTopNav />
 
+      {/* Sommer-Banner steht VOR der besten Prognose: wenn nichts läuft,
+          braucht der User die ehrliche Antwort zuerst statt eine leere Top-Karte. */}
+      <SummerModeBanner leagues={leagues} todayIso={buckets.todayIso} />
+
       {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking + Band-Verteilung. */}
       <div id="top" />
       <BestPredictionCard ranked={rankedPredictions} todayIso={buckets.todayIso} />
@@ -531,12 +536,14 @@ export default async function SportPage() {
       <LigaAccordionControls />
       <div className="space-y-3">
         {(() => {
-          // Sortierung: Ligen mit anstehenden Spielen zuerst (die mit den meisten
-          // upcoming oben), dann die in Saisonpause. So sieht der User SOFORT
-          // wo Spiele laufen.
+          // Sortierung: Ligen mit anstehenden Spielen zuerst, dann Saisonpause
+          // (haben mindestens last-Pool), dann „keine Daten" (komplett leer).
           const sortedLeagues = [...leagues].sort((a, b) => b.next.length - a.next.length);
-          return sortedLeagues.map((lf, leagueIdx) => {
-          if (lf.next.length === 0 && lf.last.length === 0) return null;
+          const active = sortedLeagues.filter((lf) => lf.next.length > 0 || lf.last.length > 0);
+          const noData = sortedLeagues.filter((lf) => lf.next.length === 0 && lf.last.length === 0);
+          return (
+            <>
+              {active.map((lf, leagueIdx) => {
           const hasNext = lf.next.length > 0;
           return (
             <details
@@ -644,7 +651,28 @@ export default async function SportPage() {
               </div>
             </details>
           );
-          });
+              })}
+              {noData.length > 0 && (
+                <details className="rounded-2xl border border-slate-800/60 bg-slate-900/30">
+                  <summary className="cursor-pointer p-4 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300">
+                    ▸ Ligen ohne Daten ({noData.length})
+                    <span className="ml-2 text-[10px] normal-case text-slate-600">TheSportsDB liefert für diese gerade nichts</span>
+                  </summary>
+                  <ul className="space-y-0.5 px-4 pb-4 pt-1 text-[11px]">
+                    {noData.map((lf) => (
+                      <li key={lf.league.id} className="grid grid-cols-[1fr_auto] gap-2">
+                        <span className="truncate text-slate-500">{lf.league.name} <span className="text-slate-600">· {lf.league.country}</span></span>
+                        <span className="text-[9px] uppercase tracking-wider text-slate-600">keine Daten</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="px-4 pb-4 text-[10px] leading-snug text-slate-600">
+                    Sobald TheSportsDB für eine dieser Ligen wieder Daten liefert, taucht sie automatisch oben mit Spielen auf.
+                  </p>
+                </details>
+              )}
+            </>
+          );
         })()}
       </div>
 
