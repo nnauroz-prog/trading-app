@@ -2,6 +2,7 @@
 // Kompakte Karten mit ausklappbaren Details statt Riesen-Listen.
 
 import type { RankedPrediction } from '@/lib/sport/quality-ranking';
+import { TipSaveButton } from '@/components/tip-save-button';
 
 interface Props {
   ranked: RankedPrediction[];
@@ -119,6 +120,22 @@ export function TopPredictionsRanking({ ranked, limit = 5, title = 'Top-Prognose
                       ))}
                     </ul>
                   )}
+                  <div>
+                    <TipSaveButton
+                      fixtureId={fixture.id}
+                      fixtureDate={fixture.date}
+                      league={rp.leagueName}
+                      homeTeam={fixture.homeTeam}
+                      awayTeam={fixture.awayTeam}
+                      tier="custom"
+                      market={recommendation.label}
+                      modelProbabilityPct={Math.round(recommendation.probability * 100)}
+                      qualityScore={quality.score}
+                      qualityBand={quality.band}
+                      dataQuality={fixture.probabilities?.dataQuality ?? 'weak'}
+                      isStableMarket={recommendation.isStableMarket}
+                    />
+                  </div>
                 </div>
               </details>
             </li>

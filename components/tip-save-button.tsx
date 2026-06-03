@@ -13,6 +13,12 @@ interface Props {
   tier: TipTier | 'custom';
   market: string;
   modelProbabilityPct: number;
+  // Optional, neu in Welle 406-415: Quality-Score-Kontext für spätere
+  // Auswertung „Tipps mit hohem Score schlagen Tipps mit niedrigem Score".
+  qualityScore?: number;
+  qualityBand?: 'sehr_stark' | 'stark' | 'brauchbar' | 'orientierung' | 'nicht_verwenden';
+  dataQuality?: 'good' | 'medium' | 'weak';
+  isStableMarket?: boolean;
 }
 
 export function TipSaveButton(props: Props) {
@@ -40,7 +46,11 @@ export function TipSaveButton(props: Props) {
         awayTeam: props.awayTeam,
         tier: props.tier,
         market: props.market,
-        modelProbabilityPct: props.modelProbabilityPct
+        modelProbabilityPct: props.modelProbabilityPct,
+        qualityScore: props.qualityScore,
+        qualityBand: props.qualityBand,
+        dataQuality: props.dataQuality,
+        isStableMarket: props.isStableMarket
       });
     }
   };

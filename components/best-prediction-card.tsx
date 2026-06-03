@@ -4,6 +4,7 @@
 // Begründung + Risiko-Hinweis. Kein „sicher", kein „garantiert".
 
 import type { RankedPrediction } from '@/lib/sport/quality-ranking';
+import { TipSaveButton } from '@/components/tip-save-button';
 
 interface Props {
   ranked: RankedPrediction[];
@@ -95,6 +96,22 @@ export function BestPredictionCard({ ranked, todayIso }: Props) {
         </div>
         <div className="mt-0.5 text-base font-semibold">{recommendation.label}</div>
         <p className="mt-1 text-[11.5px] leading-snug opacity-85">{recommendation.rationale}</p>
+        <div className="mt-2">
+          <TipSaveButton
+            fixtureId={fixture.id}
+            fixtureDate={fixture.date}
+            league={leagueName}
+            homeTeam={fixture.homeTeam}
+            awayTeam={fixture.awayTeam}
+            tier="custom"
+            market={recommendation.label}
+            modelProbabilityPct={Math.round(recommendation.probability * 100)}
+            qualityScore={score}
+            qualityBand={band}
+            dataQuality={dataQuality}
+            isStableMarket={recommendation.isStableMarket}
+          />
+        </div>
       </div>
 
       <dl className="mt-3 grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4">

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { ConsensusVerdict } from '@/lib/sport/firma/consensus';
 import type { UpcomingFixture } from '@/lib/sport/fetcher';
 import { FirmaVotesCard } from '@/components/firma-votes-card';
-import { ValueBetCalculator } from '@/components/value-bet-calculator';
+import { FairOddsLine } from '@/components/fair-odds-line';
 
 interface EnrichedPick {
   verdict: ConsensusVerdict;
@@ -84,7 +84,7 @@ export function ConsensusPicks({ picks }: { picks: EnrichedPick[] }) {
 
               <p className="text-[10px] leading-snug text-slate-500">{verdict.honestNote}</p>
               {fixture.prediction && (
-                <ValueBetCalculator
+                <FairOddsLine
                   pHome={fixture.prediction.pHome}
                   pDraw={fixture.prediction.pDraw}
                   pAway={fixture.prediction.pAway}
