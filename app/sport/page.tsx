@@ -75,6 +75,7 @@ import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 import { SeasonStartsCard } from '@/components/season-starts-card';
 import { PendingTipsReminder } from '@/components/pending-tips-reminder';
 import { LastResolvedStrip } from '@/components/last-resolved-strip';
+import { NotificationOptIn } from '@/components/notification-opt-in';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -399,6 +400,7 @@ export default async function SportPage() {
       <OtherSportsShortcut upcomingFootballCount={rankedPredictions.length} />
       <PendingTipsReminder />
       <LastResolvedStrip />
+      <NotificationOptIn />
 
       {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking + Band-Verteilung. */}
       <div id="top" />
