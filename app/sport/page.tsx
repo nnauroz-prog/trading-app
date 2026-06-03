@@ -55,6 +55,7 @@ import { LigaTop3Snapshot } from '@/components/liga-top3-snapshot';
 import { SportQuickFilter } from '@/components/sport-quick-filter';
 import { SummerModeBanner } from '@/components/summer-mode-banner';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
+import { WmNextMatches } from '@/components/wm-next-matches';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 import { PendingTipsReminder } from '@/components/pending-tips-reminder';
 
@@ -365,6 +366,7 @@ export default async function SportPage() {
       {/* WM-Countdown VOR allem anderen, wenn ≤ 30 Tage bis Eröffnung — die
           beste Antwort auf „nichts in den Ligen" ist „WM kommt". */}
       <WmCountdownBanner todayIso={buckets.todayIso} />
+      <WmNextMatches todayIso={buckets.todayIso} />
 
       {/* Sommer-Banner steht VOR der besten Prognose: wenn nichts läuft,
           braucht der User die ehrliche Antwort zuerst statt eine leere Top-Karte. */}
