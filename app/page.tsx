@@ -56,6 +56,10 @@ import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
 import { AppOverviewStats } from '@/components/app-overview-stats';
 import { WmBriefingCard } from '@/components/wm-briefing-card';
+import { MultiSportBriefing } from '@/components/multi-sport-briefing';
+import { getBasketballFixtures } from '@/lib/sport/basketball-fetcher';
+import { getTennisFixtures } from '@/lib/sport/tennis-fetcher';
+import { getHockeyFixtures } from '@/lib/sport/multi-sport-fetcher';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getLehrlingReport } from '@/lib/akademie/lehrling';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
@@ -99,7 +103,7 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources, sportLeagues] = await Promise.all([
+  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources, sportLeagues, basketballLeagues, tennisLeagues, hockeyLeagues] = await Promise.all([
     buildTopPlayReport(),
     buildMasterSignal(tradeMode),
     fetchFearGreed(),
@@ -110,10 +114,17 @@ export default async function HomePage() {
     getCryptoNews(),
     getLehrlingReport(),
     fetchBothTickerSources(),
-    getFootballFixtures()
+    getFootballFixtures(),
+    getBasketballFixtures(),
+    getTennisFixtures(),
+    getHockeyFixtures()
   ]);
   const sportSynth = buildFirmaSynthesis(sportLeagues);
   const sportTodayCount = bucketByDay(sportLeagues.flatMap((lf) => lf.next)).today.length;
+  const multiSportTodayIso = new Date().toISOString().slice(0, 10);
+  const basketballTodayCount = basketballLeagues.reduce((s, l) => s + l.next.filter((f) => f.date === multiSportTodayIso).length, 0);
+  const tennisTodayCount = tennisLeagues.reduce((s, l) => s + l.next.filter((f) => f.date === multiSportTodayIso).length, 0);
+  const hockeyTodayCount = hockeyLeagues.reduce((s, l) => s + l.next.filter((f) => f.date === multiSportTodayIso).length, 0);
 
   // "Heute machen" — die EINE Empfehlung pro Asset-Klasse, ganz oben.
   const cryptoScored = masterSignal.candidates.map((c) => ({ c, safety: scoreCandidateSafety(c, masterSignal, backtestSummary) }));
@@ -524,6 +535,13 @@ export default async function HomePage() {
       <WocheVoraus events={upcomingMacro} today={todayIso} />
 
       <SportBriefingCard synth={sportSynth} todayFixtures={sportTodayCount} />
+
+      <MultiSportBriefing
+        fussballHeute={sportTodayCount}
+        basketballHeute={basketballTodayCount}
+        tennisHeute={tennisTodayCount}
+        eishockeyHeute={hockeyTodayCount}
+      />
 
       <WmBriefingCard />
 
