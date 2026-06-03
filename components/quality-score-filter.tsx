@@ -65,6 +65,10 @@ export function QualityScoreFilter({ ranked }: Props) {
           onChange={(e) => setMinScore(parseInt(e.target.value, 10))}
           className="w-full accent-emerald-400"
           aria-label="Mindest-Quality-Score"
+          aria-valuenow={minScore}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuetext={`${minScore} von 100, ${filtered.length} von ${ranked.length} Spielen ≥ Schwelle`}
         />
         <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
           <span>0</span>

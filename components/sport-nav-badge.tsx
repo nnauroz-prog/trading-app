@@ -20,7 +20,10 @@ export function SportNavBadge() {
 
   if (!mounted || pending === 0) return null;
   return (
-    <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-emerald-500 px-1 text-[8px] font-bold text-emerald-950">
+    <span
+      aria-label={`${pending} offene Sport-Tipps`}
+      className="absolute -right-1 -top-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-emerald-500 px-1 text-[8px] font-bold text-emerald-950"
+    >
       {pending > 9 ? '9+' : pending}
     </span>
   );

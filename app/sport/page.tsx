@@ -372,7 +372,7 @@ export default async function SportPage() {
         <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>
       </header>
 
-      <SportTopNav />
+      <SportTopNav todayIso={buckets.todayIso} />
       <SportOnboardingHint />
 
       {/* WM-Countdown VOR allem anderen, wenn ≤ 30 Tage bis Eröffnung — die
