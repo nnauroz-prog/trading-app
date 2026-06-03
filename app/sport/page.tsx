@@ -48,6 +48,8 @@ import { QualityBandDistribution } from '@/components/quality-band-distribution'
 import { QualityScoreFilter } from '@/components/quality-score-filter';
 import { TipprundeCard } from '@/components/tipprunde-card';
 import { DailyRecapCard } from '@/components/daily-recap-card';
+import { LigaAccordionControls } from '@/components/liga-accordion-controls';
+import { ScoreColorKey } from '@/components/score-color-key';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -354,6 +356,7 @@ export default async function SportPage() {
       {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking + Band-Verteilung. */}
       <BestPredictionCard ranked={rankedPredictions} todayIso={buckets.todayIso} />
       <TopPredictionsRanking ranked={rankedPredictions} limit={5} />
+      <ScoreColorKey />
       <QualityBandDistribution ranked={rankedPredictions} todayIso={buckets.todayIso} />
       <QualityScoreFilter ranked={rankedPredictions} />
       <TipprundeCard />
@@ -511,6 +514,7 @@ export default async function SportPage() {
         </p>
       )}
 
+      <LigaAccordionControls />
       <div className="space-y-3">
         {(() => {
           // Sortierung: Ligen mit anstehenden Spielen zuerst (die mit den meisten
@@ -521,7 +525,13 @@ export default async function SportPage() {
           if (lf.next.length === 0 && lf.last.length === 0) return null;
           const hasNext = lf.next.length > 0;
           return (
-            <details key={lf.league.id} open={hasNext && leagueIdx < 3} className={`rounded-2xl border bg-slate-900/40 ${hasNext ? 'border-emerald-400/40' : 'border-slate-800/80'}`}>
+            <details
+              key={lf.league.id}
+              open={hasNext && leagueIdx < 3}
+              data-liga-accordion="1"
+              data-liga-top={hasNext && leagueIdx < 3 ? '1' : '0'}
+              className={`rounded-2xl border bg-slate-900/40 ${hasNext ? 'border-emerald-400/40' : 'border-slate-800/80'}`}
+            >
               <summary className="cursor-pointer p-4 hover:text-slate-100">
                 <span className={`text-xs font-semibold uppercase tracking-wider ${hasNext ? 'text-emerald-300' : 'text-slate-500'}`}>
                   ▸ {lf.league.name} <span className="text-slate-500">· {lf.league.country}</span>
