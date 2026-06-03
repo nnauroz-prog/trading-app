@@ -134,10 +134,12 @@ export function SportTipJournal({ finishedFixtures }: Props) {
           <ul className="space-y-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-950/40 p-2">
             {[...log].reverse().slice(0, 30).map((e) => {
               const o = outcomeBadge(e.outcome);
+              const isWm = e.league === 'WM 2026' || e.fixtureId.startsWith('wm-');
               return (
                 <li key={e.id} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 border-b border-slate-900 py-1 last:border-b-0">
                   <span className="font-mono text-[10px] text-slate-500">{fmtDate(e.date)}</span>
                   <span className="truncate text-[11px] text-slate-200">
+                    {isWm && <span className="mr-1 text-yellow-300" title="WM 2026">🏆</span>}
                     <span className="font-semibold">{e.homeTeam} vs. {e.awayTeam}</span>
                     <span className="text-slate-500"> · {e.market}</span>
                     {e.finalHomeScore !== undefined && e.finalAwayScore !== undefined && (
