@@ -63,6 +63,8 @@ import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { WmNextMatches } from '@/components/wm-next-matches';
 import { WmGroupsOverview } from '@/components/wm-groups-overview';
 import { WmVenuesList } from '@/components/wm-venues-list';
+import { WmTipprundeStats } from '@/components/wm-tipprunde-stats';
+import { SportDataReset } from '@/components/sport-data-reset';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 import { SeasonStartsCard } from '@/components/season-starts-card';
 import { PendingTipsReminder } from '@/components/pending-tips-reminder';
@@ -377,6 +379,7 @@ export default async function SportPage() {
       <WmCountdownBanner todayIso={buckets.todayIso} />
       <WmNextMatches todayIso={buckets.todayIso} />
       <WmGroupsOverview todayIso={buckets.todayIso} />
+      <WmTipprundeStats todayIso={buckets.todayIso} />
       <WmVenuesList todayIso={buckets.todayIso} />
 
       {/* Sommer-Banner steht VOR der besten Prognose: wenn nichts läuft,
@@ -703,6 +706,7 @@ export default async function SportPage() {
 
       <div id="tagebuch" />
       <SportTipJournal finishedFixtures={finishedLite} />
+      <SportDataReset />
 
       <footer className="space-y-1 border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
         <p>
