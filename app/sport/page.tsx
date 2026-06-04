@@ -53,8 +53,10 @@ import { WochenzielCard } from '@/components/wochenziel-card';
 import { HitRateSparkline } from '@/components/hit-rate-sparkline';
 import { TipprundeWeeklyHistory } from '@/components/tipprunde-weekly-history';
 import { TipprundeByLeague } from '@/components/tipprunde-by-league';
+import { TipprundeByMarket } from '@/components/tipprunde-by-market';
 import { AchievementsCard } from '@/components/achievements-card';
 import { WeekdayHeatmap } from '@/components/weekday-heatmap';
+import { BestWeekdayHint } from '@/components/best-weekday-hint';
 import { FriendsLeaderboard } from '@/components/friends-leaderboard';
 import { DailyRecapCard } from '@/components/daily-recap-card';
 import { LigaAccordionControls } from '@/components/liga-accordion-controls';
@@ -73,6 +75,7 @@ import { WmCitiesCard } from '@/components/wm-cities-card';
 import { WmTipprundeStats } from '@/components/wm-tipprunde-stats';
 import { WmPhasesTimeline } from '@/components/wm-phases-timeline';
 import { SportDataReset } from '@/components/sport-data-reset';
+import { SportFaq } from '@/components/sport-faq';
 import { SportTabTitle } from '@/components/sport-tab-title';
 import { SportTabsDock } from '@/components/sport-tabs-dock';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
@@ -426,7 +429,9 @@ export default async function SportPage() {
       <HitRateSparkline />
       <TipprundeWeeklyHistory />
       <TipprundeByLeague />
+      <TipprundeByMarket />
       <WeekdayHeatmap />
+      <BestWeekdayHint />
       <AchievementsCard />
       <FriendsLeaderboard />
       <DailyRecapCard todayIso={buckets.todayIso} />
@@ -730,6 +735,7 @@ export default async function SportPage() {
 
       <div id="tagebuch" />
       <SportTipJournal finishedFixtures={finishedLite} />
+      <SportFaq />
       <SportDataReset />
 
       <footer className="space-y-1 border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">

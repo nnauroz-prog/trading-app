@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { SPORT_TIP_JOURNAL_CHANGED_EVENT, loadTipJournal } from '@/lib/sport/tip-journal';
 import { tipJournalToCsv } from '@/lib/sport/tip-journal-csv';
+import { IcsExportButton } from '@/components/ics-export-button';
 
 // Tipp-Tagebuch-Daten als JSON oder CSV exportieren — fürs Backup oder fürs
 // Vergleichen mit Freunden. Kein Server, alles client-seitig via Blob-URL.
@@ -51,6 +52,7 @@ export function TipJournalExport() {
       >
         CSV ({count})
       </button>
+      <IcsExportButton />
     </div>
   );
 }
