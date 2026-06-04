@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { getBasketballFixtures } from '@/lib/sport/basketball-fetcher';
+import { predictWinner } from '@/lib/sport/winner-verdict';
+import { WinnerVerdictCard } from '@/components/winner-verdict-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -46,16 +48,28 @@ export default async function BasketballPage() {
               <span className="text-[10px] text-slate-500">{lf.league.country} · {lf.next.length} anstehend</span>
             </div>
             {today.length > 0 && (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-300">Heute</div>
-                <ul className="space-y-1">
-                  {today.map((f) => (
-                    <li key={f.id} className="grid grid-cols-[auto_1fr_auto] gap-2 rounded-md border border-amber-400/40 bg-amber-950/20 px-2.5 py-1.5 text-[11.5px]">
-                      <span className="font-mono text-[10px] text-amber-300">{fmtTime(f.time, f.date)}</span>
-                      <span className="text-slate-100">{f.homeTeam} <span className="text-slate-500">vs.</span> {f.awayTeam}</span>
-                      <span className="text-[9.5px] uppercase tracking-wider text-slate-500">{f.venue ?? ''}</span>
-                    </li>
-                  ))}
+                <ul className="space-y-2">
+                  {today.map((f) => {
+                    const verdict = predictWinner({
+                      homeTeam: f.homeTeam,
+                      awayTeam: f.awayTeam,
+                      prediction: null,
+                      h2h: null,
+                      finishedPool: lf.last
+                    });
+                    return (
+                      <li key={f.id} className="space-y-1.5 rounded-md border border-amber-400/40 bg-amber-950/20 px-2.5 py-2">
+                        <div className="grid grid-cols-[auto_1fr_auto] gap-2 text-[11.5px]">
+                          <span className="font-mono text-[10px] text-amber-300">{fmtTime(f.time, f.date)}</span>
+                          <span className="text-slate-100">{f.homeTeam} <span className="text-slate-500">vs.</span> {f.awayTeam}</span>
+                          <span className="text-[9.5px] uppercase tracking-wider text-slate-500">{f.venue ?? ''}</span>
+                        </div>
+                        <WinnerVerdictCard verdict={verdict} homeTeam={f.homeTeam} awayTeam={f.awayTeam} showExtraTime />
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}

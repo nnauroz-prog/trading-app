@@ -1,8 +1,10 @@
-// Top-5 (oder konfigurierbar) der besten Prognosen — sortiert nach Quality-Score.
-// Kompakte Karten mit ausklappbaren Details statt Riesen-Listen.
+'use client';
 
+import { useEffect, useState } from 'react';
 import type { RankedPrediction } from '@/lib/sport/quality-ranking';
 import { TipSaveButton } from '@/components/tip-save-button';
+import { STABLE_ONLY_CHANGED, loadStableOnly } from '@/components/stable-only-toggle';
+import { ClearSignalBadge } from '@/components/clear-signal-badge';
 
 interface Props {
   ranked: RankedPrediction[];
@@ -32,21 +34,41 @@ function fmtDate(iso: string): string {
 }
 
 export function TopPredictionsRanking({ ranked, limit = 5, title = 'Top-Prognosen (nach Quality-Score)' }: Props) {
-  const top = ranked.slice(0, limit);
+  const [stableOnly, setStableOnly] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setStableOnly(loadStableOnly());
+    setMounted(true);
+    const sync = () => setStableOnly(loadStableOnly());
+    window.addEventListener(STABLE_ONLY_CHANGED, sync);
+    return () => window.removeEventListener(STABLE_ONLY_CHANGED, sync);
+  }, []);
+
+  const filtered = stableOnly
+    ? ranked.filter((r) => r.quality.recommendation.isStableMarket)
+    : ranked;
+  const top = filtered.slice(0, limit);
   if (top.length === 0) {
     return (
       <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{title}</h2>
-        <p className="mt-2 text-[12px] leading-snug text-slate-400">Keine Prognosen verfügbar.</p>
+        <p className="mt-2 text-[12px] leading-snug text-slate-400">
+          {stableOnly ? 'Kein stabiler Markt schafft heute die Topliste — Filter entschärfen oder nicht tippen.' : 'Keine Prognosen verfügbar.'}
+        </p>
       </section>
     );
   }
+
+  void mounted;
 
   return (
     <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{title}</h2>
-        <span className="text-[10px] text-slate-500">{ranked.length} Spiele bewertet</span>
+        <span className="text-[10px] text-slate-500">
+          {stableOnly ? `${filtered.length}/${ranked.length}` : ranked.length} Spiele
+        </span>
       </div>
       <p className="mt-1 text-[10.5px] leading-snug text-slate-500">
         Ranking nach kombiniertem Quality-Score, nicht nach roher Wahrscheinlichkeit. Stabile Märkte (Tor-Markt, Doppelchance) bevorzugt.
@@ -69,7 +91,10 @@ export function TopPredictionsRanking({ ranked, limit = 5, title = 'Top-Prognose
                       {leagueName} · {fmtDate(fixture.date)} {fmtTime(fixture.date, fixture.time)} · {recommendation.label}
                     </span>
                   </span>
-                  <span className={`rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-bold ${chipClass}`}>{score}</span>
+                  <span className="flex items-center gap-1">
+                    <ClearSignalBadge rp={rp} compact />
+                    <span className={`rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-bold ${chipClass}`}>{score}</span>
+                  </span>
                 </summary>
                 <div className="space-y-2 border-t border-slate-800 px-2.5 py-2 text-[11px] text-slate-300">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

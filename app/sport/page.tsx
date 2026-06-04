@@ -14,6 +14,8 @@ import { TeamWatchToggle } from '@/components/team-watch-toggle';
 import { SafetyPicksSection } from '@/components/safety-picks-section';
 import { H2HBadge } from '@/components/h2h-badge';
 import { computeHeadToHead } from '@/lib/sport/h2h';
+import { predictWinner } from '@/lib/sport/winner-verdict';
+import { WinnerVerdictCard } from '@/components/winner-verdict-card';
 import { FirmaTrackRecord } from '@/components/firma-track-record';
 import { DailyTopPickCard } from '@/components/daily-top-pick';
 import { PerLeagueTopPicks } from '@/components/per-league-top-picks';
@@ -44,6 +46,7 @@ import { rankPredictionsByQuality, summarizeLeagueQuality } from '@/lib/sport/qu
 import { summarizeAllLeagueDataQuality } from '@/lib/sport/league-data-quality';
 import { BestPredictionCard } from '@/components/best-prediction-card';
 import { TopPredictionsRanking } from '@/components/top-predictions-ranking';
+import { StableOnlyToggle } from '@/components/stable-only-toggle';
 import { QualityBandDistribution } from '@/components/quality-band-distribution';
 import { QualityScoreFilter } from '@/components/quality-score-filter';
 import { QualityCompare } from '@/components/quality-compare';
@@ -215,6 +218,24 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
           <H2HBadge h2h={h2h} />
         </div>
       )}
+      {(() => {
+        const verdict = predictWinner({
+          homeTeam: f.homeTeam,
+          awayTeam: f.awayTeam,
+          prediction: f.prediction,
+          h2h: h2h ?? null,
+          finishedPool: []
+        });
+        return (
+          <div className="mt-3">
+            <WinnerVerdictCard
+              verdict={verdict}
+              homeTeam={f.homeTeam}
+              awayTeam={f.awayTeam}
+            />
+          </div>
+        );
+      })()}
       {f.probabilities && f.tips ? (
         <div className="mt-3">
           <ProbabilityCard
@@ -422,6 +443,10 @@ export default async function SportPage() {
       <div id="top" />
       <BestPredictionCard ranked={rankedPredictions} todayIso={buckets.todayIso} />
       <div id="top-prognosen" />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-wider text-slate-500">Top-Ranking-Filter:</span>
+        <StableOnlyToggle />
+      </div>
       <TopPredictionsRanking ranked={rankedPredictions} limit={5} />
       <ScoreColorKey />
       <div id="verteilung" />
