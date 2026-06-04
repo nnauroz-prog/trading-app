@@ -42,8 +42,31 @@ interface ApiEvent {
   intAwayScore?: string | null;
 }
 
+// Erkennt offensichtlich nicht-Fußball-Spiele anhand des Team-Namens —
+// TheSportsDB teilt manche Liga-IDs zwischen Sportarten (z. B. 4477).
+// „Basketball", „KK " (Košarkaški Klub), „BC " (Basketball Club), „Hockey",
+// „Volleyball", „IceHockey", „Eishockey" → kein Fußball.
+const NON_FOOTBALL_HINTS = [
+  ' basketball', ' hockey', ' volleyball', ' baseball', ' rugby',
+  ' eishockey', ' hb (', ' handball'
+];
+const NON_FOOTBALL_PREFIXES = ['KK ', 'BC ', 'ZKK ', 'CSKA ', 'PBC '];
+
+function looksLikeFootball(home: string, away: string): boolean {
+  const h = home.toLowerCase();
+  const a = away.toLowerCase();
+  for (const hint of NON_FOOTBALL_HINTS) {
+    if (h.includes(hint) || a.includes(hint)) return false;
+  }
+  for (const pre of NON_FOOTBALL_PREFIXES) {
+    if (home.startsWith(pre) || away.startsWith(pre)) return false;
+  }
+  return true;
+}
+
 function normalize(e: ApiEvent, status: 'upcoming' | 'finished'): Fixture | null {
   if (!e.idEvent || !e.strHomeTeam || !e.strAwayTeam || !e.dateEvent) return null;
+  if (!looksLikeFootball(e.strHomeTeam, e.strAwayTeam)) return null;
   const home = e.intHomeScore != null && e.intHomeScore !== '' ? Number(e.intHomeScore) : null;
   const away = e.intAwayScore != null && e.intAwayScore !== '' ? Number(e.intAwayScore) : null;
   return {
