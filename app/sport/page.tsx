@@ -61,6 +61,7 @@ import { SanityHints } from '@/components/sanity-hints';
 import { FriendsLeaderboard } from '@/components/friends-leaderboard';
 import { DailyRecapCard } from '@/components/daily-recap-card';
 import { LigaAccordionControls } from '@/components/liga-accordion-controls';
+import { LigaSearch } from '@/components/liga-search';
 import { ScoreColorKey } from '@/components/score-color-key';
 import { SportTopNav } from '@/components/sport-top-nav';
 import { SportOnboardingHint } from '@/components/sport-onboarding-hint';
@@ -225,8 +226,14 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
           />
         </div>
       ) : (
-        <div className="mt-1.5 border-t border-slate-800/60 pt-1.5 text-[10px] text-slate-500">
-          Wahrscheinlichkeits-Modell: zu wenig Spiele in dieser Liga — Saison gerade gestartet oder Pokal-Modus.
+        <div className="mt-1.5 space-y-1 border-t border-amber-500/30 pt-1.5">
+          <div className="text-[11px] font-semibold text-amber-200">
+            Kein klares Signal — nicht tippen empfohlen.
+          </div>
+          <p className="text-[10px] leading-snug text-slate-400">
+            Zu wenig Spiele in dieser Liga für ein verlässliches Modell (Saison gerade gestartet, Pokal-Modus, oder ID-Konflikt bei TheSportsDB).
+            Ohne Form-Daten ist jeder Tipp Glücksspiel — überspringen ist die ehrliche Antwort.
+          </p>
         </div>
       )}
     </li>
@@ -591,6 +598,7 @@ export default async function SportPage() {
       )}
 
       <div id="ligen" />
+      <LigaSearch />
       <LigaAccordionControls />
       <div className="space-y-3">
         {(() => {

@@ -66,11 +66,13 @@ export const FOOTBALL_LEAGUES: League[] = [
 ];
 
 // Basketball-Ligen — TheSportsDB-IDs für die wichtigsten Wett-Märkte.
+// Wichtig: 4477 wurde entfernt — diese ID ist bei TheSportsDB als Saudi Pro
+// League (Fußball) angelegt. Mehrfache Best-Guess-ID-Kollisionen würden
+// sonst Basketball-Spiele in der Fußball-Liste zeigen.
 export const BASKETBALL_LEAGUES: League[] = [
   { id: '4387', name: 'NBA', country: 'USA' },
   { id: '4408', name: 'EuroLeague', country: 'Europa' },
-  { id: '4607', name: 'BBL', country: 'Deutschland' },
-  { id: '4477', name: 'NCAA', country: 'USA' }
+  { id: '4607', name: 'BBL', country: 'Deutschland' }
 ];
 
 // Tennis-Turniere — die vier Grand Slams + ATP/WTA-Top.
