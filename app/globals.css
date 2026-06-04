@@ -27,3 +27,19 @@ body {
     radial-gradient(ellipse 60% 40% at 0% 100%, rgba(59, 130, 246, 0.04), transparent);
   background-attachment: fixed;
 }
+
+/* Druck-Ansicht: weiß auf weiß, ohne Sticky-Bars, ohne Bottom-Nav. */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  nav[aria-label="Hauptnavigation"],
+  nav[aria-label="Sport-Seite Sprung-Navigation"],
+  nav[aria-label="Sportarten-Schnellzugriff"] {
+    display: none !important;
+  }
+  details > summary { list-style: none; }
+  details:not([open]) > *:not(summary) { display: none; }
+  details[open] > summary::before { content: '— '; }
+}

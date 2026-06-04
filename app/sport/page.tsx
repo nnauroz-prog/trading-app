@@ -57,6 +57,7 @@ import { TipprundeByMarket } from '@/components/tipprunde-by-market';
 import { AchievementsCard } from '@/components/achievements-card';
 import { WeekdayHeatmap } from '@/components/weekday-heatmap';
 import { BestWeekdayHint } from '@/components/best-weekday-hint';
+import { SanityHints } from '@/components/sanity-hints';
 import { FriendsLeaderboard } from '@/components/friends-leaderboard';
 import { DailyRecapCard } from '@/components/daily-recap-card';
 import { LigaAccordionControls } from '@/components/liga-accordion-controls';
@@ -432,6 +433,7 @@ export default async function SportPage() {
       <TipprundeByMarket />
       <WeekdayHeatmap />
       <BestWeekdayHint />
+      <SanityHints />
       <AchievementsCard />
       <FriendsLeaderboard />
       <DailyRecapCard todayIso={buckets.todayIso} />
