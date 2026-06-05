@@ -148,25 +148,36 @@ export function predictWinner(input: BuildInput): WinnerVerdict {
       reasoning.push(`Keine Form-Daten — Heimvorteil-Schätzung für ${sport === 'basketball' ? 'Basketball' : sport === 'hockey' ? 'Eishockey' : 'Fußball'} angesetzt.`);
       reasoning.push(`Statistik-Anker: ${Math.round(def.home * 100)} % Heim / ${Math.round(def.draw * 100)} % Remis / ${Math.round(def.away * 100)} % Auswärts in dieser Sportart.`);
     } else {
-      // Form-basiert: PPG-Differenz auf Sport-Default modulieren.
+      // Form-basiert: PPG-Differenz + Tor-Differenz auf Sport-Default modulieren.
       const homePpg = homeForm.total > 0 ? homeForm.pointsPerGame : def.home * 3;
       const awayPpg = awayForm.total > 0 ? awayForm.pointsPerGame : def.away * 3;
       const ppgDiff = homePpg - awayPpg; // -3 bis +3 möglich
-      // Modulation: 0.07 pro PPG-Differenz auf Heim drücken
-      const homeBoost = Math.max(-0.18, Math.min(0.18, ppgDiff * 0.07));
+      // Tor-Differenz pro Spiel als zusätzlicher Indikator (z. B. Bayern +2/Spiel).
+      const homeGd = homeForm.total > 0 ? (homeForm.goalsFor - homeForm.goalsAgainst) / homeForm.total : 0;
+      const awayGd = awayForm.total > 0 ? (awayForm.goalsFor - awayForm.goalsAgainst) / awayForm.total : 0;
+      const gdDiff = homeGd - awayGd;
+
+      // Modulation: 0.06 pro PPG-Differenz + 0.025 pro Tor-Differenz auf Heim drücken.
+      const ppgBoost = Math.max(-0.16, Math.min(0.16, ppgDiff * 0.06));
+      const gdBoost = Math.max(-0.08, Math.min(0.08, gdDiff * 0.025));
+      const homeBoost = ppgBoost + gdBoost;
+
       pH = def.home + homeBoost;
       pA = def.away - homeBoost;
-      pD = Math.max(sport === 'football' ? 0.18 : 0.02, def.draw);
+      // Bei starkem Unterschied steigt Remis-Wahrscheinlichkeit leicht ab.
+      const drawAdjustment = Math.abs(homeBoost) > 0.1 ? -0.04 : 0;
+      pD = Math.max(sport === 'football' ? 0.16 : 0.02, def.draw + drawAdjustment);
       const sum = pH + pD + pA;
       pH /= sum; pD /= sum; pA /= sum;
       source = 'form';
+
       if (homeForm.total > 0) {
-        reasoning.push(`Form ${homeTeam} (${homeForm.total} Spiele): ${homeForm.wins}S/${homeForm.draws}U/${homeForm.losses}N · ${homePpg.toFixed(1)} PPG`);
+        reasoning.push(`Form ${homeTeam} (${homeForm.total} Spiele): ${homeForm.wins}S/${homeForm.draws}U/${homeForm.losses}N · ${homePpg.toFixed(1)} PPG · Tordiff ${homeGd >= 0 ? '+' : ''}${homeGd.toFixed(1)}/Spiel`);
       } else {
         reasoning.push(`${homeTeam}: keine eigenen Spiele im Pool — Liga-Schnitt angesetzt.`);
       }
       if (awayForm.total > 0) {
-        reasoning.push(`Form ${awayTeam} (${awayForm.total} Spiele): ${awayForm.wins}S/${awayForm.draws}U/${awayForm.losses}N · ${awayPpg.toFixed(1)} PPG`);
+        reasoning.push(`Form ${awayTeam} (${awayForm.total} Spiele): ${awayForm.wins}S/${awayForm.draws}U/${awayForm.losses}N · ${awayPpg.toFixed(1)} PPG · Tordiff ${awayGd >= 0 ? '+' : ''}${awayGd.toFixed(1)}/Spiel`);
       } else {
         reasoning.push(`${awayTeam}: keine eigenen Spiele im Pool — Liga-Schnitt angesetzt.`);
       }
