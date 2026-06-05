@@ -224,7 +224,8 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
           awayTeam: f.awayTeam,
           prediction: f.prediction,
           h2h: h2h ?? null,
-          finishedPool: []
+          finishedPool: [],
+          sport: 'football'
         });
         return (
           <div className="mt-3">

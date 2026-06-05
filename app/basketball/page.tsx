@@ -57,7 +57,8 @@ export default async function BasketballPage() {
                       awayTeam: f.awayTeam,
                       prediction: null,
                       h2h: null,
-                      finishedPool: lf.last
+                      finishedPool: lf.last,
+                      sport: 'basketball'
                     });
                     return (
                       <li key={f.id} className="space-y-1.5 rounded-md border border-amber-400/40 bg-amber-950/20 px-2.5 py-2">
