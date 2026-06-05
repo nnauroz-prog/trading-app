@@ -66,7 +66,8 @@ export function WmNextMatches({ todayIso }: Props) {
                     awayTeam: f.awayTeam,
                     prediction: null,
                     h2h: null,
-                    finishedPool: []
+                    finishedPool: [],
+                    sport: 'football'
                   })}
                   homeTeam={f.homeTeam}
                   awayTeam={f.awayTeam}

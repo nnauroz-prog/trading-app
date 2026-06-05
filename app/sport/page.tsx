@@ -74,6 +74,7 @@ import { SportQuickFilter } from '@/components/sport-quick-filter';
 import { SummerModeBanner } from '@/components/summer-mode-banner';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { WmNextMatches } from '@/components/wm-next-matches';
+import { WmDayPicker } from '@/components/wm-day-picker';
 import { WmGroupsOverview } from '@/components/wm-groups-overview';
 import { WmVenuesList } from '@/components/wm-venues-list';
 import { WmCitiesCard } from '@/components/wm-cities-card';
@@ -238,7 +239,11 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
         );
       })()}
       {f.probabilities && f.tips ? (
-        <div className="mt-3">
+        <details className="mt-3 rounded-lg border border-slate-800 bg-slate-950/40">
+          <summary className="cursor-pointer p-2 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+            ▸ Mehr Wahrscheinlichkeiten (Tor-Markt, BTTS, Ergebnis-Tendenz)
+          </summary>
+          <div className="px-2 pb-2">
           <ProbabilityCard
             homeTeam={f.homeTeam}
             awayTeam={f.awayTeam}
@@ -246,7 +251,8 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
             tips={f.tips}
             saveContext={{ fixtureId: f.id, date: f.date, league: f.league }}
           />
-        </div>
+          </div>
+        </details>
       ) : (
         <div className="mt-1.5 space-y-1 border-t border-amber-500/30 pt-1.5">
           <div className="text-[11px] font-semibold text-amber-200">
@@ -425,6 +431,7 @@ export default async function SportPage() {
           beste Antwort auf „nichts in den Ligen" ist „WM kommt". */}
       <WmCountdownBanner todayIso={buckets.todayIso} />
       <WmNextMatches todayIso={buckets.todayIso} />
+      <WmDayPicker todayIso={buckets.todayIso} />
       <WmGroupsOverview todayIso={buckets.todayIso} />
       <WmPhasesTimeline todayIso={buckets.todayIso} />
       <WmTipprundeStats todayIso={buckets.todayIso} />
