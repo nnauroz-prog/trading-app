@@ -5,8 +5,8 @@
 import Link from 'next/link';
 import { WM_2026_FIXTURES } from '@/lib/sport/wm-schedule-2026';
 import { WmTipButton } from '@/components/wm-tip-button';
-import { predictWinner } from '@/lib/sport/winner-verdict';
-import { WinnerVerdictCard } from '@/components/winner-verdict-card';
+import { predictWmMatch } from '@/lib/sport/wm-match-engine';
+import { WmProPredictionCard } from '@/components/wm-pro-prediction-card';
 
 interface Props {
   todayIso: string;
@@ -60,19 +60,14 @@ export function WmNextMatches({ todayIso }: Props) {
             </div>
             {!f.homeTeam.includes('TBD') && !f.awayTeam.includes('TBD') && (
               <>
-                <WinnerVerdictCard
-                  verdict={predictWinner({
+                <WmProPredictionCard
+                  prediction={predictWmMatch({
                     homeTeam: f.homeTeam,
                     awayTeam: f.awayTeam,
-                    prediction: null,
-                    h2h: null,
-                    finishedPool: [],
-                    sport: 'football'
+                    venue: f.venue,
+                    phase: f.phase
                   })}
-                  homeTeam={f.homeTeam}
-                  awayTeam={f.awayTeam}
                   showExtraTime={f.phase !== 'Gruppe'}
-                  compact={f.phase === 'Gruppe'}
                 />
                 <WmTipButton fixture={f} />
               </>
