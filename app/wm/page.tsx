@@ -4,6 +4,7 @@ import { WORLD_CUP_LEAGUE_IDS } from '@/lib/sport/leagues';
 import type { UpcomingFixture, Fixture } from '@/lib/sport/fetcher';
 import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
 import { predictWmMatch } from '@/lib/sport/wm-match-engine';
+import { WmOutrightCard } from '@/components/wm-outright-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -111,6 +112,8 @@ export default async function WorldCupPage() {
           11. Juni – 19. Juli 2026 in USA, Kanada, Mexiko. Pro Spiel die wahrscheinlichste Sieger-Seite. Wo Paarungen noch offen sind („Sieger Gruppe A“ usw.), wird das ehrlich markiert.
         </p>
       </header>
+
+      <WmOutrightCard todayIso={new Date().toISOString().slice(0, 10)} />
 
       <section className="rounded-2xl border border-emerald-400/30 bg-emerald-950/15 p-3 text-[11.5px] leading-snug text-emerald-100/90">
         <span className="font-semibold">Datenquelle: </span>
