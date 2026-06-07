@@ -5,6 +5,7 @@
 
 import Link from 'next/link';
 import type { AgentVerdict, PersonaId } from '@/lib/agents/personas';
+import { FirmaSubAgentVotes } from '@/components/firma-sub-agent-votes';
 
 const FIRMA_TONE: Record<PersonaId, string> = {
   conservative: 'border-sky-400/40 bg-sky-950/15',
@@ -82,6 +83,17 @@ export function PerCoinFirmaTakes({ verdicts, coinSymbol }: { verdicts: AgentVer
                     {v.voteSummary.negativeVotes}−
                   </span>
                 </div>
+              )}
+
+              {v.team.length > 0 && (
+                <details className="rounded border border-slate-800 bg-slate-950/40">
+                  <summary className="cursor-pointer p-1.5 text-[9px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300">
+                    ▸ Sub-Agenten zu {coinSymbol}
+                  </summary>
+                  <div className="p-1.5 pt-0">
+                    <FirmaSubAgentVotes team={v.team} />
+                  </div>
+                </details>
               )}
             </div>
           );
