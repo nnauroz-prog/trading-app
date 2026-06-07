@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
-import { ema } from '@/lib/analysis/indicators';
+import { ema, rsi as rsiSeries, atr as atrSeries, sma } from '@/lib/analysis/indicators';
 import { fetchYahooQuote } from '@/lib/market/yahoo-quote';
+import { GoldHoldingCalculator } from '@/components/gold/gold-holding-calculator';
+import type { MarketContext } from '@/lib/gold/gold-holding-calculator';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
@@ -172,6 +174,36 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
     ? computeVerdict(currentPrice, ema50, ema200, high52w, low52w)
     : null;
   const verdictTone = verdict ? TONE[verdict.tone] : null;
+
+  // ===== Markt-Kontext + History für den Gold-Holding-Rechner =====
+  const sma50Series = hasData && closes.length >= 50 ? sma(closes, 50) : [];
+  const ma50Raw = sma50Series.length > 0 ? sma50Series[sma50Series.length - 1] ?? null : null;
+  const sma200Series = hasData && closes.length >= 200 ? sma(closes, 200) : [];
+  const ma200Raw = sma200Series.length > 0 ? sma200Series[sma200Series.length - 1] ?? null : null;
+  const rsi14Series = hasData && closes.length >= 15 ? rsiSeries(closes, 14) : [];
+  const rsi14 = rsi14Series.length > 0 ? rsi14Series[rsi14Series.length - 1] ?? null : null;
+  const atr14Series = hasData && candles && candles.length >= 15
+    ? atrSeries(candles.map((c) => ({ high: c.high, low: c.low, close: c.close })), 14)
+    : [];
+  const atr14 = atr14Series.length > 0 ? atr14Series[atr14Series.length - 1] ?? null : null;
+  const pos52w = hasData && currentPrice !== null && high52w > low52w
+    ? ((currentPrice - low52w) / (high52w - low52w)) * 100
+    : null;
+  const goldMarketContext: MarketContext = {
+    ma50: ma50Raw,
+    ma200: ma200Raw,
+    rsi: rsi14,
+    atr: atr14,
+    performance30d: change30,
+    performance90d: change90,
+    fiftyTwoWeekPosition: pos52w,
+    priceAboveMa50: currentPrice !== null && ma50Raw !== null ? currentPrice > ma50Raw : null,
+    priceAboveMa200: currentPrice !== null && ma200Raw !== null ? currentPrice > ma200Raw : null,
+    ma50AboveMa200: ma50Raw !== null && ma200Raw !== null ? ma50Raw > ma200Raw : null
+  };
+  const history = hasData
+    ? candles!.map((c) => ({ dateIso: isoFromMs(c.openTime), closeUsd: c.close }))
+    : [];
 
   return (
     <main className="mx-auto max-w-3xl space-y-5 p-4 md:p-6">
@@ -397,6 +429,13 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
           </p>
         </section>
       )}
+
+      <GoldHoldingCalculator
+        history={history}
+        currentGoldPricePerOz={currentPrice}
+        todayIso={todayIso || new Date().toISOString().slice(0, 10)}
+        marketContext={goldMarketContext}
+      />
 
       <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
         Daten: PAXG (Pax Gold, 1:1 gedeckt) über Binance/Bybit · Tagesdaten · max. 365 Tage Historie · keine Anlageberatung.
