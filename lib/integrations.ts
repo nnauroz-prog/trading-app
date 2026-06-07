@@ -33,11 +33,11 @@ export function getIntegrationsStatus(): IntegrationStatus[] {
     {
       id: 'finnhub',
       name: 'Finnhub',
-      purpose: 'Live-Aktienkurse & 52-Wochen-Spanne zur Verifikation von Aktien-Ideen.',
+      purpose: 'Optional: Premium-Aktienkurse + 52-Wochen-Spanne mit höheren Rate-Limits. Aktien-Hauptansicht (/aktien) läuft bereits ohne Finnhub über Yahoo Finance + Stooq.',
       connected: finnhub,
       optional: true,
       envVars: [{ name: 'FINNHUB_API_KEY', set: finnhub }],
-      setup: 'Kostenlosen Key auf finnhub.io holen → als FINNHUB_API_KEY in den Vercel-Umgebungsvariablen setzen. Ohne Key bleiben Aktien-Ideen „nicht verifiziert".'
+      setup: 'Optional: kostenlosen Key auf finnhub.io holen → als FINNHUB_API_KEY in den Vercel-Umgebungsvariablen setzen. Ohne Key nutzt /aktien Yahoo + Stooq als Fallback-Kette.'
     },
     {
       id: 'telegram',
