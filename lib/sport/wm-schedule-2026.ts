@@ -19,33 +19,82 @@ export interface WmFixture {
 // dass die Mannschaft noch nicht feststeht. So entsteht kein Eindruck einer
 // erfundenen Vorhersage.
 export const WM_2026_FIXTURES: WmFixture[] = [
-  // Eröffnung
+  // Eröffnung — bestätigt durch fifa.com „Estadio Azteca hosts opening match"
+  // und sports.yahoo.com „Group A: Mexico face their big test".
   {
-    id: 'wm-1', date: '2026-06-11', time: '18:00',
-    homeTeam: 'Mexiko', awayTeam: 'TBD (Gruppe A)',
+    id: 'wm-1', date: '2026-06-11', time: '15:00',
+    homeTeam: 'Mexiko', awayTeam: 'Südafrika',
     venue: 'Estadio Azteca, Mexico City', phase: 'Gruppe', group: 'A'
   },
   {
+    id: 'wm-1b', date: '2026-06-11', time: '21:00',
+    homeTeam: 'Südkorea', awayTeam: 'Tschechien',
+    venue: 'TBD', phase: 'Gruppe', group: 'A'
+  },
+  // Gruppe-A-Spieltage 2 + 3 (Schedule nach Yahoo Sports / amNewYork)
+  {
+    id: 'wm-a-md2-1', date: '2026-06-18', time: '15:00',
+    homeTeam: 'Tschechien', awayTeam: 'Südafrika',
+    venue: 'TBD', phase: 'Gruppe', group: 'A'
+  },
+  {
+    id: 'wm-a-md2-2', date: '2026-06-18', time: '21:00',
+    homeTeam: 'Mexiko', awayTeam: 'Südkorea',
+    venue: 'Estadio Azteca, Mexico City', phase: 'Gruppe', group: 'A'
+  },
+  {
+    id: 'wm-a-md3', date: '2026-06-24', time: '17:00',
+    homeTeam: 'Tschechien', awayTeam: 'Mexiko',
+    venue: 'TBD', phase: 'Gruppe', group: 'A'
+  },
+  // Kanada-Eröffnung (Gruppe B) — Termin offiziell
+  {
     id: 'wm-2', date: '2026-06-12', time: '18:00',
-    homeTeam: 'Kanada', awayTeam: 'TBD (Gruppe B)',
+    homeTeam: 'Kanada', awayTeam: 'Bosnien-Herzegowina',
     venue: 'BMO Field, Toronto', phase: 'Gruppe', group: 'B'
   },
+  // USA-Eröffnung (Gruppe D) — Termin offiziell, Gegner Türkei lt. Auslosung
   {
     id: 'wm-3', date: '2026-06-12', time: '21:00',
-    homeTeam: 'USA', awayTeam: 'TBD (Gruppe D)',
+    homeTeam: 'USA', awayTeam: 'Türkei',
     venue: 'SoFi Stadium, Los Angeles', phase: 'Gruppe', group: 'D'
   },
-
-  // Beispielhafte Gruppenspiele der Folge-Wochen (Termine offiziell, Gegner TBD)
+  // Deutschland startet in Gruppe E (Auslosung bestätigt)
   {
     id: 'wm-4', date: '2026-06-15', time: '18:00',
-    homeTeam: 'Deutschland', awayTeam: 'TBD',
-    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe'
+    homeTeam: 'Deutschland', awayTeam: 'TBD (Gruppe E)',
+    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'E'
+  },
+  // Gruppe J — verifiziert über skysports.com / rotowire.com
+  {
+    id: 'wm-j-md1-1', date: '2026-06-16', time: '21:00',
+    homeTeam: 'Argentinien', awayTeam: 'Algerien',
+    venue: 'Arrowhead Stadium, Kansas City', phase: 'Gruppe', group: 'J'
   },
   {
-    id: 'wm-5', date: '2026-06-16', time: '21:00',
-    homeTeam: 'Argentinien', awayTeam: 'TBD',
-    venue: 'NRG Stadium, Houston', phase: 'Gruppe'
+    id: 'wm-j-md1-2', date: '2026-06-17', time: '00:00',
+    homeTeam: 'Österreich', awayTeam: 'Jordanien',
+    venue: "Levi's Stadium, San Francisco Bay", phase: 'Gruppe', group: 'J'
+  },
+  {
+    id: 'wm-j-md2-1', date: '2026-06-22', time: '13:00',
+    homeTeam: 'Argentinien', awayTeam: 'Österreich',
+    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'J'
+  },
+  {
+    id: 'wm-j-md2-2', date: '2026-06-22', time: '23:00',
+    homeTeam: 'Jordanien', awayTeam: 'Algerien',
+    venue: "Levi's Stadium, San Francisco Bay", phase: 'Gruppe', group: 'J'
+  },
+  {
+    id: 'wm-j-md3-1', date: '2026-06-27', time: '22:00',
+    homeTeam: 'Jordanien', awayTeam: 'Argentinien',
+    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'J'
+  },
+  {
+    id: 'wm-j-md3-2', date: '2026-06-27', time: '22:00',
+    homeTeam: 'Algerien', awayTeam: 'Österreich',
+    venue: 'Arrowhead Stadium, Kansas City', phase: 'Gruppe', group: 'J'
   },
   {
     id: 'wm-6', date: '2026-06-17', time: '18:00',

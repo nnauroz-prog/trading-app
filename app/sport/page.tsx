@@ -30,6 +30,7 @@ import { LeagueHitRate } from '@/components/league-hit-rate';
 import { WochenErgebnisse } from '@/components/wochen-ergebnisse';
 import { SportTodayLive } from '@/components/sport-today-live';
 import { SportTodayResolved } from '@/components/sport-today-resolved';
+import { SportYesterdayResolved } from '@/components/sport-yesterday-resolved';
 import { SportLeagueFilter } from '@/components/sport-league-filter';
 import { DataRefreshIndicator } from '@/components/data-refresh-indicator';
 import { ManualRefreshButton } from '@/components/manual-refresh-button';
@@ -490,6 +491,7 @@ export default async function SportPage() {
 
       <SportTodayLive leagues={leagues} />
 
+      <SportYesterdayResolved leagues={leagues} />
       <SportTodayResolved leagues={leagues} />
 
       <div id="ergebnisse" />
