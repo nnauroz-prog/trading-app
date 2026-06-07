@@ -132,7 +132,8 @@ export default async function WorldCupPage() {
               {fixtures.map((f) => {
                 const v = winnerVerdict(f.homeTeam, f.awayTeam, f.venue, f.phase, fullPool);
                 return (
-                  <li key={f.id} className="grid grid-cols-[auto_1fr_auto] gap-2 rounded-lg border border-slate-800 bg-slate-950/60 px-2.5 py-2 text-[11.5px]">
+                  <li key={f.id}>
+                    <Link href={`/wm/${encodeURIComponent(f.id)}`} className="grid grid-cols-[auto_1fr_auto] gap-2 rounded-lg border border-slate-800 bg-slate-950/60 px-2.5 py-2 text-[11.5px] transition hover:brightness-110">
                     <span className="font-mono text-[10px] text-slate-400">
                       {fmtDate(f.date)}
                       <br />
@@ -149,6 +150,7 @@ export default async function WorldCupPage() {
                       <div className="mt-0.5">{v.text}</div>
                       {v.confidence > 0 && <div className="text-[9px] opacity-80">{v.confidence} %</div>}
                     </span>
+                    </Link>
                   </li>
                 );
               })}
