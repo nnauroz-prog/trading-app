@@ -81,6 +81,7 @@ import { WmSafeMarketTips } from '@/components/wm-safe-market-tips';
 import { SafeFootballTips } from '@/components/safe-football-tips';
 import { evaluateFootballPersonas } from '@/lib/agents/football-personas';
 import { FootballPersonaPanel } from '@/components/football-persona-panel';
+import { PersonaConsensusBanner } from '@/components/persona-consensus-banner';
 import { WmOutrightCard } from '@/components/wm-outright-card';
 import { WmEngineHonesty } from '@/components/wm-engine-honesty';
 import { WmGroupsOverview } from '@/components/wm-groups-overview';
@@ -438,7 +439,15 @@ export default async function SportPage() {
       {/* WM-Countdown VOR allem anderen, wenn ≤ 30 Tage bis Eröffnung — die
           beste Antwort auf „nichts in den Ligen" ist „WM kommt". */}
       <WmCountdownBanner todayIso={buckets.todayIso} />
-      <FootballPersonaPanel verdicts={evaluateFootballPersonas(leagues, buckets.todayIso)} />
+      {(() => {
+        const footballVerdicts = evaluateFootballPersonas(leagues, buckets.todayIso);
+        return (
+          <>
+            <PersonaConsensusBanner verdicts={footballVerdicts} context="Liga-Fußball" />
+            <FootballPersonaPanel verdicts={footballVerdicts} />
+          </>
+        );
+      })()}
       <SafeFootballTips leagues={leagues} todayIso={buckets.todayIso} />
       <WmSafeMarketTips todayIso={buckets.todayIso} />
       <WmTopTips todayIso={buckets.todayIso} />
