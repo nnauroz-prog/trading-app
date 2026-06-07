@@ -236,13 +236,22 @@ describe('buildFirmaSynthesis', () => {
     expect(synth.chefStatement.length).toBeGreaterThan(20);
   });
 
-  it('totalFixturesNext7d zählt Spiele im 45-Tage-Fenster (Feld-Name ist historisch, Implementierung nutzt 45d-Horizont)', () => {
+  it('totalFixturesNext7d zählt nur Spiele in echten 7 Tagen — passend zum „7 Tage"-Label im UI', () => {
+    const fxToday   = upcoming('A', 'B', '2026-06-01');
+    const fxIn5d    = upcoming('C', 'D', '2026-06-06');
+    const fxIn14d   = upcoming('E', 'F', '2026-06-15');
+    const fxBeyond  = upcoming('G', 'H', '2026-08-15');
+    const synth = buildFirmaSynthesis([league('L1', [], [fxToday, fxIn5d, fxIn14d, fxBeyond])], '2026-06-01');
+    // 2 echte 7-Tage-Spiele (heute + in 5d), fxIn14d und fxBeyond fallen raus.
+    expect(synth.totalFixturesNext7d).toBe(2);
+  });
+
+  it('totalFixturesAhead zählt das volle 45-Tage-Vorschau-Fenster — was buildWeekAhead intern nutzt', () => {
     const fxToday   = upcoming('A', 'B', '2026-06-01');
     const fxIn14d   = upcoming('C', 'D', '2026-06-15');
     const fxBeyond  = upcoming('E', 'F', '2026-08-15'); // weit über 45d
     const synth = buildFirmaSynthesis([league('L1', [], [fxToday, fxIn14d, fxBeyond])], '2026-06-01');
-    // 2 Spiele im Fenster, fxBeyond liegt außerhalb.
-    expect(synth.totalFixturesNext7d).toBe(2);
+    expect(synth.totalFixturesAhead).toBe(2);
   });
 
   it('safetyPicker und dailyPickCurator sind im Roster definiert', () => {

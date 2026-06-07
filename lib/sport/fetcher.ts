@@ -93,8 +93,11 @@ function looksLikeFootball(home: string, away: string): boolean {
 function normalize(e: ApiEvent, status: 'upcoming' | 'finished'): Fixture | null {
   if (!e.idEvent || !e.strHomeTeam || !e.strAwayTeam || !e.dateEvent) return null;
   if (!looksLikeFootball(e.strHomeTeam, e.strAwayTeam)) return null;
-  const home = e.intHomeScore != null && e.intHomeScore !== '' ? Number(e.intHomeScore) : null;
-  const away = e.intAwayScore != null && e.intAwayScore !== '' ? Number(e.intAwayScore) : null;
+  // Score-Parsing mit NaN-Schutz: TheSportsDB-Werte können „?"/„-" sein.
+  const homeNum = Number(e.intHomeScore);
+  const home = e.intHomeScore != null && e.intHomeScore !== '' && Number.isFinite(homeNum) ? homeNum : null;
+  const awayNum = Number(e.intAwayScore);
+  const away = e.intAwayScore != null && e.intAwayScore !== '' && Number.isFinite(awayNum) ? awayNum : null;
   return {
     id: e.idEvent,
     homeTeam: e.strHomeTeam,

@@ -165,6 +165,96 @@ describe('predictWinner — Form aus Pool', () => {
   });
 });
 
+describe('predictWinner — Sport-spezifische Form-Beschriftung', () => {
+  it('Basketball-Reasoning sagt „Punktediff" statt „Tordiff"', () => {
+    const pool: Fixture[] = [
+      fixt('Bilbao', 'Madrid', 85, 75),
+      fixt('Bilbao', 'Barcelona', 92, 80),
+      fixt('Valencia', 'Sevilla', 70, 90)
+    ];
+    const v = predictWinner({
+      homeTeam: 'Bilbao', awayTeam: 'Valencia',
+      prediction: null, h2h: null, finishedPool: pool,
+      sport: 'basketball'
+    });
+    expect(v.source).toBe('form');
+    const formLines = v.reasoning.filter((r) => r.includes('PPG'));
+    expect(formLines.length).toBeGreaterThan(0);
+    for (const line of formLines) {
+      expect(line).toContain('Punktediff');
+      expect(line).not.toContain('Tordiff');
+    }
+  });
+
+  it('Fußball-Reasoning behält „Tordiff"', () => {
+    const pool: Fixture[] = [
+      fixt('Bayern', 'Hertha', 4, 0),
+      fixt('Hertha', 'Schalke', 0, 2)
+    ];
+    const v = predictWinner({
+      homeTeam: 'Bayern', awayTeam: 'Schalke',
+      prediction: null, h2h: null, finishedPool: pool,
+      sport: 'football'
+    });
+    const formLines = v.reasoning.filter((r) => r.includes('PPG'));
+    for (const line of formLines) {
+      expect(line).toContain('Tordiff');
+    }
+  });
+
+  it('Basketball gdBoost-Skalierung verhindert Dauerclipping bei großen Punkte-Differenzen', () => {
+    // Hohes Heim-PPG (alle Siege) aber wenig Punkt-Spread → Heim sollte
+    // bevorzugt sein, aber nicht durch Punktediff alleine an die Decke
+    // gezogen werden.
+    const lowSpread: Fixture[] = [
+      fixt('A', 'X1', 80, 78),
+      fixt('A', 'X2', 82, 80),
+      fixt('A', 'X3', 85, 83),
+      fixt('B', 'Y1', 78, 80),
+      fixt('B', 'Y2', 80, 82)
+    ];
+    const highSpread: Fixture[] = [
+      fixt('A', 'X1', 100, 60),
+      fixt('A', 'X2', 105, 65),
+      fixt('A', 'X3', 110, 70),
+      fixt('B', 'Y1', 60, 100),
+      fixt('B', 'Y2', 65, 105)
+    ];
+    const vLow = predictWinner({ homeTeam: 'A', awayTeam: 'B', prediction: null, h2h: null, finishedPool: lowSpread, sport: 'basketball' });
+    const vHigh = predictWinner({ homeTeam: 'A', awayTeam: 'B', prediction: null, h2h: null, finishedPool: highSpread, sport: 'basketball' });
+    // Bei richtig skaliertem gdBoost: Hoher Spread zieht stärker, niedriger Spread weniger stark.
+    expect(vHigh.regular.homePct).toBeGreaterThan(vLow.regular.homePct);
+  });
+});
+
+describe('predictWinner — Sample-Confidence-Daempfung', () => {
+  it('Einzelnes Pool-Spiel kippt die Prognose nicht über 70 %', () => {
+    // Ein einzelnes 4:0-Heimspiel ist nicht genug, um die Heim-Wahrscheinlichkeit
+    // an die Decke (>= 70 %) zu drücken.
+    const pool: Fixture[] = [fixt('Bayern', 'Hertha', 4, 0)];
+    const v = predictWinner({
+      homeTeam: 'Bayern', awayTeam: 'Schalke',
+      prediction: null, h2h: null, finishedPool: pool,
+      sport: 'football'
+    });
+    expect(v.regular.homePct).toBeLessThan(70);
+  });
+
+  it('Mehr Pool-Spiele → stärkerer Effekt der gleichen PPG-Differenz', () => {
+    const onePool: Fixture[] = [fixt('A', 'X', 3, 0)];
+    const fivePool: Fixture[] = [
+      fixt('A', 'X1', 3, 0), fixt('A', 'X2', 2, 0), fixt('A', 'X3', 4, 1),
+      fixt('A', 'X4', 2, 1), fixt('A', 'X5', 3, 0),
+      fixt('B', 'Y1', 0, 2), fixt('B', 'Y2', 1, 3), fixt('B', 'Y3', 0, 1),
+      fixt('B', 'Y4', 1, 2), fixt('B', 'Y5', 0, 3)
+    ];
+    const vOne = predictWinner({ homeTeam: 'A', awayTeam: 'B', prediction: null, h2h: null, finishedPool: onePool, sport: 'football' });
+    const vFive = predictWinner({ homeTeam: 'A', awayTeam: 'B', prediction: null, h2h: null, finishedPool: fivePool, sport: 'football' });
+    // Mehr Spiele → höhere Konfidenz → stärkerer Heim-Anteil bei gleicher Tendenz.
+    expect(vFive.regular.homePct).toBeGreaterThan(vOne.regular.homePct);
+  });
+});
+
 describe('predictWinner — Klarheit + Kein-Favorit', () => {
   it('strong bei ≥ 58 %', () => {
     const v = predictWinner({

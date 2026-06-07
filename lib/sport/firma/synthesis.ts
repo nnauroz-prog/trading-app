@@ -22,7 +22,11 @@ export interface FirmaSynthesis {
   totalAnalyzedFixtures: number;
   findings: ScoutFinding[];
   weekAhead: WeekAheadDay[];
+  // Echte 7-Tage-Zahl für UI-Labels, die „Spiele · 7 Tage" sagen.
   totalFixturesNext7d: number;
+  // Gesamt-Spiele im 45-Tage-Vorschau-Fenster (was buildWeekAhead tatsächlich
+  // liefert — wird für perLeagueTopPicks und dailyTopPick gebraucht).
+  totalFixturesAhead: number;
   highConfidencePicks: HighConfidencePick[];
   safetyPickThreshold: number;
   scheduleGatekeeper: SportEmployee;
@@ -58,7 +62,14 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
   const forms = computeTeamForms(leagues);
   const findings = scoutFindings(forms);
   const weekAhead = buildWeekAhead(leagues, todayIso);
-  const totalFixturesNext7d = weekAhead.reduce((s, d) => s + d.fixtures.length, 0);
+  const totalFixturesAhead = weekAhead.reduce((s, d) => s + d.fixtures.length, 0);
+  // Echter 7-Tage-Cutoff (für „Spiele · 7 Tage"-Labels). weekAhead-Einträge
+  // sind als YYYY-MM-DD lokal sortiert.
+  const todayCutoffIso = todayIso ?? new Date().toISOString().slice(0, 10);
+  const sevenDayCutoff = addIsoDays(todayCutoffIso, 7);
+  const totalFixturesNext7d = weekAhead
+    .filter((d) => d.date < sevenDayCutoff)
+    .reduce((s, d) => s + d.fixtures.length, 0);
   const highConfidencePicks = pickHighConfidence(weekAhead);
   const dailyTopPick = pickBestOfAll(weekAhead);
   const perLeagueTopPicks = pickBestPerLeague(weekAhead);
@@ -66,7 +77,7 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
   const counts = countByDepartment();
 
   const chefStatement = composeChefStatement({
-    fixtures: totalFixturesNext7d,
+    fixtures: totalFixturesAhead,
     dangerous: findings.filter((f) => f.kind === 'dangerous'),
     fading: findings.filter((f) => f.kind === 'fading'),
     picks: highConfidencePicks
@@ -81,6 +92,7 @@ export function buildFirmaSynthesis(leagues: LeagueFixtures[], todayIso?: string
     findings,
     weekAhead,
     totalFixturesNext7d,
+    totalFixturesAhead,
     highConfidencePicks,
     safetyPickThreshold: SAFETY_PICK_THRESHOLD,
     scheduleGatekeeper: SCHEDULE_GATEKEEPER_EMPLOYEE,
@@ -196,4 +208,14 @@ function composeChefStatement(args: {
   }
   parts.push('Alles aus der historischen Form gerechnet — fürs Tippspiel mit Freunden gemacht.');
   return parts.join(' ');
+}
+
+// Addiert n Kalendertage auf eine YYYY-MM-DD-Datums-Zeichenkette und liefert das
+// Ergebnis im selben Format. Mittags-Anker, damit DST-Wechsel das Datum nicht
+// kippt. Bei kaputter Eingabe Identität (fail-open).
+function addIsoDays(iso: string, n: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
 }
