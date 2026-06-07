@@ -1,46 +1,51 @@
 // Banner, das zeigt, wenn mindestens 2 von 3 Persönlichkeiten desselben
-// Vorstands das gleiche Verdict abgeben. Funktioniert für Aktien und Rohstoffe
-// gleichermaßen, weil Verdict-Strings identisch sind.
+// Vorstands das gleiche Verdict abgeben. Verdict-Strings sind je Asset-Klasse
+// anders (KAUFEN vs. TIPPEN), aber „kauft/tippt" wird einheitlich als „buy"
+// gemappt.
 
 interface Verdict {
   persona: string;
   name: string;
-  verdict: 'KAUFEN' | 'BEOBACHTEN' | 'WARTEN';
+  verdict: string;
 }
 
 interface Props {
   verdicts: Verdict[];
-  context: 'Aktien' | 'Rohstoffe';
+  context: 'Aktien' | 'Rohstoffe' | 'WM' | 'Liga-Fußball';
+}
+
+function classify(v: string): 'buy' | 'watch' | 'wait' {
+  if (v === 'KAUFEN' || v === 'BUY' || v === 'TIPPEN') return 'buy';
+  if (v === 'BEOBACHTEN') return 'watch';
+  return 'wait';
 }
 
 export function PersonaConsensusBanner({ verdicts, context }: Props) {
   if (verdicts.length === 0) return null;
 
-  const counts: Record<string, number> = { KAUFEN: 0, BEOBACHTEN: 0, WARTEN: 0 };
-  for (const v of verdicts) counts[v.verdict] = (counts[v.verdict] ?? 0) + 1;
+  const counts = { buy: 0, watch: 0, wait: 0 };
+  for (const v of verdicts) counts[classify(v.verdict)]++;
 
-  const buyCount = counts['KAUFEN'] ?? 0;
-  const waitCount = counts['WARTEN'] ?? 0;
-  const watchCount = counts['BEOBACHTEN'] ?? 0;
+  const buyLabel = context === 'WM' || context === 'Liga-Fußball' ? 'TIPPEN' : 'KAUFEN';
 
-  if (buyCount === verdicts.length) {
+  if (counts.buy === verdicts.length) {
     return (
       <section className="rounded-2xl border border-emerald-400/70 bg-emerald-500/15 p-3 text-[12px] text-emerald-100">
-        <strong>🎯 Voller Konsens: KAUFEN</strong>{' '}
+        <strong>🎯 Voller Konsens: {buyLabel}</strong>{' '}
         <span className="opacity-90">— alle drei {context}-Persönlichkeiten signalisieren grün. Sehr selten, sehr stark. Vergangenheit ≠ Zukunft.</span>
       </section>
     );
   }
-  if (buyCount === 2) {
-    const dissent = verdicts.find((v) => v.verdict !== 'KAUFEN');
+  if (counts.buy === 2) {
+    const dissent = verdicts.find((v) => classify(v.verdict) !== 'buy');
     return (
       <section className="rounded-2xl border border-emerald-400/40 bg-emerald-950/15 p-3 text-[12px] text-emerald-100">
-        <strong>✓ Mehrheits-Konsens: KAUFEN</strong>{' '}
+        <strong>✓ Mehrheits-Konsens: {buyLabel}</strong>{' '}
         <span className="opacity-80">— 2 von 3 {context}-Persönlichkeiten sagen grün, {dissent?.name} bleibt {dissent?.verdict.toLowerCase()}.</span>
       </section>
     );
   }
-  if (waitCount === verdicts.length) {
+  if (counts.wait === verdicts.length) {
     return (
       <section className="rounded-2xl border border-rose-400/40 bg-rose-950/15 p-3 text-[12px] text-rose-100">
         <strong>⛔ Voller Konsens: WARTEN</strong>{' '}
@@ -48,7 +53,7 @@ export function PersonaConsensusBanner({ verdicts, context }: Props) {
       </section>
     );
   }
-  if (watchCount >= 2) {
+  if (counts.watch >= 2) {
     return (
       <section className="rounded-2xl border border-amber-400/40 bg-amber-950/15 p-3 text-[12px] text-amber-100">
         <strong>👀 Mehrheits-Konsens: BEOBACHTEN</strong>{' '}
@@ -56,11 +61,10 @@ export function PersonaConsensusBanner({ verdicts, context }: Props) {
       </section>
     );
   }
-  // Gemischt — kein eindeutiger Konsens
   return (
     <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-3 text-[12px] text-slate-300">
       <strong>🟰 Kein Konsens im {context}-Vorstand</strong>{' '}
-      <span className="opacity-80">— die drei Persönlichkeiten sind sich uneinig (KAUFEN {buyCount} · BEOBACHTEN {watchCount} · WARTEN {waitCount}). Vorsicht walten lassen.</span>
+      <span className="opacity-80">— die drei Persönlichkeiten sind sich uneinig ({buyLabel} {counts.buy} · BEOBACHTEN {counts.watch} · WARTEN {counts.wait}). Vorsicht walten lassen.</span>
     </section>
   );
 }
