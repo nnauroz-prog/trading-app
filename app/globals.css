@@ -21,27 +21,16 @@
 }
 
 /*
- * Body-Background: dezente farbige Akzente OHNE background-attachment fixed,
- * weil iOS-Safari die fixed-Variante als sichtbare „Beulen"-Overlays über
- * scrollbarem Content rendert. Statt fixed nutzen wir position-relative
- * Pseudo-Element + viewport-Ankerung, das stabil bleibt.
+ * Body-Background: einfacher dunkler Solid-Color statt radial-gradient.
+ * iOS-Safari rendert radial-gradient mit position:fixed konsequent als
+ * sichtbare „Beulen"-Overlays, egal wie dezent die Opacity ist.
+ * Drei vorherige Fix-Versuche (fixed, scroll, pseudo-element) haben
+ * das Symptom nicht eliminiert — also Gradient ganz raus.
  */
 body {
   @apply bg-slate-950 text-slate-100 antialiased;
-  position: relative;
   min-height: 100vh;
   overflow-x: hidden;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  background-image:
-    radial-gradient(ellipse 80% 40% at 50% -20%, rgba(16, 185, 129, 0.04), transparent 70%),
-    radial-gradient(ellipse 60% 30% at 0% 110%, rgba(59, 130, 246, 0.03), transparent 70%);
 }
 
 /* Druck-Ansicht: weiß auf weiß, ohne Sticky-Bars, ohne Bottom-Nav. */
