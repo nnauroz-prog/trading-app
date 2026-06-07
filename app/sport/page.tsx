@@ -75,6 +75,7 @@ import { SummerModeBanner } from '@/components/summer-mode-banner';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { WmNextMatches } from '@/components/wm-next-matches';
 import { WmDayPicker } from '@/components/wm-day-picker';
+import { WmTopTips } from '@/components/wm-top-tips';
 import { WmGroupsOverview } from '@/components/wm-groups-overview';
 import { WmVenuesList } from '@/components/wm-venues-list';
 import { WmCitiesCard } from '@/components/wm-cities-card';
@@ -430,6 +431,7 @@ export default async function SportPage() {
       {/* WM-Countdown VOR allem anderen, wenn ≤ 30 Tage bis Eröffnung — die
           beste Antwort auf „nichts in den Ligen" ist „WM kommt". */}
       <WmCountdownBanner todayIso={buckets.todayIso} />
+      <WmTopTips todayIso={buckets.todayIso} />
       <WmNextMatches todayIso={buckets.todayIso} />
       <WmDayPicker todayIso={buckets.todayIso} />
       <WmGroupsOverview todayIso={buckets.todayIso} />

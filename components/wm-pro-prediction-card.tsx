@@ -7,6 +7,7 @@
 //   • Begründungen und Spielort-Faktoren
 
 import type { WmMatchPrediction } from '@/lib/sport/wm-match-engine';
+import { bestWmMarket } from '@/lib/sport/wm-best-market';
 
 interface Props {
   prediction: WmMatchPrediction;
@@ -27,6 +28,7 @@ const CLARITY_LABEL: Record<string, string> = {
 
 export function WmProPredictionCard({ prediction, showExtraTime = false }: Props) {
   const { homeTeam, awayTeam, pick, regular, withExtraTime, expectedGoals, goalMarkets, topScorelines, reasoning, venueFactors, dataConfidence, homeElo, awayElo, eloDiff } = prediction;
+  const bestMarket = bestWmMarket(prediction);
   const cls = CLARITY_COLOR[pick.clarity];
   const headline = pick.winner === 'draw'
     ? 'Reguläre Spielzeit: Remis'
@@ -59,6 +61,20 @@ export function WmProPredictionCard({ prediction, showExtraTime = false }: Props
       </div>
       <div className="text-center font-mono text-[10px] opacity-70">
         Effektive ELO-Differenz: {eloDiff >= 0 ? '+' : ''}{eloDiff}
+      </div>
+
+      <div className="rounded-md border-2 border-current/40 bg-black/25 p-2.5">
+        <div className="text-[9.5px] font-semibold uppercase tracking-wider opacity-70">Profi-Empfehlung — bester Markt</div>
+        <div className="mt-0.5 flex items-baseline justify-between gap-2">
+          <div className="font-bold leading-tight">{bestMarket.market}</div>
+          <div className="font-mono text-sm font-bold">{Math.round(bestMarket.probability * 100)} %</div>
+        </div>
+        <p className="mt-1 text-[10px] leading-snug opacity-80">{bestMarket.rationale}</p>
+        {!bestMarket.isStableMarket && (
+          <p className="mt-1 text-[10px] leading-snug opacity-60">
+            ⚠ Markt nicht stabil — eher Orientierung als feste Tippempfehlung.
+          </p>
+        )}
       </div>
 
       <div className="rounded-md border border-current/15 bg-black/15 p-2 text-[11px]">
