@@ -20,6 +20,9 @@ import { WmPersonaPanel } from '@/components/wm-persona-panel';
 import { FootballPersonaPanel } from '@/components/football-persona-panel';
 import { VorstandHeatmap } from '@/components/vorstand-heatmap';
 import { PersonaConsensusPicks, type PersonaPickEntry } from '@/components/persona-consensus-picks';
+import { PersonaHistoryRecorder } from '@/components/persona-history-recorder';
+import { PersonaHistoryCard } from '@/components/persona-history-card';
+import type { HistoryEntry } from '@/lib/agents/persona-history';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -116,6 +119,19 @@ export default async function AgentenPage() {
         }
         return <PersonaConsensusPicks entries={allPicks} />;
       })()}
+
+      {(() => {
+        const historyEntries: HistoryEntry[] = [
+          ...cryptoVerdicts.map((v) => ({ dateIso: todayIso, klass: 'Krypto', personaId: v.persona, verdict: v.verdict, targetLabel: v.target?.symbol ?? null })),
+          ...stockVerdicts.map((v) => ({ dateIso: todayIso, klass: 'Aktien', personaId: v.persona, verdict: v.verdict, targetLabel: v.target?.name ?? null })),
+          ...commodityVerdicts.map((v) => ({ dateIso: todayIso, klass: 'Rohstoffe', personaId: v.persona, verdict: v.verdict, targetLabel: v.target?.name ?? null })),
+          ...wmVerdicts.map((v) => ({ dateIso: todayIso, klass: 'WM', personaId: v.persona, verdict: v.verdict, targetLabel: v.target ? `${v.target.fixture.homeTeam} – ${v.target.fixture.awayTeam}` : null })),
+          ...footballVerdicts.map((v) => ({ dateIso: todayIso, klass: 'Liga-Fußball', personaId: v.persona, verdict: v.verdict, targetLabel: v.target ? `${v.target.fixture.homeTeam} – ${v.target.fixture.awayTeam}` : null }))
+        ];
+        return <PersonaHistoryRecorder entries={historyEntries} />;
+      })()}
+
+      <PersonaHistoryCard days={7} todayIso={todayIso} />
 
       <VorstandHeatmap
         cells={[
