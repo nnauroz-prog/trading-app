@@ -1,7 +1,7 @@
 // Sparkline der Safety-Score-Entwicklung über die letzten Tage. Färbt
 // einzelne Punkte nach Grade — grün = A, blau = B, gelb = C, rot = D.
 
-import type { ScoreHistoryPoint } from '@/lib/market/safety-score-history';
+import { analyzeStreak, type ScoreHistoryPoint } from '@/lib/market/safety-score-history';
 
 const GRADE_COLOR: Record<ScoreHistoryPoint['grade'], string> = {
   A: '#34d399',
@@ -12,6 +12,7 @@ const GRADE_COLOR: Record<ScoreHistoryPoint['grade'], string> = {
 
 export function SafetyScoreTrend({ points }: { points: ScoreHistoryPoint[] }) {
   if (points.length < 2) return null;
+  const streak = analyzeStreak(points);
   const W = 320;
   const H = 80;
 
@@ -52,6 +53,18 @@ export function SafetyScoreTrend({ points }: { points: ScoreHistoryPoint[] }) {
         <span className="text-amber-300">● C</span>
         <span className="text-rose-300">● D</span>
       </div>
+      {streak && (
+        <p className="text-[10.5px] leading-snug text-slate-400">
+          Aktuelle Streak: <span className="font-mono font-bold text-slate-200">{streak.currentStreak}× Grade {streak.currentGrade}</span> in Folge.
+          {' '}Im Fenster waren <span className="font-mono font-bold text-emerald-300">{streak.gradeADays}/{streak.windowDays}</span> Tage Grade A.
+          {streak.daysSinceLastA !== null && streak.daysSinceLastA > 0 && (
+            <> Letzter A: vor <span className="font-mono font-bold text-slate-200">{streak.daysSinceLastA} Tagen</span>.</>
+          )}
+          {streak.daysSinceLastA === null && (
+            <> Im Fenster kein einziger Grade-A-Tag.</>
+          )}
+        </p>
+      )}
     </section>
   );
 }
