@@ -49,11 +49,41 @@ function hueFromId(id: string): number {
   return h;
 }
 
-function EmployeeChip({ e }: { e: SportEmployee }) {
+interface EmployeeStatLite {
+  hitRatePct: number | null;
+  totalVotes: number;
+  sampleQuality: 'good' | 'medium' | 'weak';
+}
+
+function HitRateBadge({ stat }: { stat: EmployeeStatLite | null }) {
+  if (!stat || stat.hitRatePct === null || stat.totalVotes === 0) {
+    return (
+      <span className="rounded border border-slate-700 bg-slate-900 px-1 py-0 text-[9px] font-bold uppercase tracking-wider text-slate-500" title="Noch keine ausgewertete Backtest-Stichprobe">
+        —
+      </span>
+    );
+  }
+  const tone = stat.hitRatePct >= 60
+    ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200'
+    : stat.hitRatePct >= 50
+      ? 'border-amber-400/40 bg-amber-500/10 text-amber-200'
+      : 'border-rose-400/40 bg-rose-500/10 text-rose-200';
+  const sampleLabel = stat.sampleQuality === 'good' ? '' : stat.sampleQuality === 'medium' ? '·' : '!';
+  return (
+    <span
+      className={`rounded border px-1 py-0 text-[9px] font-bold uppercase tracking-wider ${tone}`}
+      title={`Trefferquote ${stat.hitRatePct.toFixed(1)}% bei ${stat.totalVotes} Stimmen · Stichprobe ${stat.sampleQuality}`}
+    >
+      {stat.hitRatePct.toFixed(0)}%{sampleLabel}
+    </span>
+  );
+}
+
+function EmployeeChip({ e, stat }: { e: SportEmployee; stat: EmployeeStatLite | null }) {
   const hue = hueFromId(e.id);
   return (
     <li>
-      <Link href={`/sport/firma/${e.id}`} className="grid grid-cols-[2rem_1fr] items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 hover:border-emerald-400/40 hover:bg-slate-900/60">
+      <Link href={`/sport/firma/${e.id}`} className="grid grid-cols-[2rem_1fr_auto] items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 hover:border-emerald-400/40 hover:bg-slate-900/60">
         <div
           className="flex h-8 w-8 items-center justify-center rounded-full font-mono text-[10px] font-bold text-white"
           style={{ background: `hsl(${hue}, 45%, 35%)` }}
@@ -65,6 +95,7 @@ function EmployeeChip({ e }: { e: SportEmployee }) {
           <div className="truncate text-[12px] font-semibold text-white">{e.name}</div>
           <div className="truncate text-[10.5px] text-slate-400">{e.role}</div>
         </div>
+        <HitRateBadge stat={stat} />
       </Link>
     </li>
   );
@@ -73,6 +104,7 @@ function EmployeeChip({ e }: { e: SportEmployee }) {
 export default async function SportFirmaPage() {
   const counts = countByDepartment();
   const backtestStats = await getEmployeeBacktest();
+  const statMap = new Map(backtestStats.map((s) => [s.employeeId, s]));
   const grouped: Record<SportDepartment, SportEmployee[]> = {
     chef: [], league_scout: [], team_analyst: [], form_analyst: [],
     tactical_analyst: [], international_watch: [], transfer_watch: [], politik_watch: [],
@@ -115,7 +147,7 @@ export default async function SportFirmaPage() {
             <span className="text-[10px] text-slate-500">{counts[d]} Mitarbeiter</span>
           </div>
           <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {grouped[d].map((e) => <EmployeeChip key={e.id} e={e} />)}
+            {grouped[d].map((e) => <EmployeeChip key={e.id} e={e} stat={statMap.get(e.id) ?? null} />)}
           </ul>
           {(d === 'transfer_watch' || d === 'politik_watch') && (
             <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-2 text-[10.5px] leading-snug text-amber-100/85">
