@@ -25,6 +25,9 @@ import { WatchlistStrip } from '@/components/watchlist-strip';
 import { AktienWatchlistStrip } from '@/components/aktien-watchlist-strip';
 import { RohstoffWatchlistStrip } from '@/components/rohstoff-watchlist-strip';
 import { CrossAssetSafetyStats } from '@/components/cross-asset-safety-stats';
+import { AssetQuickSearch } from '@/components/asset-quick-search';
+import { STOCK_UNIVERSE } from '@/lib/market/stocks';
+import { COMMODITY_UNIVERSE } from '@/lib/market/commodities';
 import { CoinScoreRecorder } from '@/components/coin-score-recorder';
 import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { SportBriefingCard } from '@/components/sport-briefing-card';
@@ -546,6 +549,13 @@ export default async function HomePage() {
       />
 
       <HeuteMachen cards={heuteCards} />
+
+      <AssetQuickSearch
+        items={[
+          ...STOCK_UNIVERSE.map((s) => ({ symbol: s.symbol, name: s.name, group: s.group, kind: 'aktie' as const })),
+          ...COMMODITY_UNIVERSE.map((c) => ({ symbol: c.symbol, name: c.name, group: c.group, kind: 'rohstoff' as const }))
+        ]}
+      />
 
       <CrossAssetSafetyStats
         stocksGradeA={stockSafetyScan.filter((e) => e.assessment.grade === 'A').length}
