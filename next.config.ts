@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
 // Last bumped: 2026-06-01 — Welle 58.
-const BUILD_MARKER = 'welle-13901-14000-tests-fuer-safety-score-history';
+const BUILD_MARKER = 'welle-14001-14100-krypto-watchlist-strip-zeigt-safety-grade';
 
 const nextConfig: NextConfig = {
   env: {

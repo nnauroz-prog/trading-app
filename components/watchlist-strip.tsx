@@ -11,7 +11,16 @@ interface CandidateInfo {
   priceChangePct24h: number;
   structure: string;
   nearSupport: boolean;
+  // Optional: Safety-Grade aus dem Krypto-Safety-Gate, falls bekannt.
+  safetyGrade?: 'A' | 'B' | 'C' | 'D';
 }
+
+const GRADE_TONE: Record<string, string> = {
+  A: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-100',
+  B: 'border-sky-400/40 bg-sky-500/10 text-sky-200',
+  C: 'border-amber-400/40 bg-amber-500/10 text-amber-200',
+  D: 'border-rose-500/50 bg-rose-500/15 text-rose-200'
+};
 
 // Compact home-page view of the user's watchlist. Cross-references the
 // candidate list from the master signal so each watched coin shows its
@@ -62,9 +71,15 @@ export function WatchlistStrip({ candidates }: { candidates: CandidateInfo[] }) 
                   <span className={`font-mono ${c.priceChangePct24h >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
                     {c.priceChangePct24h >= 0 ? '+' : ''}{c.priceChangePct24h.toFixed(1)}%
                   </span>
-                  <span className="font-mono text-[10px] text-slate-400" title={`${c.passedCount} von 12 Kriterien erfüllt`}>
-                    {c.passedCount} Häkchen
-                  </span>
+                  {c.safetyGrade ? (
+                    <span className={`rounded border px-1 py-0 text-[9.5px] font-bold uppercase tracking-wider ${GRADE_TONE[c.safetyGrade]}`}>
+                      {c.safetyGrade}
+                    </span>
+                  ) : (
+                    <span className="font-mono text-[10px] text-slate-400" title={`${c.passedCount} von 12 Kriterien erfüllt`}>
+                      {c.passedCount} Häkchen
+                    </span>
+                  )}
                   <span className={`text-[10px] uppercase ${c.structure === 'uptrend' ? 'text-emerald-400' : c.structure === 'downtrend' ? 'text-rose-400' : 'text-slate-500'}`}>
                     {c.structure === 'uptrend' ? '↗' : c.structure === 'downtrend' ? '↘' : '→'}
                   </span>

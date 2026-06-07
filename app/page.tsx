@@ -637,12 +637,14 @@ export default async function HomePage() {
 
       {/* 5. Watchlist + Diff vs Gestern */}
       <DiffVsYesterday />
-      <WatchlistStrip candidates={masterSignal.candidates.map((c) => ({
-        coinId: c.coinId,
-        passedCount: c.passedCount,
-        priceChangePct24h: c.priceChangePct24h,
-        structure: c.structure,
-        nearSupport: c.nearSupport
+      <WatchlistStrip candidates={cryptoScored.map((x) => ({
+        coinId: x.c.coinId,
+        symbol: x.c.symbol,
+        passedCount: x.c.passedCount,
+        priceChangePct24h: x.c.priceChangePct24h,
+        structure: x.c.structure,
+        nearSupport: x.c.nearSupport,
+        safetyGrade: x.safety.grade
       }))} />
       <AktienWatchlistStrip
         grades={stockSafetyScan.map((e) => ({ symbol: e.symbol, grade: e.assessment.grade, score: e.assessment.score }))}
