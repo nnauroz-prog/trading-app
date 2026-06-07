@@ -37,6 +37,30 @@ export function InstrumentSafetyCard({ assessment, name }: { assessment: Instrum
         {a.verdict} · {a.passedHard}/{a.totalHard} Kriterien
       </div>
 
+      {/* Fehlende Kriterien KOMPAKT inline — der User soll nicht erst „Alle Kriterien zeigen" aufklappen müssen, um zu sehen, was fehlt. */}
+      {!a.maxSafety && (() => {
+        const failing = a.criteria.filter((c) => !c.passed);
+        if (failing.length === 0) return null;
+        return (
+          <div className="space-y-1 rounded-lg border border-rose-500/30 bg-rose-950/15 p-2.5">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-rose-300">
+              {failing.length === 1 ? 'Was fehlt' : `Was fehlt (${failing.length})`}
+            </div>
+            <ul className="space-y-0.5">
+              {failing.map((c) => (
+                <li key={c.id} className="grid grid-cols-[auto_1fr] gap-2 text-[11px] leading-snug">
+                  <span aria-hidden className="text-rose-400">✗</span>
+                  <span className="text-slate-200">
+                    <span className="font-semibold">{c.label}</span>{' '}
+                    <span className="text-slate-400">— {c.detail}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
+
       <details className="rounded-lg border border-slate-800 bg-slate-950/40">
         <summary className="cursor-pointer p-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
           ▸ Alle Kriterien zeigen
