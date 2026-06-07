@@ -186,6 +186,7 @@ export default async function AktienPage() {
                   quote={quote}
                   fallbackName={stock.name}
                   fallbackSymbol={stock.symbol}
+                  href={`/aktien/${encodeURIComponent(stock.symbol)}`}
                 />
               ))}
             </ul>
