@@ -15,6 +15,8 @@ import {
 import { evaluateInstrumentSafety } from '@/lib/market/instrument-safety';
 import { backtestSafetyStrategy } from '@/lib/market/instrument-safety-backtest';
 import { InstrumentSafetyBacktestMini } from '@/components/instrument-safety-backtest-mini';
+import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
+import { SectorPeerComparison } from '@/components/sector-peer-comparison';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -38,10 +40,12 @@ export default async function AktienDetailPage({ params }: PageProps) {
   const stock = STOCK_UNIVERSE.find((s) => s.symbol.toUpperCase() === symbol);
   if (!stock) notFound();
 
-  const [quote, history] = await Promise.all([
+  const [quote, history, safetyScan] = await Promise.all([
     fetchYahooQuote(stock.symbol, stock.name),
-    fetchYahooHistory(stock.symbol)
+    fetchYahooHistory(stock.symbol),
+    getStockSafetyScan()
   ]);
+  const sectorPeers = safetyScan.filter((e) => e.group === stock.group);
 
   const closes = history?.candles.map((c) => c.close) ?? [];
   const ma50 = sma(closes, 50);
@@ -97,6 +101,15 @@ export default async function AktienDetailPage({ params }: PageProps) {
           {safety && <InstrumentSafetyCard assessment={safety} name={stock.name} />}
 
           {safetyBacktest && <InstrumentSafetyBacktestMini result={safetyBacktest} name={stock.name} />}
+
+          {safety && sectorPeers.length >= 2 && (
+            <SectorPeerComparison
+              symbol={stock.symbol}
+              group={stock.group}
+              ownScore={safety.score}
+              peers={sectorPeers}
+            />
+          )}
 
           <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Trend &amp; Indikatoren</h2>
