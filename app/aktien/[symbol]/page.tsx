@@ -5,12 +5,14 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AktienWatchlistToggle } from '@/components/aktien-watchlist-toggle';
+import { InstrumentSafetyCard } from '@/components/instrument-safety-card';
 import { STOCK_UNIVERSE } from '@/lib/market/stocks';
 import { fetchYahooQuote, fmtCurrency, fmtChange } from '@/lib/market/yahoo-quote';
 import { fetchYahooHistory, type PriceCandle } from '@/lib/market/yahoo-history';
 import {
   atr, ema, fiftyTwoWeekRange, performancePct, rsi, sma, trendVerdict, volumeRatio
 } from '@/lib/market/indicators';
+import { evaluateInstrumentSafety } from '@/lib/market/instrument-safety';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -48,6 +50,7 @@ export default async function AktienDetailPage({ params }: PageProps) {
   const range52w = history ? fiftyTwoWeekRange(history.candles) : null;
   const volRatio = history ? volumeRatio(history.candles, 20) : null;
   const verdict = quote ? trendVerdict(quote.last, ma50, ma200) : 'neutral';
+  const safety = quote && history ? evaluateInstrumentSafety({ price: quote.last, candles: history.candles }) : null;
 
   return (
     <main className="mx-auto max-w-3xl space-y-5 p-4 pb-20 md:p-6">
@@ -88,6 +91,8 @@ export default async function AktienDetailPage({ params }: PageProps) {
         </section>
       ) : (
         <>
+          {safety && <InstrumentSafetyCard assessment={safety} name={stock.name} />}
+
           <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Trend &amp; Indikatoren</h2>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
