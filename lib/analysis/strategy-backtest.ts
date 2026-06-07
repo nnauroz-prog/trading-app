@@ -1,5 +1,5 @@
 import { Candle } from '@/lib/types/domain';
-import { adx, atr, bollinger, ema, macd, rsi, sma } from '@/lib/analysis/indicators';
+import { adx, atr, bollinger, detectSwingLow, ema, macd, rsi, sma } from '@/lib/analysis/indicators';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { TOP_50 } from '@/lib/coin-universe';
 
@@ -210,7 +210,12 @@ export function backtestStrategy(assetId: string, ticker: string, c1h: Candle[],
     if (volRatio >= 1.3) confluence++;
     if (((bbUpper - entry) / entry) * 100 > 1.5) confluence++;
     if (stochK < 80) confluence++;
-    if (atrVal > 0) confluence++; // stop-level always identifiable via ATR
+    // Swing-Low-Check identisch zur Live-Engine: ein nahegelegenes Swing-Low
+    // dient als logischer Stop. Vorher wurde hier „atrVal > 0" gezählt, was
+    // praktisch immer true ist und backtest+live um ~1 Häkchen verzerrte.
+    const swingLowFromHere = detectSwingLow(c1h.slice(Math.max(0, i - 30), i + 1), 3);
+    const swingLowDistPct = swingLowFromHere !== null ? ((entry - swingLowFromHere) / entry) * 100 : 0;
+    if (swingLowFromHere !== null && swingLowDistPct > 0 && swingLowDistPct < 5) confluence++;
 
     if (confluence < params.minConfluence) continue;
 
