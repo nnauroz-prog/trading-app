@@ -15,6 +15,7 @@ import { detectHotCommodityGroups } from '@/lib/market/commodity-group-summary';
 import { HotCommodityGroupBanner } from '@/components/hot-commodity-group-banner';
 import { evaluateCommodityPersonas } from '@/lib/agents/commodity-personas';
 import { CommodityPersonaPanel } from '@/components/commodity-persona-panel';
+import { PersonaConsensusBanner } from '@/components/persona-consensus-banner';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -83,7 +84,15 @@ export default async function RohstoffePage() {
 
       <SafeCommodityPicks entries={safetyScan} />
 
-      <CommodityPersonaPanel verdicts={evaluateCommodityPersonas(safetyScan)} />
+      {(() => {
+        const commodityVerdicts = evaluateCommodityPersonas(safetyScan);
+        return (
+          <>
+            <PersonaConsensusBanner verdicts={commodityVerdicts} context="Rohstoffe" />
+            <CommodityPersonaPanel verdicts={commodityVerdicts} />
+          </>
+        );
+      })()}
 
       <CommoditySectorSafetyHeatmap entries={safetyScan} />
 

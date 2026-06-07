@@ -18,6 +18,7 @@ import { detectHotSectors } from '@/lib/market/sector-safety-summary';
 import { HotSectorBanner } from '@/components/hot-sector-banner';
 import { evaluateStockPersonas } from '@/lib/agents/stock-personas';
 import { StockPersonaPanel } from '@/components/stock-persona-panel';
+import { PersonaConsensusBanner } from '@/components/persona-consensus-banner';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -94,7 +95,15 @@ export default async function AktienPage() {
 
       <SafeStockPicks entries={safetyScan} />
 
-      <StockPersonaPanel verdicts={evaluateStockPersonas(safetyScan)} />
+      {(() => {
+        const stockVerdicts = evaluateStockPersonas(safetyScan);
+        return (
+          <>
+            <PersonaConsensusBanner verdicts={stockVerdicts} context="Aktien" />
+            <StockPersonaPanel verdicts={stockVerdicts} />
+          </>
+        );
+      })()}
 
       <SectorSafetyHeatmap entries={safetyScan} />
 
