@@ -22,6 +22,7 @@ import { StreitBanner } from '@/components/streit-banner';
 import { KonsensStreakCard } from '@/components/konsens-streak-card';
 import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
+import { AktienWatchlistStrip } from '@/components/aktien-watchlist-strip';
 import { CoinScoreRecorder } from '@/components/coin-score-recorder';
 import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { SportBriefingCard } from '@/components/sport-briefing-card';
@@ -525,6 +526,7 @@ export default async function HomePage() {
         structure: c.structure,
         nearSupport: c.nearSupport
       }))} />
+      <AktienWatchlistStrip />
       <CoinScoreRecorder
         date={todayIso}
         candidates={masterSignal.candidates.map((c) => ({ coinId: c.coinId, symbol: c.symbol, passedCount: c.passedCount }))}

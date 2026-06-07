@@ -128,6 +128,7 @@ export default async function RohstoffePage() {
                   fallbackSymbol={c.symbol}
                   unit={c.unit}
                   emoji={c.emoji}
+                  href={`/rohstoffe/${encodeURIComponent(c.symbol)}`}
                 />
               ))}
             </ul>
