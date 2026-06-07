@@ -24,6 +24,7 @@ import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
 import { AktienWatchlistStrip } from '@/components/aktien-watchlist-strip';
 import { RohstoffWatchlistStrip } from '@/components/rohstoff-watchlist-strip';
+import { CrossAssetSafetyStats } from '@/components/cross-asset-safety-stats';
 import { CoinScoreRecorder } from '@/components/coin-score-recorder';
 import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { SportBriefingCard } from '@/components/sport-briefing-card';
@@ -545,6 +546,17 @@ export default async function HomePage() {
       />
 
       <HeuteMachen cards={heuteCards} />
+
+      <CrossAssetSafetyStats
+        stocksGradeA={stockSafetyScan.filter((e) => e.assessment.grade === 'A').length}
+        stocksTotal={stockSafetyScan.length}
+        commoditiesGradeA={commoditySafetyScan.filter((e) => e.assessment.grade === 'A').length}
+        commoditiesTotal={commoditySafetyScan.length}
+        wmMaximalCount={safeWmTips.filter((t) => t.tier === 'maximal').length}
+        footballMaximalCount={safeFootballTips.filter((t) => t.tier === 'maximal').length}
+        cryptoGrade={cryptoTop ? cryptoTop.safety.grade : null}
+        cryptoSymbol={cryptoTop ? cryptoTop.c.symbol : null}
+      />
 
       <Link
         href="/heute-sicher"
