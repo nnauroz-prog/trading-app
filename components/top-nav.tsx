@@ -16,9 +16,24 @@ const ITEMS = [
   { href: '/sport', label: 'Sport', emoji: '⚽' }
 ] as const;
 
+// Sub-Pfade, die zu „Sport" gehören, auch wenn sie nicht unter /sport/* liegen.
+const SPORT_SUB_PATHS = ['/basketball', '/tennis', '/eishockey', '/handball', '/wm'];
+// Alle Top-Bereich-Roots (außer „/" Krypto) — Krypto matched alles, was nicht
+// zu einem der anderen Bereiche gehört.
+const NON_KRYPTO_ROOTS = ['/aktien', '/gold', '/rohstoffe', '/sport', ...SPORT_SUB_PATHS];
+
 function isActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
-  if (href === '/') return pathname === '/';
+  if (href === '/') {
+    // Krypto-Tab ist aktiv für alle Sub-Pages (Positionen, Risiko, Journal …),
+    // die nicht zu einem anderen Top-Bereich gehören.
+    return !NON_KRYPTO_ROOTS.some((root) => pathname === root || pathname.startsWith(`${root}/`));
+  }
+  if (href === '/sport') {
+    // Sport-Tab matched auch die Sub-Sport-Reiter.
+    if (pathname === '/sport' || pathname.startsWith('/sport/')) return true;
+    return SPORT_SUB_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
