@@ -16,6 +16,8 @@ import { MarketStatusBadges } from '@/components/market-status-badges';
 import { usMarketState, xetraMarketState } from '@/lib/market/market-hours';
 import { detectHotSectors } from '@/lib/market/sector-safety-summary';
 import { HotSectorBanner } from '@/components/hot-sector-banner';
+import { evaluateStockPersonas } from '@/lib/agents/stock-personas';
+import { StockPersonaPanel } from '@/components/stock-persona-panel';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -91,6 +93,8 @@ export default async function AktienPage() {
       <SectorHeatmap buckets={sectorBuckets} title="Sektor-Heatmap (Aktien)" />
 
       <SafeStockPicks entries={safetyScan} />
+
+      <StockPersonaPanel verdicts={evaluateStockPersonas(safetyScan)} />
 
       <SectorSafetyHeatmap entries={safetyScan} />
 
