@@ -41,12 +41,15 @@ interface YahooChartResponse {
 async function fetchYahoo(symbol: string, fallbackName: string): Promise<MarketQuote | null> {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=15m`;
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
     const res = await fetch(url, {
       next: { revalidate: 300 },
       headers: {
         'User-Agent': 'Mozilla/5.0 (TradingApp Desktop) AppleWebKit/537.36'
-      }
-    });
+      },
+      signal: controller.signal
+    }).finally(() => clearTimeout(timer));
     if (!res.ok) return null;
     const data = (await res.json()) as YahooChartResponse;
     const meta = data.chart?.result?.[0]?.meta;
@@ -108,10 +111,13 @@ async function fetchStooq(symbol: string, fallbackName: string): Promise<MarketQ
   if (!mapping) return null;
   const url = `https://stooq.com/q/l/?s=${encodeURIComponent(mapping.stooq)}&f=sd2t2ohlcv&h&e=csv`;
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
     const res = await fetch(url, {
       next: { revalidate: 300 },
-      headers: { 'User-Agent': 'Mozilla/5.0 (TradingApp Desktop) AppleWebKit/537.36' }
-    });
+      headers: { 'User-Agent': 'Mozilla/5.0 (TradingApp Desktop) AppleWebKit/537.36' },
+      signal: controller.signal
+    }).finally(() => clearTimeout(timer));
     if (!res.ok) return null;
     const text = await res.text();
     // CSV-Header: Symbol,Date,Time,Open,High,Low,Close,Volume
@@ -150,7 +156,18 @@ export async function fetchManyQuotes(items: Array<{ symbol: string; name: strin
 }
 
 export function fmtCurrency(value: number, currency: string): string {
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency, maximumFractionDigits: value >= 100 ? 2 : 4 }).format(value);
+  // Intl.NumberFormat wirft bei ungültigem Currency-Code („" oder „xxx") —
+  // sicheren Fallback auf USD nutzen.
+  const safe = currency && /^[A-Za-z]{3}$/.test(currency) ? currency.toUpperCase() : 'USD';
+  try {
+    return new Intl.NumberFormat('de-DE', {
+      style: 'currency',
+      currency: safe,
+      maximumFractionDigits: value >= 100 ? 2 : 4
+    }).format(value);
+  } catch {
+    return `${value.toFixed(2)} ${safe}`;
+  }
 }
 
 export function fmtChange(pct: number): string {

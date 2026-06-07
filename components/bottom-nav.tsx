@@ -26,9 +26,18 @@ const ITEMS: Item[] = [
   { href: '/sport', label: 'Sport', emoji: '⚽', badge: 'sport', hoverColor: 'hover:text-emerald-300' }
 ];
 
+const SPORT_SUB_PATHS = ['/basketball', '/tennis', '/eishockey', '/handball', '/wm'];
+const NON_KRYPTO_ROOTS = ['/aktien', '/gold', '/rohstoffe', '/sport', ...SPORT_SUB_PATHS];
+
 function isActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
-  if (href === '/') return pathname === '/';
+  if (href === '/') {
+    return !NON_KRYPTO_ROOTS.some((root) => pathname === root || pathname.startsWith(`${root}/`));
+  }
+  if (href === '/sport') {
+    if (pathname === '/sport' || pathname.startsWith('/sport/')) return true;
+    return SPORT_SUB_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
