@@ -23,9 +23,14 @@ export function DailyPersonaCompass({ compass }: { compass: PersonaCompassResult
       </div>
       <p className="text-[10.5px] leading-snug text-slate-500">
         {compass.totalPersonas} Persönlichkeiten quer durch alle Vorstände.
-        {compass.strongestKlass && compass.strongestBuyShare > 0 && (
-          <> Stärkster Konsens: <span className="font-semibold text-emerald-300">{compass.strongestKlass}</span>
-          {' '}({Math.round(compass.strongestBuyShare * 100)} % kaufen/tippen).</>
+        {compass.strongestKlassesAll.length > 0 && compass.strongestBuyShare > 0 && (
+          <> Stärkster Konsens:{' '}
+            <span className="font-semibold text-emerald-300">
+              {compass.strongestKlassesAll.join(' + ')}
+            </span>
+            {' '}({Math.round(compass.strongestBuyShare * 100)} % kaufen/tippen).
+            {compass.strongestKlassesAll.length > 1 && ' (Gleichstand)'}
+          </>
         )}
       </p>
       <div className="grid grid-cols-3 gap-2 text-center text-[11px]">

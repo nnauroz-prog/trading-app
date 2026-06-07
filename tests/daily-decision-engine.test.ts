@@ -205,7 +205,10 @@ describe('warningZone', () => {
 describe('personaCompass', () => {
   it('leere Eingabe → totale 0', () => {
     const c = personaCompass([]);
-    expect(c).toEqual({ totalPersonas: 0, buyCount: 0, watchCount: 0, waitCount: 0, strongestKlass: null, strongestBuyShare: 0 });
+    expect(c).toEqual({
+      totalPersonas: 0, buyCount: 0, watchCount: 0, waitCount: 0,
+      strongestKlass: null, strongestBuyShare: 0, strongestKlassesAll: []
+    });
   });
 
   it('zählt Buy/Watch/Wait korrekt', () => {
@@ -232,6 +235,148 @@ describe('personaCompass', () => {
     const c = personaCompass(verdicts);
     expect(c.strongestKlass).toBe('Aktien');
     expect(c.strongestBuyShare).toBe(1);
+    expect(c.strongestKlassesAll).toEqual(['Aktien']);
+  });
+
+  it('Gleichstand: mehrere stärkste Klassen werden alle gemeldet, alphabetisch sortiert', () => {
+    const verdicts: PersonaVerdictEntry[] = [
+      persona('Rohstoffe', 'c', 'KAUFEN', true),
+      persona('Rohstoffe', 'b', 'WARTEN', false),
+      persona('Aktien', 'c', 'KAUFEN', true),
+      persona('Aktien', 'b', 'WARTEN', false)
+    ];
+    const c = personaCompass(verdicts);
+    expect(c.strongestKlassesAll).toEqual(['Aktien', 'Rohstoffe']);
+    expect(c.strongestKlass).toBe('Aktien');
+    expect(c.strongestBuyShare).toBe(0.5);
+  });
+
+  it('Personas mit Total-0 werden nicht für strongest gezählt', () => {
+    // Edge: alle WARTEN -> strongestBuyShare bleibt 0, strongestKlass null
+    const verdicts: PersonaVerdictEntry[] = [
+      persona('Aktien', 'c', 'WARTEN', false)
+    ];
+    const c = personaCompass(verdicts);
+    expect(c.strongestBuyShare).toBe(0);
+    expect(c.strongestKlass).toBeNull();
+    expect(c.strongestKlassesAll).toEqual([]);
+  });
+});
+
+describe('evaluateMarketMode maturity', () => {
+  it('liefert immer dataQuality und modeConfidence', () => {
+    for (const a of [
+      evaluateMarketMode(emptyInput()),
+      evaluateMarketMode({
+        stocks: [stock('AAPL', 'A')],
+        commodities: [], cryptoTop: null, cryptoMaxSafety: false,
+        sportTips: [], personaVerdicts: []
+      })
+    ]) {
+      expect(['high', 'medium', 'low']).toContain(a.dataQuality);
+      expect(a.modeConfidence).toBeGreaterThanOrEqual(0);
+      expect(a.modeConfidence).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('dataQuality high wenn ≥4 Quellen liefern', () => {
+    const a = evaluateMarketMode({
+      stocks: [stock('AAPL', 'B')],
+      commodities: [commodity('GC=F', 'B')],
+      cryptoTop: crypto('BTC', 'B'),
+      cryptoMaxSafety: false,
+      sportTips: [sportTip('A', 'B', 'sicher')],
+      personaVerdicts: []
+    });
+    expect(a.dataQuality).toBe('high');
+  });
+
+  it('dataQuality low wenn nur 1 Quelle liefert', () => {
+    const a = evaluateMarketMode({
+      stocks: [stock('AAPL', 'B')],
+      commodities: [], cryptoTop: null, cryptoMaxSafety: false,
+      sportTips: [], personaVerdicts: []
+    });
+    expect(a.dataQuality).toBe('low');
+  });
+
+  it('CASH-mit-keinen-Daten → modeConfidence 1.0', () => {
+    const a = evaluateMarketMode(emptyInput());
+    expect(a.modeConfidence).toBe(1);
+  });
+
+  it('OFFENSIV-Grenzfall: exakt 4 broadGradeA + exakt 60 % Buy + exakt 2 max-sicher → OFFENSIV', () => {
+    const input: DailyEngineInputs = {
+      stocks: [stock('A', 'A'), stock('B', 'A'), stock('C', 'A')],
+      commodities: [commodity('GC=F', 'A')],
+      cryptoTop: crypto('BTC', 'C'), cryptoMaxSafety: false,
+      sportTips: [sportTip('a', 'b', 'maximal'), sportTip('c', 'd', 'maximal')],
+      personaVerdicts: [
+        persona('Aktien', 'c', 'KAUFEN', true),
+        persona('Aktien', 'b', 'KAUFEN', true),
+        persona('Aktien', 'a', 'KAUFEN', true),
+        persona('Rohstoffe', 'c', 'WARTEN', false),
+        persona('Rohstoffe', 'b', 'WARTEN', false)
+      ]
+    };
+    const a = evaluateMarketMode(input);
+    expect(a.mode).toBe('OFFENSIV');
+  });
+
+  it('OFFENSIV-knapp-darunter: 3 broadGradeA → SELEKTIV', () => {
+    const input: DailyEngineInputs = {
+      stocks: [stock('A', 'A'), stock('B', 'A'), stock('C', 'A')],
+      commodities: [],
+      cryptoTop: crypto('BTC', 'C'), cryptoMaxSafety: false,
+      sportTips: [sportTip('a', 'b', 'maximal'), sportTip('c', 'd', 'maximal')],
+      personaVerdicts: [
+        persona('Aktien', 'c', 'KAUFEN', true),
+        persona('Aktien', 'b', 'KAUFEN', true)
+      ]
+    };
+    const a = evaluateMarketMode(input);
+    expect(a.mode).toBe('SELEKTIV');
+  });
+});
+
+describe('warningZone maturity — Sortierung', () => {
+  it('schlechtestes passedHard zuerst', () => {
+    const input: DailyEngineInputs = {
+      ...emptyInput(),
+      stocks: [
+        { ...stock('A', 'D'), passedHard: 3, totalHard: 8 },
+        { ...stock('B', 'D'), passedHard: 1, totalHard: 8 },
+        { ...stock('C', 'D'), passedHard: 2, totalHard: 8 }
+      ]
+    };
+    const w = warningZone(input);
+    expect(w[0].label).toBe('B');
+    expect(w[1].label).toBe('C');
+    expect(w[2].label).toBe('A');
+  });
+
+  it('Gleichstand → alphabetisch sortiert', () => {
+    const input: DailyEngineInputs = {
+      ...emptyInput(),
+      stocks: [
+        { ...stock('Zeta', 'D'), passedHard: 2 },
+        { ...stock('Alpha', 'D'), passedHard: 2 },
+        { ...stock('Beta', 'D'), passedHard: 2 }
+      ]
+    };
+    const w = warningZone(input);
+    expect(w.map((x) => x.label)).toEqual(['Alpha', 'Beta', 'Zeta']);
+  });
+
+  it('mischt Aktien und Rohstoffe konsistent nach Severity', () => {
+    const input: DailyEngineInputs = {
+      ...emptyInput(),
+      stocks: [{ ...stock('AktienD', 'D'), passedHard: 3 }],
+      commodities: [{ ...commodity('RohstoffD', 'D'), passedHard: 1 }]
+    };
+    const w = warningZone(input);
+    expect(w[0].source).toBe('Rohstoffe'); // schlimmer
+    expect(w[1].source).toBe('Aktien');
   });
 });
 

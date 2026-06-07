@@ -65,9 +65,21 @@ export interface DailyEngineInputs {
   personaVerdicts: PersonaVerdictEntry[];
 }
 
+// Wie verlässlich ist der Mode-Call?
+// - 'high': alle Datenquellen liefern und stimmen erkennbar überein
+// - 'medium': zumindest die Hälfte der Quellen liefert
+// - 'low': zu wenig Datenbasis für eine ehrliche Entscheidung
+export type DataQuality = 'high' | 'medium' | 'low';
+
+// Wie eindeutig ist die Mode-Klassifikation? 0..1.
+// 1.0 = lehrbuchmäßig OFFENSIV/DEFENSIV. 0.5 = SELEKTIV.
+export type ModeConfidence = number;
+
 export interface ModeAssessment {
   mode: MarketMode;
   reason: string;
+  dataQuality: DataQuality;
+  modeConfidence: ModeConfidence;
   metrics: {
     stocksGradeA: number;
     stocksGradeB: number;
@@ -80,6 +92,56 @@ export interface ModeAssessment {
     personaBuyCount: number;
     personaTotal: number;
   };
+}
+
+// Wie viele Datenquellen haben heute überhaupt etwas geliefert?
+// Stocks / Commodities / Crypto / Sport / Personas — jeweils 1 Punkt.
+function countAvailableSources(input: DailyEngineInputs): number {
+  let n = 0;
+  if (input.stocks.length > 0) n++;
+  if (input.commodities.length > 0) n++;
+  if (input.cryptoTop !== null) n++;
+  if (input.sportTips.length > 0) n++;
+  if (input.personaVerdicts.length > 0) n++;
+  return n;
+}
+
+function dataQualityFor(input: DailyEngineInputs): DataQuality {
+  const n = countAvailableSources(input);
+  if (n >= 4) return 'high';
+  if (n >= 2) return 'medium';
+  return 'low';
+}
+
+// Modus-Confidence: wie eindeutig fällt die Klassifikation aus?
+// - CASH-out-of-no-data: 1.0 (eindeutig nichts da)
+// - OFFENSIV/DEFENSIV: skaliert mit Überschreitung der Schwellen
+// - SELEKTIV: 0.5 als Default
+function modeConfidenceFor(
+  mode: MarketMode,
+  broadGradeA: number,
+  personaBuyShare: number,
+  personaWaitShare: number,
+  maximalSportTips: number,
+  hasAnyData: boolean
+): ModeConfidence {
+  if (mode === 'CASH') {
+    return hasAnyData ? 0.5 : 1.0;
+  }
+  if (mode === 'OFFENSIV') {
+    // Volle 1.0 bei 8+ Grade-A Assets, 80 %+ Buy-Quote, 4+ maximal-sicheren Sport-Tipps.
+    const aScore = Math.min(broadGradeA / 8, 1);
+    const buyScore = Math.min(personaBuyShare / 0.8, 1);
+    const sportScore = Math.min(maximalSportTips / 4, 1);
+    return Math.max(0.6, (aScore + buyScore + sportScore) / 3);
+  }
+  if (mode === 'DEFENSIV') {
+    // Volle 1.0 bei 80 % WARTEN-Quote.
+    return Math.max(0.6, Math.min(personaWaitShare / 0.8, 1));
+  }
+  // SELEKTIV: je näher am OFFENSIV-Rand, desto höhere Confidence im SELEKTIV-Modus
+  // — denn klare „SELEKTIV"-Tage sind die mit gemischten Signalen.
+  return 0.5;
 }
 
 // Ein einziges sauberes Modell, das aus den Eingaben den Tages-Modus ableitet.
@@ -104,38 +166,45 @@ export function evaluateMarketMode(input: DailyEngineInputs): ModeAssessment {
     personaBuyCount, personaTotal
   };
 
+  const dataQuality = dataQualityFor(input);
+  const broadGradeA = stocksGradeA + commoditiesGradeA + (input.cryptoMaxSafety ? 1 : 0);
+  const personaBuyShare = personaTotal > 0 ? personaBuyCount / personaTotal : 0;
+  const personaWaitCount = input.personaVerdicts.filter((p) => !p.isBuy && (p.verdict === 'WARTEN' || p.verdict === 'WAIT')).length;
+  const personaWaitShare = personaTotal > 0 ? personaWaitCount / personaTotal : 0;
+
   // Wenn überhaupt nichts vorliegt → CASH (ehrlicher Empty-State)
   const noStockData = input.stocks.length === 0;
   const noCommodityData = input.commodities.length === 0;
   const noCryptoData = input.cryptoTop === null;
+  const hasAnyData = countAvailableSources(input) > 0;
   if (noStockData && noCommodityData && noCryptoData && input.sportTips.length === 0 && personaTotal === 0) {
     return {
       mode: 'CASH',
       reason: 'Keine Daten — heute keine Entscheidung möglich. Beobachten oder Cash halten.',
+      dataQuality,
+      modeConfidence: modeConfidenceFor('CASH', broadGradeA, personaBuyShare, personaWaitShare, maximalSportTips, hasAnyData),
       metrics
     };
   }
 
   // OFFENSIV: viele Grade A quer durch + viele Persona-Buys + maximal-sichere Sport-Tipps
-  const broadGradeA = stocksGradeA + commoditiesGradeA + (input.cryptoMaxSafety ? 1 : 0);
-  const personaBuyShare = personaTotal > 0 ? personaBuyCount / personaTotal : 0;
-
   if (broadGradeA >= 4 && personaBuyShare >= 0.6 && maximalSportTips >= 2) {
     return {
       mode: 'OFFENSIV',
       reason: `Breite Stärke: ${broadGradeA} Grade-A Assets, ${personaBuyCount}/${personaTotal} Personas kaufen/tippen, ${maximalSportTips} maximal-sichere Sport-Tipps. Trotzdem nie mehr als geplant riskieren.`,
+      dataQuality,
+      modeConfidence: modeConfidenceFor('OFFENSIV', broadGradeA, personaBuyShare, personaWaitShare, maximalSportTips, hasAnyData),
       metrics
     };
   }
 
   // DEFENSIV: nichts schafft Grade A, Personas mehrheitlich WARTEN
-  const personaWaitCount = input.personaVerdicts.filter((p) => !p.isBuy && (p.verdict === 'WARTEN' || p.verdict === 'WAIT')).length;
-  const personaWaitShare = personaTotal > 0 ? personaWaitCount / personaTotal : 0;
-
   if (broadGradeA === 0 && maximalSportTips === 0 && personaWaitShare >= 0.6) {
     return {
       mode: 'DEFENSIV',
       reason: `Kein Asset im Grade-A, keine maximal-sicheren Sport-Tipps, ${personaWaitCount}/${personaTotal} Personas warten. Heute Risiko klein halten oder Cash.`,
+      dataQuality,
+      modeConfidence: modeConfidenceFor('DEFENSIV', broadGradeA, personaBuyShare, personaWaitShare, maximalSportTips, hasAnyData),
       metrics
     };
   }
@@ -144,6 +213,8 @@ export function evaluateMarketMode(input: DailyEngineInputs): ModeAssessment {
   return {
     mode: 'SELEKTIV',
     reason: `Gemischtes Bild: ${broadGradeA} Grade-A Assets, ${personaBuyCount}/${personaTotal} Personas grün, ${maximalSportTips} maximal-sichere Sport-Tipps. Heute nur klare Konsens-Setups, der Rest beobachten.`,
+    dataQuality,
+    modeConfidence: modeConfidenceFor('SELEKTIV', broadGradeA, personaBuyShare, personaWaitShare, maximalSportTips, hasAnyData),
     metrics
   };
 }
@@ -247,45 +318,60 @@ export interface WarningEntry {
 
 // Listet Werte, die heute klare Negativ-Signale liefern. Konkrete Begründung pro
 // Zeile — keine dramatische Sprache, keine Garantien gegen sie zu wetten.
+// Sortiert: schlechtestes passedHard zuerst, dann alphabetisch nach Label.
+// So sieht der User die wirklich schlimmen Fälle zuerst, nicht zufällig.
 export function warningZone(input: DailyEngineInputs, limit = 8): WarningEntry[] {
-  const out: WarningEntry[] = [];
+  // severity: niedriger passedHard = schlimmer.
+  const buckets: Array<{ entry: WarningEntry; severity: number }> = [];
 
   for (const s of input.stocks) {
     if (s.grade === 'D') {
-      out.push({
-        source: 'Aktien',
-        label: s.name,
-        symbol: s.symbol,
-        reason: `Grade D — nur ${s.passedHard}/${s.totalHard} Kriterien.`,
-        href: `/aktien/${encodeURIComponent(s.symbol)}`
+      buckets.push({
+        severity: s.passedHard,
+        entry: {
+          source: 'Aktien',
+          label: s.name,
+          symbol: s.symbol,
+          reason: `Grade D — nur ${s.passedHard}/${s.totalHard} Kriterien.`,
+          href: `/aktien/${encodeURIComponent(s.symbol)}`
+        }
       });
     }
   }
   for (const c of input.commodities) {
     if (c.grade === 'D') {
-      out.push({
-        source: 'Rohstoffe',
-        label: c.name,
-        symbol: c.symbol,
-        reason: `Grade D — nur ${c.passedHard}/${c.totalHard} Kriterien.`,
-        href: `/rohstoffe/${encodeURIComponent(c.symbol)}`
+      buckets.push({
+        severity: c.passedHard,
+        entry: {
+          source: 'Rohstoffe',
+          label: c.name,
+          symbol: c.symbol,
+          reason: `Grade D — nur ${c.passedHard}/${c.totalHard} Kriterien.`,
+          href: `/rohstoffe/${encodeURIComponent(c.symbol)}`
+        }
       });
     }
   }
   if (input.cryptoTop && input.cryptoTop.grade === 'D') {
-    out.push({
-      source: 'Krypto',
-      label: input.cryptoTop.symbol,
-      symbol: input.cryptoTop.symbol,
-      reason: `Grade D im Krypto-Gate — nur ${input.cryptoTop.passedCount}/${input.cryptoTop.totalCount} Häkchen.`,
-      href: `/assets/${input.cryptoTop.symbol.toLowerCase()}`
+    buckets.push({
+      severity: input.cryptoTop.passedCount,
+      entry: {
+        source: 'Krypto',
+        label: input.cryptoTop.symbol,
+        symbol: input.cryptoTop.symbol,
+        reason: `Grade D im Krypto-Gate — nur ${input.cryptoTop.passedCount}/${input.cryptoTop.totalCount} Häkchen.`,
+        href: `/assets/${input.cryptoTop.symbol.toLowerCase()}`
+      }
     });
   }
   // Sport-Picks die NICHT in den safe tips waren — sind hier nicht zugänglich,
   // dafür hat die /sport-Seite schon ihre eigenen "open"-Banner.
 
-  // Sortiere: meiste D-Grades zuerst, dann alphabetisch.
-  return out.slice(0, limit);
+  buckets.sort((a, b) => {
+    if (a.severity !== b.severity) return a.severity - b.severity;
+    return a.entry.label.localeCompare(b.entry.label);
+  });
+  return buckets.slice(0, limit).map((b) => b.entry);
 }
 
 export interface PersonaCompassResult {
@@ -293,16 +379,21 @@ export interface PersonaCompassResult {
   buyCount: number;
   watchCount: number;
   waitCount: number;
+  // Klasse mit der höchsten Buy-Quote. Bei Gleichstand: erste in alphabetischer Reihenfolge.
   strongestKlass: string | null;
   strongestBuyShare: number;
+  // ALLE Klassen mit derselben höchsten Buy-Quote — falls die UI das Auflisten will.
+  strongestKlassesAll: string[];
 }
 
 // Aggregiert über alle Vorstände: wie viele kaufen/tippen, wer hat den
 // stärksten Konsens? Liefert NICHT nur die Zahl, sondern auch welche Asset-
-// Klasse die höchste Buy-Quote hat.
+// Klasse die höchste Buy-Quote hat. Bei Gleichstand wird die alphabetisch
+// erste Klasse als strongestKlass gewählt, die komplette Liste in
+// strongestKlassesAll.
 export function personaCompass(verdicts: PersonaVerdictEntry[]): PersonaCompassResult {
   if (verdicts.length === 0) {
-    return { totalPersonas: 0, buyCount: 0, watchCount: 0, waitCount: 0, strongestKlass: null, strongestBuyShare: 0 };
+    return { totalPersonas: 0, buyCount: 0, watchCount: 0, waitCount: 0, strongestKlass: null, strongestBuyShare: 0, strongestKlassesAll: [] };
   }
   const buyCount = verdicts.filter((v) => v.isBuy).length;
   const watchCount = verdicts.filter((v) => v.verdict === 'BEOBACHTEN').length;
@@ -316,23 +407,30 @@ export function personaCompass(verdicts: PersonaVerdictEntry[]): PersonaCompassR
     if (v.isBuy) entry.buys += 1;
     byKlass.set(v.klass, entry);
   }
-  let strongestKlass: string | null = null;
+  // Erst die Klasse(n) mit der höchsten Buy-Quote sammeln, dann alphabetisch sortieren.
   let strongestBuyShare = 0;
+  const tied: string[] = [];
   for (const [klass, { buys, total }] of byKlass.entries()) {
     if (total === 0) continue;
     const share = buys / total;
     if (share > strongestBuyShare) {
       strongestBuyShare = share;
-      strongestKlass = klass;
+      tied.length = 0;
+      tied.push(klass);
+    } else if (share === strongestBuyShare && strongestBuyShare > 0) {
+      tied.push(klass);
     }
   }
+  const strongestKlassesAll = [...tied].sort((a, b) => a.localeCompare(b));
+  const strongestKlass = strongestKlassesAll[0] ?? null;
   return {
     totalPersonas: verdicts.length,
     buyCount,
     watchCount,
     waitCount,
     strongestKlass,
-    strongestBuyShare
+    strongestBuyShare,
+    strongestKlassesAll
   };
 }
 
@@ -364,7 +462,7 @@ export interface WatchedAsset {
 // gestern ist. „Grade A" wird immer markiert, auch ohne Vorgeschichte.
 export function watchlistAlarms(watched: WatchedAsset[]): WatchlistAlarm[] {
   const out: WatchlistAlarm[] = [];
-  const gradeRank: Record<string, number> = { A: 4, B: 3, C: 2, D: 1 };
+  const gradeRank: Record<'A' | 'B' | 'C' | 'D', number> = { A: 4, B: 3, C: 2, D: 1 };
 
   for (const w of watched) {
     if (w.currentGrade === 'A') {
