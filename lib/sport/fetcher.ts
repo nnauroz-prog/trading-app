@@ -43,7 +43,7 @@ interface ApiEvent {
 }
 
 // Erkennt offensichtlich nicht-Fußball-Spiele anhand des Team-Namens —
-// TheSportsDB teilt manche Liga-IDs zwischen Sportarten (z. B. 4477).
+// TheSportsDB teilt manche Liga-IDs zwischen Sportarten (z. B. 4477 / 4380).
 // „Basketball", „KK " (Košarkaški Klub), „BC " (Basketball Club), „Hockey",
 // „Volleyball", „IceHockey", „Eishockey" → kein Fußball.
 const NON_FOOTBALL_HINTS = [
@@ -52,9 +52,35 @@ const NON_FOOTBALL_HINTS = [
 ];
 const NON_FOOTBALL_PREFIXES = ['KK ', 'BC ', 'ZKK ', 'CSKA ', 'PBC '];
 
+// NHL-Team-Blacklist. TheSportsDB-ID 4380 (NHL) kollidiert historisch
+// mit „Russian Premier Liga". Selbst wenn beide Liga-IDs entwirrt sind,
+// können vereinzelte Crossover-Antworten durchkommen. Die NHL-Teams
+// haben charakteristische Namen ohne Sport-Präfix — also explizit
+// per Liste filtern.
+const NHL_TEAMS = new Set([
+  'anaheim ducks', 'arizona coyotes', 'boston bruins', 'buffalo sabres',
+  'calgary flames', 'carolina hurricanes', 'chicago blackhawks',
+  'colorado avalanche', 'columbus blue jackets', 'dallas stars',
+  'detroit red wings', 'edmonton oilers', 'florida panthers',
+  'los angeles kings', 'minnesota wild', 'montreal canadiens',
+  'nashville predators', 'new jersey devils', 'new york islanders',
+  'new york rangers', 'ottawa senators', 'philadelphia flyers',
+  'pittsburgh penguins', 'san jose sharks', 'seattle kraken',
+  'st. louis blues', 'st louis blues', 'tampa bay lightning',
+  'toronto maple leafs', 'utah hockey club', 'vancouver canucks',
+  'vegas golden knights', 'washington capitals', 'winnipeg jets'
+]);
+
+// MLB-Team-Blacklist (Baseball). Auch hier vereinzelte Crossover möglich.
+const MLB_KEYWORDS = ['yankees', 'red sox', 'dodgers', 'mets', 'cubs', 'astros', 'braves'];
+
 function looksLikeFootball(home: string, away: string): boolean {
   const h = home.toLowerCase();
   const a = away.toLowerCase();
+  if (NHL_TEAMS.has(h) || NHL_TEAMS.has(a)) return false;
+  for (const kw of MLB_KEYWORDS) {
+    if (h.includes(kw) || a.includes(kw)) return false;
+  }
   for (const hint of NON_FOOTBALL_HINTS) {
     if (h.includes(hint) || a.includes(hint)) return false;
   }

@@ -43,6 +43,9 @@ export function SportQuickFilter({ ranked, todayIso, tomorrowIso }: Props) {
   }, [mode, mounted]);
 
   if (!mounted) return null;
+  // Bug-Fix: bei komplett leerem Pool (Sommerpause) blendet sich der
+  // Filter sauber aus, statt „0/0 Nichts passt" als pseudo-aktiv zu zeigen.
+  if (ranked.length === 0) return null;
 
   const filtered =
     mode === 'heute' ? ranked.filter((r) => r.fixture.date === todayIso)

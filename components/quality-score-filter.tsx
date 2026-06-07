@@ -45,6 +45,9 @@ export function QualityScoreFilter({ ranked }: Props) {
   const filtered = useMemo(() => ranked.filter((r) => r.quality.score >= minScore), [ranked, minScore]);
 
   if (!mounted) return null;
+  // Bug-Fix: bei leerem Pool blendet sich der Schwellen-Regler aus statt
+  // „Kein Spiel schafft heute ≥ X/100" als sinnlosen Hinweis zu zeigen.
+  if (ranked.length === 0) return null;
 
   return (
     <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
