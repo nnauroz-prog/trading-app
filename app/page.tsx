@@ -28,6 +28,9 @@ import { CrossAssetSafetyStats } from '@/components/cross-asset-safety-stats';
 import { AssetQuickSearch } from '@/components/asset-quick-search';
 import { STOCK_UNIVERSE } from '@/lib/market/stocks';
 import { COMMODITY_UNIVERSE } from '@/lib/market/commodities';
+import { evaluateStockPersonas } from '@/lib/agents/stock-personas';
+import { evaluateCommodityPersonas } from '@/lib/agents/commodity-personas';
+import { CrossAssetConservativeCard, type CrossAssetConservativeRow } from '@/components/cross-asset-conservative-card';
 import { CoinScoreRecorder } from '@/components/coin-score-recorder';
 import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { SportBriefingCard } from '@/components/sport-briefing-card';
@@ -547,6 +550,41 @@ export default async function HomePage() {
         balanced={personas.find((p) => p.persona === 'balanced') ?? null}
         aggressive={personas.find((p) => p.persona === 'aggressive') ?? null}
       />
+
+      {(() => {
+        const stockVerdicts = evaluateStockPersonas(stockSafetyScan);
+        const commodityVerdicts = evaluateCommodityPersonas(commoditySafetyScan);
+        const stockConservative = stockVerdicts.find((v) => v.persona === 'conservative');
+        const commodityConservative = commodityVerdicts.find((v) => v.persona === 'conservative');
+        const cryptoConservative = personas.find((p) => p.persona === 'conservative');
+        const rows: CrossAssetConservativeRow[] = [
+          {
+            klass: 'krypto',
+            label: 'Krypto',
+            emoji: '₿',
+            verdict: cryptoConservative?.verdict ?? 'WAIT',
+            target: cryptoConservative?.target ? { symbol: cryptoConservative.target.symbol, name: cryptoConservative.target.symbol } : null,
+            href: '/'
+          },
+          {
+            klass: 'aktien',
+            label: 'Aktien',
+            emoji: '📈',
+            verdict: stockConservative?.verdict ?? 'WARTEN',
+            target: stockConservative?.target ? { symbol: stockConservative.target.symbol, name: stockConservative.target.name } : null,
+            href: '/aktien'
+          },
+          {
+            klass: 'rohstoffe',
+            label: 'Rohstoffe',
+            emoji: '🛢️',
+            verdict: commodityConservative?.verdict ?? 'WARTEN',
+            target: commodityConservative?.target ? { symbol: commodityConservative.target.symbol, name: commodityConservative.target.name } : null,
+            href: '/rohstoffe'
+          }
+        ];
+        return <CrossAssetConservativeCard rows={rows} />;
+      })()}
 
       <HeuteMachen cards={heuteCards} />
 
