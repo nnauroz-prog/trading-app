@@ -62,7 +62,10 @@ export const FOOTBALL_LEAGUES: League[] = [
   // === Asien / Australien ===
   { id: '4339', name: 'J1 League', country: 'Japan' },
   { id: '4356', name: 'A-League Men', country: 'Australien' },
-  { id: '4391', name: 'Chinese Super League', country: 'China' },
+  // ID 4391 entfernt — kollidiert mit NFL (American Football) bei
+  // TheSportsDB. Chinese Super League war ein best-guess; bei
+  // TheSportsDB hat die NFL diese ID, die CSL ist über free-tier
+  // nicht zuverlässig gepflegt.
   { id: '4396', name: 'Indian Super League', country: 'Indien' },
   // === International ===
   { id: '4429', name: 'FIFA World Cup', country: 'International' },
