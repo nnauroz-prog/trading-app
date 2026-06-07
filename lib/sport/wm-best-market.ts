@@ -14,7 +14,9 @@ export interface WmMarketRecommendation {
   internalScore: number;
 }
 
-export function bestWmMarket(p: WmMatchPrediction): WmMarketRecommendation {
+// Listet ALLE Markt-Kandidaten, die ihre jeweilige Mindestschwelle erfüllen,
+// sortiert nach internalScore. bestWmMarket() ist nur ein Schmal-Wrapper.
+export function listWmMarkets(p: WmMatchPrediction): WmMarketRecommendation[] {
   const candidates: WmMarketRecommendation[] = [];
 
   // 1X2 — nur wenn klar.
@@ -121,21 +123,27 @@ export function bestWmMarket(p: WmMatchPrediction): WmMarketRecommendation {
     });
   }
 
-  // Fallback: höchste 1X2-Wahrscheinlichkeit als Aussage, auch wenn unter 55 %.
-  if (candidates.length === 0) {
-    const max = Math.max(ph, pd, pa);
-    const market = max === ph ? `${p.homeTeam} gewinnt`
-      : max === pa ? `${p.awayTeam} gewinnt`
-      : 'Remis';
-    candidates.push({
-      market,
-      probability: max,
-      rationale: 'Kein stabiler Markt schafft die Schwelle — beste 1X2-Aussage als Orientierung.',
-      isStableMarket: false,
-      internalScore: max * 100 - 18
-    });
-  }
-
   candidates.sort((a, b) => b.internalScore - a.internalScore);
-  return candidates[0];
+  return candidates;
+}
+
+export function bestWmMarket(p: WmMatchPrediction): WmMarketRecommendation {
+  const candidates = listWmMarkets(p);
+  if (candidates.length > 0) return candidates[0];
+
+  // Fallback: höchste 1X2-Wahrscheinlichkeit als Aussage, auch wenn unter 55 %.
+  const ph = p.regular.homePct / 100;
+  const pd = p.regular.drawPct / 100;
+  const pa = p.regular.awayPct / 100;
+  const max = Math.max(ph, pd, pa);
+  const market = max === ph ? `${p.homeTeam} gewinnt`
+    : max === pa ? `${p.awayTeam} gewinnt`
+    : 'Remis';
+  return {
+    market,
+    probability: max,
+    rationale: 'Kein stabiler Markt schafft die Schwelle — beste 1X2-Aussage als Orientierung.',
+    isStableMarket: false,
+    internalScore: max * 100 - 18
+  };
 }
