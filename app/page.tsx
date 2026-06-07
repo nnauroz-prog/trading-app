@@ -192,10 +192,10 @@ export default async function HomePage() {
       klass: 'aktien',
       emoji: '📈',
       label: 'Aktien',
-      verdict: 'keine_daten',
-      headline: 'Daten-Quelle fehlt',
-      detail: 'Finnhub-API-Key nicht angebunden. Sobald er da ist, erscheint hier dieselbe Logik wie für Krypto.',
-      href: '/screener'
+      verdict: 'live',
+      headline: 'Live-Quotes verfügbar',
+      detail: 'Top-Indizes (S&P 500, Nasdaq, Dow, DAX, EURO STOXX 50) + 29 Mega-Caps und DAX-Top live via Yahoo Finance, Fallback Stooq. 5 Min Cache.',
+      href: '/aktien'
     },
     {
       klass: 'gold',
@@ -302,7 +302,7 @@ export default async function HomePage() {
   const commandCenter = buildCommandCenter({
     marketMood: masterSignal.marketMood,
     cryptoBestScore: cryptoBest?.score.score ?? 0,
-    stocksAvailable: false,        // Finnhub key currently not wired
+    stocksAvailable: true,         // Yahoo + Stooq Provider wired
     stocksBestScore: null,
     goldTrendOk: true,             // PAXG is part of the universe; treat as defensively-stable
     openPositionsCount: 0,         // client-side data, not server-known
@@ -328,13 +328,13 @@ export default async function HomePage() {
     {
       klass: 'stocks',
       label: 'Aktien',
-      status: 'keine_daten',
+      status: 'neutral',
       topCandidate: null,
       goodSetupsCount: 0,
       riskLevel: 'mittel',
-      action: 'Aktien-Daten nicht angebunden (Finnhub-API-Key fehlt).',
-      href: null,
-      note: 'Sobald ein Daten-Provider verbunden ist, erscheinen hier Setups.'
+      action: 'Live-Quotes verfügbar — Übersicht öffnen.',
+      href: '/aktien',
+      note: 'Top-Indizes + 29 Mega-Caps und DAX-Top via Yahoo Finance + Stooq-Fallback. Setup-Scoring kommt in einer späteren Welle.'
     },
     {
       klass: 'gold',
