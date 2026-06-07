@@ -62,43 +62,55 @@ function pickTarget(report: MasterSignalReport, backtest: BacktestSummary, perso
   return { target: scored[0].c, safety: scored[0].safety };
 }
 
-export function evaluatePersonas(
+interface PersonaInfo {
+  id: PersonaId;
+  name: string;
+  motto: string;
+  manifest: string;
+}
+
+const PERSONAS: PersonaInfo[] = [
+  {
+    id: 'conservative', name: 'Konservativ', motto: 'Lieber gar nichts kaufen als zu früh',
+    manifest: 'Erhalt des Kapitals geht vor Rendite. Ich kaufe nur, wenn alle harten Sicherheits-Kriterien erfüllt sind, die Liquidität tief ist, der Backtest das Setup bestätigt und kein hoch-impact Termin in den nächsten 24h liegt. Lieber wochenlang in Cash als ein zweifelhafter Trade.'
+  },
+  {
+    id: 'balanced', name: 'Balanciert', motto: 'Sicher, aber nicht überpingelig',
+    manifest: 'Solider Setup mit klarem Stop ist genug — ich brauche nicht jede Sterne aligned. Häkchen ≥ 8 plus saubere Konfluenz: Position auf. Eine Negativ-Stimme einzelner Sub-Agenten kippt mich nicht, aber zwei zusammen bremsen.'
+  },
+  {
+    id: 'aggressive', name: 'Aggressiv', motto: 'Mehr Signale, kleinere Größen',
+    manifest: 'Wer wartet, verpasst Bewegung. Ich nehme Setups schon ab 7 Häkchen mit, aber dann mit kleinerer Position. Auch bei dünneren Märkten — solange Risiko-Manager kein Veto einlegt. Sogar mir zu riskant ist nur: risk-off-Markt oder Risiko-Veto.'
+  }
+];
+
+// Evaluiert genau eine Persona auf ein vorgegebenes Target. Wird sowohl von
+// `evaluatePersonas` (Target wird zuerst gepickt) als auch von
+// `evaluatePersonasForCoin` (Target wird vorgegeben) genutzt. Reine Funktion.
+function evaluatePersonaForTarget(
+  personaInfo: PersonaInfo,
+  target: RankedCandidate | null,
+  safety: SafetyAssessment | null,
   report: MasterSignalReport,
   backtest: BacktestSummary,
-  spaeher: SpaeherReport | null = null,
-  eventWindow: EventWindowState | null = null
-): AgentVerdict[] {
-  const PERSONAS: { id: PersonaId; name: string; motto: string; manifest: string }[] = [
-    {
-      id: 'conservative', name: 'Konservativ', motto: 'Lieber gar nichts kaufen als zu früh',
-      manifest: 'Erhalt des Kapitals geht vor Rendite. Ich kaufe nur, wenn alle harten Sicherheits-Kriterien erfüllt sind, die Liquidität tief ist, der Backtest das Setup bestätigt und kein hoch-impact Termin in den nächsten 24h liegt. Lieber wochenlang in Cash als ein zweifelhafter Trade.'
-    },
-    {
-      id: 'balanced', name: 'Balanciert', motto: 'Sicher, aber nicht überpingelig',
-      manifest: 'Solider Setup mit klarem Stop ist genug — ich brauche nicht jede Sterne aligned. Häkchen ≥ 8 plus saubere Konfluenz: Position auf. Eine Negativ-Stimme einzelner Sub-Agenten kippt mich nicht, aber zwei zusammen bremsen.'
-    },
-    {
-      id: 'aggressive', name: 'Aggressiv', motto: 'Mehr Signale, kleinere Größen',
-      manifest: 'Wer wartet, verpasst Bewegung. Ich nehme Setups schon ab 7 Häkchen mit, aber dann mit kleinerer Position. Auch bei dünneren Märkten — solange Risiko-Manager kein Veto einlegt. Sogar mir zu riskant ist nur: risk-off-Markt oder Risiko-Veto.'
-    }
-  ];
+  spaeher: SpaeherReport | null,
+  eventWindow: EventWindowState | null
+): AgentVerdict {
+  const { id, name, motto, manifest } = personaInfo;
+  const analyst = analystVote(report);
+  const scout = scoutVote(target);
+  const risk = riskVote(target);
+  const news = newsVote(target, spaeher);
+  const position = positionManagerVote(target, id);
+  const liquidity = liquiditySpecialistVote(target, id);
+  const similarity = target ? computeSetupSimilarity(backtest.safeTrades, { coinId: target.coinId, ticker: target.symbol, passedCount: target.passedCount }) : null;
+  const backtestAudit = backtestAuditVote(target, similarity);
+  const team: SubAgentReport[] = [analyst, scout, risk, news, position, liquidity, backtestAudit];
 
-  return PERSONAS.map(({ id, name, motto, manifest }) => {
-    const { target, safety } = pickTarget(report, backtest, id);
-    const analyst = analystVote(report);
-    const scout = scoutVote(target);
-    const risk = riskVote(target);
-    const news = newsVote(target, spaeher);
-    const position = positionManagerVote(target, id);
-    const liquidity = liquiditySpecialistVote(target, id);
-    const similarity = target ? computeSetupSimilarity(backtest.safeTrades, { coinId: target.coinId, ticker: target.symbol, passedCount: target.passedCount }) : null;
-    const backtestAudit = backtestAuditVote(target, similarity);
-    const team: SubAgentReport[] = [analyst, scout, risk, news, position, liquidity, backtestAudit];
+  let verdict: 'BUY' | 'WAIT' = 'WAIT';
+  let rationale = 'Keine Setups vorhanden.';
 
-    let verdict: 'BUY' | 'WAIT' = 'WAIT';
-    let rationale = 'Keine Setups vorhanden.';
-
-    if (target && safety) {
+  if (target && safety) {
       // Event-Window-Vorbehalt:
       // - Konservativ wartet 24h vor einem hoch-impact Event.
       // - Balanciert wartet 12h davor.
@@ -179,11 +191,37 @@ export function evaluatePersonas(
       }
     }
 
-    const ceoFinalWord = composeCeoFinalWord(id, name, verdict, team, target, safety);
+  const ceoFinalWord = composeCeoFinalWord(id, name, verdict, team, target, safety);
+  const voteSummary = summariseFirmaVotes(team);
+  return { persona: id, name, motto, manifest, verdict, target, safety, rationale, team, voteSummary, ceoFinalWord };
+}
 
-    const voteSummary = summariseFirmaVotes(team);
-    return { persona: id, name, motto, manifest, verdict, target, safety, rationale, team, voteSummary, ceoFinalWord };
+export function evaluatePersonas(
+  report: MasterSignalReport,
+  backtest: BacktestSummary,
+  spaeher: SpaeherReport | null = null,
+  eventWindow: EventWindowState | null = null
+): AgentVerdict[] {
+  return PERSONAS.map((p) => {
+    const { target, safety } = pickTarget(report, backtest, p.id);
+    return evaluatePersonaForTarget(p, target, safety, report, backtest, spaeher, eventWindow);
   });
+}
+
+// Zwingt alle drei Personas, denselben konkreten Coin zu bewerten — auch wenn
+// sie ihn normalerweise nicht ins Visier nehmen würden. Damit lässt sich auf der
+// Coin-Detailseite ehrlich zeigen, was jede Firma über genau DIESEN Coin sagen
+// würde. Reine Wrapper-Funktion über evaluatePersonaForTarget.
+export function evaluatePersonasForCoin(
+  coinId: string,
+  report: MasterSignalReport,
+  backtest: BacktestSummary,
+  spaeher: SpaeherReport | null = null,
+  eventWindow: EventWindowState | null = null
+): AgentVerdict[] {
+  const candidate = report.candidates.find((c) => c.coinId === coinId) ?? null;
+  const safety = candidate ? safetyForCandidate(candidate, report, backtest) : null;
+  return PERSONAS.map((p) => evaluatePersonaForTarget(p, candidate, safety, report, backtest, spaeher, eventWindow));
 }
 
 // CEO-Schlusswort: kurze Synthese der drei Sub-Agenten-Meinungen aus Sicht
