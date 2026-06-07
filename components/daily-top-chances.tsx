@@ -24,6 +24,13 @@ export function DailyTopChances({ chances }: { chances: TopChance[] }) {
           Heute keine konkreten Tageschancen — kein Asset im Grade A/B, kein Sport-Tipp ≥70 %.
           Beobachten oder Cash halten ist die richtige Reaktion.
         </p>
+        <p className="text-[10.5px] leading-snug text-slate-500">
+          Nächster Schritt: Watchlist-Werte pflegen
+          {' '}(<Link href="/aktien/watchlist" className="underline hover:text-emerald-300">Aktien</Link>
+          {' '}/{' '}<Link href="/rohstoffe/watchlist" className="underline hover:text-emerald-300">Rohstoffe</Link>),
+          {' '}oder die Vorstand-Einschätzung anschauen
+          {' '}(<Link href="/agenten" className="underline hover:text-emerald-300">Vorstände</Link>).
+        </p>
       </section>
     );
   }

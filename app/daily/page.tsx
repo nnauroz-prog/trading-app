@@ -118,6 +118,7 @@ export default async function DailyPage() {
   const warnings = warningZone(inputs);
   const compass = personaCompass(personaVerdicts);
   const plan = buildActionPlan(mode);
+  const generatedAtIso = new Date().toISOString();
 
   return (
     <main className="mx-auto max-w-4xl space-y-5 p-4 pb-20 md:p-6">
@@ -134,7 +135,7 @@ export default async function DailyPage() {
         </p>
       </header>
 
-      <DailyMarketModeCard assessment={mode} />
+      <DailyMarketModeCard assessment={mode} generatedAtIso={generatedAtIso} />
 
       <DailyTopChances chances={chances} />
 

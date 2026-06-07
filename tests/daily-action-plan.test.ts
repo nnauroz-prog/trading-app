@@ -6,6 +6,8 @@ function assessment(mode: ModeAssessment['mode']): ModeAssessment {
   return {
     mode,
     reason: 'test',
+    dataQuality: 'medium',
+    modeConfidence: 0.5,
     metrics: {
       stocksGradeA: 0, stocksGradeB: 0,
       commoditiesGradeA: 0, commoditiesGradeB: 0,
