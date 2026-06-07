@@ -11,6 +11,10 @@ import { detectHotSectors } from '@/lib/market/sector-safety-summary';
 import { detectHotCommodityGroups } from '@/lib/market/commodity-group-summary';
 import { HotSectorBanner } from '@/components/hot-sector-banner';
 import { HotCommodityGroupBanner } from '@/components/hot-commodity-group-banner';
+import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
+import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
+import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
+import type { SafetyAssessment } from '@/lib/analysis/safety-gate';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -18,14 +22,22 @@ export const revalidate = 600;
 export default async function HeuteSicherPage() {
   const todayIso = new Date().toISOString().slice(0, 10);
 
-  const [stocks, commodities, leagues] = await Promise.all([
+  const [stocks, commodities, leagues, masterSignal, backtest] = await Promise.all([
     getStockSafetyScan(),
     getCommoditySafetyScan(),
-    getFootballFixtures()
+    getFootballFixtures(),
+    buildMasterSignal('swing'),
+    getBacktestSummary()
   ]);
 
   const safeFootball = rankSafeFootballTips(leagues, { todayIso, horizonDays: 14, minProbability: 0.7, limit: 50 });
   const safeWm = rankSafeWmTips({ todayIso, maxDays: 14, minProbability: 0.7, limit: 30 });
+
+  const cryptoScored = masterSignal.candidates
+    .map((c) => ({ c, safety: scoreCandidateSafety(c, masterSignal, backtest) }))
+    .sort((a, b) => b.safety.score - a.safety.score);
+  const gradeACrypto = cryptoScored.filter((x) => x.safety.grade === 'A');
+  const gradeBCrypto = cryptoScored.filter((x) => x.safety.grade === 'B').slice(0, 5);
 
   const gradeAStocks = stocks
     .filter((e) => e.assessment.grade === 'A')
@@ -48,7 +60,7 @@ export default async function HeuteSicherPage() {
   const maxSafeWm = safeWm.filter((t) => t.tier === 'maximal').slice(0, 10);
   const sehrSicherWm = safeWm.filter((t) => t.tier === 'sehr-sicher').slice(0, 10);
 
-  const totalCount = gradeAStocks.length + gradeACommodities.length + maxSafeFootball.length + maxSafeWm.length;
+  const totalCount = gradeACrypto.length + gradeAStocks.length + gradeACommodities.length + maxSafeFootball.length + maxSafeWm.length;
 
   return (
     <main className="mx-auto max-w-4xl space-y-5 p-4 pb-20 md:p-6">
@@ -60,7 +72,7 @@ export default async function HeuteSicherPage() {
         <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">🛡️ Heute</div>
         <h1 className="text-3xl font-bold tracking-tight text-white">Heute besonders sicher</h1>
         <p className="text-sm text-slate-400">
-          Alles, was JETZT das Maximum-Filter passiert — quer durch Aktien, Rohstoffe und Fußball.
+          Alles, was JETZT das Maximum-Filter passiert — quer durch Krypto, Aktien, Rohstoffe und Fußball.
           Grade A (alle Kriterien erfüllt) oben, dann die nächst-besten als Backup.
           <span className="ml-1 text-emerald-300">{totalCount} maximal-sichere Setups heute.</span>
         </p>
@@ -68,6 +80,27 @@ export default async function HeuteSicherPage() {
 
       <HotSectorBanner hotSectors={detectHotSectors(stocks)} />
       <HotCommodityGroupBanner hotGroups={detectHotCommodityGroups(commodities)} />
+
+      <section className="space-y-2 rounded-2xl border border-emerald-400/40 bg-emerald-950/15 p-4">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">₿ Krypto · Grade A</h2>
+        {gradeACrypto.length === 0 ? (
+          <>
+            <p className="text-[11px] leading-relaxed text-slate-400">
+              Heute schafft kein Coin alle Sicherheits-Kriterien. Hier die nächst-besten (Grade B):
+            </p>
+            <ul className="space-y-1">
+              {gradeBCrypto.length > 0
+                ? gradeBCrypto.map((x) => <CryptoRow key={x.c.coinId} entry={{ symbol: x.c.symbol, safety: x.safety }} />)
+                : <li className="text-[10.5px] text-slate-500">Auch kein Grade-B-Coin. Cash bleibt eine valide Position.</li>
+              }
+            </ul>
+          </>
+        ) : (
+          <ul className="space-y-1">
+            {gradeACrypto.map((x) => <CryptoRow key={x.c.coinId} entry={{ symbol: x.c.symbol, safety: x.safety }} />)}
+          </ul>
+        )}
+      </section>
 
       <section className="space-y-2 rounded-2xl border border-emerald-400/40 bg-emerald-950/15 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">📈 Aktien · Grade A</h2>
@@ -134,6 +167,26 @@ export default async function HeuteSicherPage() {
         Modell-Schätzungen, keine Garantien. Vergangenheit ≠ Zukunft.
       </footer>
     </main>
+  );
+}
+
+function CryptoRow({ entry }: { entry: { symbol: string; safety: SafetyAssessment } }) {
+  return (
+    <li>
+      <Link href={`/assets/${entry.symbol.toLowerCase()}`} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-3 py-1.5 text-[11.5px] transition hover:brightness-110">
+        <span className="min-w-0">
+          <span className="block truncate font-semibold text-slate-100">{entry.symbol}</span>
+          <span className="block text-[9.5px] text-slate-500">Krypto · {entry.safety.maxSafety ? 'alle Kriterien erfüllt' : `${entry.safety.passedHard}/${entry.safety.totalHard} Kriterien`}</span>
+        </span>
+        <span className="font-mono text-[10.5px] text-slate-300">{entry.safety.passedHard}/{entry.safety.totalHard}</span>
+        <span className={`rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+          entry.safety.grade === 'A' ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-100'
+            : 'border-sky-400/40 bg-sky-500/10 text-sky-200'
+        }`}>
+          {entry.safety.grade} · {entry.safety.score}
+        </span>
+      </Link>
+    </li>
   );
 }
 
