@@ -56,6 +56,7 @@ import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
 import { AppOverviewStats } from '@/components/app-overview-stats';
 import { WmBriefingCard } from '@/components/wm-briefing-card';
+import { HomeWmProCard } from '@/components/home-wm-pro-card';
 import { HomeSportStatus } from '@/components/home-sport-status';
 import { MultiSportBriefing } from '@/components/multi-sport-briefing';
 import { getBasketballFixtures } from '@/lib/sport/basketball-fetcher';
@@ -546,6 +547,7 @@ export default async function HomePage() {
       />
 
       <WmBriefingCard />
+      <HomeWmProCard todayIso={todayIso} />
       <HomeSportStatus />
 
       <AppOverviewStats

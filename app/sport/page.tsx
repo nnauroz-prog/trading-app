@@ -76,6 +76,7 @@ import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { WmNextMatches } from '@/components/wm-next-matches';
 import { WmDayPicker } from '@/components/wm-day-picker';
 import { WmTopTips } from '@/components/wm-top-tips';
+import { WmEngineHonesty } from '@/components/wm-engine-honesty';
 import { WmGroupsOverview } from '@/components/wm-groups-overview';
 import { WmVenuesList } from '@/components/wm-venues-list';
 import { WmCitiesCard } from '@/components/wm-cities-card';
@@ -434,6 +435,7 @@ export default async function SportPage() {
       <WmTopTips todayIso={buckets.todayIso} />
       <WmNextMatches todayIso={buckets.todayIso} />
       <WmDayPicker todayIso={buckets.todayIso} />
+      <WmEngineHonesty todayIso={buckets.todayIso} />
       <WmGroupsOverview todayIso={buckets.todayIso} />
       <WmPhasesTimeline todayIso={buckets.todayIso} />
       <WmTipprundeStats todayIso={buckets.todayIso} />
