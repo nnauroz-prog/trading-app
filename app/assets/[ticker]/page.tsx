@@ -11,7 +11,8 @@ import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { getCryptoNews } from '@/lib/news/news-agent';
 import { runSpaeher } from '@/lib/akademie/spaeher';
-import { evaluatePersonas } from '@/lib/agents/personas';
+import { evaluatePersonas, evaluatePersonasForCoin } from '@/lib/agents/personas';
+import { PerCoinFirmaTakes } from '@/components/per-coin-firma-takes';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
 import { detectChaseSignals, detectOpportunitySignals, PriceContext } from '@/lib/analysis/chase-detector';
 import { Asset, PriceSnapshot } from '@/lib/types/domain';
@@ -137,6 +138,13 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
   const spaeher = newsItems.length > 0 ? runSpaeher(newsItems) : null;
   const personas = (masterSignal && backtestSummary)
     ? evaluatePersonas(masterSignal, backtestSummary, spaeher)
+    : [];
+  // Cross-Persona-Bewertung: was würden alle 3 Firmen über GENAU diesen Coin
+  // sagen, wenn sie ihn bewerten müssten? Liefert auch dann 3 Stimmen, wenn
+  // keine Firma ihn natürlich ins Visier nimmt. Nur für Universe-Coins
+  // (mock-Assets bekommen das nicht).
+  const perCoinFirmaTakes = (universeCoin && masterSignal && backtestSummary)
+    ? evaluatePersonasForCoin(asset.id, masterSignal, backtestSummary, spaeher)
     : [];
   const personaTakesOnThisCoin = personas.map((p) => ({
     persona: p,
@@ -347,15 +355,20 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
         </section>
       )}
 
-      {/* Was die drei Firmen zu diesem Coin sagen */}
-      {personas.length > 0 && (
+      {/* Cross-Persona-Take auf GENAU diesen Coin: zwingt alle 3 Firmen, ihn
+          zu bewerten, statt nur den jeweils eigenen Top-Pick zu zeigen. */}
+      {perCoinFirmaTakes.length > 0 && (
+        <PerCoinFirmaTakes verdicts={perCoinFirmaTakes} coinSymbol={asset.ticker} />
+      )}
+
+      {/* Fallback für Mock-Assets ohne Universe-Eintrag: zeigt die natürlichen
+          Persona-Takes (jede schaut auf ihren eigenen Top-Pick). */}
+      {perCoinFirmaTakes.length === 0 && personas.length > 0 && (
         <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
           <div>
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Was die drei Firmen sagen</h2>
             <p className="mt-1 text-[11px] text-slate-500">
-              {candidate
-                ? `${asset.ticker} hat aktuell ${candidate.passedCount} von 12 Häkchen, Struktur ${candidate.structure === 'uptrend' ? 'aufwärts' : candidate.structure === 'downtrend' ? 'abwärts' : 'seitwärts'}${candidate.nearSupport ? ', nahe Unterstützung' : ''}.`
-                : `${asset.ticker} steht aktuell auf keiner Firma-Liste — kein erfülltes Mindest-Setup.`}
+              {asset.ticker} steht aktuell auf keiner Firma-Liste — keine direkte Bewertung möglich.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
