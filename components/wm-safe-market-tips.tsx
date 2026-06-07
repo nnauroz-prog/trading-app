@@ -5,6 +5,7 @@
 // MEHR und SICHERERE Signale pro Tag.
 
 import { rankSafeWmTips, type SafeWmTip } from '@/lib/sport/wm-safe-tips';
+import { groupByDayBucket } from '@/lib/sport/day-bucket';
 
 interface Props {
   todayIso: string;
@@ -85,6 +86,14 @@ export function WmSafeMarketTips({
         die ≥{Math.round(minProbability * 100)} % Profi-Engine-Wahrscheinlichkeit erreichen UND auf einer Datenbasis ≥{minDataConfidence}/100 stehen.
         Mehrere Tipps pro Spieltag möglich. Vergangenheit ≠ Zukunft — keine Garantie.
       </p>
+
+      {(() => {
+        const dayGroups = groupByDayBucket(tips, (t) => t.fixture.date, todayIso);
+        const todayGroup = dayGroups.find((g) => g.key === 'heute');
+        return todayGroup && todayGroup.items.length > 0 ? (
+          <TipGroup heading={`📅 Heute · ${todayGroup.items.length}`} tips={todayGroup.items} />
+        ) : null;
+      })()}
 
       {maxTier.length > 0 && <TipGroup heading="🏆 Maximal sicher (≥85 %)" tips={maxTier} />}
       {sehrSicher.length > 0 && <TipGroup heading="✓ Sehr sicher (78–84 %)" tips={sehrSicher} />}
