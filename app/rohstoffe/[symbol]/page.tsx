@@ -18,6 +18,8 @@ import { SuggestedLevelsCard } from '@/components/suggested-levels-card';
 import { PositionSizer } from '@/components/position-sizer';
 import { computeSafetyScoreHistory } from '@/lib/market/safety-score-history';
 import { SafetyScoreTrend } from '@/components/safety-score-trend';
+import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
+import { CommodityGroupPeerComparison } from '@/components/commodity-group-peer-comparison';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -41,10 +43,12 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
   const commodity = COMMODITY_UNIVERSE.find((c) => c.symbol.toUpperCase() === symbol);
   if (!commodity) notFound();
 
-  const [quote, history] = await Promise.all([
+  const [quote, history, safetyScan] = await Promise.all([
     fetchYahooQuote(commodity.symbol, commodity.name),
-    fetchYahooHistory(commodity.symbol)
+    fetchYahooHistory(commodity.symbol),
+    getCommoditySafetyScan()
   ]);
+  const groupPeers = safetyScan.filter((e) => e.group === commodity.group);
 
   const closes = history?.candles.map((c) => c.close) ?? [];
   const ma50 = sma(closes, 50);
@@ -123,6 +127,15 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
           {safetyBacktest && <InstrumentSafetyBacktestMini result={safetyBacktest} name={commodity.name} />}
 
           {scoreHistory.length >= 2 && <SafetyScoreTrend points={scoreHistory} />}
+
+          {safety && groupPeers.length >= 2 && (
+            <CommodityGroupPeerComparison
+              symbol={commodity.symbol}
+              group={commodity.group}
+              ownScore={safety.score}
+              peers={groupPeers}
+            />
+          )}
 
           <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Trend &amp; Indikatoren</h2>
