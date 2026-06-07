@@ -35,7 +35,11 @@ export const FOOTBALL_LEAGUES: League[] = [
   { id: '4330', name: 'Allsvenskan', country: 'Schweden' },
   // === Süd-Europa / Osteuropa ===
   { id: '4388', name: 'Super League', country: 'Griechenland' },
-  { id: '4380', name: 'Premier Liga', country: 'Russland' },
+  // ID 4380 entfernt — kollidiert mit NHL (Eishockey) bei TheSportsDB.
+  // Aktuell laufen NHL-Stanley-Cup-Finals, die Daten kamen fälschlich
+  // in der Fußball-Liste an (Vegas Golden Knights vs. Carolina Hurricanes).
+  // Russische Top-Liga ist bei TheSportsDB unter einer anderen ID oder
+  // gar nicht zuverlässig gepflegt — wir lassen sie raus.
   // === Europa-Pokale ===
   { id: '4480', name: 'UEFA Champions League', country: 'Europa' },
   { id: '4481', name: 'UEFA Europa League', country: 'Europa' },
