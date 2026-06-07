@@ -8,7 +8,9 @@ import { STOCK_INDEX_SYMBOLS, STOCK_UNIVERSE, type StockSymbol } from '@/lib/mar
 import { fetchManyQuotes } from '@/lib/market/yahoo-quote';
 import { marketAverageChangePct, scoreUniverse } from '@/lib/market/stock-setup-score';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
+import { getStockSafetyBacktestSummary } from '@/lib/market/stock-safety-backtest-scan';
 import { SafeStockPicks } from '@/components/safe-stock-picks';
+import { StockSafetyBacktestCard } from '@/components/stock-safety-backtest-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -18,10 +20,11 @@ const GROUP_ORDER: StockSymbol['group'][] = [
 ];
 
 export default async function AktienPage() {
-  const [indices, stocks, safetyScan] = await Promise.all([
+  const [indices, stocks, safetyScan, safetyBacktest] = await Promise.all([
     fetchManyQuotes(STOCK_INDEX_SYMBOLS.map((i) => ({ symbol: i.symbol, name: i.name }))),
     fetchManyQuotes(STOCK_UNIVERSE.map((s) => ({ symbol: s.symbol, name: s.name }))),
-    getStockSafetyScan()
+    getStockSafetyScan(),
+    getStockSafetyBacktestSummary()
   ]);
 
   const stocksByGroup: Record<string, Array<{ stock: StockSymbol; quote: typeof stocks[number] }>> = {};
@@ -79,6 +82,8 @@ export default async function AktienPage() {
       <SectorHeatmap buckets={sectorBuckets} title="Sektor-Heatmap (Aktien)" />
 
       <SafeStockPicks entries={safetyScan} />
+
+      <StockSafetyBacktestCard summary={safetyBacktest} />
 
       {topSetups.length > 0 && (
         <section className="space-y-2 rounded-2xl border border-emerald-400/30 bg-emerald-950/15 p-4">
