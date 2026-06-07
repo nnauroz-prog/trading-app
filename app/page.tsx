@@ -88,6 +88,8 @@ import { LastSafeBuyCard } from '@/components/last-safe-buy-card';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
+import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
+import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
 import { getCryptoNews } from '@/lib/news/news-agent';
 import { AdvancedOnly } from '@/components/advanced-only';
 import { ViewModeToggle } from '@/components/view-mode-toggle';
@@ -107,7 +109,7 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources, sportLeagues, basketballLeagues, tennisLeagues, hockeyLeagues] = await Promise.all([
+  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources, sportLeagues, basketballLeagues, tennisLeagues, hockeyLeagues, stockSafetyScan, commoditySafetyScan] = await Promise.all([
     buildTopPlayReport(),
     buildMasterSignal(tradeMode),
     fetchFearGreed(),
@@ -121,7 +123,9 @@ export default async function HomePage() {
     getFootballFixtures(),
     getBasketballFixtures(),
     getTennisFixtures(),
-    getHockeyFixtures()
+    getHockeyFixtures(),
+    getStockSafetyScan(),
+    getCommoditySafetyScan()
   ]);
   const sportSynth = buildFirmaSynthesis(sportLeagues);
   const sportTodayCount = bucketByDay(sportLeagues.flatMap((lf) => lf.next)).today.length;
@@ -189,25 +193,84 @@ export default async function HomePage() {
           detail: 'Kein Coin schafft die strengen Kriterien. Cash bleibt eine valide Position.',
           href: '/screener'
         },
-    {
-      klass: 'aktien',
-      emoji: '📈',
-      label: 'Aktien',
-      verdict: 'live',
-      headline: 'Live-Quotes verfügbar',
-      detail: 'Top-Indizes (S&P 500, Nasdaq, Dow, DAX, EURO STOXX 50) + 29 Mega-Caps und DAX-Top live via Yahoo Finance, Fallback Stooq. 5 Min Cache.',
-      href: '/aktien'
-    },
-    {
-      klass: 'gold',
-      emoji: '🥇',
-      label: 'Gold',
-      verdict: 'halten',
-      headline: 'Defensiv beibehalten',
-      detail: 'Gold bleibt der Stabilitäts-Anker. Kein schneller Trade, aber gut zur Risiko-Streuung.',
-      target: 'PAXG / XAUT',
-      href: '/gold'
-    },
+    (() => {
+      // Aktien-Karte aus dem Safety-Scan: nur wenn ALLE 8 Kriterien passen,
+      // wird KAUFEN gezeigt. Sonst Grade-B als „beobachten" oder generischer
+      // Hinweis. So spiegelt die Karte exakt das, was auf /aktien oben steht.
+      const sortedA = stockSafetyScan
+        .filter((e) => e.assessment.grade === 'A')
+        .sort((a, b) => b.assessment.score - a.assessment.score);
+      const topA = sortedA[0];
+      if (topA) {
+        return {
+          klass: 'aktien',
+          emoji: '📈',
+          label: 'Aktien',
+          verdict: 'kaufen',
+          headline: `${topA.name} kaufen`,
+          detail: `Grade A · alle ${topA.assessment.totalHard} Sicherheits-Kriterien erfüllt (MA-Stack, RSI, 52W-Position, Volumen, Momentum).`,
+          target: topA.symbol,
+          confidence: topA.assessment.score,
+          href: `/aktien/${encodeURIComponent(topA.symbol)}`
+        };
+      }
+      const topB = stockSafetyScan
+        .filter((e) => e.assessment.grade === 'B')
+        .sort((a, b) => b.assessment.score - a.assessment.score)[0];
+      if (topB) {
+        return {
+          klass: 'aktien',
+          emoji: '📈',
+          label: 'Aktien',
+          verdict: 'halten',
+          headline: `${topB.name} beobachten`,
+          detail: `Grade B · ${topB.assessment.passedHard}/${topB.assessment.totalHard} Kriterien. Noch nicht sicher genug zum Einstieg — eines fehlt.`,
+          target: topB.symbol,
+          confidence: topB.assessment.score,
+          href: `/aktien/${encodeURIComponent(topB.symbol)}`
+        };
+      }
+      return {
+        klass: 'aktien',
+        emoji: '📈',
+        label: 'Aktien',
+        verdict: 'warten',
+        headline: 'Heute nicht kaufen',
+        detail: 'Keine Aktie im Universum schafft heute die strengen Kriterien. Lieber abwarten.',
+        href: '/aktien'
+      };
+    })(),
+    (() => {
+      // Rohstoff-Karte analog Aktien: Top-Grade-A aus dem Commodity-Scan.
+      // Wenn nichts Grade A schafft → Gold-Default („defensiv halten") bleibt.
+      const sortedA = commoditySafetyScan
+        .filter((e) => e.assessment.grade === 'A')
+        .sort((a, b) => b.assessment.score - a.assessment.score);
+      const topA = sortedA[0];
+      if (topA) {
+        return {
+          klass: 'gold',
+          emoji: topA.emoji ?? '🛢️',
+          label: 'Rohstoffe',
+          verdict: 'kaufen',
+          headline: `${topA.name} kaufen`,
+          detail: `Grade A · alle ${topA.assessment.totalHard} Sicherheits-Kriterien erfüllt. ${topA.group}-Bereich.`,
+          target: topA.symbol,
+          confidence: topA.assessment.score,
+          href: `/rohstoffe/${encodeURIComponent(topA.symbol)}`
+        };
+      }
+      return {
+        klass: 'gold',
+        emoji: '🥇',
+        label: 'Gold',
+        verdict: 'halten',
+        headline: 'Defensiv beibehalten',
+        detail: 'Gold bleibt der Stabilitäts-Anker. Aktuell kein Rohstoff im Grade-A — Risiko-Streuung statt schneller Trade.',
+        target: 'PAXG / XAUT',
+        href: '/gold'
+      };
+    })(),
     sportLead
       ? {
           klass: 'sport',
