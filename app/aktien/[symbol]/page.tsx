@@ -18,6 +18,7 @@ import { InstrumentSafetyBacktestMini } from '@/components/instrument-safety-bac
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { SectorPeerComparison } from '@/components/sector-peer-comparison';
 import { SuggestedLevelsCard } from '@/components/suggested-levels-card';
+import { PositionSizer } from '@/components/position-sizer';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -107,6 +108,14 @@ export default async function AktienDetailPage({ params }: PageProps) {
               atr={atr14}
               currency={history.currency}
               grade={safety.grade}
+            />
+          )}
+
+          {safety && quote && atr14 !== null && safety.grade !== 'D' && (
+            <PositionSizer
+              entryPrice={quote.last}
+              stopPrice={quote.last - 2 * atr14}
+              currency={history.currency}
             />
           )}
 
