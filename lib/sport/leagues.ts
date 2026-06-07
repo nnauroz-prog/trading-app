@@ -76,7 +76,12 @@ export const FOOTBALL_LEAGUES: League[] = [
 export const BASKETBALL_LEAGUES: League[] = [
   { id: '4387', name: 'NBA', country: 'USA' },
   { id: '4408', name: 'EuroLeague', country: 'Europa' },
-  { id: '4607', name: 'BBL', country: 'Deutschland' }
+  // ID 4607 war bei mir als „BBL Deutschland" eingetragen — tatsächlich
+  // ist es bei TheSportsDB die NCAA Men's Basketball. Daher umgelabelt,
+  // sonst tauchten March-Madness-Spiele unter „BBL" auf (z. B. Michigan
+  // vs. Connecticut). Echte deutsche BBL hat bei TheSportsDB keine
+  // zuverlässige free-tier-ID.
+  { id: '4607', name: 'NCAA Men\'s Basketball', country: 'USA' }
 ];
 
 // Tennis-Turniere — die vier Grand Slams + ATP/WTA-Top.
