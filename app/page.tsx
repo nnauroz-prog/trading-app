@@ -613,6 +613,13 @@ export default async function HomePage() {
         🛡️ Alle maximal-sicheren Setups heute → /heute-sicher
       </Link>
 
+      <Link
+        href="/agenten"
+        className="block rounded-2xl border border-sky-400/40 bg-sky-950/15 p-3 text-center text-[12px] font-semibold text-sky-200 transition hover:bg-sky-950/30"
+      >
+        👥 Alle 12 Vorstands-Persönlichkeiten auf einen Blick → /agenten
+      </Link>
+
       {tier90.qualified && (
         <TradeTier90Card result={tier90} showcaseVerdict={tier90Showcase} />
       )}
