@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-export type Verdict = 'kaufen' | 'tippen' | 'halten' | 'warten' | 'keine_daten';
+export type Verdict = 'kaufen' | 'tippen' | 'halten' | 'warten' | 'keine_daten' | 'live';
 
 export interface AssetCardData {
   klass: 'krypto' | 'aktien' | 'gold' | 'sport';
@@ -63,6 +63,13 @@ const VERDICT_STYLE: Record<Verdict, { border: string; bg: string; text: string;
     text: 'text-slate-300',
     pillText: 'text-slate-500',
     label: 'NOCH KEINE DATEN'
+  },
+  live: {
+    border: 'border-sky-400/40',
+    bg: 'bg-sky-950/15',
+    text: 'text-sky-100',
+    pillText: 'text-sky-300',
+    label: 'LIVE-DATEN'
   }
 };
 
