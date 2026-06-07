@@ -6,6 +6,7 @@ import { WATCHLIST_CHANGED_EVENT, WatchlistItem, loadWatchlist, removeFromWatchl
 
 interface CandidateInfo {
   coinId: string;
+  symbol?: string;
   passedCount: number;
   priceChangePct24h: number;
   structure: string;
@@ -29,6 +30,19 @@ export function WatchlistStrip({ candidates }: { candidates: CandidateInfo[] }) 
 
   if (!mounted || items.length === 0) return null;
 
+  // Bug-Fix: Symbol-Fallback. Wenn coinId-Match scheitert (z. B. weil
+  // Watchlist alte „bitcoin"-Form speichert, Candidates aber „BTC" nutzen),
+  // matchen wir zusätzlich auf den Ticker — case-insensitive.
+  const findCandidate = (w: WatchlistItem): CandidateInfo | undefined => {
+    const direct = candidates.find((c) => c.coinId === w.coinId);
+    if (direct) return direct;
+    const wSym = w.symbol.toLowerCase();
+    return candidates.find((c) => {
+      if (c.symbol && c.symbol.toLowerCase() === wSym) return true;
+      return c.coinId.toLowerCase() === wSym;
+    });
+  };
+
   return (
     <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3">
       <div className="flex items-baseline justify-between">
@@ -37,7 +51,7 @@ export function WatchlistStrip({ candidates }: { candidates: CandidateInfo[] }) 
       </div>
       <ul className="space-y-1">
         {items.map((w) => {
-          const c = candidates.find((c) => c.coinId === w.coinId);
+          const c = findCandidate(w);
           return (
             <li key={w.coinId} className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
               <Link href={`/assets/${w.symbol.toLowerCase()}`} className="font-mono font-bold text-white hover:text-emerald-300">

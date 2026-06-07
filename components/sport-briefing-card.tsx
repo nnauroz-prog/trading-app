@@ -24,7 +24,7 @@ export function SportBriefingCard({ synth, todayFixtures }: { synth: FirmaSynthe
         <span className="font-mono text-slate-300">{synth.weekAhead.reduce((s, d) => s + d.fixtures.length, 0)} in 7 Tagen</span>
         <span className="mx-1 text-slate-600">·</span>
         <span className="font-mono text-amber-300">{synth.highConfidencePicks.length} sicher</span>
-        {dangerous && (
+        {dangerous && synth.totalFixturesNext7d > 0 && (
           <>
             <br />
             <span className="text-slate-300">Heißeste Mannschaft: <span className="font-semibold text-white">{dangerous.team}</span> <span className="text-slate-500">({dangerous.league})</span></span>
