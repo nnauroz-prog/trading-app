@@ -12,6 +12,23 @@ export interface SectorRow {
   d: number;
 }
 
+export interface HotSector {
+  group: string;
+  gradeACount: number;
+  total: number;
+  gradeARatio: number; // 0..1
+}
+
+// Liefert die Sektoren, in denen heute ungewöhnlich viele Aktien das volle
+// Sicherheits-Gate passieren — Default-Schwelle 40 %.
+export function detectHotSectors(entries: StockSafetyEntry[], minRatio = 0.4): HotSector[] {
+  const rows = summarizeStockSectors(entries);
+  return rows
+    .filter((r) => r.total > 0 && r.a / r.total >= minRatio)
+    .map((r) => ({ group: r.group, gradeACount: r.a, total: r.total, gradeARatio: r.a / r.total }))
+    .sort((x, y) => y.gradeARatio - x.gradeARatio);
+}
+
 export function summarizeStockSectors(entries: StockSafetyEntry[]): SectorRow[] {
   const map = new Map<string, SectorRow>();
   for (const e of entries) {

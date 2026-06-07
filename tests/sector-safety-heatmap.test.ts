@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { summarizeStockSectors } from '@/lib/market/sector-safety-summary';
+import { summarizeStockSectors, detectHotSectors } from '@/lib/market/sector-safety-summary';
 import type { StockSafetyEntry } from '@/lib/market/stock-safety-scan';
 import type { InstrumentSafetyAssessment } from '@/lib/market/instrument-safety';
 
@@ -64,5 +64,56 @@ describe('summarizeStockSectors', () => {
     const rows = summarizeStockSectors([entry('AAPL', 'US Tech', 'D')]);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ group: 'US Tech', total: 1, a: 0, b: 0, c: 0, d: 1 });
+  });
+});
+
+describe('detectHotSectors', () => {
+  it('Sektor mit hohem Grade-A-Anteil wird erkannt', () => {
+    const entries = [
+      entry('A1', 'US Tech', 'A'),
+      entry('A2', 'US Tech', 'A'),
+      entry('A3', 'US Tech', 'B'),
+      entry('JNJ', 'US Health', 'C')
+    ];
+    const hot = detectHotSectors(entries, 0.4);
+    expect(hot.length).toBe(1);
+    expect(hot[0].group).toBe('US Tech');
+    expect(hot[0].gradeARatio).toBeCloseTo(2 / 3, 3);
+  });
+
+  it('niedrige Grade-A-Quoten werden ausgefiltert', () => {
+    const entries = [
+      entry('A1', 'US Tech', 'A'),
+      entry('B1', 'US Tech', 'B'),
+      entry('B2', 'US Tech', 'B'),
+      entry('B3', 'US Tech', 'C')
+    ];
+    const hot = detectHotSectors(entries, 0.4);
+    expect(hot).toEqual([]);
+  });
+
+  it('Schwelle wird respektiert', () => {
+    const entries = [
+      entry('A1', 'X', 'A'),
+      entry('B1', 'X', 'B')
+    ];
+    expect(detectHotSectors(entries, 0.4)).toHaveLength(1);
+    expect(detectHotSectors(entries, 0.6)).toHaveLength(0);
+  });
+
+  it('Sortierung nach Grade-A-Ratio absteigend', () => {
+    const entries = [
+      entry('A1', 'Alpha', 'A'),
+      entry('B1', 'Alpha', 'B'),
+      entry('A2', 'Beta', 'A'),
+      entry('A3', 'Beta', 'A')
+    ];
+    const hot = detectHotSectors(entries, 0.4);
+    expect(hot[0].group).toBe('Beta');
+    expect(hot[1].group).toBe('Alpha');
+  });
+
+  it('leere Eingabe → leeres Array', () => {
+    expect(detectHotSectors([])).toEqual([]);
   });
 });
