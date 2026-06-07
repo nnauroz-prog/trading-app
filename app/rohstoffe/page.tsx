@@ -27,11 +27,19 @@ export default async function RohstoffePage() {
   const liveCount = quotes.filter((q) => q !== null).length;
 
   // Tages-Mover für die Schnellsicht: Top-3 hoch, Top-3 runter.
+  // „Stärkste" nur wenn wirklich positiv — sonst irreführend wenn der
+  // ganze Markt rot ist (z. B. „+-0,14 %" für eine Zucker-Position).
   const liveCommodities = allItems
     .map((c) => ({ c, q: quoteMap.get(c.symbol) ?? null }))
     .filter((x): x is { c: CommoditySymbol; q: NonNullable<typeof x.q> } => x.q !== null);
-  const moversUp = [...liveCommodities].sort((a, b) => b.q.changePct - a.q.changePct).slice(0, 3);
-  const moversDown = [...liveCommodities].sort((a, b) => a.q.changePct - b.q.changePct).slice(0, 3);
+  const moversUp = [...liveCommodities]
+    .filter((x) => x.q.changePct > 0)
+    .sort((a, b) => b.q.changePct - a.q.changePct)
+    .slice(0, 3);
+  const moversDown = [...liveCommodities]
+    .filter((x) => x.q.changePct < 0)
+    .sort((a, b) => a.q.changePct - b.q.changePct)
+    .slice(0, 3);
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 pb-20 md:p-6">
@@ -49,32 +57,46 @@ export default async function RohstoffePage() {
         </p>
       </header>
 
-      {liveCommodities.length >= 6 && (
+      {liveCommodities.length >= 6 && (moversUp.length > 0 || moversDown.length > 0) && (
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-2 rounded-2xl border border-emerald-400/30 bg-slate-900/40 p-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Stärkste heute</h2>
-            <ul className="space-y-1">
-              {moversUp.map(({ c, q }) => (
-                <li key={c.symbol} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
-                  {c.emoji && <span className="text-base leading-none">{c.emoji}</span>}
-                  <span className="min-w-0 truncate text-slate-100">{c.name}</span>
-                  <span className="font-mono font-bold text-emerald-300">+{q.changePct.toFixed(2)} %</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="space-y-2 rounded-2xl border border-rose-400/30 bg-slate-900/40 p-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-rose-300">Schwächste heute</h2>
-            <ul className="space-y-1">
-              {moversDown.map(({ c, q }) => (
-                <li key={c.symbol} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
-                  {c.emoji && <span className="text-base leading-none">{c.emoji}</span>}
-                  <span className="min-w-0 truncate text-slate-100">{c.name}</span>
-                  <span className="font-mono font-bold text-rose-300">{q.changePct.toFixed(2)} %</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {moversUp.length > 0 ? (
+            <div className="space-y-2 rounded-2xl border border-emerald-400/30 bg-slate-900/40 p-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Stärkste heute</h2>
+              <ul className="space-y-1">
+                {moversUp.map(({ c, q }) => (
+                  <li key={c.symbol} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
+                    {c.emoji && <span className="text-base leading-none">{c.emoji}</span>}
+                    <span className="min-w-0 truncate text-slate-100">{c.name}</span>
+                    <span className="font-mono font-bold text-emerald-300">+{q.changePct.toFixed(2)} %</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Stärkste heute</h2>
+              <p className="mt-2 text-[10.5px] leading-snug text-slate-500">Heute kein Rohstoff im Plus — gesamter Markt rot.</p>
+            </div>
+          )}
+          {moversDown.length > 0 ? (
+            <div className="space-y-2 rounded-2xl border border-rose-400/30 bg-slate-900/40 p-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-rose-300">Schwächste heute</h2>
+              <ul className="space-y-1">
+                {moversDown.map(({ c, q }) => (
+                  <li key={c.symbol} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
+                    {c.emoji && <span className="text-base leading-none">{c.emoji}</span>}
+                    <span className="min-w-0 truncate text-slate-100">{c.name}</span>
+                    <span className="font-mono font-bold text-rose-300">{q.changePct.toFixed(2)} %</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Schwächste heute</h2>
+              <p className="mt-2 text-[10.5px] leading-snug text-slate-500">Heute kein Rohstoff im Minus.</p>
+            </div>
+          )}
         </section>
       )}
 
