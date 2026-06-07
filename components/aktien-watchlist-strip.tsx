@@ -31,7 +31,7 @@ export function AktienWatchlistStrip() {
     <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3">
       <div className="flex items-baseline justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Meine Aktien-Watchlist</h2>
-        <Link href="/aktien" className="text-[10px] text-sky-300 hover:text-sky-200">alle Aktien →</Link>
+        <Link href="/aktien/watchlist" className="text-[10px] text-sky-300 hover:text-sky-200">verwalten →</Link>
       </div>
       <ul className="flex flex-wrap gap-1.5">
         {items.map((w) => (
