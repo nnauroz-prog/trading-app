@@ -11,6 +11,7 @@ import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { getStockSafetyBacktestSummary } from '@/lib/market/stock-safety-backtest-scan';
 import { SafeStockPicks } from '@/components/safe-stock-picks';
 import { StockSafetyBacktestCard } from '@/components/stock-safety-backtest-card';
+import { SectorSafetyHeatmap } from '@/components/sector-safety-heatmap';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -82,6 +83,8 @@ export default async function AktienPage() {
       <SectorHeatmap buckets={sectorBuckets} title="Sektor-Heatmap (Aktien)" />
 
       <SafeStockPicks entries={safetyScan} />
+
+      <SectorSafetyHeatmap entries={safetyScan} />
 
       <StockSafetyBacktestCard summary={safetyBacktest} />
 
