@@ -3,6 +3,7 @@ import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { ema, rsi as rsiSeries, atr as atrSeries, sma } from '@/lib/analysis/indicators';
 import { fetchYahooQuote } from '@/lib/market/yahoo-quote';
 import { GoldHoldingCalculator } from '@/components/gold/gold-holding-calculator';
+import { GoldPortfolioPanel } from '@/components/gold/gold-portfolio-panel';
 import type { MarketContext } from '@/lib/gold/gold-holding-calculator';
 
 export const dynamic = 'force-dynamic';
@@ -431,6 +432,13 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
       )}
 
       <GoldHoldingCalculator
+        history={history}
+        currentGoldPricePerOz={currentPrice}
+        todayIso={todayIso || new Date().toISOString().slice(0, 10)}
+        marketContext={goldMarketContext}
+      />
+
+      <GoldPortfolioPanel
         history={history}
         currentGoldPricePerOz={currentPrice}
         todayIso={todayIso || new Date().toISOString().slice(0, 10)}
