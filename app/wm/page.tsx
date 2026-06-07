@@ -6,6 +6,8 @@ import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
 import { predictWmMatch } from '@/lib/sport/wm-match-engine';
 import { WmOutrightCard } from '@/components/wm-outright-card';
 import { WmSafeMarketTips } from '@/components/wm-safe-market-tips';
+import { evaluateWmPersonas } from '@/lib/agents/wm-personas';
+import { WmPersonaPanel } from '@/components/wm-persona-panel';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -115,6 +117,7 @@ export default async function WorldCupPage() {
       </header>
 
       <WmSafeMarketTips todayIso={new Date().toISOString().slice(0, 10)} />
+      <WmPersonaPanel verdicts={evaluateWmPersonas(new Date().toISOString().slice(0, 10))} />
       <WmOutrightCard todayIso={new Date().toISOString().slice(0, 10)} />
 
       <section className="rounded-2xl border border-emerald-400/30 bg-emerald-950/15 p-3 text-[11.5px] leading-snug text-emerald-100/90">
