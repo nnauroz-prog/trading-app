@@ -52,6 +52,10 @@ export function recordVerdict(entry: HistoryEntry): void {
   save([...list, entry]);
 }
 
+export function clearPersonaHistory(): void {
+  save([]);
+}
+
 export interface VerdictStreak {
   // Letztes (jüngstes) Verdict in der Reihe.
   currentVerdict: string;
@@ -100,6 +104,22 @@ export function sliceLastDays(history: HistoryEntry[], days: number, todayIso: s
     slice.entries.sort((a, b) => a.dateIso.localeCompare(b.dateIso));
   }
   return [...map.values()];
+}
+
+// Liefert das jüngste Datum, an dem eine bestimmte Persona ein „Buy/Tipp"-Verdict
+// abgegeben hat. Null wenn keine Buy-Einträge in der Historie.
+function isBuyVerdict(verdict: string): boolean {
+  return verdict === 'KAUFEN' || verdict === 'BUY' || verdict === 'TIPPEN';
+}
+
+export function lastBuyDateFor(history: HistoryEntry[], klass: string, personaId: string): string | null {
+  let best: string | null = null;
+  for (const e of history) {
+    if (e.klass !== klass || e.personaId !== personaId) continue;
+    if (!isBuyVerdict(e.verdict)) continue;
+    if (best === null || e.dateIso > best) best = e.dateIso;
+  }
+  return best;
 }
 
 // Liefert die aktuelle Streak pro Persona-ID für eine bestimmte Asset-Klasse.
