@@ -16,6 +16,8 @@ import { backtestSafetyStrategy } from '@/lib/market/instrument-safety-backtest'
 import { InstrumentSafetyBacktestMini } from '@/components/instrument-safety-backtest-mini';
 import { SuggestedLevelsCard } from '@/components/suggested-levels-card';
 import { PositionSizer } from '@/components/position-sizer';
+import { computeSafetyScoreHistory } from '@/lib/market/safety-score-history';
+import { SafetyScoreTrend } from '@/components/safety-score-trend';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -55,6 +57,7 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
   const verdict = quote ? trendVerdict(quote.last, ma50, ma200) : 'neutral';
   const safety = quote && history ? evaluateInstrumentSafety({ price: quote.last, candles: history.candles }) : null;
   const safetyBacktest = history ? backtestSafetyStrategy(history.candles) : null;
+  const scoreHistory = history ? computeSafetyScoreHistory(history.candles, 60) : [];
 
   return (
     <main className="mx-auto max-w-3xl space-y-5 p-4 pb-20 md:p-6">
@@ -118,6 +121,8 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
           )}
 
           {safetyBacktest && <InstrumentSafetyBacktestMini result={safetyBacktest} name={commodity.name} />}
+
+          {scoreHistory.length >= 2 && <SafetyScoreTrend points={scoreHistory} />}
 
           <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Trend &amp; Indikatoren</h2>

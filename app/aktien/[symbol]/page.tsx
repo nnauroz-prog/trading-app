@@ -19,6 +19,8 @@ import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { SectorPeerComparison } from '@/components/sector-peer-comparison';
 import { SuggestedLevelsCard } from '@/components/suggested-levels-card';
 import { PositionSizer } from '@/components/position-sizer';
+import { computeSafetyScoreHistory } from '@/lib/market/safety-score-history';
+import { SafetyScoreTrend } from '@/components/safety-score-trend';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -60,6 +62,7 @@ export default async function AktienDetailPage({ params }: PageProps) {
   const verdict = quote ? trendVerdict(quote.last, ma50, ma200) : 'neutral';
   const safety = quote && history ? evaluateInstrumentSafety({ price: quote.last, candles: history.candles }) : null;
   const safetyBacktest = history ? backtestSafetyStrategy(history.candles) : null;
+  const scoreHistory = history ? computeSafetyScoreHistory(history.candles, 60) : [];
 
   return (
     <main className="mx-auto max-w-3xl space-y-5 p-4 pb-20 md:p-6">
@@ -120,6 +123,8 @@ export default async function AktienDetailPage({ params }: PageProps) {
           )}
 
           {safetyBacktest && <InstrumentSafetyBacktestMini result={safetyBacktest} name={stock.name} />}
+
+          {scoreHistory.length >= 2 && <SafetyScoreTrend points={scoreHistory} />}
 
           {safety && sectorPeers.length >= 2 && (
             <SectorPeerComparison
