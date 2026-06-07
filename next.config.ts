@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
 // Last bumped: 2026-06-01 — Welle 58.
-const BUILD_MARKER = 'welle-17401-17500-gold-portfolio-reife';
+const BUILD_MARKER = 'welle-17501-17600-persona-track-record-reife';
 
 const nextConfig: NextConfig = {
   env: {

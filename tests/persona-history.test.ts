@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sliceLastDays, computeStreak, getStreaksForPersonas, type HistoryEntry } from '@/lib/agents/persona-history';
+import { sliceLastDays, computeStreak, getStreaksForPersonas, lastBuyDateFor, type HistoryEntry } from '@/lib/agents/persona-history';
 
 function entry(date: string, klass: string, persona: string, verdict: string): HistoryEntry {
   return { dateIso: date, klass, personaId: persona, verdict, targetLabel: null };
@@ -142,5 +142,46 @@ describe('getStreaksForPersonas', () => {
     const result = getStreaksForPersonas(history, 'Aktien', ['conservative'], '2026-06-09', 7);
     expect(result.conservative?.currentVerdict).toBe('WARTEN');
     expect(result.conservative?.length).toBe(1);
+  });
+});
+
+describe('lastBuyDateFor', () => {
+  it('leere Historie → null', () => {
+    expect(lastBuyDateFor([], 'Aktien', 'conservative')).toBeNull();
+  });
+
+  it('liefert jüngstes KAUFEN-Datum', () => {
+    const history = [
+      entry('2026-06-01', 'Aktien', 'conservative', 'KAUFEN'),
+      entry('2026-06-05', 'Aktien', 'conservative', 'WARTEN'),
+      entry('2026-06-08', 'Aktien', 'conservative', 'KAUFEN'),
+      entry('2026-06-09', 'Aktien', 'conservative', 'BEOBACHTEN')
+    ];
+    expect(lastBuyDateFor(history, 'Aktien', 'conservative')).toBe('2026-06-08');
+  });
+
+  it('BUY (Krypto) und TIPPEN (Sport) zählen auch als Buy', () => {
+    const history = [
+      entry('2026-06-05', 'Krypto', 'a', 'BUY'),
+      entry('2026-06-09', 'WM', 'b', 'TIPPEN')
+    ];
+    expect(lastBuyDateFor(history, 'Krypto', 'a')).toBe('2026-06-05');
+    expect(lastBuyDateFor(history, 'WM', 'b')).toBe('2026-06-09');
+  });
+
+  it('andere Personas / Klassen werden ignoriert', () => {
+    const history = [
+      entry('2026-06-05', 'Aktien', 'aggressive', 'KAUFEN'),
+      entry('2026-06-09', 'Rohstoffe', 'conservative', 'KAUFEN')
+    ];
+    expect(lastBuyDateFor(history, 'Aktien', 'conservative')).toBeNull();
+  });
+
+  it('keine Buy-Einträge → null', () => {
+    const history = [
+      entry('2026-06-09', 'Aktien', 'conservative', 'WARTEN'),
+      entry('2026-06-08', 'Aktien', 'conservative', 'BEOBACHTEN')
+    ];
+    expect(lastBuyDateFor(history, 'Aktien', 'conservative')).toBeNull();
   });
 });
