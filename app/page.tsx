@@ -546,6 +546,13 @@ export default async function HomePage() {
 
       <HeuteMachen cards={heuteCards} />
 
+      <Link
+        href="/heute-sicher"
+        className="block rounded-2xl border border-emerald-400/40 bg-emerald-950/15 p-3 text-center text-[12px] font-semibold text-emerald-200 transition hover:bg-emerald-950/30"
+      >
+        🛡️ Alle maximal-sicheren Setups heute → /heute-sicher
+      </Link>
+
       {tier90.qualified && (
         <TradeTier90Card result={tier90} showcaseVerdict={tier90Showcase} />
       )}
