@@ -9,11 +9,23 @@ import {
   removeAktienWatch
 } from '@/lib/aktien-watchlist';
 
-// Kompakte Aktien-Watchlist auf der Startseite. Verlinkt jeden Eintrag
-// auf die Detail-Seite mit MA50/MA200/RSI/ATR/52W-Range/Performance.
-// Preise werden bewusst NICHT in der Liste angezeigt — das würde 30 Yahoo-Quotes
-// pro Render kosten. Wer aktuelle Werte will, klickt durch.
-export function AktienWatchlistStrip() {
+interface GradeInfo {
+  symbol: string;
+  grade: string;
+  score: number;
+}
+
+const GRADE_TONE: Record<string, string> = {
+  A: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-100',
+  B: 'border-sky-400/40 bg-sky-500/10 text-sky-200',
+  C: 'border-amber-400/40 bg-amber-500/10 text-amber-200',
+  D: 'border-rose-500/50 bg-rose-500/15 text-rose-200'
+};
+
+// Kompakte Aktien-Watchlist auf der Startseite. Pro Eintrag Live-Grade-Badge
+// (aus dem 30-Min-gecachten Safety-Scan, daher Server-Daten via Prop, ohne
+// dass der Client selbst fetchen müsste).
+export function AktienWatchlistStrip({ grades = [] }: { grades?: GradeInfo[] }) {
   const [items, setItems] = useState<AktienWatchlistItem[]>([]);
   const [mounted, setMounted] = useState(false);
 
@@ -26,6 +38,7 @@ export function AktienWatchlistStrip() {
   }, []);
 
   if (!mounted || items.length === 0) return null;
+  const gradeMap = new Map(grades.map((g) => [g.symbol, g]));
 
   return (
     <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3">
@@ -34,25 +47,32 @@ export function AktienWatchlistStrip() {
         <Link href="/aktien/watchlist" className="text-[10px] text-sky-300 hover:text-sky-200">verwalten →</Link>
       </div>
       <ul className="flex flex-wrap gap-1.5">
-        {items.map((w) => (
-          <li key={w.symbol} className="group inline-flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-950/40 pl-2 pr-1 py-1 text-[11px]">
-            <Link
-              href={`/aktien/${encodeURIComponent(w.symbol)}`}
-              className="flex items-baseline gap-1.5 text-slate-100 hover:text-emerald-300"
-            >
-              <span className="font-semibold">{w.name}</span>
-              <span className="font-mono text-[9.5px] text-slate-500 group-hover:text-emerald-400/70">{w.symbol}</span>
-            </Link>
-            <button
-              onClick={(e) => { e.preventDefault(); removeAktienWatch(w.symbol); }}
-              className="ml-0.5 px-1 text-[11px] text-slate-500 hover:text-rose-300"
-              title="Aus Watchlist entfernen"
-              aria-label={`${w.name} aus Watchlist entfernen`}
-            >
-              ×
-            </button>
-          </li>
-        ))}
+        {items.map((w) => {
+          const g = gradeMap.get(w.symbol);
+          return (
+            <li key={w.symbol} className="group inline-flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-950/40 pl-2 pr-1 py-1 text-[11px]">
+              <Link
+                href={`/aktien/${encodeURIComponent(w.symbol)}`}
+                className="flex items-baseline gap-1.5 text-slate-100 hover:text-emerald-300"
+              >
+                <span className="font-semibold">{w.name}</span>
+                {g && (
+                  <span className={`rounded border px-1 py-0 text-[9px] font-bold uppercase tracking-wider ${GRADE_TONE[g.grade] ?? 'border-slate-700 bg-slate-900 text-slate-400'}`}>
+                    {g.grade}
+                  </span>
+                )}
+              </Link>
+              <button
+                onClick={(e) => { e.preventDefault(); removeAktienWatch(w.symbol); }}
+                className="ml-0.5 px-1 text-[11px] text-slate-500 hover:text-rose-300"
+                title="Aus Watchlist entfernen"
+                aria-label={`${w.name} aus Watchlist entfernen`}
+              >
+                ×
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
