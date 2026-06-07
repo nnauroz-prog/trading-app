@@ -15,13 +15,15 @@ interface Item {
   hoverColor: string;
 }
 
+// 5 Top-Level-Bereiche, klar getrennt. Alle Sub-Pages
+// (Positionen / Risiko / Journal / Firmen / News / Watchlist usw.)
+// erreichbar über die jeweilige Hauptseite des Bereichs.
 const ITEMS: Item[] = [
-  { href: '/', label: 'Heute', emoji: '🏠', hoverColor: 'hover:text-emerald-300' },
-  { href: '/agent', label: 'Firmen', emoji: '🏢', hoverColor: 'hover:text-emerald-300' },
-  { href: '/sport', label: 'Sport', emoji: '⚽', badge: 'sport', hoverColor: 'hover:text-emerald-300' },
-  { href: '/positions', label: 'Positionen', emoji: '📊', hoverColor: 'hover:text-emerald-300' },
-  { href: '/risk', label: 'Risiko', emoji: '⚠️', badge: 'risk', hoverColor: 'hover:text-rose-300' },
-  { href: '/journal', label: 'Journal', emoji: '📓', hoverColor: 'hover:text-emerald-300' }
+  { href: '/', label: 'Krypto', emoji: '₿', hoverColor: 'hover:text-emerald-300' },
+  { href: '/aktien', label: 'Aktien', emoji: '📈', hoverColor: 'hover:text-emerald-300' },
+  { href: '/gold', label: 'Gold', emoji: '🥇', hoverColor: 'hover:text-amber-300' },
+  { href: '/rohstoffe', label: 'Rohstoffe', emoji: '🛢️', hoverColor: 'hover:text-sky-300' },
+  { href: '/sport', label: 'Sport', emoji: '⚽', badge: 'sport', hoverColor: 'hover:text-emerald-300' }
 ];
 
 function isActive(pathname: string | null, href: string): boolean {
@@ -37,7 +39,7 @@ export function BottomNav() {
       aria-label="Hauptnavigation"
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 bg-slate-950/95 backdrop-blur md:hidden"
     >
-      <ul className="mx-auto grid max-w-5xl grid-cols-6 text-[10px]">
+      <ul className="mx-auto grid max-w-5xl grid-cols-5 text-[10px]">
         {ITEMS.map((item) => {
           const active = isActive(pathname, item.href);
           const baseColor = active ? 'text-emerald-300' : 'text-slate-300';
