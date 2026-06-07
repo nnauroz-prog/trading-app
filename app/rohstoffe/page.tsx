@@ -10,6 +10,7 @@ import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
 import { getCommoditySafetyBacktestSummary } from '@/lib/market/commodity-safety-backtest-scan';
 import { SafeCommodityPicks } from '@/components/safe-commodity-picks';
 import { CommoditySafetyBacktestCard } from '@/components/commodity-safety-backtest-card';
+import { CommoditySectorSafetyHeatmap } from '@/components/commodity-sector-safety-heatmap';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -75,6 +76,8 @@ export default async function RohstoffePage() {
       <SectorHeatmap buckets={sectorBuckets} title="Sektor-Heatmap (Rohstoffe)" />
 
       <SafeCommodityPicks entries={safetyScan} />
+
+      <CommoditySectorSafetyHeatmap entries={safetyScan} />
 
       <CommoditySafetyBacktestCard summary={safetyBacktest} />
 
