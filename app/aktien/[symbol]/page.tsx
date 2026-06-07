@@ -17,6 +17,8 @@ import { backtestSafetyStrategy } from '@/lib/market/instrument-safety-backtest'
 import { InstrumentSafetyBacktestMini } from '@/components/instrument-safety-backtest-mini';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { SectorPeerComparison } from '@/components/sector-peer-comparison';
+import { evaluateStockPersonas } from '@/lib/agents/stock-personas';
+import { PersonaPickStrip } from '@/components/persona-pick-strip';
 import { SuggestedLevelsCard } from '@/components/suggested-levels-card';
 import { PositionSizer } from '@/components/position-sizer';
 import { computeSafetyScoreHistory } from '@/lib/market/safety-score-history';
@@ -59,6 +61,10 @@ export default async function AktienDetailPage({ params }: PageProps) {
     fetchYahooHistory(benchSymbol)
   ]);
   const sectorPeers = safetyScan.filter((e) => e.group === stock.group);
+  // Welche Personas haben diese Aktie als Top-Pick?
+  const personaPicks = evaluateStockPersonas(safetyScan)
+    .filter((v) => v.target?.symbol === stock.symbol)
+    .map((v) => ({ persona: v.persona, name: v.name, verdict: v.verdict }));
 
   const closes = history?.candles.map((c) => c.close) ?? [];
   const ma50 = sma(closes, 50);
@@ -114,6 +120,10 @@ export default async function AktienDetailPage({ params }: PageProps) {
         </section>
       ) : (
         <>
+          {personaPicks.length > 0 && (
+            <PersonaPickStrip picks={personaPicks} assetName={stock.name} />
+          )}
+
           {safety && <InstrumentSafetyCard assessment={safety} name={stock.name} />}
 
           {safety && quote && atr14 !== null && (
