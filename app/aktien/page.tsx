@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { QuoteRow } from '@/components/quote-row';
 import { STOCK_INDEX_SYMBOLS, STOCK_UNIVERSE, type StockSymbol } from '@/lib/market/stocks';
 import { fetchManyQuotes } from '@/lib/market/yahoo-quote';
+import { marketAverageChangePct, scoreUniverse } from '@/lib/market/stock-setup-score';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -28,6 +29,13 @@ export default async function AktienPage() {
   const liveCount = stocks.filter((q) => q !== null).length;
   const indexLiveCount = indices.filter((q) => q !== null).length;
 
+  // Setup-Scoring: relative Stärke gegen Index-Schnitt + simple Filter.
+  // Liefert die Top-Aktien des Tages für die Schnellansicht oben.
+  const marketAvg = marketAverageChangePct(indices);
+  const setups = scoreUniverse(stocks, marketAvg);
+  const topSetups = setups.slice(0, 5);
+  const strongCount = setups.filter((s) => s.tier === 'strong').length;
+
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 pb-20 md:p-6">
       <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
@@ -42,6 +50,42 @@ export default async function AktienPage() {
           {liveCount > 0 && <span> · <span className="text-emerald-300">{liveCount + indexLiveCount} Live-Quotes</span></span>}
         </p>
       </header>
+
+      {topSetups.length > 0 && (
+        <section className="space-y-2 rounded-2xl border border-emerald-400/30 bg-emerald-950/15 p-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">🎯 Top-Setups heute</h2>
+            <span className="text-[10px] text-emerald-200/70">
+              Markt-Schnitt: <span className="font-mono">{marketAvg >= 0 ? '+' : ''}{marketAvg.toFixed(2)} %</span>
+              {strongCount > 0 && <> · <span className="text-emerald-200">{strongCount} stark</span></>}
+            </span>
+          </div>
+          <p className="text-[10.5px] leading-snug text-emerald-100/70">
+            6-Punkt-Konfluenz: positiver Tag, relative Stärke ggü. Markt, kein FOMO-Spike, kein fallendes Messer, Markt offen, valider Tickers-Header. Reine Tagesveränderungs-Heuristik — keine Mehr-Tages-Trend-Analyse.
+          </p>
+          <ul className="space-y-1">
+            {topSetups.map((s) => {
+              const tierTone = s.tier === 'strong' ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-100'
+                : s.tier === 'standard' ? 'border-sky-400/40 bg-sky-500/10 text-sky-100'
+                : 'border-slate-700 bg-slate-900/60 text-slate-400';
+              return (
+                <li key={s.symbol} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-3 py-1.5 text-[11.5px]">
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-slate-100">{s.name}</span>
+                    <span className="block text-[9.5px] text-slate-500">{s.symbol}</span>
+                  </span>
+                  <span className={`font-mono text-[10.5px] font-semibold ${s.changePct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                    {s.changePct >= 0 ? '+' : ''}{s.changePct.toFixed(2)} %
+                  </span>
+                  <span className={`rounded border px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider ${tierTone}`}>
+                    {s.passed}/{s.total} · {s.tier === 'strong' ? 'stark' : s.tier === 'standard' ? 'normal' : 'schwach'}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
         <div className="flex items-baseline justify-between gap-2">
