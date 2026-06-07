@@ -7,6 +7,7 @@ import { collectFirmaVotes } from '@/lib/sport/firma/employee-votes';
 import { computeTeamForms } from '@/lib/sport/firma/scouts';
 import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 import { computeHeadToHead } from '@/lib/sport/h2h';
+import { leagueLabelForKey, matchLeagueForKey } from '@/lib/sport/firma/league-key-mapping';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
@@ -184,12 +185,56 @@ export default async function EmployeeDetailPage({ params }: PageProps) {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Rolle</h2>
         <p className="mt-1 text-[12.5px] leading-snug text-slate-200">{employee.role}</p>
         {employee.leagueKey && (
-          <div className="mt-2 text-[10px] uppercase tracking-wider text-slate-500">Liga-Bindung: {employee.leagueKey}</div>
+          <div className="mt-2 text-[10px] uppercase tracking-wider text-slate-500">
+            Liga-Bindung: <span className="font-mono text-slate-300">{leagueLabelForKey(employee.leagueKey) ?? employee.leagueKey}</span>
+          </div>
         )}
         {employee.teamKey && (
-          <div className="mt-2 text-[10px] uppercase tracking-wider text-slate-500">Team-Bindung: {employee.teamKey}</div>
+          <div className="mt-2 text-[10px] uppercase tracking-wider text-slate-500">Team-Bindung: <span className="font-mono text-slate-300">{employee.teamKey}</span></div>
         )}
       </section>
+
+      {(() => {
+        if (!employee.leagueKey) return null;
+        const namedLeagues = leagues.map((lf) => ({ ...lf.league, _lf: lf }));
+        const match = matchLeagueForKey(employee.leagueKey, namedLeagues);
+        if (!match) {
+          return (
+            <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 text-[11.5px] text-slate-400">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Coverage</h2>
+              <p className="mt-1 leading-snug">
+                {employee.name} ist gebunden an <span className="font-semibold">{leagueLabelForKey(employee.leagueKey) ?? employee.leagueKey}</span> — aktuell stehen keine Liga-Daten zur Verfügung.
+              </p>
+            </section>
+          );
+        }
+        const upcomingForLeague = match._lf.next.slice(0, 5);
+        return (
+          <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Coverage · {match.name} <span className="text-slate-500">({match.country})</span>
+            </h2>
+            <p className="text-[10.5px] leading-snug text-slate-500">
+              Die nächsten {upcomingForLeague.length} Spieltage in {employee.name}s Liga — das sind die Spiele, auf die {employee.name} in den nächsten Tagen schaut.
+            </p>
+            {upcomingForLeague.length > 0 ? (
+              <ul className="space-y-1">
+                {upcomingForLeague.map((f) => (
+                  <li key={f.id} className="grid grid-cols-[auto_1fr_auto] items-baseline gap-2 rounded border border-slate-800 bg-slate-950/40 px-2 py-1 text-[10.5px]">
+                    <span className="font-mono text-[9.5px] text-slate-500">{f.date}{f.time && ` · ${f.time}`}</span>
+                    <span className="truncate text-slate-200">{f.homeTeam} <span className="text-slate-500">vs.</span> {f.awayTeam}</span>
+                    {f.prediction && (
+                      <span className="shrink-0 font-mono text-[9.5px] text-emerald-300">{f.prediction.pickPlain} ({Math.round(f.prediction.pickConfidence * 100)}%)</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[10.5px] text-slate-500">Keine anstehenden Spiele in der nächsten Datenrunde.</p>
+            )}
+          </section>
+        );
+      })()}
 
       {colleagues.length > 0 && (
         <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
