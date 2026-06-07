@@ -3,24 +3,9 @@
 // wenn Konservativ UND Aggressiv das gleiche wählen, ist das selten.
 
 import Link from 'next/link';
+import { aggregateConsensus, type PersonaPickEntry } from '@/lib/agents/consensus-picks-aggregator';
 
-export interface PersonaPickEntry {
-  klass: 'Krypto' | 'Aktien' | 'Rohstoffe' | 'WM' | 'Liga-Fußball';
-  personaId: string;
-  personaName: string;
-  verdict: string;
-  assetKey: string;   // symbol oder eindeutige Fixture-ID
-  assetLabel: string; // Anzeige-Name
-  href: string;
-}
-
-interface ConsensusGroup {
-  assetKey: string;
-  assetLabel: string;
-  klass: string;
-  href: string;
-  picks: PersonaPickEntry[];
-}
+export type { PersonaPickEntry };
 
 function tone(verdict: string): string {
   if (verdict === 'KAUFEN' || verdict === 'BUY' || verdict === 'TIPPEN') {
@@ -33,24 +18,7 @@ function tone(verdict: string): string {
 }
 
 export function PersonaConsensusPicks({ entries }: { entries: PersonaPickEntry[] }) {
-  const groupMap = new Map<string, ConsensusGroup>();
-  for (const e of entries) {
-    const key = `${e.klass}::${e.assetKey}`;
-    const existing = groupMap.get(key);
-    if (existing) {
-      existing.picks.push(e);
-    } else {
-      groupMap.set(key, {
-        assetKey: e.assetKey,
-        assetLabel: e.assetLabel,
-        klass: e.klass,
-        href: e.href,
-        picks: [e]
-      });
-    }
-  }
-  const groups = [...groupMap.values()].filter((g) => g.picks.length >= 2);
-  groups.sort((a, b) => b.picks.length - a.picks.length);
+  const groups = aggregateConsensus(entries, 2);
 
   if (groups.length === 0) {
     return (
