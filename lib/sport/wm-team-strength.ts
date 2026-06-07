@@ -27,11 +27,15 @@ export interface TeamStrength {
 
 export const WM_2026_TEAMS: TeamStrength[] = [
   // Spitzenreiter / Top-Favoriten
-  { name: 'Argentinien', aliases: ['Argentina'], elo: 2155, offensive: 85, defensive: 78, formIndex: 4, confederation: 'CONMEBOL' },
-  { name: 'Frankreich', aliases: ['France'], elo: 2120, offensive: 88, defensive: 80, formIndex: 3, confederation: 'UEFA' },
+  // Form-Index 06/2026 — Markt-Konsens-Kalibrierung:
+  // Spanien (Euro-2024-Sieger) führt aktuelle Form klar an,
+  // Argentinien (WM-Sieger 2022) hat seit Copa America leicht nachgelassen,
+  // Frankreich + England durchgehend stabil im oberen Bereich.
+  { name: 'Argentinien', aliases: ['Argentina'], elo: 2155, offensive: 85, defensive: 78, formIndex: 2, confederation: 'CONMEBOL' },
+  { name: 'Frankreich', aliases: ['France'], elo: 2120, offensive: 88, defensive: 80, formIndex: 4, confederation: 'UEFA' },
   { name: 'Spanien', aliases: ['Spain'], elo: 2110, offensive: 86, defensive: 82, formIndex: 5, confederation: 'UEFA' },
-  { name: 'England', elo: 2090, offensive: 84, defensive: 79, formIndex: 3, confederation: 'UEFA' },
-  { name: 'Brasilien', aliases: ['Brazil'], elo: 2075, offensive: 82, defensive: 76, formIndex: 2, confederation: 'CONMEBOL' },
+  { name: 'England', elo: 2090, offensive: 84, defensive: 79, formIndex: 4, confederation: 'UEFA' },
+  { name: 'Brasilien', aliases: ['Brazil'], elo: 2075, offensive: 82, defensive: 76, formIndex: 3, confederation: 'CONMEBOL' },
   { name: 'Portugal', elo: 2055, offensive: 82, defensive: 75, formIndex: 3, confederation: 'UEFA' },
 
   // Starke Mittelfeld-Top
