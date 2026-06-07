@@ -71,6 +71,7 @@ import { fetchBothTickerSources } from '@/lib/providers/binance-tickers';
 import { checkCrossExchangePrices } from '@/lib/analysis/cross-exchange-check';
 import { CrossExchangeWarning } from '@/components/cross-exchange-warning';
 import { EhrlicheGrenzen } from '@/components/ehrliche-grenzen';
+import { AllToolsIndex } from '@/components/all-tools-index';
 import { MorningBriefingExport } from '@/components/morning-briefing-export';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import { computeEventWindow } from '@/lib/calendar/event-window';
@@ -641,6 +642,8 @@ export default async function HomePage() {
       />
 
       <EhrlicheGrenzen />
+
+      <AllToolsIndex />
 
       <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
         Keine Finanzberatung. Stop-Loss respektieren. Vergangenheit ≠ Zukunft.
