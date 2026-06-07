@@ -22,6 +22,7 @@ import { PositionSizer } from '@/components/position-sizer';
 import { computeSafetyScoreHistory } from '@/lib/market/safety-score-history';
 import { SafetyScoreTrend } from '@/components/safety-score-trend';
 import { TradePlanCopy } from '@/components/trade-plan-copy';
+import { RelativeStrengthCard } from '@/components/relative-strength-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -45,10 +46,15 @@ export default async function AktienDetailPage({ params }: PageProps) {
   const stock = STOCK_UNIVERSE.find((s) => s.symbol.toUpperCase() === symbol);
   if (!stock) notFound();
 
-  const [quote, history, safetyScan] = await Promise.all([
+  // Wähle den passenden Benchmark-Index: DAX für DE-Aktien (Suffix .DE),
+  // sonst S&P 500 als US-Standard.
+  const benchSymbol = stock.symbol.endsWith('.DE') ? '^GDAXI' : '^GSPC';
+  const benchName = stock.symbol.endsWith('.DE') ? 'DAX' : 'S&P 500';
+  const [quote, history, safetyScan, benchHistory] = await Promise.all([
     fetchYahooQuote(stock.symbol, stock.name),
     fetchYahooHistory(stock.symbol),
-    getStockSafetyScan()
+    getStockSafetyScan(),
+    fetchYahooHistory(benchSymbol)
   ]);
   const sectorPeers = safetyScan.filter((e) => e.group === stock.group);
 
@@ -147,6 +153,18 @@ export default async function AktienDetailPage({ params }: PageProps) {
               group={stock.group}
               ownScore={safety.score}
               peers={sectorPeers}
+            />
+          )}
+
+          {benchHistory && (
+            <RelativeStrengthCard
+              stockName={stock.name}
+              indexName={benchName}
+              points={[
+                { label: '1 Monat', stockPct: performancePct(history.candles, 21), indexPct: performancePct(benchHistory.candles, 21) },
+                { label: '3 Monate', stockPct: performancePct(history.candles, 63), indexPct: performancePct(benchHistory.candles, 63) },
+                { label: '1 Jahr', stockPct: performancePct(history.candles, 252), indexPct: performancePct(benchHistory.candles, 252) }
+              ]}
             />
           )}
 
