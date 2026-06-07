@@ -31,6 +31,7 @@ import { COMMODITY_UNIVERSE } from '@/lib/market/commodities';
 import { evaluateStockPersonas } from '@/lib/agents/stock-personas';
 import { evaluateCommodityPersonas } from '@/lib/agents/commodity-personas';
 import { CrossAssetConservativeCard, type CrossAssetConservativeRow } from '@/components/cross-asset-conservative-card';
+import { PersonaConsensusBanner } from '@/components/persona-consensus-banner';
 import { CoinScoreRecorder } from '@/components/coin-score-recorder';
 import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { SportBriefingCard } from '@/components/sport-briefing-card';
@@ -554,6 +555,7 @@ export default async function HomePage() {
       {(() => {
         const stockVerdicts = evaluateStockPersonas(stockSafetyScan);
         const commodityVerdicts = evaluateCommodityPersonas(commoditySafetyScan);
+        const cryptoVerdicts = personas;
         const stockConservative = stockVerdicts.find((v) => v.persona === 'conservative');
         const commodityConservative = commodityVerdicts.find((v) => v.persona === 'conservative');
         const cryptoConservative = personas.find((p) => p.persona === 'conservative');
@@ -583,7 +585,12 @@ export default async function HomePage() {
             href: '/rohstoffe'
           }
         ];
-        return <CrossAssetConservativeCard rows={rows} />;
+        return (
+          <>
+            <PersonaConsensusBanner verdicts={cryptoVerdicts.map((v) => ({ persona: v.persona, name: v.name, verdict: v.verdict }))} context="Krypto" />
+            <CrossAssetConservativeCard rows={rows} />
+          </>
+        );
       })()}
 
       <HeuteMachen cards={heuteCards} />

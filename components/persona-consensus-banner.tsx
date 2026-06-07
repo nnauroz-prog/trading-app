@@ -11,7 +11,7 @@ interface Verdict {
 
 interface Props {
   verdicts: Verdict[];
-  context: 'Aktien' | 'Rohstoffe' | 'WM' | 'Liga-Fußball';
+  context: 'Krypto' | 'Aktien' | 'Rohstoffe' | 'WM' | 'Liga-Fußball';
 }
 
 function classify(v: string): 'buy' | 'watch' | 'wait' {
