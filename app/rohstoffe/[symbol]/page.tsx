@@ -15,6 +15,7 @@ import { evaluateInstrumentSafety } from '@/lib/market/instrument-safety';
 import { backtestSafetyStrategy } from '@/lib/market/instrument-safety-backtest';
 import { InstrumentSafetyBacktestMini } from '@/components/instrument-safety-backtest-mini';
 import { SuggestedLevelsCard } from '@/components/suggested-levels-card';
+import { PositionSizer } from '@/components/position-sizer';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -105,6 +106,14 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
               atr={atr14}
               currency={history.currency}
               grade={safety.grade}
+            />
+          )}
+
+          {safety && quote && atr14 !== null && safety.grade !== 'D' && (
+            <PositionSizer
+              entryPrice={quote.last}
+              stopPrice={quote.last - 2 * atr14}
+              currency={history.currency}
             />
           )}
 
