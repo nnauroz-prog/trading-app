@@ -332,9 +332,9 @@ export default async function HomePage() {
       topCandidate: null,
       goodSetupsCount: 0,
       riskLevel: 'mittel',
-      action: 'Live-Quotes verfügbar — Übersicht öffnen.',
+      action: 'Live-Quotes + 6-Punkt-Konfluenz-Setup-Scoring → Übersicht öffnen.',
       href: '/aktien',
-      note: 'Top-Indizes + 29 Mega-Caps und DAX-Top via Yahoo Finance + Stooq-Fallback. Setup-Scoring kommt in einer späteren Welle.'
+      note: 'Top-Indizes + 29 Mega-Caps und DAX-Top via Yahoo + Stooq. Top-Setups, Tagesgewinner/-verlierer und Sektor-Übersicht direkt auf /aktien.'
     },
     {
       klass: 'gold',

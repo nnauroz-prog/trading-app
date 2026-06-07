@@ -51,7 +51,7 @@ export default function HilfePage() {
           <li>• <span className="font-semibold">Garantierte Gewinne.</span> Auch ein 90-%-Pick geht in 1 von 10 Fällen schief — und der eine kann der nächste sein.</li>
           <li>• <span className="font-semibold">Verletzungen / Aufstellungen / Tagesform.</span> Das Modell sieht Form aus den letzten Spielen, nicht ob der Star-Stürmer heute krank ist.</li>
           <li>• <span className="font-semibold">Live-Spiel-Anpassungen.</span> Empfehlungen sind vor Anstoß. Sobald ein Tor fällt, ist die Vorhersage Geschichte.</li>
-          <li>• <span className="font-semibold">Aktien-Setup-Scoring.</span> Live-Quotes für Indizes und Top-Aktien sind über /aktien verfügbar (Yahoo Finance + Stooq), das eigentliche Setup-Scoring (Konfluenz-Filter wie bei Krypto) kommt in einer späteren Welle.</li>
+          <li>• <span className="font-semibold">Aktien-Setup-Scoring.</span> Live-Quotes für Indizes und Top-Aktien sind über /aktien verfügbar (Yahoo Finance + Stooq). 6-Punkt-Konfluenz-Scoring pro Aktie (positiver Tag, relative Stärke ggü. Markt-Schnitt, kein FOMO-Spike, kein fallendes Messer, Markt offen, valider Tickers-Header) + Tagesgewinner/-verlierer-Übersicht. Stufen: 6/6 strong, 4–5/6 standard, ≤ 3/6 weak.</li>
         </ul>
       </section>
 
