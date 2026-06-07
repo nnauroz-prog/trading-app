@@ -61,8 +61,27 @@ export function RohstoffWatchlistPageClient({ scanEntries, perAssetBacktests }: 
   const scanMap = new Map(scanEntries.map((e) => [e.symbol, e]));
   const btMap = new Map(perAssetBacktests.map((b) => [b.symbol, b]));
 
+  const gradeAItems = items
+    .map((w) => ({ w, scan: scanMap.get(w.symbol) }))
+    .filter((x): x is { w: RohstoffWatchlistItem; scan: CommoditySafetyEntry } => x.scan?.assessment.grade === 'A');
+
   return (
     <section className="space-y-3">
+      {gradeAItems.length > 0 && (
+        <div className="rounded-2xl border border-emerald-400/60 bg-emerald-500/10 p-3 text-[12px] text-emerald-100">
+          <span className="font-semibold">⭐ Heute Kaufgelegenheit:</span>{' '}
+          {gradeAItems.map((x, i) => (
+            <span key={x.w.symbol}>
+              {i > 0 && ', '}
+              <Link href={`/rohstoffe/${encodeURIComponent(x.w.symbol)}`} className="font-bold underline hover:text-emerald-50">
+                {x.w.name}
+              </Link>{' '}
+              <span className="text-emerald-200/80">({x.scan.assessment.score}/100)</span>
+            </span>
+          ))}
+          {' '}— alle 8 Sicherheits-Kriterien erfüllt.
+        </div>
+      )}
       <div className="flex items-baseline justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">{items.length} Rohstoff{items.length === 1 ? '' : 'e'} in der Watchlist</h2>
         <Link href="/rohstoffe" className="text-[10px] text-sky-300 hover:text-sky-200">alle Rohstoffe →</Link>
