@@ -17,6 +17,7 @@ import { backtestSafetyStrategy } from '@/lib/market/instrument-safety-backtest'
 import { InstrumentSafetyBacktestMini } from '@/components/instrument-safety-backtest-mini';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { SectorPeerComparison } from '@/components/sector-peer-comparison';
+import { SuggestedLevelsCard } from '@/components/suggested-levels-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -99,6 +100,15 @@ export default async function AktienDetailPage({ params }: PageProps) {
       ) : (
         <>
           {safety && <InstrumentSafetyCard assessment={safety} name={stock.name} />}
+
+          {safety && quote && atr14 !== null && (
+            <SuggestedLevelsCard
+              price={quote.last}
+              atr={atr14}
+              currency={history.currency}
+              grade={safety.grade}
+            />
+          )}
 
           {safetyBacktest && <InstrumentSafetyBacktestMini result={safetyBacktest} name={stock.name} />}
 
