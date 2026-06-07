@@ -36,6 +36,13 @@ export default async function AktienPage() {
   const topSetups = setups.slice(0, 5);
   const strongCount = setups.filter((s) => s.tier === 'strong').length;
 
+  // Tagesgewinner und -verlierer aus der Quote-Liste.
+  const liveStocks = stocks
+    .map((q, i) => ({ q, stock: STOCK_UNIVERSE[i] }))
+    .filter((x): x is { q: NonNullable<typeof x.q>; stock: StockSymbol } => x.q !== null);
+  const winners = [...liveStocks].sort((a, b) => b.q.changePct - a.q.changePct).slice(0, 3);
+  const losers = [...liveStocks].sort((a, b) => a.q.changePct - b.q.changePct).slice(0, 3);
+
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 pb-20 md:p-6">
       <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
@@ -84,6 +91,33 @@ export default async function AktienPage() {
               );
             })}
           </ul>
+        </section>
+      )}
+
+      {liveStocks.length >= 6 && (
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-2 rounded-2xl border border-emerald-400/30 bg-slate-900/40 p-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Tagesgewinner</h2>
+            <ul className="space-y-1">
+              {winners.map((w) => (
+                <li key={w.stock.symbol} className="grid grid-cols-[1fr_auto] gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
+                  <span className="min-w-0 truncate text-slate-100">{w.stock.name}</span>
+                  <span className="font-mono font-bold text-emerald-300">+{w.q.changePct.toFixed(2)} %</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="space-y-2 rounded-2xl border border-rose-400/30 bg-slate-900/40 p-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-rose-300">Tagesverlierer</h2>
+            <ul className="space-y-1">
+              {losers.map((l) => (
+                <li key={l.stock.symbol} className="grid grid-cols-[1fr_auto] gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
+                  <span className="min-w-0 truncate text-slate-100">{l.stock.name}</span>
+                  <span className="font-mono font-bold text-rose-300">{l.q.changePct.toFixed(2)} %</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
       )}
 
