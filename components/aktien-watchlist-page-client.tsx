@@ -66,8 +66,29 @@ export function AktienWatchlistPageClient({ scanEntries, perAssetBacktests }: Pr
   const scanMap = new Map(scanEntries.map((e) => [e.symbol, e]));
   const btMap = new Map(perAssetBacktests.map((b) => [b.symbol, b]));
 
+  // Wenn JETZT in der Watchlist eine Aktie Grade A erreicht hat: prominenter
+  // Hinweis ganz oben, damit der User die Kaufgelegenheit nicht verpasst.
+  const gradeAItems = items
+    .map((w) => ({ w, scan: scanMap.get(w.symbol) }))
+    .filter((x): x is { w: AktienWatchlistItem; scan: StockSafetyEntry } => x.scan?.assessment.grade === 'A');
+
   return (
     <section className="space-y-3">
+      {gradeAItems.length > 0 && (
+        <div className="rounded-2xl border border-emerald-400/60 bg-emerald-500/10 p-3 text-[12px] text-emerald-100">
+          <span className="font-semibold">⭐ Heute Kaufgelegenheit:</span>{' '}
+          {gradeAItems.map((x, i) => (
+            <span key={x.w.symbol}>
+              {i > 0 && ', '}
+              <Link href={`/aktien/${encodeURIComponent(x.w.symbol)}`} className="font-bold underline hover:text-emerald-50">
+                {x.w.name}
+              </Link>{' '}
+              <span className="text-emerald-200/80">({x.scan.assessment.score}/100)</span>
+            </span>
+          ))}
+          {' '}— alle 8 Sicherheits-Kriterien erfüllt.
+        </div>
+      )}
       <div className="flex items-baseline justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">{items.length} Aktie{items.length === 1 ? '' : 'n'} in der Watchlist</h2>
         <Link href="/aktien" className="text-[10px] text-sky-300 hover:text-sky-200">alle Aktien →</Link>
