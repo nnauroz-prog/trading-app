@@ -90,6 +90,8 @@ import { NewsFeed } from '@/components/news-feed';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
+import { rankSafeFootballTips } from '@/lib/sport/safe-football-tips';
+import { rankSafeWmTips } from '@/lib/sport/wm-safe-tips';
 import { getCryptoNews } from '@/lib/news/news-agent';
 import { AdvancedOnly } from '@/components/advanced-only';
 import { ViewModeToggle } from '@/components/view-mode-toggle';
@@ -140,6 +142,23 @@ export default async function HomePage() {
   const cryptoTop = cryptoScored[0] ?? null;
 
   const sportLead = sportSynth.highConfidencePicks[0] ?? sportSynth.dailyTopPick;
+
+  // Sicherster Sport-Tipp quer durch Liga-Fußball + WM für die Sport-Karte.
+  // Multi-Markt-Scan (Über 1,5, Doppelchance, BTTS, 1X2) — höchste
+  // Modell-Wahrscheinlichkeit der nächsten 14 Tage gewinnt.
+  const safeSportTodayIso = new Date().toISOString().slice(0, 10);
+  const safeWmTips = rankSafeWmTips({ todayIso: safeSportTodayIso, maxDays: 14, minProbability: 0.7, limit: 5 });
+  const safeFootballTips = rankSafeFootballTips(sportLeagues, { todayIso: safeSportTodayIso, horizonDays: 14, minProbability: 0.7, limit: 5 });
+  const safeSportLead = (() => {
+    const wmBest = safeWmTips[0];
+    const liBest = safeFootballTips[0];
+    if (!wmBest && !liBest) return null;
+    if (!wmBest) return { kind: 'liga' as const, tip: liBest! };
+    if (!liBest) return { kind: 'wm' as const, tip: wmBest };
+    return wmBest.market.probability >= liBest.market.probability
+      ? { kind: 'wm' as const, tip: wmBest }
+      : { kind: 'liga' as const, tip: liBest };
+  })();
   const todayBerlin = sportSynth.weekAhead[0]?.date;
   const todaySportFixtures = todayBerlin === undefined ? [] : (sportSynth.weekAhead[0]?.fixtures ?? []);
   const sportExtraTips = todaySportFixtures
@@ -271,7 +290,23 @@ export default async function HomePage() {
         href: '/gold'
       };
     })(),
-    sportLead
+    // Sport-Karte: bevorzugt den sichersten Multi-Markt-Tipp (Über 1,5,
+    // Doppelchance etc.) statt nur das 1X2-Endergebnis. Fallback auf den
+    // klassischen sportLead, wenn nichts ≥70 % schafft.
+    safeSportLead
+      ? {
+          klass: 'sport',
+          emoji: '⚽',
+          label: 'Sport',
+          verdict: 'tippen',
+          headline: `${safeSportLead.tip.fixture.homeTeam} – ${safeSportLead.tip.fixture.awayTeam}`,
+          detail: `→ ${safeSportLead.tip.market.market} · ${safeSportLead.kind === 'wm' ? 'WM' : (safeSportLead.tip as typeof safeFootballTips[number]).leagueName}. ${safeSportLead.tip.market.rationale}`,
+          target: safeSportLead.tip.market.market,
+          confidence: Math.round(safeSportLead.tip.market.probability * 100),
+          href: safeSportLead.kind === 'wm' ? '/wm' : '/sport',
+          extraTips: sportExtraTips
+        }
+      : sportLead
       ? {
           klass: 'sport',
           emoji: '⚽',
