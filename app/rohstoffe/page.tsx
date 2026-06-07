@@ -13,6 +13,8 @@ import { CommoditySafetyBacktestCard } from '@/components/commodity-safety-backt
 import { CommoditySectorSafetyHeatmap } from '@/components/commodity-sector-safety-heatmap';
 import { detectHotCommodityGroups } from '@/lib/market/commodity-group-summary';
 import { HotCommodityGroupBanner } from '@/components/hot-commodity-group-banner';
+import { evaluateCommodityPersonas } from '@/lib/agents/commodity-personas';
+import { CommodityPersonaPanel } from '@/components/commodity-persona-panel';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -80,6 +82,8 @@ export default async function RohstoffePage() {
       <HotCommodityGroupBanner hotGroups={detectHotCommodityGroups(safetyScan)} />
 
       <SafeCommodityPicks entries={safetyScan} />
+
+      <CommodityPersonaPanel verdicts={evaluateCommodityPersonas(safetyScan)} />
 
       <CommoditySectorSafetyHeatmap entries={safetyScan} />
 
