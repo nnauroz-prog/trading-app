@@ -72,7 +72,7 @@ export function WatchlistStrip({ candidates }: { candidates: CandidateInfo[] }) 
               ) : (
                 <>
                   <span className="text-slate-500">—</span>
-                  <span className="text-[10px] text-slate-500">nicht im Universum</span>
+                  <span className="text-[10px] text-slate-500" title="Heute kein Top-Setup — Coin trotzdem im Universum, nur ohne Konfluenz-Daten">kein Top-Setup heute</span>
                   <span />
                 </>
               )}
