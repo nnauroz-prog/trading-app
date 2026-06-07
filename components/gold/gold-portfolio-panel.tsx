@@ -6,13 +6,19 @@ import {
   addGoldHolding,
   loadGoldHoldings,
   removeGoldHolding,
+  updateGoldHolding,
   type GoldHolding
 } from '@/lib/gold/gold-holdings-store';
 import {
   aggregateGoldPortfolio,
+  sortPortfolioPositions,
+  filterPortfolioByTax,
   type PortfolioHoldingInput,
-  type PortfolioSummary
+  type PortfolioSummary,
+  type PositionSortKey,
+  type TaxFilter
 } from '@/lib/gold/gold-portfolio-aggregator';
+import { holdingsToCsv } from '@/lib/gold/gold-holdings-export';
 import { GoldPortfolioSummary } from '@/components/gold/gold-portfolio-summary';
 import {
   ALLOY_OPTIONS,
@@ -86,8 +92,12 @@ function pnlClass(value: number | null): string {
 export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, marketContext }: Props) {
   const [holdings, setHoldings] = useState<GoldHolding[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [sortKey, setSortKey] = useState<PositionSortKey>('purchase-date-desc');
+  const [taxFilter, setTaxFilter] = useState<TaxFilter>('all');
+  // null = Add-Modus, sonst Editier-ID der zu ändernden Position.
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Add-Form-State (separat vom bestehenden Calculator-Form)
+  // Form-State (Add ODER Edit — entscheidet sich über editingId)
   const [formLabel, setFormLabel] = useState('Krügerrand');
   const [formDate, setFormDate] = useState(todayIso);
   const [formAmount, setFormAmount] = useState('100');
@@ -115,7 +125,26 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
     return aggregateGoldPortfolio(inputs, currentGoldPricePerOz, todayIso, marketContext);
   }, [holdings, history, currentGoldPricePerOz, todayIso, marketContext]);
 
-  function handleAdd(e: React.FormEvent) {
+  function startEdit(h: GoldHolding) {
+    setEditingId(h.id);
+    setFormLabel(h.label);
+    setFormDate(h.purchaseDate);
+    setFormAmount(String(h.amount));
+    setFormUnit(h.amountUnit);
+    setFormPromille(h.purityPromille);
+    setFormMode(h.purchasePriceMode);
+    setFormPrice(h.purchasePrice !== undefined ? String(h.purchasePrice) : '');
+    setFormFees(h.fees !== undefined ? String(h.fees) : '');
+    setFormSpread(h.sellSpreadPct !== undefined ? String(h.sellSpreadPct) : '');
+    setFormError(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setFormError(null);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
     const amount = Number.parseFloat(formAmount.replace(',', '.'));
@@ -130,7 +159,7 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
     const priceNum = Number.parseFloat(formPrice.replace(',', '.'));
     const feesNum = Number.parseFloat(formFees.replace(',', '.'));
     const spreadNum = Number.parseFloat(formSpread.replace(',', '.'));
-    addGoldHolding({
+    const payload = {
       label: formLabel.trim() || 'Position',
       purchaseDate: formDate,
       amount,
@@ -140,22 +169,58 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
       purchasePrice: Number.isFinite(priceNum) && priceNum > 0 ? priceNum : undefined,
       fees: Number.isFinite(feesNum) && feesNum > 0 ? feesNum : undefined,
       sellSpreadPct: Number.isFinite(spreadNum) && spreadNum > 0 ? spreadNum : undefined
-    });
+    };
+    if (editingId !== null) {
+      updateGoldHolding(editingId, payload);
+      setEditingId(null);
+    } else {
+      addGoldHolding(payload);
+    }
     // Form-Inputs nicht resetten — der User will oft mehrere ähnliche Positionen eintragen.
+  }
+
+  function downloadCsv() {
+    if (typeof window === 'undefined') return;
+    const csv = holdingsToCsv(holdings);
+    // BOM für Excel-DE-Unterstützung der deutschen Umlaute.
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gold-holdings-${todayIso}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   if (!mounted) {
     return null;
   }
 
+  // Sortier- und Filter-Ansicht der Positionen.
+  const filteredPositions = filterPortfolioByTax(summary.positions, taxFilter);
+  const visiblePositions = sortPortfolioPositions(filteredPositions, sortKey);
+
   return (
     <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-      <header>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-300">📒 Gold-Portfolio (lokal)</h3>
-        <p className="mt-1 text-[11px] leading-snug text-slate-400">
-          Mehrere Käufe getrennt speichern. Alles bleibt nur in deinem Browser — kein Server, kein Account.
-          Steuer-Status pro Position nach §23 EStG.
-        </p>
+      <header className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-300">📒 Gold-Portfolio (lokal)</h3>
+          <p className="mt-1 text-[11px] leading-snug text-slate-400">
+            Mehrere Käufe getrennt speichern. Alles bleibt nur in deinem Browser — kein Server, kein Account.
+            Steuer-Status pro Position nach §23 EStG.
+          </p>
+        </div>
+        {holdings.length > 0 && (
+          <button
+            type="button"
+            onClick={downloadCsv}
+            className="shrink-0 rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1 text-[10.5px] font-semibold text-slate-200 transition hover:border-amber-400/50 hover:text-amber-200"
+          >
+            ⬇ CSV-Export
+          </button>
+        )}
       </header>
 
       {holdings.length > 0 && <GoldPortfolioSummary summary={summary} />}
@@ -167,8 +232,50 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
       )}
 
       {holdings.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 text-[10.5px] text-slate-400">
+          <label className="flex items-center gap-1">
+            Sortieren:
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as PositionSortKey)}
+              className="rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-[10.5px] text-slate-200 focus:border-amber-400 focus:outline-none"
+            >
+              <option value="purchase-date-desc">Datum, neuest zuerst</option>
+              <option value="purchase-date-asc">Datum, ältest zuerst</option>
+              <option value="value-desc">aktueller Wert, höchst zuerst</option>
+              <option value="value-asc">aktueller Wert, niedrigst zuerst</option>
+              <option value="pnl-desc">PnL, höchst zuerst</option>
+              <option value="pnl-asc">PnL, niedrigst zuerst</option>
+              <option value="label-asc">Bezeichnung, A–Z</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-1">
+            Steuer-Status:
+            <select
+              value={taxFilter}
+              onChange={(e) => setTaxFilter(e.target.value as TaxFilter)}
+              className="rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-[10.5px] text-slate-200 focus:border-amber-400 focus:outline-none"
+            >
+              <option value="all">alle</option>
+              <option value="tax-free">nur steuerfrei (§23 EStG)</option>
+              <option value="taxable">nur noch steuerpflichtig</option>
+            </select>
+          </label>
+          <span className="ml-auto font-mono text-[10px] text-slate-500">
+            {visiblePositions.length} von {summary.positions.length} angezeigt
+          </span>
+        </div>
+      )}
+
+      {holdings.length > 0 && visiblePositions.length === 0 && (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-3 text-[11px] leading-snug text-amber-100">
+          Keine Position passt zum aktiven Filter. Filter zurücksetzen oder anderen Steuer-Status wählen.
+        </p>
+      )}
+
+      {visiblePositions.length > 0 && (
         <ul className="space-y-1">
-          {summary.positions.map((p) => {
+          {visiblePositions.map((p) => {
             const tax = p.taxStatus;
             return (
               <li key={p.input.id} className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
@@ -193,21 +300,46 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => removeGoldHolding(p.input.id)}
-                  className="shrink-0 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-300 hover:border-rose-400/50 hover:text-rose-200"
-                  aria-label={`${p.input.label} entfernen`}
-                >
-                  × entfernen
-                </button>
+                <div className="flex shrink-0 flex-col gap-1">
+                  <button
+                    onClick={() => {
+                      const original = holdings.find((x) => x.id === p.input.id);
+                      if (original) startEdit(original);
+                    }}
+                    className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-300 hover:border-amber-400/50 hover:text-amber-200"
+                    aria-label={`${p.input.label} bearbeiten`}
+                  >
+                    ✎ bearbeiten
+                  </button>
+                  <button
+                    onClick={() => removeGoldHolding(p.input.id)}
+                    className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-300 hover:border-rose-400/50 hover:text-rose-200"
+                    aria-label={`${p.input.label} entfernen`}
+                  >
+                    × entfernen
+                  </button>
+                </div>
               </li>
             );
           })}
         </ul>
       )}
 
-      <form onSubmit={handleAdd} className="space-y-2 rounded-lg border border-slate-700 bg-slate-950/40 p-3">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Position hinzufügen</div>
+      <form onSubmit={handleSubmit} className="space-y-2 rounded-lg border border-slate-700 bg-slate-950/40 p-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
+            {editingId !== null ? 'Position bearbeiten' : 'Position hinzufügen'}
+          </div>
+          {editingId !== null && (
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-[9.5px] text-slate-400 hover:text-rose-200"
+            >
+              Bearbeitung abbrechen
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <input
             type="text"
@@ -308,7 +440,7 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
             type="submit"
             className="shrink-0 rounded-md border border-emerald-400/50 bg-emerald-500/20 px-3 py-1.5 text-[12px] font-semibold text-emerald-100 transition hover:bg-emerald-500/30"
           >
-            + speichern
+            {editingId !== null ? '✓ Änderungen speichern' : '+ speichern'}
           </button>
         </div>
       </form>
