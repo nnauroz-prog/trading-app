@@ -21,6 +21,7 @@ import { SuggestedLevelsCard } from '@/components/suggested-levels-card';
 import { PositionSizer } from '@/components/position-sizer';
 import { computeSafetyScoreHistory } from '@/lib/market/safety-score-history';
 import { SafetyScoreTrend } from '@/components/safety-score-trend';
+import { TradePlanCopy } from '@/components/trade-plan-copy';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -118,6 +119,20 @@ export default async function AktienDetailPage({ params }: PageProps) {
             <PositionSizer
               entryPrice={quote.last}
               stopPrice={quote.last - 2 * atr14}
+              currency={history.currency}
+            />
+          )}
+
+          {safety && quote && atr14 !== null && safety.grade !== 'D' && (
+            <TradePlanCopy
+              symbol={stock.symbol}
+              name={stock.name}
+              grade={safety.grade}
+              score={safety.score}
+              price={quote.last}
+              stop={quote.last - 2 * atr14}
+              tp1={quote.last + 3 * atr14}
+              tp2={quote.last + 6 * atr14}
               currency={history.currency}
             />
           )}
