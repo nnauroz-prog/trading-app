@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
 // Last bumped: 2026-06-01 — Welle 58.
-const BUILD_MARKER = 'welle-10601-10700-wm-seite-profi-engine';
+const BUILD_MARKER = 'welle-10701-10800-wm-outright-karte';
 
 const nextConfig: NextConfig = {
   env: {

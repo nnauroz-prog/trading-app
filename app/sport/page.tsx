@@ -77,6 +77,7 @@ import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { WmNextMatches } from '@/components/wm-next-matches';
 import { WmDayPicker } from '@/components/wm-day-picker';
 import { WmTopTips } from '@/components/wm-top-tips';
+import { WmOutrightCard } from '@/components/wm-outright-card';
 import { WmEngineHonesty } from '@/components/wm-engine-honesty';
 import { WmGroupsOverview } from '@/components/wm-groups-overview';
 import { WmVenuesList } from '@/components/wm-venues-list';
@@ -434,6 +435,7 @@ export default async function SportPage() {
           beste Antwort auf „nichts in den Ligen" ist „WM kommt". */}
       <WmCountdownBanner todayIso={buckets.todayIso} />
       <WmTopTips todayIso={buckets.todayIso} />
+      <WmOutrightCard todayIso={buckets.todayIso} />
       <WmNextMatches todayIso={buckets.todayIso} />
       <WmDayPicker todayIso={buckets.todayIso} />
       <WmEngineHonesty todayIso={buckets.todayIso} />
