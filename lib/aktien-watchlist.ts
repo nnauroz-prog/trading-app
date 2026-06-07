@@ -5,6 +5,9 @@ export interface AktienWatchlistItem {
   symbol: string;       // Yahoo-Symbol (AAPL, SAP.DE, …)
   name: string;
   addedAt: number;
+  // Preis zum Zeitpunkt des Hinzufügens für „Seit Add"-Performance.
+  // Optional, damit alte Einträge ohne diesen Wert nicht kaputt gehen.
+  addedAtPrice?: number;
   note?: string;
 }
 
@@ -36,14 +39,14 @@ export function isAktienWatched(symbol: string): boolean {
   return loadAktienWatchlist().some((w) => w.symbol === symbol);
 }
 
-export function toggleAktienWatch(symbol: string, name: string): boolean {
+export function toggleAktienWatch(symbol: string, name: string, currentPrice?: number): boolean {
   const list = loadAktienWatchlist();
   const existing = list.findIndex((w) => w.symbol === symbol);
   if (existing >= 0) {
     save(list.filter((_, i) => i !== existing));
     return false;
   }
-  save([...list, { symbol, name, addedAt: Date.now() }]);
+  save([...list, { symbol, name, addedAt: Date.now(), addedAtPrice: currentPrice }]);
   return true;
 }
 

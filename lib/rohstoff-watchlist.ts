@@ -5,6 +5,8 @@ export interface RohstoffWatchlistItem {
   symbol: string;
   name: string;
   addedAt: number;
+  // Preis zum Zeitpunkt des Hinzufügens für „Seit Add"-Performance.
+  addedAtPrice?: number;
   note?: string;
 }
 
@@ -36,14 +38,14 @@ export function isRohstoffWatched(symbol: string): boolean {
   return loadRohstoffWatchlist().some((w) => w.symbol === symbol);
 }
 
-export function toggleRohstoffWatch(symbol: string, name: string): boolean {
+export function toggleRohstoffWatch(symbol: string, name: string, currentPrice?: number): boolean {
   const list = loadRohstoffWatchlist();
   const existing = list.findIndex((w) => w.symbol === symbol);
   if (existing >= 0) {
     save(list.filter((_, i) => i !== existing));
     return false;
   }
-  save([...list, { symbol, name, addedAt: Date.now() }]);
+  save([...list, { symbol, name, addedAt: Date.now(), addedAtPrice: currentPrice }]);
   return true;
 }
 

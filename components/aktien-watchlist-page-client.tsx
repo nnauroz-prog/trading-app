@@ -24,6 +24,10 @@ interface Props {
   perAssetBacktests: PerAsset[];
 }
 
+function fmtPct(value: number): string {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)} %`;
+}
+
 const GRADE_TONE: Record<string, string> = {
   A: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-100',
   B: 'border-sky-400/40 bg-sky-500/10 text-sky-200',
@@ -116,6 +120,16 @@ export function AktienWatchlistPageClient({ scanEntries, perAssetBacktests }: Pr
                   </span>
                 </p>
               )}
+              {scan && w.addedAtPrice !== undefined && w.addedAtPrice > 0 && (() => {
+                const sinceAddPct = ((scan.price - w.addedAtPrice) / w.addedAtPrice) * 100;
+                return (
+                  <p className="text-[10.5px] leading-snug text-slate-500">
+                    <span className="text-slate-400">Seit Add:</span>{' '}
+                    <span className={`font-mono font-bold ${sinceAddPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{fmtPct(sinceAddPct)}</span>
+                    {' '}<span className="text-slate-600">(Add-Preis: {w.addedAtPrice.toFixed(2)})</span>
+                  </p>
+                );
+              })()}
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[9.5px] text-slate-500">hinzugefügt {new Date(w.addedAt).toLocaleDateString('de-DE')}</span>
                 <button
