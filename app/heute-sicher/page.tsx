@@ -7,6 +7,10 @@ import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
 import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { rankSafeFootballTips } from '@/lib/sport/safe-football-tips';
 import { rankSafeWmTips } from '@/lib/sport/wm-safe-tips';
+import { detectHotSectors } from '@/lib/market/sector-safety-summary';
+import { detectHotCommodityGroups } from '@/lib/market/commodity-group-summary';
+import { HotSectorBanner } from '@/components/hot-sector-banner';
+import { HotCommodityGroupBanner } from '@/components/hot-commodity-group-banner';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -61,6 +65,9 @@ export default async function HeuteSicherPage() {
           <span className="ml-1 text-emerald-300">{totalCount} maximal-sichere Setups heute.</span>
         </p>
       </header>
+
+      <HotSectorBanner hotSectors={detectHotSectors(stocks)} />
+      <HotCommodityGroupBanner hotGroups={detectHotCommodityGroups(commodities)} />
 
       <section className="space-y-2 rounded-2xl border border-emerald-400/40 bg-emerald-950/15 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">📈 Aktien · Grade A</h2>
