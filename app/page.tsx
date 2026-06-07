@@ -632,8 +632,12 @@ export default async function HomePage() {
         structure: c.structure,
         nearSupport: c.nearSupport
       }))} />
-      <AktienWatchlistStrip />
-      <RohstoffWatchlistStrip />
+      <AktienWatchlistStrip
+        grades={stockSafetyScan.map((e) => ({ symbol: e.symbol, grade: e.assessment.grade, score: e.assessment.score }))}
+      />
+      <RohstoffWatchlistStrip
+        grades={commoditySafetyScan.map((e) => ({ symbol: e.symbol, grade: e.assessment.grade, score: e.assessment.score }))}
+      />
       <CoinScoreRecorder
         date={todayIso}
         candidates={masterSignal.candidates.map((c) => ({ coinId: c.coinId, symbol: c.symbol, passedCount: c.passedCount }))}
