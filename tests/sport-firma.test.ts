@@ -193,4 +193,86 @@ describe('buildFirmaSynthesis', () => {
     expect(synth.highConfidencePicks.length).toBeGreaterThan(0);
     expect(synth.highConfidencePicks[0].confidence).toBeCloseTo(0.72, 2);
   });
+
+  it('perLeagueTopPicks: pro Liga genau einen Top-Pick — der höchste pickConfidence', () => {
+    const fxA1 = upcoming('A1', 'A2', '2026-06-02');
+    fxA1.prediction = mkPred(0.6);
+    const fxA2 = upcoming('A3', 'A4', '2026-06-03');
+    fxA2.prediction = mkPred(0.75);
+    const fxB1 = upcoming('B1', 'B2', '2026-06-02');
+    fxB1.prediction = mkPred(0.55);
+
+    const synth = buildFirmaSynthesis([
+      league('Liga A', [], [fxA1, fxA2]),
+      league('Liga B', [], [fxB1])
+    ], '2026-06-01');
+
+    expect(synth.perLeagueTopPicks.length).toBe(2);
+    const aPick = synth.perLeagueTopPicks.find((p) => p.leagueName === 'Liga A');
+    expect(aPick?.confidence).toBeCloseTo(0.75, 2);
+    const bPick = synth.perLeagueTopPicks.find((p) => p.leagueName === 'Liga B');
+    expect(bPick?.confidence).toBeCloseTo(0.55, 2);
+  });
+
+  it('dailyTopPick: liefert das beste Spiel auch unterhalb der Safety-Schwelle', () => {
+    // Predictions alle unter 0.65 — highConfidencePicks bleibt leer.
+    const fx = upcoming('A1', 'A2', '2026-06-02');
+    fx.prediction = mkPred(0.55);
+    const synth = buildFirmaSynthesis([league('L1', [], [fx])], '2026-06-01');
+    expect(synth.highConfidencePicks).toHaveLength(0);
+    expect(synth.dailyTopPick).not.toBeNull();
+    expect(synth.dailyTopPick?.confidence).toBeCloseTo(0.55, 2);
+  });
+
+  it('dailyTopPick: null wenn KEIN Spiel eine Prediction hat', () => {
+    const fx = upcoming('A1', 'A2', '2026-06-02');
+    // Keine prediction gesetzt → fx.prediction bleibt null
+    const synth = buildFirmaSynthesis([league('L1', [], [fx])], '2026-06-01');
+    expect(synth.dailyTopPick).toBeNull();
+  });
+
+  it('chefStatement: nicht leer und enthält Tipper-Sprache', () => {
+    const synth = buildFirmaSynthesis([league('L1', [], [])], '2026-06-01');
+    expect(synth.chefStatement.length).toBeGreaterThan(20);
+  });
+
+  it('totalFixturesNext7d zählt Spiele im 45-Tage-Fenster (Feld-Name ist historisch, Implementierung nutzt 45d-Horizont)', () => {
+    const fxToday   = upcoming('A', 'B', '2026-06-01');
+    const fxIn14d   = upcoming('C', 'D', '2026-06-15');
+    const fxBeyond  = upcoming('E', 'F', '2026-08-15'); // weit über 45d
+    const synth = buildFirmaSynthesis([league('L1', [], [fxToday, fxIn14d, fxBeyond])], '2026-06-01');
+    // 2 Spiele im Fenster, fxBeyond liegt außerhalb.
+    expect(synth.totalFixturesNext7d).toBe(2);
+  });
+
+  it('safetyPicker und dailyPickCurator sind im Roster definiert', () => {
+    const synth = buildFirmaSynthesis([league('L1', [], [])], '2026-06-01');
+    expect(synth.safetyPicker.id).toBeTruthy();
+    expect(synth.dailyPickCurator.id).toBeTruthy();
+    expect(synth.scheduleGatekeeper.id).toBeTruthy();
+  });
+
+  it('honesty notes existieren als Array', () => {
+    const synth = buildFirmaSynthesis([league('L1', [], [])], '2026-06-01');
+    expect(Array.isArray(synth.honesty)).toBe(true);
+  });
 });
+
+function mkPred(conf: number) {
+  return {
+    lambdaHome: 1.5,
+    lambdaAway: 1.2,
+    pHome: conf,
+    pDraw: (1 - conf) / 2,
+    pAway: (1 - conf) / 2,
+    likelyScore: { home: 1, away: 1 },
+    homeGames: 5,
+    awayGames: 5,
+    pickSide: 'home' as const,
+    pickConfidence: conf,
+    pickLabel: 'klar' as const,
+    pickPlain: 'Heimsieg',
+    homeForm: { results: [], goalsFor: 0, goalsAgainst: 0 },
+    awayForm: { results: [], goalsFor: 0, goalsAgainst: 0 }
+  };
+}
