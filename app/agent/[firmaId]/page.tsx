@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { CEO_BIOS, SUBAGENT_BIOS } from '@/lib/agents/personalities';
-import { evaluatePersonas, type PersonaId } from '@/lib/agents/personas';
+import { evaluatePersonas, evaluatePersonasForCoin, type PersonaId } from '@/lib/agents/personas';
+import { FirmaCandidateRundown } from '@/components/firma-candidate-rundown';
 import { buildMasterSignal, type TradeMode } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { runSpaeher } from '@/lib/akademie/spaeher';
@@ -82,6 +83,16 @@ export default async function FirmaDetailPage({ params }: PageProps) {
   const memo = myVerdict ? generateTradeMemo(myVerdict) : null;
   const isBuy = myVerdict?.verdict === 'BUY';
 
+  // Rundown: was würde DIESE Firma über die anderen Top-Kandidaten sagen?
+  // Zeigt die Rejection-Logik transparent — nicht nur die Auswahl.
+  const topCandidateIds = report.candidates.slice(0, 5).map((c) => c.coinId);
+  const candidateVerdicts = topCandidateIds
+    .map((cid) => {
+      const v = evaluatePersonasForCoin(cid, report, backtest, spaeher, eventWindow);
+      return v.find((vv) => vv.persona === firmaId) ?? null;
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null);
+
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
       <Link href="/agent" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
@@ -126,6 +137,10 @@ export default async function FirmaDetailPage({ params }: PageProps) {
 
           {memo && <FirmaTradeMemoPanel memo={memo} />}
         </section>
+      )}
+
+      {candidateVerdicts.length > 0 && (
+        <FirmaCandidateRundown verdicts={candidateVerdicts} firmaName={FIRMA_LABEL[firmaId]} />
       )}
 
       <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
