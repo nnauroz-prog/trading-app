@@ -7,6 +7,7 @@ import { H2HBadge } from '@/components/h2h-badge';
 import { collectFirmaVotes } from '@/lib/sport/firma/employee-votes';
 import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 import { FirmaVotesCard } from '@/components/firma-votes-card';
+import { rankSafeFootballTips } from '@/lib/sport/safe-football-tips';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -36,6 +37,16 @@ export default async function TeamDetailPage({ params }: PageProps) {
   const upcoming = lf.next.filter((f) => f.homeTeam === team || f.awayTeam === team);
   const allPast = lf.last.filter((f) => f.homeTeam === team || f.awayTeam === team);
   const past = allPast.slice(0, 8);
+
+  // Sichere Multi-Markt-Tipps für die kommenden Spiele dieses Teams.
+  // Wir scannen ALLE Märkte (1X2, Doppelchance, Über/Unter, BTTS) der eigenen
+  // Liga und filtern auf die Spiele dieses Teams. So sieht der User auf einen
+  // Blick, welche Markt-Tipps für diese Mannschaft ≥70 % Wahrscheinlichkeit
+  // erreichen — nicht nur das 1X2-Endergebnis.
+  const todayIsoSport = new Date().toISOString().slice(0, 10);
+  const teamFixtureIds = new Set(upcoming.map((f) => f.id));
+  const safeTeamTips = rankSafeFootballTips([lf], { todayIso: todayIsoSport, horizonDays: 30, minProbability: 0.65, limit: 50 })
+    .filter((t) => teamFixtureIds.has(t.fixture.id));
 
   // Aggregat-Statistiken über alle aufgezeichneten Spiele dieser Mannschaft
   // (mehrere Saisons), nicht nur die letzten 5.
@@ -103,6 +114,42 @@ export default async function TeamDetailPage({ params }: PageProps) {
             <Stat label="Heim-Sieg-Quote" value={homeGames > 0 ? `${Math.round((homeWins / homeGames) * 100)}%` : '—'} tone="good" />
             <Stat label="Auswärts-Sieg-Quote" value={awayGames > 0 ? `${Math.round((awayWins / awayGames) * 100)}%` : '—'} tone="neutral" />
           </div>
+        </section>
+      )}
+
+      {safeTeamTips.length > 0 && (
+        <section className="space-y-2 rounded-2xl border border-emerald-400/50 bg-emerald-950/15 p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">🛡️ Sichere Markt-Tipps für {team}</h2>
+          <p className="text-[10.5px] leading-snug text-emerald-100/70">
+            Multi-Markt-Scan (1X2, Doppelchance, Über/Unter, BTTS) über die kommenden Spiele.
+            Nur Tipps ≥65 % Modell-Wahrscheinlichkeit, sortiert nach Sicherheit.
+          </p>
+          <ul className="space-y-1">
+            {safeTeamTips.map((t, i) => {
+              const tierTone = t.tier === 'maximal' ? 'border-emerald-300/70 bg-emerald-400/20 text-emerald-100'
+                : t.tier === 'sehr-sicher' ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200'
+                : 'border-sky-400/40 bg-sky-500/10 text-sky-200';
+              return (
+                <li key={`${t.fixture.id}-${t.market.market}`} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
+                  <span className="font-mono text-[10px] text-emerald-300">#{i + 1}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-slate-100">
+                      <span className="font-semibold">{t.fixture.homeTeam}</span>
+                      <span className="mx-1 text-slate-500">–</span>
+                      <span className="font-semibold">{t.fixture.awayTeam}</span>
+                    </span>
+                    <span className="block truncate text-[9.5px] text-slate-500">
+                      {fmtDate(t.fixture.date)}{t.fixture.time && ` · ${t.fixture.time}`} · {t.leagueName}
+                    </span>
+                    <span className="block truncate text-[10.5px] text-emerald-200">→ {t.market.market}</span>
+                  </span>
+                  <span className={`shrink-0 rounded border px-1.5 py-0.5 text-center font-mono text-[10px] font-bold ${tierTone}`}>
+                    {Math.round(t.market.probability * 100)} %
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       )}
 
