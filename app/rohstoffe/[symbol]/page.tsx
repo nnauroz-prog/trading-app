@@ -21,6 +21,8 @@ import { SafetyScoreTrend } from '@/components/safety-score-trend';
 import { TradePlanCopy } from '@/components/trade-plan-copy';
 import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
 import { CommodityGroupPeerComparison } from '@/components/commodity-group-peer-comparison';
+import { evaluateCommodityPersonas } from '@/lib/agents/commodity-personas';
+import { PersonaPickStrip } from '@/components/persona-pick-strip';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -50,6 +52,9 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
     getCommoditySafetyScan()
   ]);
   const groupPeers = safetyScan.filter((e) => e.group === commodity.group);
+  const personaPicks = evaluateCommodityPersonas(safetyScan)
+    .filter((v) => v.target?.symbol === commodity.symbol)
+    .map((v) => ({ persona: v.persona, name: v.name, verdict: v.verdict }));
 
   const closes = history?.candles.map((c) => c.close) ?? [];
   const ma50 = sma(closes, 50);
@@ -106,6 +111,10 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
         </section>
       ) : (
         <>
+          {personaPicks.length > 0 && (
+            <PersonaPickStrip picks={personaPicks} assetName={commodity.name} />
+          )}
+
           {safety && <InstrumentSafetyCard assessment={safety} name={commodity.name} />}
 
           {safety && quote && atr14 !== null && (
