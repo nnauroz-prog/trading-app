@@ -12,9 +12,12 @@ import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
 import { evaluateStockPersonas } from '@/lib/agents/stock-personas';
 import { evaluateCommodityPersonas } from '@/lib/agents/commodity-personas';
 import { evaluateWmPersonas } from '@/lib/agents/wm-personas';
+import { evaluateFootballPersonas } from '@/lib/agents/football-personas';
+import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { StockPersonaPanel } from '@/components/stock-persona-panel';
 import { CommodityPersonaPanel } from '@/components/commodity-persona-panel';
 import { WmPersonaPanel } from '@/components/wm-persona-panel';
+import { FootballPersonaPanel } from '@/components/football-persona-panel';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -23,25 +26,28 @@ export default async function AgentenPage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
   const todayIso = new Date().toISOString().slice(0, 10);
 
-  const [masterSignal, backtest, stockScan, commodityScan] = await Promise.all([
+  const [masterSignal, backtest, stockScan, commodityScan, leagues] = await Promise.all([
     buildMasterSignal(tradeMode),
     getBacktestSummary(),
     getStockSafetyScan(),
-    getCommoditySafetyScan()
+    getCommoditySafetyScan(),
+    getFootballFixtures()
   ]);
 
   const cryptoVerdicts = evaluatePersonas(masterSignal, backtest);
   const stockVerdicts = evaluateStockPersonas(stockScan);
   const commodityVerdicts = evaluateCommodityPersonas(commodityScan);
   const wmVerdicts = evaluateWmPersonas(todayIso);
+  const footballVerdicts = evaluateFootballPersonas(leagues, todayIso);
 
   // Cross-Asset-Statistik
   const totalBuy =
     cryptoVerdicts.filter((v) => v.verdict === 'BUY').length +
     stockVerdicts.filter((v) => v.verdict === 'KAUFEN').length +
     commodityVerdicts.filter((v) => v.verdict === 'KAUFEN').length +
-    wmVerdicts.filter((v) => v.verdict === 'TIPPEN').length;
-  const totalPersonas = cryptoVerdicts.length + stockVerdicts.length + commodityVerdicts.length + wmVerdicts.length;
+    wmVerdicts.filter((v) => v.verdict === 'TIPPEN').length +
+    footballVerdicts.filter((v) => v.verdict === 'TIPPEN').length;
+  const totalPersonas = cryptoVerdicts.length + stockVerdicts.length + commodityVerdicts.length + wmVerdicts.length + footballVerdicts.length;
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 pb-20 md:p-6">
@@ -107,6 +113,11 @@ export default async function AgentenPage() {
       <section>
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-300">🏆 WM-Vorstand ({wmVerdicts.length})</h2>
         <WmPersonaPanel verdicts={wmVerdicts} />
+      </section>
+
+      <section>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-300">⚽ Liga-Fußball-Vorstand ({footballVerdicts.length})</h2>
+        <FootballPersonaPanel verdicts={footballVerdicts} />
       </section>
 
       <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
