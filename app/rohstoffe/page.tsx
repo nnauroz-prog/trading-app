@@ -6,6 +6,8 @@ import { QuoteRow } from '@/components/quote-row';
 import { SectorHeatmap, aggregateBuckets } from '@/components/sector-heatmap';
 import { commoditiesByGroup, COMMODITY_UNIVERSE, type CommoditySymbol } from '@/lib/market/commodities';
 import { fetchManyQuotes } from '@/lib/market/yahoo-quote';
+import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
+import { SafeCommodityPicks } from '@/components/safe-commodity-picks';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -23,7 +25,10 @@ export default async function RohstoffePage() {
   const groups = commoditiesByGroup();
   // Alle in einem Rutsch holen, damit nur ein Promise.all wartet.
   const allItems: CommoditySymbol[] = GROUP_ORDER.flatMap((g) => groups[g]);
-  const quotes = await fetchManyQuotes(allItems.map((c) => ({ symbol: c.symbol, name: c.name })));
+  const [quotes, safetyScan] = await Promise.all([
+    fetchManyQuotes(allItems.map((c) => ({ symbol: c.symbol, name: c.name }))),
+    getCommoditySafetyScan()
+  ]);
   const quoteMap = new Map(allItems.map((c, i) => [c.symbol, quotes[i]]));
   const liveCount = quotes.filter((q) => q !== null).length;
 
@@ -65,6 +70,8 @@ export default async function RohstoffePage() {
       </header>
 
       <SectorHeatmap buckets={sectorBuckets} title="Sektor-Heatmap (Rohstoffe)" />
+
+      <SafeCommodityPicks entries={safetyScan} />
 
       {liveCommodities.length >= 6 && (moversUp.length > 0 || moversDown.length > 0) && (
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">

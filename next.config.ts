@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
 // Last bumped: 2026-06-01 — Welle 58.
-const BUILD_MARKER = 'welle-11501-11600-instrument-safety-aktien-rohstoffe';
+const BUILD_MARKER = 'welle-11601-11700-safe-picks-aktien-rohstoffe-uebersicht';
 
 const nextConfig: NextConfig = {
   env: {
