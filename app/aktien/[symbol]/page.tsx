@@ -23,6 +23,8 @@ import { computeSafetyScoreHistory } from '@/lib/market/safety-score-history';
 import { SafetyScoreTrend } from '@/components/safety-score-trend';
 import { TradePlanCopy } from '@/components/trade-plan-copy';
 import { RelativeStrengthCard } from '@/components/relative-strength-card';
+import { usMarketState, xetraMarketState } from '@/lib/market/market-hours';
+import { MarketStatusBadges } from '@/components/market-status-badges';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -103,6 +105,8 @@ export default async function AktienDetailPage({ params }: PageProps) {
           <AktienWatchlistToggle symbol={stock.symbol} name={stock.name} currentPrice={quote?.last} />
         </div>
       </header>
+
+      <MarketStatusBadges states={[stock.symbol.endsWith('.DE') ? xetraMarketState() : usMarketState()]} />
 
       {!history ? (
         <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5 text-sm text-slate-400">
