@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { InstrumentSafetyCard } from '@/components/instrument-safety-card';
+import { RohstoffWatchlistToggle } from '@/components/rohstoff-watchlist-toggle';
 import { COMMODITY_UNIVERSE } from '@/lib/market/commodities';
 import { fetchYahooQuote, fmtCurrency, fmtChange } from '@/lib/market/yahoo-quote';
 import { fetchYahooHistory, type PriceCandle } from '@/lib/market/yahoo-history';
@@ -83,6 +84,9 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
               </span>
             )}
           </div>
+        </div>
+        <div className="pt-1">
+          <RohstoffWatchlistToggle symbol={commodity.symbol} name={commodity.name} />
         </div>
       </header>
 
