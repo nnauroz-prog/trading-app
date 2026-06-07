@@ -614,6 +614,13 @@ export default async function HomePage() {
       />
 
       <Link
+        href="/daily"
+        className="block rounded-2xl border border-emerald-400/60 bg-emerald-950/25 p-3 text-center text-[12px] font-semibold text-emerald-100 transition hover:bg-emerald-950/40"
+      >
+        🌅 Tagesentscheidung: Modus, Top-Chancen, Warnzone, Vorstand → /daily
+      </Link>
+
+      <Link
         href="/heute-sicher"
         className="block rounded-2xl border border-emerald-400/40 bg-emerald-950/15 p-3 text-center text-[12px] font-semibold text-emerald-200 transition hover:bg-emerald-950/30"
       >

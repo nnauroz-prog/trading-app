@@ -73,14 +73,13 @@ export function computeStreak(entries: HistoryEntry[]): VerdictStreak | null {
   return { currentVerdict: last.verdict, length };
 }
 
-// Pure: filtert die History auf einen N-Tage-Slice und gruppiert
-// nach Persona-Identität.
 export interface PersonaSlice {
   klass: string;
   personaId: string;
   entries: HistoryEntry[];
 }
 
+// Filtert die History auf ein N-Tage-Fenster und gruppiert nach Persona-Identität.
 export function sliceLastDays(history: HistoryEntry[], days: number, todayIso: string): PersonaSlice[] {
   const todayMs = new Date(`${todayIso}T00:00:00`).getTime();
   const minMs = todayMs - days * 24 * 60 * 60 * 1000;
@@ -101,4 +100,23 @@ export function sliceLastDays(history: HistoryEntry[], days: number, todayIso: s
     slice.entries.sort((a, b) => a.dateIso.localeCompare(b.dateIso));
   }
   return [...map.values()];
+}
+
+// Liefert die aktuelle Streak pro Persona-ID für eine bestimmte Asset-Klasse.
+// Reine Funktion — kombiniert sliceLastDays + computeStreak. Wenn keine Einträge,
+// ist der Wert null.
+export function getStreaksForPersonas(
+  history: HistoryEntry[],
+  klass: string,
+  personaIds: string[],
+  todayIso: string,
+  windowDays = 30
+): Record<string, VerdictStreak | null> {
+  const slices = sliceLastDays(history, windowDays, todayIso);
+  const out: Record<string, VerdictStreak | null> = {};
+  for (const id of personaIds) {
+    const slice = slices.find((s) => s.klass === klass && s.personaId === id);
+    out[id] = slice ? computeStreak(slice.entries) : null;
+  }
+  return out;
 }
