@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import { QuoteRow } from '@/components/quote-row';
+import { SectorHeatmap, aggregateBuckets } from '@/components/sector-heatmap';
 import { STOCK_INDEX_SYMBOLS, STOCK_UNIVERSE, type StockSymbol } from '@/lib/market/stocks';
 import { fetchManyQuotes } from '@/lib/market/yahoo-quote';
 import { marketAverageChangePct, scoreUniverse } from '@/lib/market/stock-setup-score';
@@ -51,6 +52,12 @@ export default async function AktienPage() {
     .sort((a, b) => a.q.changePct - b.q.changePct)
     .slice(0, 3);
 
+  // Sektor-Heatmap pro Branche.
+  const sectorBuckets = aggregateBuckets(
+    STOCK_UNIVERSE.map((s, i) => ({ group: s.group, quote: stocks[i] })),
+    GROUP_ORDER
+  );
+
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 pb-20 md:p-6">
       <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
@@ -65,6 +72,8 @@ export default async function AktienPage() {
           {liveCount > 0 && <span> · <span className="text-emerald-300">{liveCount + indexLiveCount} Live-Quotes</span></span>}
         </p>
       </header>
+
+      <SectorHeatmap buckets={sectorBuckets} title="Sektor-Heatmap (Aktien)" />
 
       {topSetups.length > 0 && (
         <section className="space-y-2 rounded-2xl border border-emerald-400/30 bg-emerald-950/15 p-4">

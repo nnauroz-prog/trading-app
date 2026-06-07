@@ -31,7 +31,11 @@ export function QuoteRow({ quote, fallbackName, fallbackSymbol, unit, emoji }: P
     <li className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-3 py-2 text-[11.5px]">
       {emoji ? <span className="text-base leading-none">{emoji}</span> : <span className="font-mono text-[10px] text-slate-500">{quote.symbol}</span>}
       <span className="min-w-0">
-        <span className="block truncate font-semibold text-slate-100">{quote.name}</span>
+        {/* Bewusst fallbackName statt quote.name: Yahoo liefert oft
+            unhandliche Volltext-Namen wie „Brent Crude Oil Last Day
+            Financial Futures" — unsere kuratierten Namen aus der
+            Lib sind kürzer und konsistenter. */}
+        <span className="block truncate font-semibold text-slate-100">{fallbackName}</span>
         {unit && <span className="block truncate text-[9.5px] text-slate-500">{unit}</span>}
       </span>
       <span className="font-mono text-[12px] font-bold text-slate-100">

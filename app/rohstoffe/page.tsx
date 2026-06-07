@@ -3,7 +3,8 @@
 
 import Link from 'next/link';
 import { QuoteRow } from '@/components/quote-row';
-import { commoditiesByGroup, type CommoditySymbol } from '@/lib/market/commodities';
+import { SectorHeatmap, aggregateBuckets } from '@/components/sector-heatmap';
+import { commoditiesByGroup, COMMODITY_UNIVERSE, type CommoditySymbol } from '@/lib/market/commodities';
 import { fetchManyQuotes } from '@/lib/market/yahoo-quote';
 
 export const dynamic = 'force-dynamic';
@@ -41,6 +42,12 @@ export default async function RohstoffePage() {
     .sort((a, b) => a.q.changePct - b.q.changePct)
     .slice(0, 3);
 
+  // Sektor-Heatmap pro Gruppe.
+  const sectorBuckets = aggregateBuckets(
+    COMMODITY_UNIVERSE.map((c) => ({ group: c.group, quote: quoteMap.get(c.symbol) ?? null })),
+    GROUP_ORDER
+  );
+
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 pb-20 md:p-6">
       <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
@@ -56,6 +63,8 @@ export default async function RohstoffePage() {
           {liveCount > 0 && <span> · <span className="text-emerald-300">{liveCount} Live-Quotes</span></span>}
         </p>
       </header>
+
+      <SectorHeatmap buckets={sectorBuckets} title="Sektor-Heatmap (Rohstoffe)" />
 
       {liveCommodities.length >= 6 && (moversUp.length > 0 || moversDown.length > 0) && (
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
