@@ -18,6 +18,7 @@ import { StockPersonaPanel } from '@/components/stock-persona-panel';
 import { CommodityPersonaPanel } from '@/components/commodity-persona-panel';
 import { WmPersonaPanel } from '@/components/wm-persona-panel';
 import { FootballPersonaPanel } from '@/components/football-persona-panel';
+import { VorstandHeatmap } from '@/components/vorstand-heatmap';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -69,6 +70,18 @@ export default async function AgentenPage() {
           }
         </p>
       </header>
+
+      <VorstandHeatmap
+        cells={[
+          ...cryptoVerdicts.map((v) => ({ klass: 'Krypto', persona: v.persona, verdict: v.verdict })),
+          ...stockVerdicts.map((v) => ({ klass: 'Aktien', persona: v.persona, verdict: v.verdict })),
+          ...commodityVerdicts.map((v) => ({ klass: 'Rohstoffe', persona: v.persona, verdict: v.verdict })),
+          ...wmVerdicts.map((v) => ({ klass: 'WM', persona: v.persona, verdict: v.verdict })),
+          ...footballVerdicts.map((v) => ({ klass: 'Liga-Fußball', persona: v.persona, verdict: v.verdict }))
+        ]}
+        klassOrder={['Krypto', 'Aktien', 'Rohstoffe', 'WM', 'Liga-Fußball']}
+        personaOrder={['conservative', 'balanced', 'aggressive']}
+      />
 
       <section>
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-300">₿ Krypto-Vorstand ({cryptoVerdicts.length})</h2>
