@@ -19,6 +19,7 @@ import { CommodityPersonaPanel } from '@/components/commodity-persona-panel';
 import { WmPersonaPanel } from '@/components/wm-persona-panel';
 import { FootballPersonaPanel } from '@/components/football-persona-panel';
 import { VorstandHeatmap } from '@/components/vorstand-heatmap';
+import { PersonaConsensusPicks, type PersonaPickEntry } from '@/components/persona-consensus-picks';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -70,6 +71,51 @@ export default async function AgentenPage() {
           }
         </p>
       </header>
+
+      {(() => {
+        const allPicks: PersonaPickEntry[] = [];
+        for (const v of cryptoVerdicts) {
+          if (v.target) {
+            allPicks.push({
+              klass: 'Krypto', personaId: v.persona, personaName: v.name, verdict: v.verdict,
+              assetKey: v.target.symbol, assetLabel: v.target.symbol, href: `/assets/${v.target.symbol.toLowerCase()}`
+            });
+          }
+        }
+        for (const v of stockVerdicts) {
+          if (v.target) {
+            allPicks.push({
+              klass: 'Aktien', personaId: v.persona, personaName: v.name, verdict: v.verdict,
+              assetKey: v.target.symbol, assetLabel: v.target.name, href: `/aktien/${encodeURIComponent(v.target.symbol)}`
+            });
+          }
+        }
+        for (const v of commodityVerdicts) {
+          if (v.target) {
+            allPicks.push({
+              klass: 'Rohstoffe', personaId: v.persona, personaName: v.name, verdict: v.verdict,
+              assetKey: v.target.symbol, assetLabel: v.target.name, href: `/rohstoffe/${encodeURIComponent(v.target.symbol)}`
+            });
+          }
+        }
+        for (const v of wmVerdicts) {
+          if (v.target) {
+            allPicks.push({
+              klass: 'WM', personaId: v.persona, personaName: v.name, verdict: v.verdict,
+              assetKey: v.target.fixture.id, assetLabel: `${v.target.fixture.homeTeam} – ${v.target.fixture.awayTeam}`, href: `/wm/${encodeURIComponent(v.target.fixture.id)}`
+            });
+          }
+        }
+        for (const v of footballVerdicts) {
+          if (v.target) {
+            allPicks.push({
+              klass: 'Liga-Fußball', personaId: v.persona, personaName: v.name, verdict: v.verdict,
+              assetKey: v.target.fixture.id, assetLabel: `${v.target.fixture.homeTeam} – ${v.target.fixture.awayTeam}`, href: '/sport'
+            });
+          }
+        }
+        return <PersonaConsensusPicks entries={allPicks} />;
+      })()}
 
       <VorstandHeatmap
         cells={[
