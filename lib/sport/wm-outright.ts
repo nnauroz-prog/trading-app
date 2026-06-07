@@ -59,7 +59,11 @@ export function computeOutright(teams: TeamStrength[] = WM_2026_TEAMS): Outright
 
   for (let i = 0; i < ranked.length; i++) {
     const team = ranked[i];
-    const myElo = team.elo + team.formIndex * 8 + (team.isHost ? 20 : 0);
+    // Form-Index-Gewichtung 06/2026 erhöht auf ×15 (vorher ×8). Markt-
+    // Konsens-Vergleich zeigt: Tipico-Quoten gewichten aktuelle Form
+    // stärker als reine ELO. Eine Form-Differenz von +5 vs. +1 zwischen
+    // Spanien und Niederlande macht so 60 ELO-Punkte aus statt 32.
+    const myElo = team.elo + team.formIndex * 15 + (team.isHost ? 20 : 0);
 
     // 1) Gruppenphase
     const groupAdvance = groupAdvanceProb(i + 1, ranked.length);
