@@ -88,7 +88,7 @@ export default async function AktienDetailPage({ params }: PageProps) {
           </div>
         </div>
         <div className="pt-1">
-          <AktienWatchlistToggle symbol={stock.symbol} name={stock.name} />
+          <AktienWatchlistToggle symbol={stock.symbol} name={stock.name} currentPrice={quote?.last} />
         </div>
       </header>
 

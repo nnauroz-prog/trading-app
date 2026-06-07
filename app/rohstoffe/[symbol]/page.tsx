@@ -86,7 +86,7 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
           </div>
         </div>
         <div className="pt-1">
-          <RohstoffWatchlistToggle symbol={commodity.symbol} name={commodity.name} />
+          <RohstoffWatchlistToggle symbol={commodity.symbol} name={commodity.name} currentPrice={quote?.last} />
         </div>
       </header>
 
