@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sliceLastDays, computeStreak, type HistoryEntry } from '@/lib/agents/persona-history';
+import { sliceLastDays, computeStreak, getStreaksForPersonas, type HistoryEntry } from '@/lib/agents/persona-history';
 
 function entry(date: string, klass: string, persona: string, verdict: string): HistoryEntry {
   return { dateIso: date, klass, personaId: persona, verdict, targetLabel: null };
@@ -97,5 +97,50 @@ describe('computeStreak', () => {
     ])!;
     expect(s.currentVerdict).toBe('BEOBACHTEN');
     expect(s.length).toBe(2);
+  });
+});
+
+describe('getStreaksForPersonas', () => {
+  it('leere Historie → alle Personas null', () => {
+    const result = getStreaksForPersonas([], 'Aktien', ['conservative', 'balanced', 'aggressive'], '2026-06-09');
+    expect(result).toEqual({ conservative: null, balanced: null, aggressive: null });
+  });
+
+  it('filtert auf die gewünschte Asset-Klasse', () => {
+    const history = [
+      entry('2026-06-09', 'Aktien', 'conservative', 'KAUFEN'),
+      entry('2026-06-09', 'Rohstoffe', 'conservative', 'WARTEN')
+    ];
+    const result = getStreaksForPersonas(history, 'Aktien', ['conservative'], '2026-06-09');
+    expect(result.conservative?.currentVerdict).toBe('KAUFEN');
+  });
+
+  it('Streak-Berechnung pro Persona unabhängig', () => {
+    const history = [
+      entry('2026-06-07', 'Aktien', 'conservative', 'KAUFEN'),
+      entry('2026-06-08', 'Aktien', 'conservative', 'KAUFEN'),
+      entry('2026-06-09', 'Aktien', 'conservative', 'KAUFEN'),
+      entry('2026-06-09', 'Aktien', 'aggressive', 'WARTEN')
+    ];
+    const result = getStreaksForPersonas(history, 'Aktien', ['conservative', 'aggressive'], '2026-06-09');
+    expect(result.conservative?.length).toBe(3);
+    expect(result.aggressive?.length).toBe(1);
+  });
+
+  it('Personas ohne Einträge → null', () => {
+    const history = [entry('2026-06-09', 'Aktien', 'conservative', 'KAUFEN')];
+    const result = getStreaksForPersonas(history, 'Aktien', ['conservative', 'balanced'], '2026-06-09');
+    expect(result.conservative).not.toBeNull();
+    expect(result.balanced).toBeNull();
+  });
+
+  it('Fenster begrenzt auf windowDays', () => {
+    const history = [
+      entry('2026-05-01', 'Aktien', 'conservative', 'KAUFEN'),
+      entry('2026-06-09', 'Aktien', 'conservative', 'WARTEN')
+    ];
+    const result = getStreaksForPersonas(history, 'Aktien', ['conservative'], '2026-06-09', 7);
+    expect(result.conservative?.currentVerdict).toBe('WARTEN');
+    expect(result.conservative?.length).toBe(1);
   });
 });

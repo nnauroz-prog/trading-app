@@ -16,7 +16,6 @@ export function SafetyScoreTrend({ points }: { points: ScoreHistoryPoint[] }) {
   const W = 320;
   const H = 80;
 
-  const scores = points.map((p) => p.score);
   const min = 0;
   const max = 100;
   const range = max - min;

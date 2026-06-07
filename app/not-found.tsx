@@ -10,7 +10,8 @@ const QUICK_LINKS = [
   { href: '/sport', label: 'Sport', emoji: '⚽' },
   { href: '/wm', label: 'WM 2026', emoji: '🏆' },
   { href: '/heute-sicher', label: 'Heute besonders sicher', emoji: '🛡️' },
-  { href: '/agenten', label: 'Vorstände & Agenten', emoji: '👥' }
+  { href: '/agenten', label: 'Vorstände & Agenten', emoji: '👥' },
+  { href: '/daily', label: 'Daily Decision Center', emoji: '🌅' }
 ];
 
 export default function NotFound() {
