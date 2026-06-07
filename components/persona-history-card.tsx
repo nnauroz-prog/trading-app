@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   loadPersonaHistory,
   sliceLastDays,
+  computeStreak,
   PERSONA_HISTORY_CHANGED_EVENT,
   type HistoryEntry
 } from '@/lib/agents/persona-history';
@@ -80,8 +81,9 @@ export function PersonaHistoryCard({ days = 7, todayIso }: { days?: number; toda
             <ul className="space-y-1">
               {list.sort((a, b) => a.personaId.localeCompare(b.personaId)).map((s) => {
                 const buyDays = s.entries.filter((e) => buyClass(e.verdict)).length;
+                const streak = computeStreak(s.entries);
                 return (
-                  <li key={s.personaId} className="grid grid-cols-[auto_auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
+                  <li key={s.personaId} className="grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
                     <span className="text-base leading-none">{PERSONA_EMOJI[s.personaId] ?? ''}</span>
                     <span className="font-semibold text-slate-100">{PERSONA_LABEL[s.personaId] ?? s.personaId}</span>
                     <div className="flex items-center gap-0.5">
@@ -94,6 +96,17 @@ export function PersonaHistoryCard({ days = 7, todayIso }: { days?: number; toda
                         />
                       ))}
                     </div>
+                    {streak && streak.length >= 2 && (
+                      <span className={`rounded border px-1 py-0 font-mono text-[9.5px] font-bold uppercase tracking-wider ${
+                        buyClass(streak.currentVerdict)
+                          ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200'
+                          : streak.currentVerdict === 'BEOBACHTEN'
+                            ? 'border-amber-400/40 bg-amber-500/10 text-amber-200'
+                            : 'border-slate-700 bg-slate-900 text-slate-400'
+                      }`}>
+                        {streak.length}× {streak.currentVerdict}
+                      </span>
+                    )}
                     <span className="font-mono text-[9.5px] text-emerald-300">{buyDays}/{s.entries.length}</span>
                   </li>
                 );

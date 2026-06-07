@@ -52,6 +52,27 @@ export function recordVerdict(entry: HistoryEntry): void {
   save([...list, entry]);
 }
 
+export interface VerdictStreak {
+  // Letztes (jüngstes) Verdict in der Reihe.
+  currentVerdict: string;
+  // Wie viele Tage hintereinander wurde dasselbe Verdict abgegeben?
+  length: number;
+}
+
+// Berechnet die aktuelle Streak in einer chronologisch sortierten
+// (oder unsortierten) Liste von Einträgen.
+export function computeStreak(entries: HistoryEntry[]): VerdictStreak | null {
+  if (entries.length === 0) return null;
+  const sorted = [...entries].sort((a, b) => a.dateIso.localeCompare(b.dateIso));
+  const last = sorted[sorted.length - 1];
+  let length = 1;
+  for (let i = sorted.length - 2; i >= 0; i--) {
+    if (sorted[i].verdict === last.verdict) length++;
+    else break;
+  }
+  return { currentVerdict: last.verdict, length };
+}
+
 // Pure: filtert die History auf einen N-Tage-Slice und gruppiert
 // nach Persona-Identität.
 export interface PersonaSlice {
