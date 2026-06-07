@@ -159,14 +159,20 @@ export function fmtCurrency(value: number, currency: string): string {
   // Intl.NumberFormat wirft bei ungültigem Currency-Code („" oder „xxx") —
   // sicheren Fallback auf USD nutzen.
   const safe = currency && /^[A-Za-z]{3}$/.test(currency) ? currency.toUpperCase() : 'USD';
+  // FIXED Dezimalstellen je nach Größenordnung — sonst kann
+  // „69,103 USD" als 69 Tausend gelesen werden (DE-Tausenderpunkt vs.
+  // Dezimal-Komma-Verwechslung). Mit minimumFractionDigits = maximumFractionDigits
+  // bleiben trailing zeros erhalten: „69,1030 USD" ist eindeutig 69,10.
+  const decimals = Math.abs(value) >= 100 ? 2 : Math.abs(value) >= 1 ? 2 : 4;
   try {
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
       currency: safe,
-      maximumFractionDigits: value >= 100 ? 2 : 4
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
     }).format(value);
   } catch {
-    return `${value.toFixed(2)} ${safe}`;
+    return `${value.toFixed(decimals)} ${safe}`;
   }
 }
 
