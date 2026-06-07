@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { ema } from '@/lib/analysis/indicators';
+import { fetchYahooQuote } from '@/lib/market/yahoo-quote';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
@@ -58,7 +59,13 @@ const TONE: Record<Verdict['tone'], { box: string; head: string }> = {
 
 export default async function GoldPage({ searchParams }: { searchParams: Promise<{ date?: string; price?: string }> }) {
   const sp = await searchParams;
-  const candles = await fetchKlinesBySymbol('PAXGUSDT', '1d', 365);
+  // Zwei Datenquellen parallel: PAXG (Crypto-Token-Pegged) für die
+  // 1-Jahres-Historie, plus Spot-Gold-Futures (Yahoo/Stooq) als Sanity-
+  // Check für den aktuellen Preis.
+  const [candles, spotGold] = await Promise.all([
+    fetchKlinesBySymbol('PAXGUSDT', '1d', 365),
+    fetchYahooQuote('GC=F', 'Gold Spot Future')
+  ]);
   const hasData = !!candles && candles.length > 30;
 
   const currentPrice = hasData ? candles![candles!.length - 1].close : null;
@@ -135,6 +142,32 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
     }
   }
 
+  // Steuer-Hinweis Deutschland: physisches Gold ist nach 12 Monaten
+  // Haltedauer steuerfrei (Spekulationsfrist §23 EStG).
+  let holdingDays: number | null = null;
+  let annualizedPct: number | null = null;
+  let taxFreeReached = false;
+  let daysToTaxFree: number | null = null;
+  if (purchaseDateIso && pnlPct !== null) {
+    const start = new Date(purchaseDateIso + 'T00:00:00').getTime();
+    holdingDays = Math.max(0, Math.floor((Date.now() - start) / (24 * 60 * 60 * 1000)));
+    taxFreeReached = holdingDays >= 365;
+    daysToTaxFree = taxFreeReached ? 0 : 365 - holdingDays;
+    // Annualisierte Rendite per Jahres-Konvention:
+    // (1 + r)^(365/days) - 1
+    if (holdingDays > 0) {
+      const r = pnlPct / 100;
+      annualizedPct = (Math.pow(1 + r, 365 / holdingDays) - 1) * 100;
+    }
+  }
+
+  // Cross-Source-Differenz: PAXG vs. Spot-Gold-Future. Bei > 3 %
+  // Abweichung Warnung anzeigen.
+  let sourceDeltaPct: number | null = null;
+  if (currentPrice !== null && spotGold && spotGold.last > 0) {
+    sourceDeltaPct = ((currentPrice - spotGold.last) / spotGold.last) * 100;
+  }
+
   const verdict = hasData && currentPrice !== null
     ? computeVerdict(currentPrice, ema50, ema200, high52w, low52w)
     : null;
@@ -189,6 +222,43 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
         <p className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400">
           Gold-Kursdaten (PAXG) gerade nicht verfügbar. Versuch&apos;s in ein paar Minuten nochmal.
         </p>
+      )}
+
+      {spotGold && (
+        <section className="rounded-2xl border border-amber-500/30 bg-amber-950/15 p-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-amber-300">PAXG (Crypto-Token)</div>
+              <div className="font-mono text-lg font-bold text-white">${currentPrice?.toFixed(2) ?? '—'}</div>
+              <div className="text-[10px] text-slate-500">via Bybit / Binance</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-amber-300">Spot-Gold-Future</div>
+              <div className="font-mono text-lg font-bold text-white">${spotGold.last.toFixed(2)}</div>
+              <div className="text-[10px] text-slate-500">via Yahoo / Stooq (GC=F)</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-amber-300">Differenz</div>
+              {sourceDeltaPct !== null ? (
+                <>
+                  <div className={`font-mono text-lg font-bold ${Math.abs(sourceDeltaPct) <= 3 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                    {sourceDeltaPct >= 0 ? '+' : ''}{sourceDeltaPct.toFixed(2)} %
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    {Math.abs(sourceDeltaPct) <= 3 ? 'Quellen stimmen überein' : '⚠ Quellen weichen ab'}
+                  </div>
+                </>
+              ) : (
+                <div className="text-[10px] text-slate-500">—</div>
+              )}
+            </div>
+          </div>
+          <p className="mt-3 text-[10.5px] leading-snug text-amber-100/70">
+            PAXG ist 1:1 mit physischem Gold gedeckt (Paxos), wird aber an Crypto-Börsen gehandelt — der Spot-Future
+            (GC=F) ist der reine Terminmarkt-Preis. Beide sollten nahe beieinander liegen. Größere Abweichungen können
+            auf Crypto-Liquiditäts-Effekte oder Roll-Effekte hindeuten.
+          </p>
+        </section>
       )}
 
       {hasData && currentPrice !== null && (
@@ -261,15 +331,52 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
       )}
 
       {purchasePrice !== null && pnlPct !== null && pnlAbs !== null && (
-        <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Dein Stand</h2>
-          <p className="mt-1 text-sm text-slate-300">
-            Kauf am <span className="font-mono font-semibold text-slate-100">{purchaseDateIso ? fmtDate(purchaseDateIso) : fmtDate(dateRaw)}</span> zu <span className="font-mono font-semibold text-slate-100">${purchasePrice.toFixed(2)}</span> · Heute <span className="font-mono font-semibold text-slate-100">${currentPrice!.toFixed(2)}</span>
-          </p>
-          <div className="mt-2 flex items-baseline gap-3">
-            <span className={`font-mono text-3xl font-bold ${pnlPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(2)}%</span>
-            <span className={`font-mono text-sm ${pnlAbs >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{pnlAbs >= 0 ? '+' : ''}${pnlAbs.toFixed(2)} pro Unze</span>
+        <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Dein Stand</h2>
+            <p className="mt-1 text-sm text-slate-300">
+              Kauf am <span className="font-mono font-semibold text-slate-100">{purchaseDateIso ? fmtDate(purchaseDateIso) : fmtDate(dateRaw)}</span> zu <span className="font-mono font-semibold text-slate-100">${purchasePrice.toFixed(2)}</span> · Heute <span className="font-mono font-semibold text-slate-100">${currentPrice!.toFixed(2)}</span>
+            </p>
+            <div className="mt-2 flex items-baseline gap-3">
+              <span className={`font-mono text-3xl font-bold ${pnlPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(2)}%</span>
+              <span className={`font-mono text-sm ${pnlAbs >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{pnlAbs >= 0 ? '+' : ''}${pnlAbs.toFixed(2)} pro Unze</span>
+            </div>
           </div>
+
+          <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2.5">
+              <dt className="text-[10px] uppercase tracking-wider text-slate-500">Haltedauer</dt>
+              <dd className="mt-0.5 font-mono text-sm font-semibold text-slate-100">
+                {holdingDays !== null ? `${holdingDays} Tage` : '—'}
+              </dd>
+              <dd className="text-[9.5px] text-slate-500">
+                {holdingDays !== null && holdingDays >= 365 ? '≥ 1 Jahr' : holdingDays !== null ? `< 1 Jahr` : ''}
+              </dd>
+            </div>
+            <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2.5">
+              <dt className="text-[10px] uppercase tracking-wider text-slate-500">Annualisierte Rendite</dt>
+              <dd className={`mt-0.5 font-mono text-sm font-semibold ${annualizedPct === null ? 'text-slate-500' : annualizedPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                {annualizedPct !== null ? `${annualizedPct >= 0 ? '+' : ''}${annualizedPct.toFixed(2)} %` : '—'}
+              </dd>
+              <dd className="text-[9.5px] text-slate-500">p. a. nach Compound-Methode</dd>
+            </div>
+            <div className={`rounded-md border p-2.5 ${taxFreeReached ? 'border-emerald-400/40 bg-emerald-950/15' : 'border-amber-500/30 bg-amber-950/15'}`}>
+              <dt className="text-[10px] uppercase tracking-wider text-slate-500">Steuer-Status DE</dt>
+              <dd className={`mt-0.5 text-sm font-semibold ${taxFreeReached ? 'text-emerald-300' : 'text-amber-300'}`}>
+                {taxFreeReached ? '✓ steuerfrei' : 'noch steuerpflichtig'}
+              </dd>
+              <dd className="text-[9.5px] leading-snug text-slate-500">
+                {taxFreeReached
+                  ? 'Spekulationsfrist §23 EStG erfüllt — Gewinn-Verkauf steuerfrei für Privatpersonen.'
+                  : daysToTaxFree !== null ? `Noch ${daysToTaxFree} Tage bis zur Spekulationsfrist (1 Jahr Haltedauer).` : ''}
+              </dd>
+            </div>
+          </dl>
+
+          <p className="text-[10px] leading-snug text-slate-500">
+            Steuer-Hinweis bezieht sich auf physisches Gold + PAXG-Token für Privatpersonen in Deutschland (§23 EStG, Stand 2026).
+            Keine Steuerberatung — bei Unsicherheit Steuerberater fragen.
+          </p>
         </section>
       )}
 
