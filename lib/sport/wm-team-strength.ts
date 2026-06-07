@@ -71,7 +71,25 @@ export const WM_2026_TEAMS: TeamStrength[] = [
   { name: 'Ghana', elo: 1725, offensive: 66, defensive: 62, formIndex: -1, confederation: 'CAF' },
   { name: 'Kamerun', aliases: ['Cameroon'], elo: 1715, offensive: 66, defensive: 62, formIndex: 0, confederation: 'CAF' },
   { name: 'Costa Rica', elo: 1665, offensive: 62, defensive: 65, formIndex: -1, confederation: 'CONCACAF' },
-  { name: 'Neuseeland', aliases: ['New Zealand'], elo: 1610, offensive: 58, defensive: 62, formIndex: 0, confederation: 'OFC' }
+  { name: 'Neuseeland', aliases: ['New Zealand'], elo: 1610, offensive: 58, defensive: 62, formIndex: 0, confederation: 'OFC' },
+
+  // Nachträglich ergänzt nach Auslosung Dez 2025 (Welle 9501+):
+  // alle Teams, die durch die WM-2026-Auslosung in die 12 Gruppen kamen
+  // und vorher nicht in der Datenbasis standen.
+  { name: 'Südafrika', aliases: ['South Africa'], elo: 1690, offensive: 65, defensive: 65, formIndex: 1, confederation: 'CAF' },
+  { name: 'Bosnien-Herzegowina', aliases: ['Bosnia and Herzegovina', 'Bosnia'], elo: 1675, offensive: 67, defensive: 64, formIndex: 0, confederation: 'UEFA' },
+  { name: 'Katar', aliases: ['Qatar'], elo: 1640, offensive: 63, defensive: 65, formIndex: -1, confederation: 'AFC' },
+  { name: 'Haiti', elo: 1545, offensive: 58, defensive: 58, formIndex: 0, confederation: 'CONCACAF' },
+  { name: 'Schottland', aliases: ['Scotland'], elo: 1780, offensive: 67, defensive: 68, formIndex: 1, confederation: 'UEFA' },
+  { name: 'Paraguay', elo: 1755, offensive: 66, defensive: 69, formIndex: 1, confederation: 'CONMEBOL' },
+  { name: 'Curaçao', aliases: ['Curacao'], elo: 1510, offensive: 56, defensive: 58, formIndex: 0, confederation: 'CONCACAF' },
+  { name: 'Elfenbeinküste', aliases: ["Cote d'Ivoire", 'Ivory Coast'], elo: 1820, offensive: 72, defensive: 69, formIndex: 2, confederation: 'CAF' },
+  { name: 'Kap Verde', aliases: ['Cape Verde', 'Cabo Verde'], elo: 1620, offensive: 62, defensive: 64, formIndex: 1, confederation: 'CAF' },
+  { name: 'Irak', aliases: ['Iraq'], elo: 1620, offensive: 60, defensive: 65, formIndex: 0, confederation: 'AFC' },
+  { name: 'Jordanien', aliases: ['Jordan'], elo: 1580, offensive: 58, defensive: 63, formIndex: 0, confederation: 'AFC' },
+  { name: 'DR Kongo', aliases: ['DR Congo', 'Congo DR', 'Demokratische Republik Kongo'], elo: 1735, offensive: 68, defensive: 65, formIndex: 1, confederation: 'CAF' },
+  { name: 'Usbekistan', aliases: ['Uzbekistan'], elo: 1645, offensive: 62, defensive: 65, formIndex: 0, confederation: 'AFC' },
+  { name: 'Panama', elo: 1670, offensive: 64, defensive: 63, formIndex: 0, confederation: 'CONCACAF' }
 ];
 
 function normalize(name: string): string {
