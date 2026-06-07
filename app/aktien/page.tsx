@@ -12,6 +12,8 @@ import { getStockSafetyBacktestSummary } from '@/lib/market/stock-safety-backtes
 import { SafeStockPicks } from '@/components/safe-stock-picks';
 import { StockSafetyBacktestCard } from '@/components/stock-safety-backtest-card';
 import { SectorSafetyHeatmap } from '@/components/sector-safety-heatmap';
+import { MarketStatusBadges } from '@/components/market-status-badges';
+import { usMarketState, xetraMarketState } from '@/lib/market/market-hours';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -79,6 +81,8 @@ export default async function AktienPage() {
           {liveCount > 0 && <span> · <span className="text-emerald-300">{liveCount + indexLiveCount} Live-Quotes</span></span>}
         </p>
       </header>
+
+      <MarketStatusBadges states={[usMarketState(), xetraMarketState()]} />
 
       <SectorHeatmap buckets={sectorBuckets} title="Sektor-Heatmap (Aktien)" />
 
