@@ -133,4 +133,55 @@ export function aggregateGoldPortfolio(
   };
 }
 
+export type PositionSortKey =
+  | 'purchase-date-desc'
+  | 'purchase-date-asc'
+  | 'value-desc'
+  | 'value-asc'
+  | 'pnl-desc'
+  | 'pnl-asc'
+  | 'label-asc';
+
+// Sortiert Positionen nach der gegebenen Achse. Pure Funktion.
+// Positionen mit fehlenden Werten (currentValue null) landen bei nummerischen
+// Sortierungen IMMER am Ende — damit der User unvollständige Daten zuletzt sieht.
+export function sortPortfolioPositions(positions: PortfolioPosition[], key: PositionSortKey): PortfolioPosition[] {
+  const out = [...positions];
+  function nullableNumber(v: number | null, fallback: number): number {
+    return v === null || !Number.isFinite(v) ? fallback : v;
+  }
+  switch (key) {
+    case 'purchase-date-desc':
+      out.sort((a, b) => b.input.purchaseDate.localeCompare(a.input.purchaseDate));
+      break;
+    case 'purchase-date-asc':
+      out.sort((a, b) => a.input.purchaseDate.localeCompare(b.input.purchaseDate));
+      break;
+    case 'value-desc':
+      out.sort((a, b) => nullableNumber(b.currentValue, -Infinity) - nullableNumber(a.currentValue, -Infinity));
+      break;
+    case 'value-asc':
+      out.sort((a, b) => nullableNumber(a.currentValue, Infinity) - nullableNumber(b.currentValue, Infinity));
+      break;
+    case 'pnl-desc':
+      out.sort((a, b) => nullableNumber(b.absolutePnL, -Infinity) - nullableNumber(a.absolutePnL, -Infinity));
+      break;
+    case 'pnl-asc':
+      out.sort((a, b) => nullableNumber(a.absolutePnL, Infinity) - nullableNumber(b.absolutePnL, Infinity));
+      break;
+    case 'label-asc':
+      out.sort((a, b) => a.input.label.localeCompare(b.input.label));
+      break;
+  }
+  return out;
+}
+
+export type TaxFilter = 'all' | 'tax-free' | 'taxable';
+
+export function filterPortfolioByTax(positions: PortfolioPosition[], filter: TaxFilter): PortfolioPosition[] {
+  if (filter === 'all') return positions;
+  if (filter === 'tax-free') return positions.filter((p) => p.taxStatus.isTaxFree);
+  return positions.filter((p) => !p.taxStatus.isTaxFree);
+}
+
 export { GRAMS_PER_TROY_OUNCE };

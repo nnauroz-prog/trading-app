@@ -77,6 +77,18 @@ export function removeGoldHolding(id: string): void {
   save(loadGoldHoldings().filter((h) => h.id !== id));
 }
 
+// Updates eine bestehende Position. ID und createdAt bleiben erhalten.
+// Wenn die ID nicht existiert, passiert nichts.
+export function updateGoldHolding(id: string, patch: Partial<Omit<GoldHolding, 'id' | 'createdAt'>>): void {
+  const list = loadGoldHoldings();
+  const idx = list.findIndex((h) => h.id === id);
+  if (idx < 0) return;
+  const merged: GoldHolding = { ...list[idx], ...patch, id: list[idx].id, createdAt: list[idx].createdAt };
+  const next = [...list];
+  next[idx] = merged;
+  save(next);
+}
+
 export function clearGoldHoldings(): void {
   save([]);
 }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   aggregateGoldPortfolio,
+  sortPortfolioPositions,
+  filterPortfolioByTax,
   GRAMS_PER_TROY_OUNCE,
   type PortfolioHoldingInput
 } from '@/lib/gold/gold-portfolio-aggregator';
@@ -118,5 +120,115 @@ describe('aggregateGoldPortfolio', () => {
     const s = aggregateGoldPortfolio(inputs, 2400, '2026-06-09', ctx());
     expect(s.incompleteCount).toBe(0);
     expect(s.positions[0].hasCompleteData).toBe(true);
+  });
+});
+
+describe('sortPortfolioPositions', () => {
+  function build(overrides: Array<Partial<PortfolioHoldingInput>>) {
+    const inputs = overrides.map((o, i) => holding({ id: `h-${i}`, ...o }));
+    return aggregateGoldPortfolio(inputs, 2400, '2026-06-09', ctx()).positions;
+  }
+
+  it('purchase-date-desc: jüngstes Kaufdatum zuerst', () => {
+    const positions = build([
+      { id: 'a', purchaseDate: '2024-01-01' },
+      { id: 'b', purchaseDate: '2025-06-09' },
+      { id: 'c', purchaseDate: '2023-01-01' }
+    ]);
+    const sorted = sortPortfolioPositions(positions, 'purchase-date-desc');
+    expect(sorted.map((p) => p.input.id)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('purchase-date-asc: ältestes zuerst', () => {
+    const positions = build([
+      { id: 'a', purchaseDate: '2024-01-01' },
+      { id: 'b', purchaseDate: '2025-06-09' }
+    ]);
+    const sorted = sortPortfolioPositions(positions, 'purchase-date-asc');
+    expect(sorted.map((p) => p.input.id)).toEqual(['a', 'b']);
+  });
+
+  it('value-desc: höchster aktueller Wert zuerst', () => {
+    const positions = build([
+      { id: 'a', amount: 50 },   // weniger Wert
+      { id: 'b', amount: 200 },  // höchster Wert
+      { id: 'c', amount: 100 }
+    ]);
+    const sorted = sortPortfolioPositions(positions, 'value-desc');
+    expect(sorted.map((p) => p.input.id)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('pnl-desc: höchster Gewinn zuerst', () => {
+    const positions = build([
+      { id: 'a', amount: 50,  historicalGoldPricePerOz: 2000 }, // +20 %
+      { id: 'b', amount: 200, historicalGoldPricePerOz: 2400 }, // 0 %
+      { id: 'c', amount: 100, historicalGoldPricePerOz: 1800 }  // höchster PnL absolut
+    ]);
+    const sorted = sortPortfolioPositions(positions, 'pnl-desc');
+    expect(sorted[0].input.id).toBe('c');
+  });
+
+  it('label-asc: alphabetisch', () => {
+    const positions = build([
+      { id: 'a', label: 'Zeta' },
+      { id: 'b', label: 'Alpha' },
+      { id: 'c', label: 'Beta' }
+    ]);
+    const sorted = sortPortfolioPositions(positions, 'label-asc');
+    expect(sorted.map((p) => p.input.label)).toEqual(['Alpha', 'Beta', 'Zeta']);
+  });
+
+  it('positions mit currentValue null landen bei value-desc am Ende', () => {
+    const positions = aggregateGoldPortfolio([
+      { ...holding({ id: 'a' }) },
+      { ...holding({ id: 'b' }) }
+    ], null, '2026-06-09', ctx()).positions;
+    // Beide haben null currentValue — Reihenfolge bleibt stabil.
+    const sorted = sortPortfolioPositions(positions, 'value-desc');
+    expect(sorted).toHaveLength(2);
+  });
+
+  it('Sortierung mutiert das Original nicht', () => {
+    const positions = build([
+      { id: 'a', purchaseDate: '2024-01-01' },
+      { id: 'b', purchaseDate: '2025-06-09' }
+    ]);
+    const originalOrder = positions.map((p) => p.input.id);
+    sortPortfolioPositions(positions, 'purchase-date-desc');
+    expect(positions.map((p) => p.input.id)).toEqual(originalOrder);
+  });
+});
+
+describe('filterPortfolioByTax', () => {
+  function buildMixed() {
+    return aggregateGoldPortfolio([
+      holding({ id: 'tax-free', purchaseDate: '2020-01-01' }),
+      holding({ id: 'taxable',  purchaseDate: '2026-01-01' })
+    ], 2400, '2026-06-09', ctx()).positions;
+  }
+
+  it('all: alle Positionen', () => {
+    const positions = buildMixed();
+    expect(filterPortfolioByTax(positions, 'all')).toHaveLength(2);
+  });
+
+  it('tax-free: nur abgelaufene Spekulationsfrist', () => {
+    const positions = buildMixed();
+    const filtered = filterPortfolioByTax(positions, 'tax-free');
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].input.id).toBe('tax-free');
+  });
+
+  it('taxable: nur noch steuerpflichtige', () => {
+    const positions = buildMixed();
+    const filtered = filterPortfolioByTax(positions, 'taxable');
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].input.id).toBe('taxable');
+  });
+
+  it('leere Liste bleibt leer', () => {
+    expect(filterPortfolioByTax([], 'tax-free')).toEqual([]);
+    expect(filterPortfolioByTax([], 'taxable')).toEqual([]);
+    expect(filterPortfolioByTax([], 'all')).toEqual([]);
   });
 });
