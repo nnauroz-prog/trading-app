@@ -26,7 +26,7 @@ const CLARITY_CHIP: Record<string, string> = {
   open: 'border-amber-500/40 bg-amber-500/10 text-amber-100'
 };
 
-export function WmTopTips({ todayIso, openingIso = '2026-06-11', limit = 5 }: Props) {
+export function WmTopTips({ todayIso, openingIso = '2026-06-11', limit = 12 }: Props) {
   const days = daysBetween(todayIso, openingIso);
   if (days > 30 || days < -50) return null;
 
