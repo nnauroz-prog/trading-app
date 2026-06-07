@@ -148,18 +148,27 @@ export function predictWinner(input: BuildInput): WinnerVerdict {
       reasoning.push(`Keine Form-Daten — Heimvorteil-Schätzung für ${sport === 'basketball' ? 'Basketball' : sport === 'hockey' ? 'Eishockey' : 'Fußball'} angesetzt.`);
       reasoning.push(`Statistik-Anker: ${Math.round(def.home * 100)} % Heim / ${Math.round(def.draw * 100)} % Remis / ${Math.round(def.away * 100)} % Auswärts in dieser Sportart.`);
     } else {
-      // Form-basiert: PPG-Differenz + Tor-Differenz auf Sport-Default modulieren.
+      // Form-basiert: PPG-Differenz + Tor-/Punkte-Differenz auf Sport-Default
+      // modulieren. Der Skalierungs-Faktor unterscheidet sich je Sport, weil
+      // Basketball-Punktedifferenzen ~10× größer sind als Fußball-Tordiffs.
       const homePpg = homeForm.total > 0 ? homeForm.pointsPerGame : def.home * 3;
       const awayPpg = awayForm.total > 0 ? awayForm.pointsPerGame : def.away * 3;
       const ppgDiff = homePpg - awayPpg; // -3 bis +3 möglich
-      // Tor-Differenz pro Spiel als zusätzlicher Indikator (z. B. Bayern +2/Spiel).
       const homeGd = homeForm.total > 0 ? (homeForm.goalsFor - homeForm.goalsAgainst) / homeForm.total : 0;
       const awayGd = awayForm.total > 0 ? (awayForm.goalsFor - awayForm.goalsAgainst) / awayForm.total : 0;
       const gdDiff = homeGd - awayGd;
 
-      // Modulation: 0.06 pro PPG-Differenz + 0.025 pro Tor-Differenz auf Heim drücken.
-      const ppgBoost = Math.max(-0.16, Math.min(0.16, ppgDiff * 0.06));
-      const gdBoost = Math.max(-0.08, Math.min(0.08, gdDiff * 0.025));
+      // Sport-spezifische Skalierung: Fußball-Tordiffs sind klein (±1-2/Spiel),
+      // Basketball-Punktdiffs groß (±5-15/Spiel). Ohne sport-spezifische
+      // Skalierung würde Basketball-Punktdiff IMMER ans Clipping-Limit laufen.
+      const gdScale = sport === 'football' ? 0.025 : sport === 'basketball' ? 0.0035 : 0.012;
+      // Sample-Confidence: bei nur 1-2 Spielen ist die Form-Schätzung Rauschen
+      // mehr als Signal. Wir dämpfen die Auswirkung, damit ein einzelnes
+      // Ausreißerspiel die Prognose nicht um 20% kippt.
+      const minSample = Math.min(homeForm.total, awayForm.total);
+      const sampleConfidence = minSample === 0 ? 0.3 : minSample === 1 ? 0.55 : minSample === 2 ? 0.8 : 1;
+      const ppgBoost = Math.max(-0.16, Math.min(0.16, ppgDiff * 0.06 * sampleConfidence));
+      const gdBoost = Math.max(-0.08, Math.min(0.08, gdDiff * gdScale * sampleConfidence));
       const homeBoost = ppgBoost + gdBoost;
 
       pH = def.home + homeBoost;
@@ -171,13 +180,16 @@ export function predictWinner(input: BuildInput): WinnerVerdict {
       pH /= sum; pD /= sum; pA /= sum;
       source = 'form';
 
+      // Tor- vs Punkte-Wording sport-richtig.
+      const diffLabel = sport === 'football' ? 'Tordiff' : 'Punktediff';
+
       if (homeForm.total > 0) {
-        reasoning.push(`Form ${homeTeam} (${homeForm.total} Spiele): ${homeForm.wins}S/${homeForm.draws}U/${homeForm.losses}N · ${homePpg.toFixed(1)} PPG · Tordiff ${homeGd >= 0 ? '+' : ''}${homeGd.toFixed(1)}/Spiel`);
+        reasoning.push(`Form ${homeTeam} (${homeForm.total} Spiele): ${homeForm.wins}S/${homeForm.draws}U/${homeForm.losses}N · ${homePpg.toFixed(1)} PPG · ${diffLabel} ${homeGd >= 0 ? '+' : ''}${homeGd.toFixed(1)}/Spiel`);
       } else {
         reasoning.push(`${homeTeam}: keine eigenen Spiele im Pool — Liga-Schnitt angesetzt.`);
       }
       if (awayForm.total > 0) {
-        reasoning.push(`Form ${awayTeam} (${awayForm.total} Spiele): ${awayForm.wins}S/${awayForm.draws}U/${awayForm.losses}N · ${awayPpg.toFixed(1)} PPG · Tordiff ${awayGd >= 0 ? '+' : ''}${awayGd.toFixed(1)}/Spiel`);
+        reasoning.push(`Form ${awayTeam} (${awayForm.total} Spiele): ${awayForm.wins}S/${awayForm.draws}U/${awayForm.losses}N · ${awayPpg.toFixed(1)} PPG · ${diffLabel} ${awayGd >= 0 ? '+' : ''}${awayGd.toFixed(1)}/Spiel`);
       } else {
         reasoning.push(`${awayTeam}: keine eigenen Spiele im Pool — Liga-Schnitt angesetzt.`);
       }
