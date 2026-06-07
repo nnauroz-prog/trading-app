@@ -3,7 +3,7 @@ import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { WORLD_CUP_LEAGUE_IDS } from '@/lib/sport/leagues';
 import type { UpcomingFixture, Fixture } from '@/lib/sport/fetcher';
 import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
-import { predictMatch } from '@/lib/sport/predictor';
+import { predictWmMatch } from '@/lib/sport/wm-match-engine';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -43,27 +43,29 @@ function isKnownTeam(name: string): boolean {
   return !/^(Sieger|Verlierer|Zweiter|TBD)/i.test(name);
 }
 
-function winnerVerdict(home: string, away: string, finishedPool: Fixture[]): WinnerVerdict {
+function winnerVerdict(home: string, away: string, venue: string, phase: WmFixture['phase'], _finishedPool: Fixture[]): WinnerVerdict {
+  void _finishedPool;
   if (!isKnownTeam(home) || !isKnownTeam(away)) {
     return { text: 'Paarung noch offen', confidence: 0, tone: 'border-slate-700 bg-slate-900/40 text-slate-400', knownPair: false };
   }
-  const pred = predictMatch(home, away, finishedPool);
-  if (!pred) return { text: 'Keine Form-Daten im Pool', confidence: 0, tone: 'border-slate-700 bg-slate-900/40 text-slate-400', knownPair: true };
-  const pct = Math.round(pred.pickConfidence * 100);
-  if (pred.pickConfidence < 0.45) {
+  // Profi-WM-Engine: ELO + Form-Index + xG + Spielort. Funktioniert
+  // ohne TheSportsDB-Form-Pool, weil ELO-Datenbasis intern gepflegt ist.
+  const p = predictWmMatch({ homeTeam: home, awayTeam: away, venue, phase });
+  const pct = p.pick.confidencePct;
+  if (p.pick.winner === 'undecided' || p.pick.clarity === 'open') {
     return {
-      text: `Offen — Heim ${Math.round(pred.pHome * 100)} %, Remis ${Math.round(pred.pDraw * 100)} %, Auswärts ${Math.round(pred.pAway * 100)} %`,
+      text: `Offen — Heim ${p.regular.homePct} %, Remis ${p.regular.drawPct} %, Auswärts ${p.regular.awayPct} %`,
       confidence: pct, tone: 'border-amber-400/40 bg-amber-500/10 text-amber-200', knownPair: true
     };
   }
-  if (pred.pickSide === 'home') {
+  if (p.pick.winner === 'home') {
     return {
       text: `${home} gewinnt`, confidence: pct,
       tone: pct >= 65 ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-100' : 'border-sky-400/50 bg-sky-500/15 text-sky-200',
       knownPair: true
     };
   }
-  if (pred.pickSide === 'away') {
+  if (p.pick.winner === 'away') {
     return {
       text: `${away} gewinnt`, confidence: pct,
       tone: pct >= 65 ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-100' : 'border-sky-400/50 bg-sky-500/15 text-sky-200',
@@ -123,7 +125,7 @@ export default async function WorldCupPage() {
             <h2 className="text-xs font-semibold uppercase tracking-wider">{phase} · {fixtures.length} Spiel{fixtures.length === 1 ? '' : 'e'}</h2>
             <ul className="space-y-1.5">
               {fixtures.map((f) => {
-                const v = winnerVerdict(f.homeTeam, f.awayTeam, fullPool);
+                const v = winnerVerdict(f.homeTeam, f.awayTeam, f.venue, f.phase, fullPool);
                 return (
                   <li key={f.id} className="grid grid-cols-[auto_1fr_auto] gap-2 rounded-lg border border-slate-800 bg-slate-950/60 px-2.5 py-2 text-[11.5px]">
                     <span className="font-mono text-[10px] text-slate-400">
