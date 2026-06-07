@@ -11,6 +11,8 @@ import {
   atr, ema, fiftyTwoWeekRange, performancePct, rsi, sma, trendVerdict, volumeRatio
 } from '@/lib/market/indicators';
 import { evaluateInstrumentSafety } from '@/lib/market/instrument-safety';
+import { backtestSafetyStrategy } from '@/lib/market/instrument-safety-backtest';
+import { InstrumentSafetyBacktestMini } from '@/components/instrument-safety-backtest-mini';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
@@ -49,6 +51,7 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
   const volRatio = history ? volumeRatio(history.candles, 20) : null;
   const verdict = quote ? trendVerdict(quote.last, ma50, ma200) : 'neutral';
   const safety = quote && history ? evaluateInstrumentSafety({ price: quote.last, candles: history.candles }) : null;
+  const safetyBacktest = history ? backtestSafetyStrategy(history.candles) : null;
 
   return (
     <main className="mx-auto max-w-3xl space-y-5 p-4 pb-20 md:p-6">
@@ -90,6 +93,8 @@ export default async function RohstoffDetailPage({ params }: PageProps) {
       ) : (
         <>
           {safety && <InstrumentSafetyCard assessment={safety} name={commodity.name} />}
+
+          {safetyBacktest && <InstrumentSafetyBacktestMini result={safetyBacktest} name={commodity.name} />}
 
           <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Trend &amp; Indikatoren</h2>
