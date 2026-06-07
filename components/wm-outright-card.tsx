@@ -1,14 +1,9 @@
 // WM-Sieger-Outright-Karte: Wer wird Weltmeister?
 //
-// Nutzt computeOutright() aus lib/sport/wm-outright.ts mit:
-// - ELO-Rating der Teilnehmer (Argentinien 2155, Frankreich 2120, …)
-// - Form-Index (Spanien +5, Argentinien +4, Frankreich +3)
-// - Host-Bonus für USA/Mexiko/Kanada
-// - Gruppen-Überlebens-Quote nach ELO-Rang
-// - 6 KO-Runden mit Median-ELO der Gegner-Kohorte
-//
-// Zeigt Top-10 Anwärter mit den Wahrscheinlichkeiten für Champion,
-// Finale, Halbfinale, Viertelfinale.
+// Nutzt computeOutright() mit ELO + Form-Index + Host-Bonus +
+// Gruppen-Überlebens-Quote + KO-Runden gegen den Median-ELO der
+// erwarteten Gegner. Zeigt Top-N Anwärter mit Achtelfinale,
+// Viertelfinale, Halbfinale, Finale, Champion.
 
 import { computeOutright, type OutrightTeam } from '@/lib/sport/wm-outright';
 
@@ -84,7 +79,7 @@ export function WmOutrightCard({ todayIso, openingIso = '2026-06-11', limit = 10
       </div>
 
       <p className="text-[9.5px] leading-snug text-emerald-100/55">
-        Lesart: Argentinien {fmtPct(top[0].champion)} Champion ≈ in {Math.round(1 / Math.max(0.001, top[0].champion))} simulierten Turnieren würde Argentinien einmal Weltmeister. Tatsächliches Turnier ist ein einzelner Lauf — Streuung ist real.
+        Lesart: {top[0].team.name} {fmtPct(top[0].champion)} Champion ≈ in {Math.round(1 / Math.max(0.001, top[0].champion))} simulierten Turnieren würde {top[0].team.name} einmal Weltmeister. Tatsächliches Turnier ist ein einzelner Lauf — Streuung ist real.
       </p>
     </section>
   );
