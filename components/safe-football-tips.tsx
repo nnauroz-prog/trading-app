@@ -3,6 +3,7 @@
 // maximal (≥85 % + gute Datenbasis), sehr-sicher (78–84 %), sicher (70–77 %).
 
 import { rankSafeFootballTips, type SafeFootballTip } from '@/lib/sport/safe-football-tips';
+import { groupByDayBucket } from '@/lib/sport/day-bucket';
 import type { LeagueFixtures } from '@/lib/sport/fetcher';
 
 interface Props {
@@ -64,6 +65,14 @@ export function SafeFootballTips({
         zeigt nur die, die ≥{Math.round(minProbability * 100)} % Modell-Wahrscheinlichkeit erreichen UND auf mindestens mittlerer Datenqualität stehen.
         Mehr Märkte heißt mehr und sicherere Signale als reine 1X2-Tipps. Modell-Schätzungen, keine Garantien.
       </p>
+
+      {(() => {
+        const dayGroups = groupByDayBucket(tips, (t) => t.fixture.date, todayIso);
+        const todayGroup = dayGroups.find((g) => g.key === 'heute');
+        return todayGroup && todayGroup.items.length > 0 ? (
+          <TipGroup heading={`📅 Heute · ${todayGroup.items.length}`} tips={todayGroup.items} />
+        ) : null;
+      })()}
 
       {maxTier.length > 0 && <TipGroup heading="🏆 Maximal sicher (≥85 %, beste Datenbasis)" tips={maxTier} />}
       {sehrSicher.length > 0 && <TipGroup heading="✓ Sehr sicher (78–84 %)" tips={sehrSicher} />}
