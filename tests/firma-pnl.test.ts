@@ -136,4 +136,51 @@ describe('computeFirmaPnl', () => {
     expect(out[0].resolvedHitRatePct).toBeNull();
     expect(out[0].openTrades).toBe(1);
   });
+
+  describe('Equity-Kurve + Drawdown', () => {
+    it('Firma ohne bewertbare BUYs → Kurve nur Startpunkt [0], Drawdown 0', () => {
+      const log = [dec({ verdict: 'WAIT' })];
+      const out = computeFirmaPnl(log, () => 100);
+      expect(out).toHaveLength(1);
+      expect(out[0].totalBuys).toBe(0);
+      expect(out[0].equityCurve).toEqual([0]);
+      expect(out[0].maxDrawdownPct).toBe(0);
+    });
+
+    it('Kurve ist chronologisch (aeltester zuerst) und kumulativ', () => {
+      const log = [
+        dec({ date: '2026-05-03', coin: 'SOL', entry: 50, stopLoss: 45, takeProfit1: 55 }),
+        dec({ date: '2026-05-01', coin: 'BTC', entry: 100, stopLoss: 90, takeProfit1: 110 }),
+        dec({ date: '2026-05-02', coin: 'ETH', entry: 200, stopLoss: 180, takeProfit1: 220 })
+      ];
+      // BTC 2026-05-01 +10 (TP), ETH 2026-05-02 -10 (SL), SOL 2026-05-03 +10 (TP)
+      const prices = new Map<string, number>([['BTC', 115], ['ETH', 170], ['SOL', 56]]);
+      const out = computeFirmaPnl(log, (s) => prices.get(s) ?? null);
+      // Start 0, dann +10, dann 0 (10-10), dann +10
+      expect(out[0].equityCurve).toEqual([0, 10, 0, 10]);
+    });
+
+    it('maxDrawdownPct misst groessten Peak-to-Trough-Einbruch', () => {
+      const log = [
+        dec({ date: '2026-05-01', coin: 'BTC', entry: 100, stopLoss: 80, takeProfit1: 120 }),
+        dec({ date: '2026-05-02', coin: 'ETH', entry: 100, stopLoss: 80, takeProfit1: 120 }),
+        dec({ date: '2026-05-03', coin: 'SOL', entry: 100, stopLoss: 80, takeProfit1: 120 })
+      ];
+      // BTC +20 (TP, peak=20), ETH -20 (SL, equity=0, dd=-20), SOL -20 (SL, equity=-20, dd=-40)
+      const prices = new Map<string, number>([['BTC', 125], ['ETH', 75], ['SOL', 75]]);
+      const out = computeFirmaPnl(log, (s) => prices.get(s) ?? null);
+      expect(out[0].equityCurve).toEqual([0, 20, 0, -20]);
+      expect(out[0].maxDrawdownPct).toBe(-40);
+    });
+
+    it('reine Gewinn-Serie → Drawdown 0', () => {
+      const log = [
+        dec({ date: '2026-05-01', coin: 'BTC', entry: 100, stopLoss: 90, takeProfit1: 110 }),
+        dec({ date: '2026-05-02', coin: 'ETH', entry: 100, stopLoss: 90, takeProfit1: 110 })
+      ];
+      const out = computeFirmaPnl(log, () => 115); // beide TP
+      expect(out[0].maxDrawdownPct).toBe(0);
+      expect(out[0].equityCurve[out[0].equityCurve.length - 1]).toBe(20);
+    });
+  });
 });
