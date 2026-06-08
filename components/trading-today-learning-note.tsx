@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { FIRMA_DECISIONS_CHANGED_EVENT, loadFirmaLog } from '@/lib/firma-memory';
 import { INTEL_LOG_CHANGED_EVENT, loadIntelLog } from '@/lib/intel/memory';
 import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL, type FirmaAccuracy } from '@/lib/firma-accuracy';
+import { applyLearnedOverride } from '@/lib/agents/learned-override';
 import type { PersonaId } from '@/lib/agents/personas';
 
 export type TradingTodayKind = 'tier-90' | 'konservativ' | 'mit-vorsicht' | 'uneinig' | 'cash';
@@ -78,23 +79,49 @@ export function TradingTodayLearningNote({ kind, buyingFirmas }: Props) {
   const avg = Math.round(
     relevantFirmas.reduce((s, a) => s + (a.hitRatePct ?? 0), 0) / relevantFirmas.length
   );
-  const tone =
-    avg >= 60 ? 'border-emerald-400/40 bg-emerald-950/15 text-emerald-100'
+
+  // Tiefer: zaehle, wie viele der kaufenden Firmen NACH Learned-Override ihren
+  // BUY verlieren wuerden. Wenn alle BUYs gefliptt werden, koennte die ganze
+  // TradingToday-Empfehlung infrage gestellt sein.
+  const downgradedFirmas = relevantFirmas.filter((a) => {
+    const ov = applyLearnedOverride('BUY', a);
+    return ov.kind === 'downgrade-buy';
+  });
+  const allBuysDowngraded = (kind === 'tier-90' || kind === 'konservativ' || kind === 'mit-vorsicht')
+    && downgradedFirmas.length > 0 && downgradedFirmas.length === relevantFirmas.length;
+  const partiallyDowngraded = (kind === 'tier-90' || kind === 'konservativ' || kind === 'mit-vorsicht')
+    && downgradedFirmas.length > 0 && !allBuysDowngraded;
+
+  const tone = allBuysDowngraded
+    ? 'border-rose-500/60 bg-rose-950/30 text-rose-100'
+    : avg >= 60 ? 'border-emerald-400/40 bg-emerald-950/15 text-emerald-100'
     : avg >= 45 ? 'border-slate-700 bg-slate-900/40 text-slate-300'
     : 'border-rose-400/40 bg-rose-950/15 text-rose-100';
 
   return (
-    <div className={`rounded-md border px-3 py-2 text-[11px] leading-snug ${tone}`}>
-      <span className="font-semibold">{prefix}:</span>{' '}
-      {relevantFirmas.length === 1
-        ? <>liegt aktuell bei <span className="font-mono font-bold">{relevantFirmas[0].hitRatePct} %</span> ({relevantFirmas[0].rightCalls}/{relevantFirmas[0].evaluated} richtig).</>
-        : <>im Schnitt <span className="font-mono font-bold">{avg} %</span> ({relevantFirmas.map((a) => `${FIRMA_LABEL[a.firma]} ${a.hitRatePct} %`).join(' · ')}).</>
-      }
-      {kind === 'tier-90' && avg < 55 && (
-        <span className="ml-1 text-amber-300">— Achtung: Tier-90-Konsens, aber Track-Record durchwachsen, Position vorsichtiger sizen.</span>
+    <div className={`space-y-1 rounded-md border px-3 py-2 text-[11px] leading-snug ${tone}`}>
+      <div>
+        <span className="font-semibold">{prefix}:</span>{' '}
+        {relevantFirmas.length === 1
+          ? <>liegt aktuell bei <span className="font-mono font-bold">{relevantFirmas[0].hitRatePct} %</span> ({relevantFirmas[0].rightCalls}/{relevantFirmas[0].evaluated} richtig).</>
+          : <>im Schnitt <span className="font-mono font-bold">{avg} %</span> ({relevantFirmas.map((a) => `${FIRMA_LABEL[a.firma]} ${a.hitRatePct} %`).join(' · ')}).</>
+        }
+        {kind === 'tier-90' && avg < 55 && (
+          <span className="ml-1 text-amber-300">— Achtung: Tier-90-Konsens, aber Track-Record durchwachsen, Position vorsichtiger sizen.</span>
+        )}
+        {(kind === 'konservativ' || kind === 'mit-vorsicht') && avg >= 60 && !partiallyDowngraded && !allBuysDowngraded && (
+          <span className="ml-1 text-emerald-300">— Empfehlung historisch belastbar.</span>
+        )}
+      </div>
+      {allBuysDowngraded && (
+        <p className="font-semibold">
+          ⚠ Lern-Override widerspricht: {downgradedFirmas.map((a) => FIRMA_LABEL[a.firma]).join(', ')} liegt historisch zu oft falsch — das KAUFEN-Signal wird heruntergestuft. Lieber nicht handeln.
+        </p>
       )}
-      {(kind === 'konservativ' || kind === 'mit-vorsicht') && avg >= 60 && (
-        <span className="ml-1 text-emerald-300">— Empfehlung historisch belastbar.</span>
+      {partiallyDowngraded && (
+        <p className="text-amber-200">
+          ⚠ Lern-Override warnt: {downgradedFirmas.map((a) => FIRMA_LABEL[a.firma]).join(', ')} liegt historisch oft falsch — Position kleiner sizen, Stop strikt einhalten.
+        </p>
       )}
     </div>
   );

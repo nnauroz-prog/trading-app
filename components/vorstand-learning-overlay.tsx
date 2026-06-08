@@ -13,6 +13,7 @@ import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL, skillMap, type FirmaAccuracy 
 import { vorstandMediation, type VorstandReport } from '@/lib/agents/vorstand';
 import { VORSTAND_LOG_CHANGED_EVENT, computeVorstandAccuracy, loadVorstandLog, type VorstandAccuracy } from '@/lib/agents/vorstand-memory';
 import type { AgentVerdict, PersonaId } from '@/lib/agents/personas';
+import { applyLearnedOverridesToVerdicts, countFlips, type LearnedVerdict } from '@/lib/agents/learned-verdicts';
 
 const FIRMA_TONE: Record<PersonaId, string> = {
   conservative: 'border-sky-400/40 bg-sky-500/10 text-sky-100',
@@ -32,6 +33,9 @@ export function VorstandLearningOverlay({ personas, serverReport }: Props) {
   const [accuracy, setAccuracy] = useState<FirmaAccuracy[]>([]);
   const [vorstandAcc, setVorstandAcc] = useState<VorstandAccuracy | null>(null);
   const [learnedReport, setLearnedReport] = useState<VorstandReport>(serverReport);
+  const [overriddenReport, setOverriddenReport] = useState<VorstandReport>(serverReport);
+  const [flipCount, setFlipCount] = useState(0);
+  const [learnedVerdicts, setLearnedVerdicts] = useState<LearnedVerdict[]>([]);
 
   useEffect(() => {
     const sync = () => {
@@ -45,6 +49,17 @@ export function VorstandLearningOverlay({ personas, serverReport }: Props) {
       setVorstandAcc(computeVorstandAccuracy(vorstandLog, (d) => priceMap.get(d) ?? null));
       const skill = skillMap(acc);
       setLearnedReport(vorstandMediation(personas, skill.size > 0 ? skill : null));
+
+      // Tiefer: wende Learned-Override pro Firma an UND rechne den Vorstand
+      // dann auf der überstimmten Persona-Liste neu durch. Damit kippt der
+      // Track-Record nicht nur die Konfidenz, sondern auch die Anzahl der
+      // gezählten BUYs — also den Vorstand-Verdict-Typ selbst.
+      const accMap = new Map<PersonaId, FirmaAccuracy>();
+      for (const a of acc) accMap.set(a.firma, a);
+      const overridden = applyLearnedOverridesToVerdicts(personas, accMap);
+      setLearnedVerdicts(overridden);
+      setFlipCount(countFlips(overridden));
+      setOverriddenReport(vorstandMediation(overridden, skill.size > 0 ? skill : null));
     };
     sync();
     setMounted(true);
@@ -118,6 +133,25 @@ export function VorstandLearningOverlay({ personas, serverReport }: Props) {
       {verdictChanged && (
         <p className="rounded-md border border-amber-400/40 bg-amber-950/20 p-2 text-[11.5px] leading-relaxed text-amber-100">
           <span className="font-semibold">Skill-gewichtet würde der Vorstand abweichen:</span> raw &bdquo;{serverReport.verdict.replace(/_/g, ' ')}&ldquo; → Track-Record &bdquo;{learnedReport.verdict.replace(/_/g, ' ')}&ldquo;. Anlass für Vorsicht.
+        </p>
+      )}
+
+      {/* Tiefer: hier zeigen wir den Vorstand auf Basis der Persona-Verdicts
+          NACH dem Learned-Override. Wenn z.B. 2 Firmen ihre BUY-Stimme verlieren,
+          kippt der Vorstand-Typ selbst (KAUFEN_VORSICHTIG → WATCHLIST etc.). */}
+      {flipCount > 0 && overriddenReport.verdict !== serverReport.verdict && (
+        <p className="rounded-md border border-rose-400/50 bg-rose-950/20 p-2 text-[11.5px] leading-relaxed text-rose-100">
+          <span className="font-semibold">Lern-Override kippt den Vorstand: </span>
+          {flipCount} {flipCount === 1 ? 'Firma' : 'Firmen'} verlieren wegen schlechtem Track-Record ihren BUY.
+          Roh: &bdquo;{serverReport.verdict.replace(/_/g, ' ')}&ldquo; → nach Override: <span className="font-bold">&bdquo;{overriddenReport.verdict.replace(/_/g, ' ')}&ldquo;</span>.
+          {learnedVerdicts.filter((v) => v.override.kind === 'downgrade-buy').map((v) => (
+            <span key={v.persona} className="ml-1 block text-rose-200/80">· {v.name}: {v.override.reason}</span>
+          ))}
+        </p>
+      )}
+      {flipCount > 0 && overriddenReport.verdict === serverReport.verdict && (
+        <p className="text-[10.5px] leading-snug text-amber-200/80">
+          Lern-Override stuft {flipCount} Persona-BUY herunter, der Vorstand bleibt trotzdem auf &bdquo;{serverReport.verdict.replace(/_/g, ' ')}&ldquo; — die anderen Stimmen tragen.
         </p>
       )}
 
