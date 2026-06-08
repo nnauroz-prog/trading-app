@@ -49,6 +49,29 @@ function outcomeBadge(o: FirmaTradePnl['outcome']) {
   return <span className="rounded border border-slate-800 bg-slate-950 px-1 py-0.5 text-[9px] font-bold text-slate-500">—</span>;
 }
 
+// Mini-Equity-Sparkline. Zeichnet die kumulative P&L-Kurve als SVG-Pfad,
+// gruen wenn der Endstand positiv ist, sonst rot. Eine 0-Linie als Referenz.
+function EquitySparkline({ curve }: { curve: number[] }) {
+  if (curve.length < 2) return null;
+  const W = 100;
+  const H = 28;
+  const min = Math.min(...curve, 0);
+  const max = Math.max(...curve, 0);
+  const range = max - min || 1;
+  const x = (i: number) => (i / (curve.length - 1)) * W;
+  const y = (v: number) => H - ((v - min) / range) * H;
+  const path = curve.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const last = curve[curve.length - 1];
+  const stroke = last >= 0 ? '#34d399' : '#fb7185';
+  const zeroY = y(0);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-7 w-full" preserveAspectRatio="none" aria-hidden>
+      <line x1={0} y1={zeroY} x2={W} y2={zeroY} stroke="#475569" strokeWidth={0.5} strokeDasharray="2 2" />
+      <path d={path} fill="none" stroke={stroke} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function FirmaPnlCard({ latestPrices }: Props) {
   const [summaries, setSummaries] = useState<FirmaPnlSummary[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -131,6 +154,19 @@ export function FirmaPnlCard({ latestPrices }: Props) {
               <span className="rounded border border-rose-400/40 bg-rose-500/10 px-1.5 py-0.5 text-rose-200">{s.losses} SL</span>
               <span className="rounded border border-slate-700 bg-slate-900/60 px-1.5 py-0.5 text-slate-300">{s.openTrades} offen</span>
             </div>
+            {s.equityCurve.length >= 2 && (
+              <div className="space-y-0.5">
+                <EquitySparkline curve={s.equityCurve} />
+                <div className="flex items-baseline justify-between text-[8.5px] text-slate-500">
+                  <span>Equity-Verlauf ({s.equityCurve.length - 1} Trades)</span>
+                  {s.maxDrawdownPct < 0 && (
+                    <span className="text-rose-400/80" title="Groesster zwischenzeitlicher Einbruch">
+                      max. Einbruch {fmtPct(s.maxDrawdownPct)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
             {s.bestTradePct !== null && s.worstTradePct !== null && (
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[10px]">
                 <span className="text-slate-500">Bester</span>

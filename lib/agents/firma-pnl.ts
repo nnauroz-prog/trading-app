@@ -52,6 +52,14 @@ export interface FirmaPnlSummary {
   // Bestes + schlechtestes Einzel-Outcome.
   bestTradePct: number | null;
   worstTradePct: number | null;
+  // Kumulative Equity-Kurve aus ALLEN bewerteten Trades, chronologisch
+  // (aeltester zuerst). Jeder Punkt ist die laufende Summe der gleich-
+  // gewichteten P&L-Prozente bis zu diesem Trade. Startpunkt 0.
+  // So sieht der User die Trajektorie: wird die Firma ueber die Zeit besser?
+  equityCurve: number[];
+  // Groesster Peak-to-Trough-Einbruch der Equity-Kurve (≤ 0). Misst, wie tief
+  // der schlimmste zwischenzeitliche Drawdown war.
+  maxDrawdownPct: number;
   // Letzte 20 Trades fuer Detail-Anzeige (neueste zuerst).
   trades: FirmaTradePnl[];
 }
@@ -115,6 +123,22 @@ export function computeFirmaPnl(
     const pcts = evaluatable.map((t) => t.pnlPct as number);
     const bestTradePct = pcts.length > 0 ? Math.max(...pcts) : null;
     const worstTradePct = pcts.length > 0 ? Math.min(...pcts) : null;
+
+    // Equity-Kurve: chronologisch (aeltester zuerst), kumulative Summe.
+    // Startpunkt 0, danach ein Punkt pro bewertetem Trade.
+    const chrono = [...evaluatable].sort((a, b) => a.date.localeCompare(b.date));
+    const equityCurve: number[] = [0];
+    let running = 0;
+    let peak = 0;
+    let maxDrawdownPct = 0;
+    for (const t of chrono) {
+      running += t.pnlPct ?? 0;
+      equityCurve.push(Math.round(running * 10) / 10);
+      if (running > peak) peak = running;
+      const dd = running - peak;
+      if (dd < maxDrawdownPct) maxDrawdownPct = dd;
+    }
+
     out.push({
       firma,
       firmaName: entries[0]?.firmaName ?? firma,
@@ -128,6 +152,8 @@ export function computeFirmaPnl(
       avgPnlPct: Math.round(avgPnlPct * 100) / 100,
       bestTradePct: bestTradePct !== null ? Math.round(bestTradePct * 10) / 10 : null,
       worstTradePct: worstTradePct !== null ? Math.round(worstTradePct * 10) / 10 : null,
+      equityCurve,
+      maxDrawdownPct: Math.round(maxDrawdownPct * 10) / 10,
       trades: trades.slice(0, 20)
     });
   }
