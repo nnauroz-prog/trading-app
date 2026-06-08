@@ -7,6 +7,7 @@
 
 import type { AgentVerdict, PersonaId } from '@/lib/agents/personas';
 import type { FirmaAccuracy } from '@/lib/firma-accuracy';
+import type { FirmaPnlSummary } from '@/lib/agents/firma-pnl';
 import { applyLearnedOverride, type LearnedOverride } from '@/lib/agents/learned-override';
 
 export interface LearnedVerdict extends AgentVerdict {
@@ -17,11 +18,13 @@ export interface LearnedVerdict extends AgentVerdict {
 
 export function applyLearnedOverridesToVerdicts(
   verdicts: AgentVerdict[],
-  accuracyMap: Map<PersonaId, FirmaAccuracy>
+  accuracyMap: Map<PersonaId, FirmaAccuracy>,
+  pnlMap: Map<PersonaId, FirmaPnlSummary> = new Map()
 ): LearnedVerdict[] {
   return verdicts.map((v) => {
     const acc = accuracyMap.get(v.persona) ?? null;
-    const override = applyLearnedOverride(v.verdict, acc);
+    const pnl = pnlMap.get(v.persona) ?? null;
+    const override = applyLearnedOverride(v.verdict, acc, pnl);
     return {
       ...v,
       rawVerdict: v.verdict,

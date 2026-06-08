@@ -18,6 +18,7 @@ import { AgentRecorder } from '@/components/agent-recorder';
 import { FirmaStrip } from '@/components/firma-strip';
 import { VorstandStrip } from '@/components/vorstand-strip';
 import { VorstandLearningOverlay } from '@/components/vorstand-learning-overlay';
+import { FirmaPnlCard } from '@/components/firma-pnl-card';
 import { vorstandMediation } from '@/lib/agents/vorstand';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { IntelRecorder } from '@/components/intel-recorder';
@@ -704,7 +705,8 @@ export default async function HomePage() {
       />
 
       <VorstandStrip report={vorstandReport} />
-      <VorstandLearningOverlay personas={personas} serverReport={vorstandReport} />
+      <VorstandLearningOverlay personas={personas} serverReport={vorstandReport} latestPrices={latestPrices} />
+      <FirmaPnlCard latestPrices={latestPrices} />
       {/* Headless: jeder Home-Page-Aufruf füttert den Lern-Loop. Ohne diese
           Recorder wuchs der Track-Record nur, wenn der User /agent oder
           /intel besuchte — das machten die wenigsten User taeglich. */}
@@ -805,7 +807,7 @@ export default async function HomePage() {
 
         <TodoBox report={masterSignal} />
 
-        <FirmaStrip personas={personas} />
+        <FirmaStrip personas={personas} latestPrices={latestPrices} />
 
         <SetupTrend />
 

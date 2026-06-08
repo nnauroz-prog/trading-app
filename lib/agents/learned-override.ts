@@ -13,8 +13,14 @@
 //     das als „starker Vertrauens-Override" (kein verdict-Flip, weil Vorsicht
 //     immer richtig sein kann, aber sichtbar verstaerkt).
 //   - Bei unzureichenden Daten (< MIN_EVALUATED) keine Aenderung.
+//   - ZUSAETZLICH (P&L-Eskalation): wenn ein virtuelles P&L-Summary vorhanden
+//     ist und der Trade-Durchschnitt deutlich negativ (≤ −3 %) bzw. positiv
+//     (≥ +5 %) ist, eskaliert das den Override auch ohne Streak-Bedingung.
+//     P&L zeigt, ob die Firma ECHT Geld verdient haette — der ehrlichste
+//     Lehrer.
 
 import type { FirmaAccuracy } from '@/lib/firma-accuracy';
+import type { FirmaPnlSummary } from '@/lib/agents/firma-pnl';
 
 export type OverrideKind = 'downgrade-buy' | 'reinforce-wait' | 'reinforce-buy' | 'flag-weak-wait' | 'none';
 
@@ -32,6 +38,12 @@ const COLD_STREAK_LENGTH = 3;
 const HOT_STREAK_LENGTH = 3;
 const COLD_HIT_RATE_PCT = 40;
 const HOT_HIT_RATE_PCT = 65;
+// P&L-Schwellen. Negativer Schnitt ≤ -3 % je Trade ist „verliert echt Geld",
+// positiver Schnitt ≥ +5 % ist „verdient deutlich". Bei < MIN_PNL_TRADES BUYs
+// im Tagebuch ignorieren wir P&L — zu wenig Daten.
+const COLD_PNL_PCT = -3;
+const HOT_PNL_PCT = 5;
+const MIN_PNL_TRADES = 5;
 
 // Berechnet die aktuelle Streak: wie viele bewertete Entscheidungen in Folge
 // waren richtig (positive Streak) bzw. falsch (negative Streak)?
@@ -48,8 +60,35 @@ export function currentStreakLength(recent: FirmaAccuracy['recent']): number {
   return last ? length : -length;
 }
 
-export function applyLearnedOverride(rawVerdict: 'BUY' | 'WAIT', accuracy: FirmaAccuracy | null): LearnedOverride {
+export function applyLearnedOverride(
+  rawVerdict: 'BUY' | 'WAIT',
+  accuracy: FirmaAccuracy | null,
+  pnl: FirmaPnlSummary | null = null
+): LearnedOverride {
+  // P&L-Eskalation: ECHTER virtueller Geld-Verlust hebelt sofort aus, auch
+  // ohne Hit-Rate-Daten. Wenn der Schnitt pro BUY deutlich negativ ist,
+  // downgraden wir — egal wie oft die „Richtung" stimmte (man kann oft
+  // richtig liegen und trotzdem verlieren, wenn Stops vor TPs zuschlagen).
+  const pnlHasData = pnl && pnl.totalBuys >= MIN_PNL_TRADES;
+  if (rawVerdict === 'BUY' && pnlHasData && pnl.avgPnlPct <= COLD_PNL_PCT) {
+    return {
+      kind: 'downgrade-buy',
+      effectiveVerdict: 'WAIT',
+      reason: `Virtuelles P&L: im Schnitt ${pnl.avgPnlPct.toFixed(1)} % pro BUY ueber ${pnl.totalBuys} Trades — diese Firma verliert echt Geld, BUY-Signal heruntergestuft.`,
+      severity: 3
+    };
+  }
+
   if (!accuracy || accuracy.evaluated < MIN_EVALUATED || accuracy.hitRatePct === null) {
+    // Aber: bei vorhandenem P&L kann es trotzdem ein flag/reinforce geben.
+    if (rawVerdict === 'BUY' && pnlHasData && pnl.avgPnlPct >= HOT_PNL_PCT) {
+      return {
+        kind: 'reinforce-buy',
+        effectiveVerdict: 'BUY',
+        reason: `Virtuelles P&L: +${pnl.avgPnlPct.toFixed(1)} % pro BUY ueber ${pnl.totalBuys} Trades — diese Firma verdient echt Geld, Signal verstaerkt.`,
+        severity: 2
+      };
+    }
     return { kind: 'none', effectiveVerdict: rawVerdict, reason: '', severity: 0 };
   }
   const hit = accuracy.hitRatePct;
@@ -73,12 +112,20 @@ export function applyLearnedOverride(rawVerdict: 'BUY' | 'WAIT', accuracy: Firma
       severity: 2
     };
   }
-  // Reinforce-BUY: BUY + hohe Hit-Rate + Gewinn-Streak
+  // Reinforce-BUY: BUY + hohe Hit-Rate + Gewinn-Streak — oder genug positives P&L.
   if (rawVerdict === 'BUY' && hit >= HOT_HIT_RATE_PCT && streak >= HOT_STREAK_LENGTH) {
     return {
       kind: 'reinforce-buy',
       effectiveVerdict: 'BUY',
       reason: `Historisch ${hit} % richtig und ${streak} BUYs in Folge erfolgreich — Track-Record stuetzt das Signal stark.`,
+      severity: 2
+    };
+  }
+  if (rawVerdict === 'BUY' && pnlHasData && pnl.avgPnlPct >= HOT_PNL_PCT) {
+    return {
+      kind: 'reinforce-buy',
+      effectiveVerdict: 'BUY',
+      reason: `Virtuelles P&L: +${pnl.avgPnlPct.toFixed(1)} % pro BUY ueber ${pnl.totalBuys} Trades — Empfehlung historisch profitabel.`,
       severity: 2
     };
   }

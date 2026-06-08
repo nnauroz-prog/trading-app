@@ -8,6 +8,7 @@ import { FIRMA_DECISIONS_CHANGED_EVENT, loadFirmaLog } from '@/lib/firma-memory'
 import { INTEL_LOG_CHANGED_EVENT, loadIntelLog } from '@/lib/intel/memory';
 import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL, type FirmaAccuracy } from '@/lib/firma-accuracy';
 import { applyLearnedOverride, type LearnedOverride } from '@/lib/agents/learned-override';
+import { computeFirmaPnl, type FirmaPnlSummary } from '@/lib/agents/firma-pnl';
 
 function fmtPrice(v: number): string {
   if (v >= 1000) return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -27,10 +28,11 @@ function gradeClasses(g: 'A' | 'B' | 'C' | 'D' | null | undefined): string {
 // Each tile links to /agent for the full team view. Eingebauter Lern-Indikator:
 // pro Firma wird die aktuelle Trefferquote als Badge eingeblendet, sobald
 // genug Daten gesammelt sind.
-export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
+export function FirmaStrip({ personas, latestPrices }: { personas: AgentVerdict[]; latestPrices?: Record<string, number | null> }) {
   const [preferred, setPreferred] = useState<PersonaId | null>(null);
   const [hitRates, setHitRates] = useState<Map<PersonaId, { pct: number; evaluated: number; streak: { kind: 'hot' | 'cold' | 'mixed'; length: number } | null }>>(new Map());
   const [accuracyMap, setAccuracyMap] = useState<Map<PersonaId, FirmaAccuracy>>(new Map());
+  const [pnlMap, setPnlMap] = useState<Map<PersonaId, FirmaPnlSummary>>(new Map());
   useEffect(() => {
     const syncPref = () => setPreferred(loadFirmaPreference());
     const syncRates = () => {
@@ -42,6 +44,16 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
       const accMap = new Map<PersonaId, FirmaAccuracy>();
       for (const a of acc) accMap.set(a.firma, a);
       setAccuracyMap(accMap);
+      // Virtuelles P&L pro Firma, sofern aktuelle Preise verfuegbar sind.
+      const pMap = new Map<PersonaId, FirmaPnlSummary>();
+      if (latestPrices) {
+        const priceFor = (symbol: string): number | null => {
+          const v = latestPrices[symbol.toLowerCase()];
+          return typeof v === 'number' && Number.isFinite(v) ? v : null;
+        };
+        for (const s of computeFirmaPnl(log, priceFor)) pMap.set(s.firma, s);
+      }
+      setPnlMap(pMap);
       const m = new Map<PersonaId, { pct: number; evaluated: number; streak: { kind: 'hot' | 'cold' | 'mixed'; length: number } | null }>();
       for (const a of acc) {
         if (a.hitRatePct !== null && a.evaluated >= MIN_EVAL_FOR_SKILL) {
@@ -79,7 +91,7 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
       window.removeEventListener(FIRMA_DECISIONS_CHANGED_EVENT, syncRates);
       window.removeEventListener(INTEL_LOG_CHANGED_EVENT, syncRates);
     };
-  }, []);
+  }, [latestPrices]);
   const buyCount = personas.filter((p) => p.verdict === 'BUY').length;
   return (
     <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3">
@@ -94,7 +106,7 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
       <div className="grid grid-cols-3 gap-2">
         {personas.map((p) => {
           const rawIsBuy = p.verdict === 'BUY';
-          const override: LearnedOverride = applyLearnedOverride(p.verdict, accuracyMap.get(p.persona) ?? null);
+          const override: LearnedOverride = applyLearnedOverride(p.verdict, accuracyMap.get(p.persona) ?? null, pnlMap.get(p.persona) ?? null);
           const isBuy = override.effectiveVerdict === 'BUY';
           const wasDowngraded = override.kind === 'downgrade-buy';
           const isFav = preferred === p.persona;
