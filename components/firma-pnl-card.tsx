@@ -14,7 +14,12 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { FIRMA_DECISIONS_CHANGED_EVENT, loadFirmaLog } from '@/lib/firma-memory';
 import { computeFirmaPnl, type FirmaPnlSummary, type FirmaTradePnl } from '@/lib/agents/firma-pnl';
+import { projectFirmaPnlEur } from '@/lib/agents/firma-pnl-eur';
 import type { PersonaId } from '@/lib/agents/personas';
+
+// localStorage-Key fuer den „Was-waere-wenn"-Betrag pro BUY.
+const AMOUNT_STORAGE_KEY = 'trading-app.firma-pnl-amount-per-buy';
+const DEFAULT_AMOUNT_EUR = 100;
 
 interface Props {
   // Vom Server uebergebene aktuelle Preise. Key = lowercased symbol ohne USDT
@@ -33,6 +38,13 @@ const FIRMA_TONE: Record<PersonaId, string> = {
 function fmtPct(v: number): string {
   const sign = v >= 0 ? '+' : '';
   return `${sign}${v.toFixed(1)} %`;
+}
+
+function fmtEur(v: number): string {
+  const abs = Math.abs(v);
+  if (abs >= 1000) return `${v < 0 ? '-' : ''}${abs.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €`;
+  if (abs >= 100) return `${v < 0 ? '-' : ''}${abs.toFixed(0)} €`;
+  return `${v < 0 ? '-' : ''}${abs.toFixed(2)} €`;
 }
 
 function pctTone(v: number): string {
@@ -75,6 +87,7 @@ function EquitySparkline({ curve }: { curve: number[] }) {
 export function FirmaPnlCard({ latestPrices }: Props) {
   const [summaries, setSummaries] = useState<FirmaPnlSummary[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [amountPerBuy, setAmountPerBuy] = useState(DEFAULT_AMOUNT_EUR);
 
   useEffect(() => {
     const sync = () => {
@@ -88,9 +101,24 @@ export function FirmaPnlCard({ latestPrices }: Props) {
     };
     sync();
     setMounted(true);
+    // „Was-waere-wenn"-Betrag aus localStorage laden, falls vorhanden.
+    if (typeof window !== 'undefined') {
+      const raw = window.localStorage.getItem(AMOUNT_STORAGE_KEY);
+      if (raw) {
+        const parsed = parseFloat(raw);
+        if (Number.isFinite(parsed) && parsed > 0) setAmountPerBuy(parsed);
+      }
+    }
     window.addEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
     return () => window.removeEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
   }, [latestPrices]);
+
+  const updateAmount = (next: number) => {
+    setAmountPerBuy(next);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(AMOUNT_STORAGE_KEY, String(next));
+    }
+  };
 
   if (!mounted) return null;
   const totalBuys = summaries.reduce((s, x) => s + x.totalBuys, 0);
@@ -126,6 +154,27 @@ export function FirmaPnlCard({ latestPrices }: Props) {
         </p>
       )}
 
+      <label className="flex flex-wrap items-baseline gap-2 rounded-md border border-slate-800 bg-slate-950/50 p-2 text-[11px]">
+        <span className="text-slate-300">Was waere, wenn ich pro BUY</span>
+        <span className="inline-flex items-baseline gap-1">
+          <input
+            type="number"
+            inputMode="decimal"
+            min={1}
+            step={10}
+            value={amountPerBuy}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value);
+              if (Number.isFinite(v) && v > 0) updateAmount(v);
+            }}
+            className="w-24 rounded border border-slate-700 bg-slate-900 px-2 py-0.5 text-right font-mono text-[12px] text-white focus:border-emerald-400/60 focus:outline-none"
+            aria-label="Betrag pro BUY in Euro"
+          />
+          <span className="font-mono text-slate-400">€</span>
+        </span>
+        <span className="text-slate-300">investiert haette?</span>
+      </label>
+
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {summaries.map((s) => (
           <article key={s.firma} className={`space-y-2 rounded-xl border-2 p-3 ${FIRMA_TONE[s.firma]}`}>
@@ -149,6 +198,29 @@ export function FirmaPnlCard({ latestPrices }: Props) {
                 </div>
               </div>
             </div>
+            {(() => {
+              const eur = projectFirmaPnlEur(s, amountPerBuy);
+              if (eur.evaluableTrades === 0) return null;
+              const profitTone = eur.profitEur >= 0 ? 'text-emerald-300' : 'text-rose-300';
+              return (
+                <div className="rounded-md border border-slate-700 bg-slate-950/50 px-2 py-1.5 text-[10.5px]">
+                  <div className="flex items-baseline justify-between gap-1">
+                    <span className="text-slate-500">Investiert</span>
+                    <span className="font-mono font-bold text-slate-200">{fmtEur(eur.investedEur)}</span>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-1">
+                    <span className="text-slate-500">Aktuell wert</span>
+                    <span className={`font-mono font-bold ${profitTone}`}>{fmtEur(eur.currentWorthEur)}</span>
+                  </div>
+                  <div className="mt-0.5 flex items-baseline justify-between gap-1 border-t border-slate-800 pt-0.5">
+                    <span className="text-slate-400">Gewinn / Verlust</span>
+                    <span className={`font-mono font-bold ${profitTone}`}>
+                      {eur.profitEur >= 0 ? '+' : ''}{fmtEur(eur.profitEur)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
             <div className="flex flex-wrap gap-1 text-[9px]">
               <span className="rounded border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">{s.wins} TP</span>
               <span className="rounded border border-rose-400/40 bg-rose-500/10 px-1.5 py-0.5 text-rose-200">{s.losses} SL</span>
@@ -198,10 +270,48 @@ export function FirmaPnlCard({ latestPrices }: Props) {
         ))}
       </div>
 
-      <p className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[10px] leading-snug text-slate-400">
-        Summe aller drei Firmen gleich-gewichtet: <span className={`font-mono font-bold ${pctTone(overallSum)}`}>{fmtPct(overallSum)}</span> ueber {overallBuys} BUYs.{' '}
-        Vereinfachtes &bdquo;Hold-to-Now&ldquo;-Modell: bei TP-Treffer wird der TP1-Gewinn realisiert, bei SL-Treffer der SL-Verlust, sonst der aktuelle, schwebende Stand gezeigt. Keine Steuern, keine Spread-Kosten. Vergangenheit ≠ Zukunft.
-      </p>
+      {(() => {
+        // Aggregat ueber alle drei Firmen in EUR.
+        const totalEur = summaries.reduce((acc, s) => {
+          const eur = projectFirmaPnlEur(s, amountPerBuy);
+          return {
+            invested: acc.invested + eur.investedEur,
+            profit: acc.profit + eur.profitEur,
+            evaluable: acc.evaluable + eur.evaluableTrades
+          };
+        }, { invested: 0, profit: 0, evaluable: 0 });
+        if (totalEur.evaluable === 0) {
+          return (
+            <p className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[10px] leading-snug text-slate-400">
+              Vereinfachtes &bdquo;Hold-to-Now&ldquo;-Modell: bei TP-Treffer wird der TP1-Gewinn realisiert, bei SL-Treffer der SL-Verlust, sonst der aktuelle, schwebende Stand gezeigt. Keine Steuern, keine Spread-Kosten. Vergangenheit ≠ Zukunft.
+            </p>
+          );
+        }
+        const tone = totalEur.profit >= 0 ? 'text-emerald-300' : 'text-rose-300';
+        return (
+          <div className="space-y-1.5 rounded-md border border-amber-400/40 bg-amber-950/15 p-2.5">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-300">Bilanz quer ueber alle drei Firmen</div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-500">Investiert</div>
+                <div className="font-mono text-base font-bold text-slate-200">{fmtEur(totalEur.invested)}</div>
+              </div>
+              <div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-500">Heute wert</div>
+                <div className={`font-mono text-base font-bold ${tone}`}>{fmtEur(totalEur.invested + totalEur.profit)}</div>
+              </div>
+              <div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-500">Gewinn / Verlust</div>
+                <div className={`font-mono text-base font-bold ${tone}`}>{totalEur.profit >= 0 ? '+' : ''}{fmtEur(totalEur.profit)}</div>
+              </div>
+            </div>
+            <p className="text-[10px] leading-snug text-slate-400">
+              Gleichgewichtet {fmtEur(amountPerBuy)} pro BUY ueber {totalEur.evaluable} bewertbare Trades, kumulierter Prozent-Schnitt <span className={`font-mono ${pctTone(overallSum)}`}>{fmtPct(overallSum)}</span>.
+              {' '}Vereinfachtes &bdquo;Hold-to-Now&ldquo;-Modell, keine Steuern, keine Spread-Kosten. Vergangenheit ≠ Zukunft.
+            </p>
+          </div>
+        );
+      })()}
     </section>
   );
 }
