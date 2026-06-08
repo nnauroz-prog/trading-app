@@ -1,6 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { FIRMA_DECISIONS_CHANGED_EVENT, loadFirmaLog } from '@/lib/firma-memory';
+import { INTEL_LOG_CHANGED_EVENT, computeIntelAccuracy, loadIntelLog } from '@/lib/intel/memory';
+import { VORSTAND_LOG_CHANGED_EVENT, computeVorstandAccuracy, loadVorstandLog } from '@/lib/agents/vorstand-memory';
+import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL, type FirmaAccuracy } from '@/lib/firma-accuracy';
 
 interface Props {
   date: string;
@@ -12,10 +16,51 @@ interface Props {
   macroNext: { title: string; hoursUntil: number } | null;
 }
 
+interface TrackRecord {
+  firmas: FirmaAccuracy[];
+  intelHitRatePct: number | null;
+  intelEvaluated: number;
+  vorstandHitRatePct: number | null;
+  vorstandEvaluated: number;
+}
+
 // Generates a copy-able plain-text morning briefing for sharing or journaling.
+// Holt zusätzlich client-seitig den Track-Record (Firma/Vorstand/Intel) und
+// haengt ihn an den exportierten Text an — so reist die Lern-Statistik mit.
 export function MorningBriefingExport(props: Props) {
   const [copied, setCopied] = useState(false);
-  const text = buildText(props);
+  const [trackRecord, setTrackRecord] = useState<TrackRecord | null>(null);
+
+  useEffect(() => {
+    const sync = () => {
+      const firmaLog = loadFirmaLog();
+      const intelLog = loadIntelLog();
+      const vorstandLog = loadVorstandLog();
+      const priceMap = new Map<string, number>();
+      for (const s of intelLog) if (s.btcPriceAtRecord !== null) priceMap.set(s.date, s.btcPriceAtRecord);
+      const firmas = computeFirmaAccuracy(firmaLog, (d) => priceMap.get(d) ?? null);
+      const intelAcc = computeIntelAccuracy(intelLog);
+      const vorstandAcc = computeVorstandAccuracy(vorstandLog, (d) => priceMap.get(d) ?? null);
+      setTrackRecord({
+        firmas,
+        intelHitRatePct: intelAcc.hitRatePct,
+        intelEvaluated: intelAcc.evaluated,
+        vorstandHitRatePct: vorstandAcc.hitRatePct,
+        vorstandEvaluated: vorstandAcc.evaluated
+      });
+    };
+    sync();
+    window.addEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
+    window.addEventListener(INTEL_LOG_CHANGED_EVENT, sync);
+    window.addEventListener(VORSTAND_LOG_CHANGED_EVENT, sync);
+    return () => {
+      window.removeEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
+      window.removeEventListener(INTEL_LOG_CHANGED_EVENT, sync);
+      window.removeEventListener(VORSTAND_LOG_CHANGED_EVENT, sync);
+    };
+  }, []);
+
+  const text = buildText(props, trackRecord);
 
   const handleCopy = async () => {
     try {
@@ -45,7 +90,7 @@ export function MorningBriefingExport(props: Props) {
   );
 }
 
-function buildText(p: Props): string {
+function buildText(p: Props, tr: TrackRecord | null): string {
   const lines: string[] = [];
   lines.push(`MORGEN-BRIEFING · ${p.date}`);
   lines.push('===============================');
@@ -71,6 +116,26 @@ function buildText(p: Props): string {
       lines.push(`· [${n.impact}] ${n.title} (${n.source})`);
     }
     lines.push('');
+  }
+  // Track-Record-Block: zeigt im Export-Text die historische Treffer-Quote
+  // pro Agent. Nur, wenn genug Daten vorliegen — sonst ehrlich weggelassen.
+  if (tr) {
+    const trainedFirmas = tr.firmas.filter((f) => f.evaluated >= MIN_EVAL_FOR_SKILL && f.hitRatePct !== null);
+    const intelTrained = tr.intelHitRatePct !== null && tr.intelEvaluated >= MIN_EVAL_FOR_SKILL;
+    const vorstandTrained = tr.vorstandHitRatePct !== null && tr.vorstandEvaluated >= MIN_EVAL_FOR_SKILL;
+    if (trainedFirmas.length > 0 || intelTrained || vorstandTrained) {
+      lines.push('TRACK-RECORD (aus deinem lokalen Tagebuch):');
+      for (const f of trainedFirmas) {
+        lines.push(`· ${f.firmaName}: ${f.hitRatePct} % (${f.rightCalls}/${f.evaluated})`);
+      }
+      if (vorstandTrained) {
+        lines.push(`· Vorstand insgesamt: ${tr.vorstandHitRatePct} % (über ${tr.vorstandEvaluated} bewertete Tage)`);
+      }
+      if (intelTrained) {
+        lines.push(`· Chefredakteur: ${tr.intelHitRatePct} % (über ${tr.intelEvaluated} bewertete Tage)`);
+      }
+      lines.push('');
+    }
   }
   lines.push('---');
   lines.push('Keine Finanzberatung. Vergangenheit ≠ Zukunft.');
