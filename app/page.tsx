@@ -23,6 +23,7 @@ import { FirmaRecorder } from '@/components/firma-recorder';
 import { IntelRecorder } from '@/components/intel-recorder';
 import { VorstandRecorder } from '@/components/vorstand-recorder';
 import { PersonaHistoryRecorder } from '@/components/persona-history-recorder';
+import { AkademieRecorder } from '@/components/akademie-recorder';
 import type { HistoryEntry } from '@/lib/agents/persona-history';
 import { StreitBanner } from '@/components/streit-banner';
 import { KonsensStreakCard } from '@/components/konsens-streak-card';
@@ -63,6 +64,7 @@ import { PnlSummary } from '@/components/pnl-summary';
 import { buildCommandCenter } from '@/lib/command-center';
 import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 import { AkademieStrip } from '@/components/akademie-strip';
+import { AkademieLearningOverlay } from '@/components/akademie-learning-overlay';
 import { HeuteEntscheidung } from '@/components/heute-entscheidung';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
@@ -712,6 +714,7 @@ export default async function HomePage() {
         generatedAt={masterSignal.generatedAt}
       />
       <VorstandRecorder report={vorstandReport} generatedAt={masterSignal.generatedAt} />
+      <AkademieRecorder lehrling={lehrlingReport} spaeher={spaeherReport} />
       {(() => {
         const historyEntries: HistoryEntry[] = [
           ...personas.map((v) => ({ dateIso: todayIso, klass: 'Krypto', personaId: v.persona, verdict: v.verdict, targetLabel: v.target?.symbol ?? null })),
@@ -805,6 +808,7 @@ export default async function HomePage() {
         <SetupTrend />
 
         <AkademieStrip spaeher={spaeherReport} lehrling={lehrlingReport} />
+        <AkademieLearningOverlay />
 
         <DailyBriefing report={masterSignal} backtest={backtestSummary} />
 
