@@ -42,6 +42,7 @@ import { PersonaConsensusBanner } from '@/components/persona-consensus-banner';
 import { CoinScoreRecorder } from '@/components/coin-score-recorder';
 import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { SportBriefingCard } from '@/components/sport-briefing-card';
+import { getEmployeeBacktest } from '@/lib/sport/firma/employee-backtest-cache';
 import { SportTodayBanner } from '@/components/sport-today-banner';
 import { MarketQuickStats } from '@/components/market-quick-stats';
 import { HeuteMachen, type AssetCardData } from '@/components/heute-machen';
@@ -128,7 +129,7 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources, sportLeagues, basketballLeagues, tennisLeagues, hockeyLeagues, stockSafetyScan, commoditySafetyScan] = await Promise.all([
+  const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources, sportLeagues, basketballLeagues, tennisLeagues, hockeyLeagues, stockSafetyScan, commoditySafetyScan, sportEmployeeStats] = await Promise.all([
     buildTopPlayReport(),
     buildMasterSignal(tradeMode),
     fetchFearGreed(),
@@ -144,7 +145,8 @@ export default async function HomePage() {
     getTennisFixtures(),
     getHockeyFixtures(),
     getStockSafetyScan(),
-    getCommoditySafetyScan()
+    getCommoditySafetyScan(),
+    getEmployeeBacktest()
   ]);
   const sportSynth = buildFirmaSynthesis(sportLeagues);
   const sportTodayCount = bucketByDay(sportLeagues.flatMap((lf) => lf.next)).today.length;
@@ -764,7 +766,7 @@ export default async function HomePage() {
       <ChaseWarning chase={chaseSignals} opportunity={opportunitySignals} />
       <WocheVoraus events={upcomingMacro} today={todayIso} />
 
-      <SportBriefingCard synth={sportSynth} todayFixtures={sportTodayCount} />
+      <SportBriefingCard synth={sportSynth} todayFixtures={sportTodayCount} employeeStats={sportEmployeeStats} />
 
       <MultiSportBriefing
         fussballHeute={sportTodayCount}
