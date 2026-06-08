@@ -74,4 +74,22 @@ describe('data-backup', () => {
     expect(importData('{"foo":1}').ok).toBe(false);
     expect(importData('not json').ok).toBe(false);
   });
+
+  it('sichert auch Gold-Bestaende, Aktien-/Rohstoff-Watchlists, Persona-Tagebuch + Sport-Tips', () => {
+    store.set('trading-app.gold-holdings-v1', JSON.stringify([{ id: 'g1', amount: 31 }]));
+    store.set('trading-app.aktien-watchlist-v1', JSON.stringify([{ symbol: 'SAP' }]));
+    store.set('trading-app.rohstoff-watchlist-v1', JSON.stringify([{ symbol: 'XAU' }]));
+    store.set('trading-app.persona-history-v1', JSON.stringify([{ id: 'h1' }]));
+    store.set('trading-app.sport-tip-journal-v1', JSON.stringify([{ id: 's1' }]));
+    store.set('trading-app.firma-decisions-v2', JSON.stringify([{ id: 'f1' }]));
+    store.set('trading-app.vorstand-log-v1', JSON.stringify([{ id: 'v1' }]));
+    const env = exportData();
+    expect(env.data['trading-app.gold-holdings-v1']).toEqual([{ id: 'g1', amount: 31 }]);
+    expect(env.data['trading-app.aktien-watchlist-v1']).toEqual([{ symbol: 'SAP' }]);
+    expect(env.data['trading-app.rohstoff-watchlist-v1']).toEqual([{ symbol: 'XAU' }]);
+    expect(env.data['trading-app.persona-history-v1']).toEqual([{ id: 'h1' }]);
+    expect(env.data['trading-app.sport-tip-journal-v1']).toEqual([{ id: 's1' }]);
+    expect(env.data['trading-app.firma-decisions-v2']).toEqual([{ id: 'f1' }]);
+    expect(env.data['trading-app.vorstand-log-v1']).toEqual([{ id: 'v1' }]);
+  });
 });
