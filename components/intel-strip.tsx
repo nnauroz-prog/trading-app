@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ChefredakteurReport, IntelSignal } from '@/lib/intel/types';
+import { ChefHitRateBadge } from '@/components/chef-hit-rate-badge';
 
 function signalClasses(s: IntelSignal): string {
   if (s === 'risk-on') return 'border-emerald-400/60 bg-emerald-500/15 text-emerald-100';
@@ -21,7 +22,10 @@ export function IntelStrip({ ceo }: { ceo: ChefredakteurReport }) {
   return (
     <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Chefredakteur — Lagebericht</h2>
+        <div className="flex items-baseline gap-1.5">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Chefredakteur — Lagebericht</h2>
+          <ChefHitRateBadge />
+        </div>
         <div className="flex items-baseline gap-2">
           <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${signalClasses(ceo.netSignal)}`}>
             {signalLabel(ceo.netSignal)}
