@@ -6,7 +6,8 @@ import { AgentVerdict, PersonaId } from '@/lib/agents/personas';
 import { FIRMA_PREFERENCE_CHANGED_EVENT, loadFirmaPreference } from '@/lib/firma-preference';
 import { FIRMA_DECISIONS_CHANGED_EVENT, loadFirmaLog } from '@/lib/firma-memory';
 import { INTEL_LOG_CHANGED_EVENT, loadIntelLog } from '@/lib/intel/memory';
-import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL } from '@/lib/firma-accuracy';
+import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL, type FirmaAccuracy } from '@/lib/firma-accuracy';
+import { applyLearnedOverride, type LearnedOverride } from '@/lib/agents/learned-override';
 
 function fmtPrice(v: number): string {
   if (v >= 1000) return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -29,6 +30,7 @@ function gradeClasses(g: 'A' | 'B' | 'C' | 'D' | null | undefined): string {
 export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
   const [preferred, setPreferred] = useState<PersonaId | null>(null);
   const [hitRates, setHitRates] = useState<Map<PersonaId, { pct: number; evaluated: number; streak: { kind: 'hot' | 'cold' | 'mixed'; length: number } | null }>>(new Map());
+  const [accuracyMap, setAccuracyMap] = useState<Map<PersonaId, FirmaAccuracy>>(new Map());
   useEffect(() => {
     const syncPref = () => setPreferred(loadFirmaPreference());
     const syncRates = () => {
@@ -37,6 +39,9 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
       const priceMap = new Map<string, number>();
       for (const s of intelLog) if (s.btcPriceAtRecord !== null) priceMap.set(s.date, s.btcPriceAtRecord);
       const acc = computeFirmaAccuracy(log, (d) => priceMap.get(d) ?? null);
+      const accMap = new Map<PersonaId, FirmaAccuracy>();
+      for (const a of acc) accMap.set(a.firma, a);
+      setAccuracyMap(accMap);
       const m = new Map<PersonaId, { pct: number; evaluated: number; streak: { kind: 'hot' | 'cold' | 'mixed'; length: number } | null }>();
       for (const a of acc) {
         if (a.hitRatePct !== null && a.evaluated >= MIN_EVAL_FOR_SKILL) {
@@ -88,9 +93,16 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
       </div>
       <div className="grid grid-cols-3 gap-2">
         {personas.map((p) => {
-          const isBuy = p.verdict === 'BUY';
+          const rawIsBuy = p.verdict === 'BUY';
+          const override: LearnedOverride = applyLearnedOverride(p.verdict, accuracyMap.get(p.persona) ?? null);
+          const isBuy = override.effectiveVerdict === 'BUY';
+          const wasDowngraded = override.kind === 'downgrade-buy';
           const isFav = preferred === p.persona;
-          const tone = isFav
+          // Visual: bei downgrade die Karte als WARTEN behandeln, plus rote
+          // Outline, damit der User den Override sieht.
+          const tone = wasDowngraded
+            ? 'border-rose-400/60 bg-rose-950/15 ring-1 ring-rose-400/40'
+            : isFav
             ? (isBuy ? 'border-amber-400/70 bg-emerald-950/30 ring-2 ring-amber-400/50' : 'border-amber-400/70 bg-slate-900/60 ring-2 ring-amber-400/50')
             : (isBuy ? 'border-emerald-400/60 bg-emerald-950/30' : 'border-slate-700 bg-slate-900/60');
           return (
@@ -100,9 +112,17 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
                   {isFav && <span className="mr-0.5 text-amber-300" title="Deine Lieblings-Firma">★</span>}
                   {p.name}
                 </span>
-                <span className={`rounded border px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider ${isBuy ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-100' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
-                  {isBuy ? 'KAUFEN' : 'WARTEN'}
-                </span>
+                {wasDowngraded ? (
+                  <span className="rounded border border-rose-400/60 bg-rose-500/20 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider text-rose-100" title={override.reason}>
+                    {rawIsBuy ? 'KAUFEN' : 'WARTEN'} → WARTEN
+                  </span>
+                ) : (
+                  <span className={`rounded border px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider ${isBuy ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-100' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
+                    {isBuy ? 'KAUFEN' : 'WARTEN'}
+                    {override.kind === 'reinforce-buy' && <span className="ml-0.5 text-emerald-300" title={override.reason}>+</span>}
+                    {override.kind === 'flag-weak-wait' && <span className="ml-0.5 text-amber-300" title={override.reason}>!</span>}
+                  </span>
+                )}
               </div>
               <div className="flex items-baseline gap-1.5">
                 {p.target ? (
@@ -152,6 +172,15 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
                   </div>
                 );
               })()}
+              {override.severity >= 2 && (
+                <div className={`rounded border px-1 py-0.5 text-[9px] leading-snug ${
+                  override.kind === 'downgrade-buy' ? 'border-rose-400/40 bg-rose-500/10 text-rose-200'
+                  : override.kind === 'reinforce-buy' ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
+                  : 'border-amber-400/40 bg-amber-500/10 text-amber-200'
+                }`}>
+                  {override.reason}
+                </div>
+              )}
             </Link>
           );
         })}
