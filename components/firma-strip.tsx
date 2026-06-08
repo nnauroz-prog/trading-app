@@ -28,7 +28,7 @@ function gradeClasses(g: 'A' | 'B' | 'C' | 'D' | null | undefined): string {
 // genug Daten gesammelt sind.
 export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
   const [preferred, setPreferred] = useState<PersonaId | null>(null);
-  const [hitRates, setHitRates] = useState<Map<PersonaId, { pct: number; evaluated: number }>>(new Map());
+  const [hitRates, setHitRates] = useState<Map<PersonaId, { pct: number; evaluated: number; streak: { kind: 'hot' | 'cold' | 'mixed'; length: number } | null }>>(new Map());
   useEffect(() => {
     const syncPref = () => setPreferred(loadFirmaPreference());
     const syncRates = () => {
@@ -37,10 +37,29 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
       const priceMap = new Map<string, number>();
       for (const s of intelLog) if (s.btcPriceAtRecord !== null) priceMap.set(s.date, s.btcPriceAtRecord);
       const acc = computeFirmaAccuracy(log, (d) => priceMap.get(d) ?? null);
-      const m = new Map<PersonaId, { pct: number; evaluated: number }>();
+      const m = new Map<PersonaId, { pct: number; evaluated: number; streak: { kind: 'hot' | 'cold' | 'mixed'; length: number } | null }>();
       for (const a of acc) {
         if (a.hitRatePct !== null && a.evaluated >= MIN_EVAL_FOR_SKILL) {
-          m.set(a.firma, { pct: a.hitRatePct, evaluated: a.evaluated });
+          // Aktuelle Streak: laufe rückwärts durch a.recent (neueste zuerst),
+          // zähle wie viele die gleiche „right"-Richtung haben. Nur wirklich
+          // bewertete Tage zählen (right !== null).
+          const evaluated = a.recent.filter((r) => r.right !== null);
+          let kind: 'hot' | 'cold' | 'mixed' = 'mixed';
+          let length = 0;
+          if (evaluated.length > 0) {
+            const last = evaluated[0].right;
+            length = 1;
+            for (let i = 1; i < evaluated.length; i++) {
+              if (evaluated[i].right === last) length++;
+              else break;
+            }
+            kind = last ? 'hot' : 'cold';
+          }
+          m.set(a.firma, {
+            pct: a.hitRatePct,
+            evaluated: a.evaluated,
+            streak: length >= 2 ? { kind, length } : null
+          });
         }
       }
       setHitRates(m);
@@ -105,18 +124,34 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
                   ${fmtPrice(p.target.entry)} → ${fmtPrice(p.target.takeProfit1)}
                 </div>
               )}
-              {hitRates.has(p.persona) && (
-                <div className="flex items-baseline justify-between gap-1 border-t border-slate-800 pt-1">
-                  <span className="text-[8.5px] uppercase tracking-wider text-slate-500">Track-Record</span>
-                  <span className={`font-mono text-[10px] font-bold ${
-                    (hitRates.get(p.persona)!.pct) >= 60 ? 'text-emerald-300'
-                    : (hitRates.get(p.persona)!.pct) >= 45 ? 'text-slate-200'
-                    : 'text-rose-300'
-                  }`} title={`${hitRates.get(p.persona)!.evaluated} bewertbare Entscheidungen`}>
-                    {hitRates.get(p.persona)!.pct} %
-                  </span>
-                </div>
-              )}
+              {hitRates.has(p.persona) && (() => {
+                const r = hitRates.get(p.persona)!;
+                return (
+                  <div className="space-y-0.5 border-t border-slate-800 pt-1">
+                    <div className="flex items-baseline justify-between gap-1">
+                      <span className="text-[8.5px] uppercase tracking-wider text-slate-500">Track-Record</span>
+                      <span className={`font-mono text-[10px] font-bold ${
+                        r.pct >= 60 ? 'text-emerald-300'
+                        : r.pct >= 45 ? 'text-slate-200'
+                        : 'text-rose-300'
+                      }`} title={`${r.evaluated} bewertbare Entscheidungen`}>
+                        {r.pct} %
+                      </span>
+                    </div>
+                    {r.streak && (
+                      <div className={`text-[9px] leading-snug ${
+                        r.streak.kind === 'hot' ? 'text-emerald-300'
+                        : r.streak.kind === 'cold' ? 'text-rose-300'
+                        : 'text-slate-500'
+                      }`}>
+                        {r.streak.kind === 'hot' ? `🔥 letzte ${r.streak.length} richtig`
+                          : r.streak.kind === 'cold' ? `❄ letzte ${r.streak.length} daneben`
+                          : ''}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </Link>
           );
         })}
