@@ -1,9 +1,31 @@
 import Link from 'next/link';
 import type { FirmaSynthesis } from '@/lib/sport/firma/synthesis';
+import type { EmployeeBacktestStat } from '@/lib/sport/firma/employee-backtest';
+
+interface SportBriefingProps {
+  synth: FirmaSynthesis;
+  todayFixtures: number;
+  // Optional: aggregierter Track-Record der Sport-Mitarbeiter. Wenn vorhanden,
+  // zeigt die Karte eine Track-Record-Zeile ein. So fliessen die Backtest-
+  // Daten von /sport/firma auch in die Home-Empfehlung.
+  employeeStats?: EmployeeBacktestStat[];
+}
 
 // Mini-Karte für die Startseite: kurzer Sport-Tagesausblick mit Link
 // auf den vollen Sport-Reiter. Damit ist die Sport-Firma nicht isoliert.
-export function SportBriefingCard({ synth, todayFixtures }: { synth: FirmaSynthesis; todayFixtures: number }) {
+export function SportBriefingCard({ synth, todayFixtures, employeeStats }: SportBriefingProps) {
+  // Aggregat: durchschnittliche Hit-Rate der Mitarbeiter mit ≥ 10 bewerteten
+  // Stimmen (sample-quality 'good' oder 'medium'). Unter diesem Schwellwert
+  // wuerde Rauschen ueberwiegen.
+  const ratedEmployees = (employeeStats ?? []).filter(
+    (e) => e.hitRatePct !== null && e.totalVotes >= 10
+  );
+  const avgHitRate = ratedEmployees.length > 0
+    ? Math.round(ratedEmployees.reduce((s, e) => s + (e.hitRatePct ?? 0), 0) / ratedEmployees.length)
+    : null;
+  const topEmployee = ratedEmployees.length > 0
+    ? [...ratedEmployees].sort((a, b) => (b.hitRatePct ?? 0) - (a.hitRatePct ?? 0))[0]
+    : null;
   // Erst der sichere Tipp, sonst der beste verfügbare. Damit die Karte
   // immer mit einer konkreten Empfehlung füllt, auch in der Sommerpause.
   const lead = synth.highConfidencePicks[0] ?? synth.dailyTopPick;
@@ -37,6 +59,20 @@ export function SportBriefingCard({ synth, todayFixtures }: { synth: FirmaSynthe
           </>
         )}
       </p>
+      {avgHitRate !== null && topEmployee && (
+        <p className="text-[10.5px] leading-snug text-slate-400">
+          <span className="text-slate-300">Track-Record:</span>{' '}
+          {ratedEmployees.length} von {synth.totalEmployees} Mitarbeitern mit genug Daten · Schnitt{' '}
+          <span className={`font-mono font-bold ${
+            avgHitRate >= 55 ? 'text-emerald-300'
+            : avgHitRate >= 45 ? 'text-slate-200'
+            : 'text-rose-300'
+          }`}>
+            {avgHitRate} %
+          </span>{' '}
+          · stärkste/r Mitarbeiter/in <span className="font-semibold text-slate-200">{topEmployee.employeeName}</span> ({topEmployee.hitRatePct} %).
+        </p>
+      )}
       <div className="text-[10px] text-emerald-300/80">zum Sport-Reiter →</div>
     </Link>
   );
