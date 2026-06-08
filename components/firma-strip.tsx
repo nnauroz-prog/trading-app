@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { AgentVerdict, PersonaId } from '@/lib/agents/personas';
 import { FIRMA_PREFERENCE_CHANGED_EVENT, loadFirmaPreference } from '@/lib/firma-preference';
+import { FIRMA_DECISIONS_CHANGED_EVENT, loadFirmaLog } from '@/lib/firma-memory';
+import { INTEL_LOG_CHANGED_EVENT, loadIntelLog } from '@/lib/intel/memory';
+import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL } from '@/lib/firma-accuracy';
 
 function fmtPrice(v: number): string {
   if (v >= 1000) return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -20,14 +23,38 @@ function gradeClasses(g: 'A' | 'B' | 'C' | 'D' | null | undefined): string {
 }
 
 // Compact strip showing today's three CEO verdicts at a glance on the home page.
-// Each tile links to /agent for the full team view.
+// Each tile links to /agent for the full team view. Eingebauter Lern-Indikator:
+// pro Firma wird die aktuelle Trefferquote als Badge eingeblendet, sobald
+// genug Daten gesammelt sind.
 export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
   const [preferred, setPreferred] = useState<PersonaId | null>(null);
+  const [hitRates, setHitRates] = useState<Map<PersonaId, { pct: number; evaluated: number }>>(new Map());
   useEffect(() => {
-    setPreferred(loadFirmaPreference());
-    const sync = () => setPreferred(loadFirmaPreference());
-    window.addEventListener(FIRMA_PREFERENCE_CHANGED_EVENT, sync);
-    return () => window.removeEventListener(FIRMA_PREFERENCE_CHANGED_EVENT, sync);
+    const syncPref = () => setPreferred(loadFirmaPreference());
+    const syncRates = () => {
+      const log = loadFirmaLog();
+      const intelLog = loadIntelLog();
+      const priceMap = new Map<string, number>();
+      for (const s of intelLog) if (s.btcPriceAtRecord !== null) priceMap.set(s.date, s.btcPriceAtRecord);
+      const acc = computeFirmaAccuracy(log, (d) => priceMap.get(d) ?? null);
+      const m = new Map<PersonaId, { pct: number; evaluated: number }>();
+      for (const a of acc) {
+        if (a.hitRatePct !== null && a.evaluated >= MIN_EVAL_FOR_SKILL) {
+          m.set(a.firma, { pct: a.hitRatePct, evaluated: a.evaluated });
+        }
+      }
+      setHitRates(m);
+    };
+    syncPref();
+    syncRates();
+    window.addEventListener(FIRMA_PREFERENCE_CHANGED_EVENT, syncPref);
+    window.addEventListener(FIRMA_DECISIONS_CHANGED_EVENT, syncRates);
+    window.addEventListener(INTEL_LOG_CHANGED_EVENT, syncRates);
+    return () => {
+      window.removeEventListener(FIRMA_PREFERENCE_CHANGED_EVENT, syncPref);
+      window.removeEventListener(FIRMA_DECISIONS_CHANGED_EVENT, syncRates);
+      window.removeEventListener(INTEL_LOG_CHANGED_EVENT, syncRates);
+    };
   }, []);
   const buyCount = personas.filter((p) => p.verdict === 'BUY').length;
   return (
@@ -76,6 +103,18 @@ export function FirmaStrip({ personas }: { personas: AgentVerdict[] }) {
               {isBuy && p.target && (
                 <div className="font-mono text-[9px] text-slate-500">
                   ${fmtPrice(p.target.entry)} → ${fmtPrice(p.target.takeProfit1)}
+                </div>
+              )}
+              {hitRates.has(p.persona) && (
+                <div className="flex items-baseline justify-between gap-1 border-t border-slate-800 pt-1">
+                  <span className="text-[8.5px] uppercase tracking-wider text-slate-500">Track-Record</span>
+                  <span className={`font-mono text-[10px] font-bold ${
+                    (hitRates.get(p.persona)!.pct) >= 60 ? 'text-emerald-300'
+                    : (hitRates.get(p.persona)!.pct) >= 45 ? 'text-slate-200'
+                    : 'text-rose-300'
+                  }`} title={`${hitRates.get(p.persona)!.evaluated} bewertbare Entscheidungen`}>
+                    {hitRates.get(p.persona)!.pct} %
+                  </span>
                 </div>
               )}
             </Link>

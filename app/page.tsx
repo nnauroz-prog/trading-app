@@ -19,6 +19,8 @@ import { FirmaStrip } from '@/components/firma-strip';
 import { VorstandStrip } from '@/components/vorstand-strip';
 import { VorstandLearningOverlay } from '@/components/vorstand-learning-overlay';
 import { vorstandMediation } from '@/lib/agents/vorstand';
+import { FirmaRecorder } from '@/components/firma-recorder';
+import { IntelRecorder } from '@/components/intel-recorder';
 import { StreitBanner } from '@/components/streit-banner';
 import { KonsensStreakCard } from '@/components/konsens-streak-card';
 import { SetupTrend } from '@/components/setup-trend';
@@ -695,6 +697,16 @@ export default async function HomePage() {
 
       <VorstandStrip report={vorstandReport} />
       <VorstandLearningOverlay personas={personas} serverReport={vorstandReport} />
+      {/* Headless: jeder Home-Page-Aufruf füttert den Lern-Loop. Ohne diese
+          Recorder wuchs der Track-Record nur, wenn der User /agent oder
+          /intel besuchte — das machten die wenigsten User taeglich. */}
+      <FirmaRecorder personas={personas} generatedAt={masterSignal.generatedAt} />
+      <IntelRecorder
+        reports={intelReports}
+        ceo={intelCeo}
+        btcPrice={latestPrices['btc'] ?? null}
+        generatedAt={masterSignal.generatedAt}
+      />
       <KonsensStreakCard />
       <StreitBanner />
 
