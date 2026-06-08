@@ -22,6 +22,8 @@ import { vorstandMediation } from '@/lib/agents/vorstand';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { IntelRecorder } from '@/components/intel-recorder';
 import { VorstandRecorder } from '@/components/vorstand-recorder';
+import { PersonaHistoryRecorder } from '@/components/persona-history-recorder';
+import type { HistoryEntry } from '@/lib/agents/persona-history';
 import { StreitBanner } from '@/components/streit-banner';
 import { KonsensStreakCard } from '@/components/konsens-streak-card';
 import { SetupTrend } from '@/components/setup-trend';
@@ -349,6 +351,9 @@ export default async function HomePage() {
   const upcomingMacroAll = listMacroEventsThisWeek();
   const eventWindow = computeEventWindow(upcomingMacroAll);
   const personas = evaluatePersonas(masterSignal, backtestSummary, spaeherReport, eventWindow);
+  // Lifted from JSX IIFE so other components (Recorder etc.) can reuse them.
+  const stockVerdicts = evaluateStockPersonas(stockSafetyScan);
+  const commodityVerdicts = evaluateCommodityPersonas(commoditySafetyScan);
   const tier90 = evaluateTradeTier90(personas);
   const tier90Showcase = personas.find((p) => p.verdict === 'BUY' && p.safety?.grade === 'A') ?? personas.find((p) => p.target) ?? null;
   const vorstandReport = vorstandMediation(personas);
@@ -557,8 +562,6 @@ export default async function HomePage() {
       />
 
       {(() => {
-        const stockVerdicts = evaluateStockPersonas(stockSafetyScan);
-        const commodityVerdicts = evaluateCommodityPersonas(commoditySafetyScan);
         const cryptoVerdicts = personas;
         const stockConservative = stockVerdicts.find((v) => v.persona === 'conservative');
         const commodityConservative = commodityVerdicts.find((v) => v.persona === 'conservative');
@@ -709,6 +712,14 @@ export default async function HomePage() {
         generatedAt={masterSignal.generatedAt}
       />
       <VorstandRecorder report={vorstandReport} generatedAt={masterSignal.generatedAt} />
+      {(() => {
+        const historyEntries: HistoryEntry[] = [
+          ...personas.map((v) => ({ dateIso: todayIso, klass: 'Krypto', personaId: v.persona, verdict: v.verdict, targetLabel: v.target?.symbol ?? null })),
+          ...stockVerdicts.map((v) => ({ dateIso: todayIso, klass: 'Aktien', personaId: v.persona, verdict: v.verdict, targetLabel: v.target?.name ?? null })),
+          ...commodityVerdicts.map((v) => ({ dateIso: todayIso, klass: 'Rohstoffe', personaId: v.persona, verdict: v.verdict, targetLabel: v.target?.name ?? null }))
+        ];
+        return <PersonaHistoryRecorder entries={historyEntries} />;
+      })()}
       <KonsensStreakCard />
       <StreitBanner />
 
