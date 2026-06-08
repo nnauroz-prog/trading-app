@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { FIRMA_DECISIONS_CHANGED_EVENT, FirmaDecision, loadFirmaLog, statsPerFirma } from '@/lib/firma-memory';
+import { INTEL_LOG_CHANGED_EVENT, loadIntelLog } from '@/lib/intel/memory';
+import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL } from '@/lib/firma-accuracy';
+import type { PersonaId } from '@/lib/agents/personas';
 import { FirmaRanking, rankFirmas } from '@/lib/firma-ranking';
 
 function medalEmoji(rank: number): string {
@@ -45,6 +48,7 @@ function RankingRow({ r }: { r: FirmaRanking }) {
         </div>
       </div>
       <div className="space-y-1">
+        {r.accuracyScore !== null && <ScoreBar label="Trefferquote" value={r.accuracyScore} />}
         <ScoreBar label="Aktivität" value={r.activityScore} />
         <ScoreBar label="Konsens" value={r.consensusScore} />
         <ScoreBar label="Disziplin" value={r.disciplineScore} />
@@ -56,27 +60,46 @@ function RankingRow({ r }: { r: FirmaRanking }) {
 
 export function FirmaRankingPanel() {
   const [log, setLog] = useState<FirmaDecision[]>([]);
+  const [accuracyMap, setAccuracyMap] = useState<Map<PersonaId, number> | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const sync = () => setLog(loadFirmaLog());
+    const sync = () => {
+      const firmaLog = loadFirmaLog();
+      setLog(firmaLog);
+      const intelLog = loadIntelLog();
+      const priceMap = new Map<string, number>();
+      for (const s of intelLog) if (s.btcPriceAtRecord !== null) priceMap.set(s.date, s.btcPriceAtRecord);
+      const acc = computeFirmaAccuracy(firmaLog, (d) => priceMap.get(d) ?? null);
+      const m = new Map<PersonaId, number>();
+      for (const a of acc) {
+        if (a.evaluated >= MIN_EVAL_FOR_SKILL && a.hitRatePct !== null) m.set(a.firma, a.hitRatePct);
+      }
+      setAccuracyMap(m.size > 0 ? m : undefined);
+    };
     sync();
     setMounted(true);
     window.addEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
-    return () => window.removeEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
+    window.addEventListener(INTEL_LOG_CHANGED_EVENT, sync);
+    return () => {
+      window.removeEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
+      window.removeEventListener(INTEL_LOG_CHANGED_EVENT, sync);
+    };
   }, []);
 
   if (!mounted) return null;
   const stats = statsPerFirma(log);
-  const ranking = rankFirmas(stats);
+  const ranking = rankFirmas(stats, accuracyMap);
 
   return (
     <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Firmen-Ranking</h2>
         <p className="mt-1 text-[11px] text-slate-500">
-          Zusammengesetzt aus drei Achsen: <span className="text-slate-300">Aktivität</span> (kauft die Firma überhaupt mal?), <span className="text-slate-300">Konsens</span> (stimmt sie mit den anderen überein?) und <span className="text-slate-300">Disziplin</span> (kauft sie weder zu selten noch zu oft, Ideal ~30 %).
-          {' '}<span className="text-amber-400/80">Das misst Verhalten, nicht Profit</span> — eine niedrig platzierte Firma kann trotzdem die richtige für dich sein.
+          {accuracyMap
+            ? <>Vier Achsen — <span className="text-emerald-300">Trefferquote</span> (war die Firma historisch richtig?) zählt 50 %, dazu Aktivität, Konsens, Disziplin. Sobald genug bewertete Entscheidungen vorliegen, dominiert die Trefferquote.</>
+            : <>Drei Achsen: <span className="text-slate-300">Aktivität</span>, <span className="text-slate-300">Konsens</span> und <span className="text-slate-300">Disziplin</span>. Sobald jede Firma ≥ {MIN_EVAL_FOR_SKILL} bewertete Entscheidungen hat, kommt die <span className="text-emerald-300">Trefferquote</span> als wichtigste Säule dazu.</>
+          }
         </p>
       </div>
       {ranking.length === 0 ? (

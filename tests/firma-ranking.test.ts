@@ -43,4 +43,39 @@ describe('rankFirmas', () => {
     const ranking = rankFirmas([stat({ buyDays: 0, totalDays: 10 })]);
     expect(ranking[0].note).toContain('vorsichtig');
   });
+
+  it('accuracyScore wird auf der Zeile reflektiert, wenn uebergeben', () => {
+    const acc = new Map<'conservative' | 'balanced' | 'aggressive', number>([
+      ['conservative', 75],
+      ['balanced', 50],
+      ['aggressive', 30]
+    ]);
+    const ranking = rankFirmas([
+      stat({ firma: 'conservative', firmaName: 'K', buyDays: 3, totalDays: 10, agreementWithOthers: 50 }),
+      stat({ firma: 'balanced', firmaName: 'B', buyDays: 3, totalDays: 10, agreementWithOthers: 50 }),
+      stat({ firma: 'aggressive', firmaName: 'A', buyDays: 3, totalDays: 10, agreementWithOthers: 50 })
+    ], acc);
+    const k = ranking.find((r) => r.firma === 'conservative')!;
+    expect(k.accuracyScore).toBe(75);
+    // Konservativ sollte fuehren, weil Accuracy 50 % im Score zaehlt.
+    expect(ranking[0].firma).toBe('conservative');
+    expect(ranking[2].firma).toBe('aggressive');
+  });
+
+  it('ohne Accuracy-Map: alle accuracyScore = null', () => {
+    const ranking = rankFirmas([stat({ buyDays: 3, totalDays: 10 })]);
+    expect(ranking[0].accuracyScore).toBeNull();
+  });
+
+  it('Hit-Rate ≥ 60 zeigt sich im Note-Text', () => {
+    const acc = new Map<'conservative' | 'balanced' | 'aggressive', number>([['conservative', 68]]);
+    const ranking = rankFirmas([stat({ firma: 'conservative', firmaName: 'K', buyDays: 3, totalDays: 10 })], acc);
+    expect(ranking[0].note).toContain('68 %');
+  });
+
+  it('Hit-Rate < 40 zeigt sich als Warnung im Note-Text', () => {
+    const acc = new Map<'conservative' | 'balanced' | 'aggressive', number>([['aggressive', 32]]);
+    const ranking = rankFirmas([stat({ firma: 'aggressive', firmaName: 'A', buyDays: 3, totalDays: 10 })], acc);
+    expect(ranking[0].note).toContain('drückt');
+  });
 });
