@@ -3,9 +3,10 @@
 // sagen würde. So sieht der User die REJECTION-Logik, nicht nur die Auswahl.
 
 import Link from 'next/link';
-import type { AgentVerdict } from '@/lib/agents/personas';
+import type { AgentVerdict, PersonaId } from '@/lib/agents/personas';
+import { FirmaHitRateBadge } from '@/components/firma-hit-rate-badge';
 
-export function FirmaCandidateRundown({ verdicts, firmaName }: { verdicts: AgentVerdict[]; firmaName: string }) {
+export function FirmaCandidateRundown({ verdicts, firmaName, firmaId }: { verdicts: AgentVerdict[]; firmaName: string; firmaId: PersonaId }) {
   if (verdicts.length === 0) return null;
 
   const buyCount = verdicts.filter((v) => v.verdict === 'BUY').length;
@@ -14,11 +15,14 @@ export function FirmaCandidateRundown({ verdicts, firmaName }: { verdicts: Agent
   return (
     <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4" aria-label={`Bewertungen aller Kandidaten durch ${firmaName}`}>
       <header>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-          Bewertung aller {verdicts.length} Top-Kandidaten
-        </h2>
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+            Bewertung aller {verdicts.length} Top-Kandidaten
+          </h2>
+          <FirmaHitRateBadge firma={firmaId} size="md" />
+        </div>
         <p className="mt-0.5 text-[10.5px] leading-snug text-slate-500">
-          So bewertet {firmaName} jeden einzelnen Top-Coin heute — die meisten landen auf „warten“. Genau das ist ehrlich: nur sehr wenige Setups passen wirklich.
+          So bewertet {firmaName} jeden einzelnen Top-Coin heute — die meisten landen auf „warten“. Das Badge oben zeigt die historische Trefferquote dieser Firma; je grüner, desto mehr Gewicht hat ihre Stimme im Vorstand.
         </p>
         <p className="mt-1 text-[11px] font-semibold text-slate-200">
           {buyCount > 0
