@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { CEO_BIOS, SUBAGENT_BIOS } from '@/lib/agents/personalities';
 import { evaluatePersonas, evaluatePersonasForCoin, type PersonaId } from '@/lib/agents/personas';
 import { FirmaCandidateRundown } from '@/components/firma-candidate-rundown';
+import { FirmaHitRateBadge } from '@/components/firma-hit-rate-badge';
 import { buildMasterSignal, type TradeMode } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { runSpaeher } from '@/lib/akademie/spaeher';
@@ -100,9 +101,17 @@ export default async function FirmaDetailPage({ params }: PageProps) {
       </Link>
 
       <header className={`rounded-2xl border-2 p-5 ${FIRMA_TONE[firmaId]}`}>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400">{FIRMA_LABEL[firmaId]}-Firma</div>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-white">{ceo.name}</h1>
-        <div className="mt-0.5 text-[12px] text-slate-300">{ceo.role}</div>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400">{FIRMA_LABEL[firmaId]}-Firma</div>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-white">{ceo.name}</h1>
+            <div className="mt-0.5 text-[12px] text-slate-300">{ceo.role}</div>
+          </div>
+          <div className="flex flex-col items-end gap-1 pt-1">
+            <span className="text-[9px] uppercase tracking-wider text-slate-400">Track-Record</span>
+            <FirmaHitRateBadge firma={firmaId} size="md" />
+          </div>
+        </div>
         <p className="mt-3 text-[13px] leading-relaxed text-slate-200">{ceo.bio}</p>
         <blockquote className="mt-3 border-l-2 border-slate-400 pl-3 text-[12px] italic text-slate-200">
           &bdquo;{ceo.quote}&ldquo;
@@ -140,7 +149,7 @@ export default async function FirmaDetailPage({ params }: PageProps) {
       )}
 
       {candidateVerdicts.length > 0 && (
-        <FirmaCandidateRundown verdicts={candidateVerdicts} firmaName={FIRMA_LABEL[firmaId]} />
+        <FirmaCandidateRundown verdicts={candidateVerdicts} firmaName={FIRMA_LABEL[firmaId]} firmaId={firmaId} />
       )}
 
       <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">

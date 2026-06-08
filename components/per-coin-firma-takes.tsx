@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import type { AgentVerdict, PersonaId } from '@/lib/agents/personas';
 import { FirmaSubAgentVotes } from '@/components/firma-sub-agent-votes';
+import { FirmaHitRateBadge } from '@/components/firma-hit-rate-badge';
 
 const FIRMA_TONE: Record<PersonaId, string> = {
   conservative: 'border-sky-400/40 bg-sky-950/15',
@@ -47,12 +48,15 @@ export function PerCoinFirmaTakes({ verdicts, coinSymbol }: { verdicts: AgentVer
           return (
             <div key={v.persona} className={`space-y-2 rounded-xl border-2 p-3 ${tone}`}>
               <div className="flex items-baseline justify-between gap-1">
-                <Link
-                  href={`/agent/${v.persona}`}
-                  className="text-[11px] font-bold uppercase tracking-wider text-white transition hover:text-emerald-300"
-                >
-                  {FIRMA_LABEL[v.persona]}
-                </Link>
+                <div className="flex items-baseline gap-1.5">
+                  <Link
+                    href={`/agent/${v.persona}`}
+                    className="text-[11px] font-bold uppercase tracking-wider text-white transition hover:text-emerald-300"
+                  >
+                    {FIRMA_LABEL[v.persona]}
+                  </Link>
+                  <FirmaHitRateBadge firma={v.persona} />
+                </div>
                 <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
                   isBuy
                     ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-100'
