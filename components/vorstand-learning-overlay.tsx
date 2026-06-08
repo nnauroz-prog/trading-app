@@ -11,6 +11,7 @@ import { FIRMA_DECISIONS_CHANGED_EVENT, loadFirmaLog } from '@/lib/firma-memory'
 import { INTEL_LOG_CHANGED_EVENT, loadIntelLog } from '@/lib/intel/memory';
 import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL, skillMap, type FirmaAccuracy } from '@/lib/firma-accuracy';
 import { vorstandMediation, type VorstandReport } from '@/lib/agents/vorstand';
+import { VORSTAND_LOG_CHANGED_EVENT, computeVorstandAccuracy, loadVorstandLog, type VorstandAccuracy } from '@/lib/agents/vorstand-memory';
 import type { AgentVerdict, PersonaId } from '@/lib/agents/personas';
 
 const FIRMA_TONE: Record<PersonaId, string> = {
@@ -29,16 +30,19 @@ interface Props {
 export function VorstandLearningOverlay({ personas, serverReport }: Props) {
   const [mounted, setMounted] = useState(false);
   const [accuracy, setAccuracy] = useState<FirmaAccuracy[]>([]);
+  const [vorstandAcc, setVorstandAcc] = useState<VorstandAccuracy | null>(null);
   const [learnedReport, setLearnedReport] = useState<VorstandReport>(serverReport);
 
   useEffect(() => {
     const sync = () => {
       const log = loadFirmaLog();
       const intelLog = loadIntelLog();
+      const vorstandLog = loadVorstandLog();
       const priceMap = new Map<string, number>();
       for (const s of intelLog) if (s.btcPriceAtRecord !== null) priceMap.set(s.date, s.btcPriceAtRecord);
       const acc = computeFirmaAccuracy(log, (d) => priceMap.get(d) ?? null);
       setAccuracy(acc);
+      setVorstandAcc(computeVorstandAccuracy(vorstandLog, (d) => priceMap.get(d) ?? null));
       const skill = skillMap(acc);
       setLearnedReport(vorstandMediation(personas, skill.size > 0 ? skill : null));
     };
@@ -46,9 +50,11 @@ export function VorstandLearningOverlay({ personas, serverReport }: Props) {
     setMounted(true);
     window.addEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
     window.addEventListener(INTEL_LOG_CHANGED_EVENT, sync);
+    window.addEventListener(VORSTAND_LOG_CHANGED_EVENT, sync);
     return () => {
       window.removeEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
       window.removeEventListener(INTEL_LOG_CHANGED_EVENT, sync);
+      window.removeEventListener(VORSTAND_LOG_CHANGED_EVENT, sync);
     };
   }, [personas]);
 
@@ -122,6 +128,30 @@ export function VorstandLearningOverlay({ personas, serverReport }: Props) {
             <> Stärkster Track-Record aktuell: <span className="font-semibold text-slate-200">{bestFirma.firmaName}</span> mit {bestFirma.hitRatePct} %.</>
           )}
         </p>
+      )}
+
+      {vorstandAcc && vorstandAcc.evaluated >= MIN_EVAL_FOR_SKILL && vorstandAcc.hitRatePct !== null && (
+        <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[10.5px] leading-snug">
+          <div className="flex items-baseline justify-between gap-1">
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Vorstand insgesamt</span>
+            <span className={`font-mono font-bold ${
+              vorstandAcc.hitRatePct >= 60 ? 'text-emerald-300'
+              : vorstandAcc.hitRatePct >= 45 ? 'text-slate-200'
+              : 'text-rose-300'
+            }`}>
+              {vorstandAcc.hitRatePct} %
+            </span>
+          </div>
+          <p className="text-slate-400">
+            {vorstandAcc.rightCalls}/{vorstandAcc.evaluated} kollektive Verdicts richtig.{' '}
+            {vorstandAcc.perVerdict.KLARER_KAUF.evaluated >= 3 && vorstandAcc.perVerdict.KLARER_KAUF.hitRatePct !== null && (
+              <>Bei KLARER_KAUF: <span className="text-slate-200">{vorstandAcc.perVerdict.KLARER_KAUF.hitRatePct} %</span>. </>
+            )}
+            {vorstandAcc.perVerdict.CASH_HALTEN.evaluated >= 3 && vorstandAcc.perVerdict.CASH_HALTEN.hitRatePct !== null && (
+              <>Bei CASH_HALTEN: <span className="text-slate-200">{vorstandAcc.perVerdict.CASH_HALTEN.hitRatePct} %</span>.</>
+            )}
+          </p>
+        </div>
       )}
     </section>
   );
