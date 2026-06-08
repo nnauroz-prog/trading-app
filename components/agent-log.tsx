@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { AGENT_DECISIONS_CHANGED_EVENT, AgentDecision, clearDecisionLog, loadDecisionLog, summarize } from '@/lib/agent-memory';
+import { FIRMA_DECISIONS_CHANGED_EVENT, loadFirmaLog } from '@/lib/firma-memory';
+import { INTEL_LOG_CHANGED_EVENT, loadIntelLog } from '@/lib/intel/memory';
+import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL, type FirmaAccuracy } from '@/lib/firma-accuracy';
 
 function fmtDate(iso: string): string {
   const d = new Date(iso + 'T12:00:00');
@@ -23,18 +26,34 @@ function gradeBadge(g: AgentDecision['safetyGrade']) {
 
 export function AgentLog() {
   const [log, setLog] = useState<AgentDecision[]>([]);
+  const [firmaAccuracy, setFirmaAccuracy] = useState<FirmaAccuracy[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const sync = () => setLog(loadDecisionLog());
-    sync();
+    const syncLog = () => setLog(loadDecisionLog());
+    const syncAcc = () => {
+      const firmaLog = loadFirmaLog();
+      const intelLog = loadIntelLog();
+      const priceMap = new Map<string, number>();
+      for (const s of intelLog) if (s.btcPriceAtRecord !== null) priceMap.set(s.date, s.btcPriceAtRecord);
+      setFirmaAccuracy(computeFirmaAccuracy(firmaLog, (d) => priceMap.get(d) ?? null));
+    };
+    syncLog();
+    syncAcc();
     setMounted(true);
-    window.addEventListener(AGENT_DECISIONS_CHANGED_EVENT, sync);
-    return () => window.removeEventListener(AGENT_DECISIONS_CHANGED_EVENT, sync);
+    window.addEventListener(AGENT_DECISIONS_CHANGED_EVENT, syncLog);
+    window.addEventListener(FIRMA_DECISIONS_CHANGED_EVENT, syncAcc);
+    window.addEventListener(INTEL_LOG_CHANGED_EVENT, syncAcc);
+    return () => {
+      window.removeEventListener(AGENT_DECISIONS_CHANGED_EVENT, syncLog);
+      window.removeEventListener(FIRMA_DECISIONS_CHANGED_EVENT, syncAcc);
+      window.removeEventListener(INTEL_LOG_CHANGED_EVENT, syncAcc);
+    };
   }, []);
 
   if (!mounted) return null;
   const stats = summarize(log);
+  const trained = firmaAccuracy.filter((a) => a.evaluated >= MIN_EVAL_FOR_SKILL);
 
   return (
     <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
@@ -73,6 +92,39 @@ export function AgentLog() {
           <div className="font-mono text-sm font-bold text-slate-100">{stats.uniqueCoinsRecommended}</div>
         </div>
       </div>
+
+      {/* Track-Record-Block: was hat der Agent aus dem Tagebuch gelernt? Wird
+          aus dem getrennten Firma-Decisions-Log + BTC-Preis-Snapshots gespeist
+          und zeigt pro Firma die historische Trefferquote. */}
+      {trained.length > 0 && (
+        <div className="space-y-2 rounded-lg border border-sky-400/30 bg-sky-950/15 p-2">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-sky-300">Was die Agenten gelernt haben</div>
+          <ul className="grid grid-cols-3 gap-1.5">
+            {firmaAccuracy.map((a) => {
+              const enough = a.evaluated >= MIN_EVAL_FOR_SKILL;
+              const pct = a.hitRatePct ?? 0;
+              const tone = !enough ? 'text-slate-500 border-slate-800 bg-slate-950/40'
+                : pct >= 60 ? 'text-emerald-200 border-emerald-400/40 bg-emerald-500/10'
+                : pct >= 45 ? 'text-slate-200 border-slate-700 bg-slate-900/40'
+                : 'text-rose-200 border-rose-400/40 bg-rose-500/10';
+              return (
+                <li key={a.firma} className={`rounded border px-2 py-1.5 ${tone}`}>
+                  <div className="text-[9.5px] uppercase tracking-wider opacity-80">{a.firmaName}</div>
+                  <div className="mt-0.5 flex items-baseline justify-between">
+                    <span className="font-mono text-sm font-bold">
+                      {enough && a.hitRatePct !== null ? `${a.hitRatePct} %` : '—'}
+                    </span>
+                    <span className="text-[9px] opacity-70">{a.rightCalls}/{a.evaluated}</span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="text-[10px] leading-snug text-sky-100/70">
+            Aus deinem Firma-Tagebuch berechnet. Je mehr Tage du die App nutzt, desto belastbarer das Signal — bisher {firmaAccuracy.reduce((s, a) => s + a.evaluated, 0)} bewertete Entscheidungen.
+          </p>
+        </div>
+      )}
 
       {log.length === 0 ? (
         <p className="rounded-lg border border-dashed border-slate-700 bg-slate-950/40 p-4 text-center text-[12px] text-slate-500">
