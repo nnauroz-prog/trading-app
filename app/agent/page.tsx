@@ -6,6 +6,7 @@ import { evaluatePersonas } from '@/lib/agents/personas';
 import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
 import { buildInternalDialog, InternalMessage } from '@/lib/agents/internal-messages';
 import { vorstandMediation, VorstandVerdict } from '@/lib/agents/vorstand';
+import { VorstandLearningOverlay } from '@/components/vorstand-learning-overlay';
 import { CEO_BIOS, SUBAGENT_BIOS } from '@/lib/agents/personalities';
 import { CeoQuote } from '@/components/ceo-quote';
 import { KonsensStreakCard } from '@/components/konsens-streak-card';
@@ -155,24 +156,27 @@ export default async function AgentPage() {
         const vorstandTone = vorstandClasses(vorstand.verdict);
         const vorstandBadge = vorstandBadgeClasses(vorstand.verdict);
         return (
-          <section className={`space-y-2 rounded-2xl border-2 p-5 ${vorstandTone}`}>
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Vorstand</span>
-              <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${vorstandBadge}`}>
-                {vorstand.verdict.replace(/_/g, ' ')}
-              </span>
-            </div>
-            <h2 className="text-lg font-bold text-white">{vorstand.headline}</h2>
-            <p className="text-[13px] leading-relaxed text-slate-200">{vorstand.body}</p>
-            {vorstand.conflictNotes.length > 0 && (
-              <details className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[11px]">
-                <summary className="cursor-pointer text-slate-300">Wo das Gremium uneins ist ({vorstand.conflictNotes.length})</summary>
-                <ul className="mt-1.5 space-y-1 text-slate-400">
-                  {vorstand.conflictNotes.map((c, i) => <li key={i}>· {c}</li>)}
-                </ul>
-              </details>
-            )}
-          </section>
+          <>
+            <section className={`space-y-2 rounded-2xl border-2 p-5 ${vorstandTone}`}>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Vorstand</span>
+                <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${vorstandBadge}`}>
+                  {vorstand.verdict.replace(/_/g, ' ')}
+                </span>
+              </div>
+              <h2 className="text-lg font-bold text-white">{vorstand.headline}</h2>
+              <p className="text-[13px] leading-relaxed text-slate-200">{vorstand.body}</p>
+              {vorstand.conflictNotes.length > 0 && (
+                <details className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-[11px]">
+                  <summary className="cursor-pointer text-slate-300">Wo das Gremium uneins ist ({vorstand.conflictNotes.length})</summary>
+                  <ul className="mt-1.5 space-y-1 text-slate-400">
+                    {vorstand.conflictNotes.map((c, i) => <li key={i}>· {c}</li>)}
+                  </ul>
+                </details>
+              )}
+            </section>
+            <VorstandLearningOverlay personas={personas} serverReport={vorstand} />
+          </>
         );
       })()}
 

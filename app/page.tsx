@@ -17,6 +17,7 @@ import { MarketBriefing } from '@/components/market-briefing';
 import { AgentRecorder } from '@/components/agent-recorder';
 import { FirmaStrip } from '@/components/firma-strip';
 import { VorstandStrip } from '@/components/vorstand-strip';
+import { VorstandLearningOverlay } from '@/components/vorstand-learning-overlay';
 import { vorstandMediation } from '@/lib/agents/vorstand';
 import { StreitBanner } from '@/components/streit-banner';
 import { KonsensStreakCard } from '@/components/konsens-streak-card';
@@ -693,6 +694,7 @@ export default async function HomePage() {
       />
 
       <VorstandStrip report={vorstandReport} />
+      <VorstandLearningOverlay personas={personas} serverReport={vorstandReport} />
       <KonsensStreakCard />
       <StreitBanner />
 

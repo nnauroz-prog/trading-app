@@ -102,4 +102,65 @@ describe('vorstandMediation', () => {
     ]);
     expect(r.conflictNotes.some((n) => n.includes('SOL'))).toBe(true);
   });
+
+  it('ohne Skill-Map: skillWeightedConfidence ist null (kein Lern-Effekt vorgetäuscht)', () => {
+    const r = vorstandMediation([
+      verdict('conservative', 'BUY', 'ETH'),
+      verdict('balanced', 'WAIT', null),
+      verdict('aggressive', 'WAIT', null)
+    ]);
+    expect(r.skillWeightedConfidence).toBeNull();
+    expect(r.skillNote).toBeNull();
+  });
+
+  it('Skill-Map hebt vertrauenswürdige BUY-Stimme hervor', () => {
+    // Konservativ historisch 70 % (Gewicht 1.8), Balanciert 50 % (1.0), Aggressiv 30 % (0.2).
+    const skill = new Map<'conservative' | 'balanced' | 'aggressive', number>([
+      ['conservative', 1.8],
+      ['balanced', 1.0],
+      ['aggressive', 0.2]
+    ]);
+    const r = vorstandMediation([
+      verdict('conservative', 'BUY', 'ETH'),
+      verdict('balanced', 'BUY', 'ETH'),
+      verdict('aggressive', 'WAIT', null)
+    ], skill);
+    expect(r.verdict).toBe('KAUFEN_VORSICHTIG');
+    expect(r.skillWeightedConfidence).not.toBeNull();
+    // (1.8 + 1.0) / (1.8 + 1.0 + 0.2) = 2.8/3.0 ≈ 0.933
+    expect(r.skillWeightedConfidence!).toBeGreaterThan(0.85);
+    expect(r.skillNote).toContain('Track-Record');
+  });
+
+  it('Skill-Map warnt, wenn nur Aggressiv kauft und historisch schwach ist', () => {
+    const skill = new Map<'conservative' | 'balanced' | 'aggressive', number>([
+      ['conservative', 1.8],
+      ['balanced', 1.6],
+      ['aggressive', 0.3]
+    ]);
+    const r = vorstandMediation([
+      verdict('conservative', 'WAIT', null),
+      verdict('balanced', 'WAIT', null),
+      verdict('aggressive', 'BUY', 'DOGE')
+    ], skill);
+    expect(r.verdict).toBe('WATCHLIST');
+    expect(r.skillWeightedConfidence).not.toBeNull();
+    // Aggressiv-only BUY mit Gewicht 0.3 vs Gesamt 3.7 ≈ 0.08
+    expect(r.skillWeightedConfidence!).toBeLessThan(0.15);
+  });
+
+  it('Skill-Map: Cash-Halten mit allen historisch starken Firmen → note bestätigt', () => {
+    const skill = new Map<'conservative' | 'balanced' | 'aggressive', number>([
+      ['conservative', 1.6],
+      ['balanced', 1.4],
+      ['aggressive', 1.5]
+    ]);
+    const r = vorstandMediation([
+      verdict('conservative', 'WAIT', null),
+      verdict('balanced', 'WAIT', null),
+      verdict('aggressive', 'WAIT', null)
+    ], skill);
+    expect(r.verdict).toBe('CASH_HALTEN');
+    expect(r.skillNote).toContain('Cash-Halten');
+  });
 });
