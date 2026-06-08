@@ -1,6 +1,7 @@
-import type { AgentVerdict } from '@/lib/agents/personas';
+import type { AgentVerdict, PersonaId } from '@/lib/agents/personas';
 import type { TradeTier90Result } from '@/lib/agents/trade-tier-90';
 import { PositionSizeHelper } from '@/components/position-size-helper';
+import { TradingTodayLearningNote, type TradingTodayKind } from '@/components/trading-today-learning-note';
 
 interface Props {
   tier90: TradeTier90Result;
@@ -54,10 +55,28 @@ function fmtPrice(n: number): string {
   return `$${n.toPrecision(3)}`;
 }
 
+function verdictToLearningKind(v: Verdict): TradingTodayKind {
+  if (v === 'kaufen-tier-90') return 'tier-90';
+  if (v === 'kaufen-konservativ') return 'konservativ';
+  if (v === 'kaufen-mit-vorsicht') return 'mit-vorsicht';
+  if (v === 'warten-uneinig') return 'uneinig';
+  return 'cash';
+}
+
+function buyingFirmasOf(props: Props): PersonaId[] {
+  const out: PersonaId[] = [];
+  if (props.conservative?.verdict === 'BUY') out.push('conservative');
+  if (props.balanced?.verdict === 'BUY') out.push('balanced');
+  if (props.aggressive?.verdict === 'BUY') out.push('aggressive');
+  return out;
+}
+
 // EINE Frage: kaufe ich heute, was, und wie? Klartext in einem Satz.
 // Sitzt ganz oben auf der Startseite und ersetzt Cockpit-Wand-Mentalität.
 export function TradingTodayCard(props: Props) {
   const { verdict, symbol, entry, stop, tp } = decideVerdict(props);
+  const learningKind = verdictToLearningKind(verdict);
+  const buyingFirmas = buyingFirmasOf(props);
   const accent = verdict === 'kaufen-tier-90'
     ? 'border-yellow-300/70 bg-gradient-to-br from-yellow-950/30 via-slate-900/70 to-slate-900/70'
     : verdict === 'kaufen-konservativ'
@@ -113,6 +132,8 @@ export function TradingTodayCard(props: Props) {
           <PositionSizeHelper entry={entry} stop={stop} symbol={symbol} />
         </>
       )}
+
+      <TradingTodayLearningNote kind={learningKind} buyingFirmas={buyingFirmas} />
 
       <p className="text-[10px] leading-snug text-slate-500">
         Position so groß, dass der Stop höchstens 1 % deines Gesamtdepots kostet. Stop religiös einhalten — kein Trade ist garantiert.
