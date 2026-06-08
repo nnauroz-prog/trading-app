@@ -1,5 +1,6 @@
 import { AgentVerdict } from '@/lib/agents/personas';
 import { composeDailyNote } from '@/lib/agents/daily-note';
+import { FirmaHitRateBadge } from '@/components/firma-hit-rate-badge';
 
 export function DailyNotes({ personas }: { personas: AgentVerdict[] }) {
   const notes = personas.map(composeDailyNote);
@@ -8,7 +9,7 @@ export function DailyNotes({ personas }: { personas: AgentVerdict[] }) {
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Tages-Notizen der CEOs</h2>
         <p className="mt-1 text-[11px] text-slate-500">
-          Drei kurze Beiträge, jeder im Stil seines CEOs geschrieben. Wer was kauft, warum, oder warum heute Cash-Tag ist.
+          Drei kurze Beiträge, jeder im Stil seines CEOs geschrieben. Wer was kauft, warum, oder warum heute Cash-Tag ist. Das Hit-Rate-Badge neben dem Namen zeigt, wie zuverlässig die Firma bisher war.
         </p>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -20,7 +21,10 @@ export function DailyNotes({ personas }: { personas: AgentVerdict[] }) {
           return (
             <article key={n.firma} className={`space-y-2 rounded-2xl border-2 p-4 ${accent}`}>
               <div>
-                <div className="text-[9px] uppercase tracking-[0.2em] text-slate-500">{n.firmaName} · {n.ceoName}</div>
+                <div className="flex items-baseline gap-1.5 text-[9px] uppercase tracking-[0.2em] text-slate-500">
+                  <span>{n.firmaName} · {n.ceoName}</span>
+                  <FirmaHitRateBadge firma={n.firma} />
+                </div>
                 <h3 className="mt-0.5 text-sm font-bold text-white">{n.title}</h3>
               </div>
               <div className="space-y-2 text-[12px] leading-relaxed text-slate-200">
