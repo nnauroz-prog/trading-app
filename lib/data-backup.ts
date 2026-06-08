@@ -2,15 +2,42 @@
 // Abhängigkeit — funktioniert offline, kann nichts kaputt machen.
 
 const BACKUP_KEYS = [
+  // Konfiguration + Profil
   'trading-app.account-config',
   'trading-app.user-profile',
+  // Positionen, Tagebuch, Paper-Trades
   'trading-app.positions',
   'trading-app.journal',
   'trading-app.paper-trades',
+  // Watchlists (Krypto + Aktien + Rohstoffe + Sport-Teams)
   'trading-app.watchlist',
+  'trading-app.aktien-watchlist-v1',
+  'trading-app.rohstoff-watchlist-v1',
+  'trading-app.sport-team-watchlist-v1',
+  // Alerts + DCA-Pläne
   'trading-app.price-alerts',
   'trading-app.dca-plans',
-  'trading-app.chart-drawings'
+  // Chart-Zeichnungen
+  'trading-app.chart-drawings',
+  // Gold-Bestände (echtes Vermögen — MUSS gesichert werden)
+  'trading-app.gold-holdings-v1',
+  // Vorstands-/Firma-Entscheidungs-Logs (Tagebuch der Agenten)
+  'trading-app.agent-decisions-v1',
+  'trading-app.firma-decisions-v2',
+  'trading-app.vorstand-log-v1',
+  'trading-app.persona-history-v1',
+  'trading-app.tier-90-journal-v1',
+  'trading-app.intel-log-v1',
+  'trading-app.akademie-log-v1',
+  // Coin-Score-Verlauf
+  'trading-app.coin-score-history-v1',
+  // Sport-Tipps + Wochen-Ziele + Freunde-Modus + Sport-Tier-90
+  'trading-app.sport-tip-journal-v1',
+  'trading-app.sport-tier-90-journal-v1',
+  'trading-app.tipprunde-wochenziel-v1',
+  'trading-app.friends-mode-v1',
+  // Firma-Präferenz (welche Firma der User bevorzugt)
+  'trading-app.firma-preference-v1'
 ] as const;
 
 const CHANGE_EVENTS = [
