@@ -14,6 +14,7 @@ import { vorstandMediation, type VorstandReport } from '@/lib/agents/vorstand';
 import { VORSTAND_LOG_CHANGED_EVENT, computeVorstandAccuracy, loadVorstandLog, type VorstandAccuracy } from '@/lib/agents/vorstand-memory';
 import type { AgentVerdict, PersonaId } from '@/lib/agents/personas';
 import { applyLearnedOverridesToVerdicts, countFlips, type LearnedVerdict } from '@/lib/agents/learned-verdicts';
+import { computeFirmaPnl, type FirmaPnlSummary } from '@/lib/agents/firma-pnl';
 
 const FIRMA_TONE: Record<PersonaId, string> = {
   conservative: 'border-sky-400/40 bg-sky-500/10 text-sky-100',
@@ -26,9 +27,13 @@ interface Props {
   // Server-seitig gerenderte Vorstands-Entscheidung. Wir vergleichen, wie
   // das Skill-Gewicht das Bild verschiebt.
   serverReport: VorstandReport;
+  // Vom Server uebergebene aktuelle Preise (lowercased symbol → Preis).
+  // Wenn vorhanden, wird virtuelles P&L pro Firma berechnet und fliesst in
+  // die Override-Entscheidung ein.
+  latestPrices?: Record<string, number | null>;
 }
 
-export function VorstandLearningOverlay({ personas, serverReport }: Props) {
+export function VorstandLearningOverlay({ personas, serverReport, latestPrices }: Props) {
   const [mounted, setMounted] = useState(false);
   const [accuracy, setAccuracy] = useState<FirmaAccuracy[]>([]);
   const [vorstandAcc, setVorstandAcc] = useState<VorstandAccuracy | null>(null);
@@ -56,7 +61,18 @@ export function VorstandLearningOverlay({ personas, serverReport }: Props) {
       // gezählten BUYs — also den Vorstand-Verdict-Typ selbst.
       const accMap = new Map<PersonaId, FirmaAccuracy>();
       for (const a of acc) accMap.set(a.firma, a);
-      const overridden = applyLearnedOverridesToVerdicts(personas, accMap);
+      // Wenn aktuelle Preise vorliegen: virtuelles P&L pro Firma berechnen
+      // und dem Override mitgeben. So fliesst echter Geld-Verlust in den
+      // Override-Entscheid (nicht nur „Richtung erraten").
+      const pnlMap = new Map<PersonaId, FirmaPnlSummary>();
+      if (latestPrices) {
+        const priceFor = (symbol: string): number | null => {
+          const v = latestPrices[symbol.toLowerCase()];
+          return typeof v === 'number' && Number.isFinite(v) ? v : null;
+        };
+        for (const s of computeFirmaPnl(log, priceFor)) pnlMap.set(s.firma, s);
+      }
+      const overridden = applyLearnedOverridesToVerdicts(personas, accMap, pnlMap);
       setLearnedVerdicts(overridden);
       setFlipCount(countFlips(overridden));
       setOverriddenReport(vorstandMediation(overridden, skill.size > 0 ? skill : null));
@@ -71,7 +87,7 @@ export function VorstandLearningOverlay({ personas, serverReport }: Props) {
       window.removeEventListener(INTEL_LOG_CHANGED_EVENT, sync);
       window.removeEventListener(VORSTAND_LOG_CHANGED_EVENT, sync);
     };
-  }, [personas]);
+  }, [personas, latestPrices]);
 
   if (!mounted) return null;
 

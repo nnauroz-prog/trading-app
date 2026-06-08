@@ -1,6 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import { applyLearnedOverride, currentStreakLength } from '@/lib/agents/learned-override';
 import type { FirmaAccuracy } from '@/lib/firma-accuracy';
+import type { FirmaPnlSummary } from '@/lib/agents/firma-pnl';
+
+function pnl(over: Partial<FirmaPnlSummary> = {}): FirmaPnlSummary {
+  return {
+    firma: 'conservative',
+    firmaName: 'Konservativ',
+    totalBuys: 10,
+    resolvedTrades: 8,
+    wins: 4,
+    losses: 4,
+    openTrades: 2,
+    resolvedHitRatePct: 50,
+    totalPnlPct: 0,
+    avgPnlPct: 0,
+    bestTradePct: 10,
+    worstTradePct: -5,
+    trades: [],
+    ...over
+  };
+}
 
 function acc(over: Partial<FirmaAccuracy>): FirmaAccuracy {
   return {
@@ -107,5 +127,77 @@ describe('applyLearnedOverride', () => {
   it('Edge: genau auf der Grenze 65 % → keine Reinforce-Buy (strikt ≥ 65)', () => {
     const out = applyLearnedOverride('BUY', acc({ evaluated: 10, hitRatePct: 65, recent: recent(true, true, true) }));
     expect(out.kind).toBe('reinforce-buy');
+  });
+
+  // P&L-Eskalation
+  describe('mit P&L-Eskalation', () => {
+    it('BUY + virtuelles P&L stark negativ → downgrade, ueberstimmt sogar gute Hit-Rate', () => {
+      const out = applyLearnedOverride(
+        'BUY',
+        acc({ evaluated: 12, hitRatePct: 65, recent: recent(true, true) }),
+        pnl({ totalBuys: 12, avgPnlPct: -5 })
+      );
+      expect(out.kind).toBe('downgrade-buy');
+      expect(out.reason).toContain('Virtuelles P&L');
+      expect(out.severity).toBe(3);
+    });
+
+    it('BUY + virtuelles P&L stark positiv → reinforce-buy auch ohne hot-Streak', () => {
+      const out = applyLearnedOverride(
+        'BUY',
+        acc({ evaluated: 12, hitRatePct: 55, recent: recent(true, false, true) }),
+        pnl({ totalBuys: 12, avgPnlPct: 8 })
+      );
+      expect(out.kind).toBe('reinforce-buy');
+      expect(out.reason).toContain('P&L');
+    });
+
+    it('P&L-Reinforce funktioniert auch OHNE accuracy-Daten', () => {
+      const out = applyLearnedOverride(
+        'BUY',
+        null,
+        pnl({ totalBuys: 8, avgPnlPct: 6 })
+      );
+      expect(out.kind).toBe('reinforce-buy');
+    });
+
+    it('P&L-Downgrade funktioniert auch OHNE accuracy-Daten', () => {
+      const out = applyLearnedOverride(
+        'BUY',
+        null,
+        pnl({ totalBuys: 8, avgPnlPct: -4 })
+      );
+      expect(out.kind).toBe('downgrade-buy');
+    });
+
+    it('zu wenig P&L-Trades (< 5) → P&L wird ignoriert', () => {
+      const out = applyLearnedOverride(
+        'BUY',
+        acc({ evaluated: 10, hitRatePct: 50, recent: recent(true, false) }),
+        pnl({ totalBuys: 3, avgPnlPct: -10 })
+      );
+      expect(out.kind).toBe('none');
+    });
+
+    it('P&L knapp positiv (zwischen -3 und +5) → kein P&L-Effekt', () => {
+      const out = applyLearnedOverride(
+        'BUY',
+        acc({ evaluated: 10, hitRatePct: 50, recent: recent(true, false) }),
+        pnl({ totalBuys: 10, avgPnlPct: 1.5 })
+      );
+      expect(out.kind).toBe('none');
+    });
+
+    it('P&L-Eskalation greift VOR der Streak-Logik (Reihenfolge wichtig)', () => {
+      // Selbst wenn die Firma auf einer hot-Streak ist, aber P&L stark
+      // negativ ist (kann passieren: oft richtige Richtung, aber Stops hauen),
+      // downgraden wir den BUY.
+      const out = applyLearnedOverride(
+        'BUY',
+        acc({ evaluated: 10, hitRatePct: 80, recent: recent(true, true, true, true) }),
+        pnl({ totalBuys: 10, avgPnlPct: -4 })
+      );
+      expect(out.kind).toBe('downgrade-buy');
+    });
   });
 });
