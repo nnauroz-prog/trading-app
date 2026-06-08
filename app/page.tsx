@@ -21,6 +21,7 @@ import { VorstandLearningOverlay } from '@/components/vorstand-learning-overlay'
 import { vorstandMediation } from '@/lib/agents/vorstand';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { IntelRecorder } from '@/components/intel-recorder';
+import { VorstandRecorder } from '@/components/vorstand-recorder';
 import { StreitBanner } from '@/components/streit-banner';
 import { KonsensStreakCard } from '@/components/konsens-streak-card';
 import { SetupTrend } from '@/components/setup-trend';
@@ -707,6 +708,7 @@ export default async function HomePage() {
         btcPrice={latestPrices['btc'] ?? null}
         generatedAt={masterSignal.generatedAt}
       />
+      <VorstandRecorder report={vorstandReport} generatedAt={masterSignal.generatedAt} />
       <KonsensStreakCard />
       <StreitBanner />
 

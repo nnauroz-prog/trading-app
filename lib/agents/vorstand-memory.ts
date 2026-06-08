@@ -58,6 +58,64 @@ export interface VorstandStats {
   daysSinceLastBuy: number | null;
 }
 
+// Vorstand-Accuracy: gleicht jeden Vorstand-Verdict gegen die naechste BTC-
+// Tagesbewegung ab. KLARER_KAUF / KAUFEN_VORSICHTIG sind „richtig", wenn BTC
+// am naechsten Tag mindestens DIRECTION_THRESHOLD % gestiegen ist. CASH_HALTEN
+// ist richtig, wenn BTC nicht klar gestiegen ist (Cash-Halten war ok).
+// WATCHLIST ist neutral und wird nicht bewertet (kein klares Aktions-Versprechen).
+
+const VORSTAND_DIRECTION_THRESHOLD = 0.5;
+
+export interface VorstandAccuracy {
+  evaluated: number;
+  rightCalls: number;
+  hitRatePct: number | null;
+  // Pro Verdict-Typ aufgeschluesselt — interessant für Diagnose:
+  // war der Vorstand bei KLARER_KAUF treffsicherer als bei KAUFEN_VORSICHTIG?
+  perVerdict: Record<VorstandVerdict, { evaluated: number; rightCalls: number; hitRatePct: number | null }>;
+}
+
+export function computeVorstandAccuracy(log: VorstandSnapshot[], btcPriceFor: (date: string) => number | null): VorstandAccuracy {
+  const sortedDates = log.map((e) => e.date).sort();
+  const perVerdict: Record<VorstandVerdict, { evaluated: number; rightCalls: number; hitRatePct: number | null }> = {
+    KLARER_KAUF: { evaluated: 0, rightCalls: 0, hitRatePct: null },
+    KAUFEN_VORSICHTIG: { evaluated: 0, rightCalls: 0, hitRatePct: null },
+    WATCHLIST: { evaluated: 0, rightCalls: 0, hitRatePct: null },
+    CASH_HALTEN: { evaluated: 0, rightCalls: 0, hitRatePct: null }
+  };
+  let evaluated = 0;
+  let right = 0;
+  for (const e of log) {
+    const todayPrice = btcPriceFor(e.date);
+    if (todayPrice === null) continue;
+    const nextDate = sortedDates.find((d) => d > e.date);
+    if (!nextDate) continue;
+    const nextPrice = btcPriceFor(nextDate);
+    if (nextPrice === null) continue;
+    const movePct = ((nextPrice - todayPrice) / todayPrice) * 100;
+    const isUp = movePct >= VORSTAND_DIRECTION_THRESHOLD;
+    let outcome: boolean | null;
+    if (e.verdict === 'KLARER_KAUF' || e.verdict === 'KAUFEN_VORSICHTIG') outcome = isUp;
+    else if (e.verdict === 'CASH_HALTEN') outcome = !isUp;
+    else outcome = null; // WATCHLIST nicht bewerten
+    if (outcome === null) continue;
+    perVerdict[e.verdict].evaluated++;
+    if (outcome) perVerdict[e.verdict].rightCalls++;
+    evaluated++;
+    if (outcome) right++;
+  }
+  for (const k of Object.keys(perVerdict) as VorstandVerdict[]) {
+    const v = perVerdict[k];
+    v.hitRatePct = v.evaluated > 0 ? Math.round((v.rightCalls / v.evaluated) * 100) : null;
+  }
+  return {
+    evaluated,
+    rightCalls: right,
+    hitRatePct: evaluated > 0 ? Math.round((right / evaluated) * 100) : null,
+    perVerdict
+  };
+}
+
 export function summariseVorstand(log: VorstandSnapshot[]): VorstandStats {
   const total = log.length;
   const klar = log.filter((e) => e.verdict === 'KLARER_KAUF').length;
