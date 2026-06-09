@@ -39,7 +39,9 @@ const BACKUP_KEYS = [
   // Firma-Präferenz (welche Firma der User bevorzugt)
   'trading-app.firma-preference-v1',
   // User-gesteuerte Aufstellungs-Overrides pro Fixture
-  'trading-app.squad-overrides-v1'
+  'trading-app.squad-overrides-v1',
+  // User-gesteuerte Coin-Faktoren pro Coin
+  'trading-app.coin-overrides-v1'
 ] as const;
 
 const CHANGE_EVENTS = [

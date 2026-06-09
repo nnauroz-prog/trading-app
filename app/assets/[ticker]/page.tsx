@@ -26,6 +26,7 @@ import { AssetSafetyCard } from '@/components/asset-safety-card';
 import { AssetTier90Status } from '@/components/asset-tier-90-status';
 import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
 import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
+import { CoinOverridePanel } from '@/components/coin-override-panel';
 import { deriveCoinAction } from '@/lib/coin-action';
 import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 
@@ -282,9 +283,15 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
         </p>
       )}
 
-      {candidate && masterSignal && backtestSummary && (
-        <AssetSafetyCard symbol={asset.ticker} safety={scoreCandidateSafety(candidate, masterSignal, backtestSummary)} />
-      )}
+      {candidate && masterSignal && backtestSummary && (() => {
+        const safety = scoreCandidateSafety(candidate, masterSignal, backtestSummary);
+        return (
+          <>
+            <AssetSafetyCard symbol={asset.ticker} safety={safety} />
+            <CoinOverridePanel coinId={asset.id} symbol={asset.ticker} baseSafetyScore={safety.score} />
+          </>
+        );
+      })()}
 
       {personas.length > 0 && (
         <AssetTier90Status result={evaluateTradeTier90(personas)} coinSymbol={asset.ticker} />

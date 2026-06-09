@@ -14,6 +14,7 @@ import { TeamWatchToggle } from '@/components/team-watch-toggle';
 import { SafetyPicksSection } from '@/components/safety-picks-section';
 import { H2HBadge } from '@/components/h2h-badge';
 import { SquadOverridePanel } from '@/components/squad-override-panel';
+import { ModifierTransparencyStrip } from '@/components/modifier-transparency-strip';
 import { RefreshSportButton } from '@/components/refresh-sport-button';
 import { ModifierBacktestCard } from '@/components/modifier-backtest-card';
 import { backtestModifiers } from '@/lib/sport/modifier-backtest';
@@ -277,7 +278,8 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
         </div>
       )}
       {f.prediction && (
-        <div className="mt-1.5">
+        <div className="mt-1.5 space-y-1.5">
+          <ModifierTransparencyStrip fixtureId={f.id} prediction={f.prediction} />
           <SquadOverridePanel
             fixtureId={f.id}
             homeTeam={f.homeTeam}
@@ -871,20 +873,28 @@ export default async function SportPage() {
       {/* Ehrlicher Modifier-Self-Check pro Liga: bringen die H2H- und
           Schiri-Anpassungen tatsaechlich Lift im Backtest? Wenn negativ,
           wird das hier offen gezeigt. */}
-      <details className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
-        <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
-          🔬 Modifier-Backtest pro Liga (ehrlicher Self-Check)
-        </summary>
-        <div className="mt-2 space-y-1.5">
-          {leagues.map((lf) => (
-            <ModifierBacktestCard
-              key={lf.league.id}
-              result={backtestModifiers(lf.last)}
-              leagueName={lf.league.name}
-            />
-          ))}
-        </div>
-      </details>
+      {(() => {
+        const allResults = leagues.map((lf) => ({ league: lf.league, result: backtestModifiers(lf.last) }));
+        const evaluated = allResults.filter((x) => x.result.matchesEvaluated >= 20);
+        const h2hPositive = evaluated.filter((x) => x.result.matchesWithH2hSignal > 0 && x.result.liftH2hPct >= 0).length;
+        const refPositive = evaluated.filter((x) => x.result.matchesWithRefereeSignal > 0 && x.result.liftRefereePct >= 0).length;
+        const summary = evaluated.length === 0
+          ? 'Pools noch nicht gross genug fuer einen aussagekraeftigen Backtest.'
+          : `H2H positiv in ${h2hPositive} von ${evaluated.length} Ligen, Schiri positiv in ${refPositive} von ${evaluated.length} Ligen.`;
+        return (
+          <details className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
+            <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+              🔬 Modifier-Backtest pro Liga (ehrlicher Self-Check)
+              <span className="ml-2 normal-case text-[10px] tracking-normal text-slate-500">· {summary}</span>
+            </summary>
+            <div className="mt-2 space-y-1.5">
+              {allResults.map(({ league, result }) => (
+                <ModifierBacktestCard key={league.id} result={result} leagueName={league.name} />
+              ))}
+            </div>
+          </details>
+        );
+      })()}
 
       <SportFaq />
       <SportDataReset />
