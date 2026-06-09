@@ -14,6 +14,9 @@ import { TeamWatchToggle } from '@/components/team-watch-toggle';
 import { SafetyPicksSection } from '@/components/safety-picks-section';
 import { H2HBadge } from '@/components/h2h-badge';
 import { SquadOverridePanel } from '@/components/squad-override-panel';
+import { RefreshSportButton } from '@/components/refresh-sport-button';
+import { ModifierBacktestCard } from '@/components/modifier-backtest-card';
+import { backtestModifiers } from '@/lib/sport/modifier-backtest';
 import { computeHeadToHead } from '@/lib/sport/h2h';
 import { predictWinner } from '@/lib/sport/winner-verdict';
 import { WinnerVerdictCard } from '@/components/winner-verdict-card';
@@ -485,7 +488,10 @@ export default async function SportPage() {
       </Link>
 
       <header className="space-y-2">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Sport · Fußball-Prognosen</div>
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Sport · Fußball-Prognosen</div>
+          <RefreshSportButton />
+        </div>
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Fußball-Prognosen für Tipprunden</h1>
         <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>
       </header>
@@ -861,6 +867,25 @@ export default async function SportPage() {
 
       <div id="tagebuch" />
       <SportTipJournal finishedFixtures={finishedLite} />
+
+      {/* Ehrlicher Modifier-Self-Check pro Liga: bringen die H2H- und
+          Schiri-Anpassungen tatsaechlich Lift im Backtest? Wenn negativ,
+          wird das hier offen gezeigt. */}
+      <details className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
+        <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+          🔬 Modifier-Backtest pro Liga (ehrlicher Self-Check)
+        </summary>
+        <div className="mt-2 space-y-1.5">
+          {leagues.map((lf) => (
+            <ModifierBacktestCard
+              key={lf.league.id}
+              result={backtestModifiers(lf.last)}
+              leagueName={lf.league.name}
+            />
+          ))}
+        </div>
+      </details>
+
       <SportFaq />
       <SportDataReset />
 

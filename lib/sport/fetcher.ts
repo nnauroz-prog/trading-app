@@ -5,6 +5,7 @@ import { lookupStadium } from '@/lib/sport/stadium-coords';
 import { fetchWeatherSnapshot } from '@/lib/providers/open-meteo';
 import { scoreWeatherImpact } from '@/lib/sport/weather-impact';
 import { computeHeadToHead } from '@/lib/sport/h2h';
+import { backtestModifiers, deriveModifierTrust } from '@/lib/sport/modifier-backtest';
 import { FootballProbabilityModel, computeFootballProbabilities } from '@/lib/sport/probabilities';
 import { AllTips, generateTips } from '@/lib/sport/tip-selection';
 
@@ -220,16 +221,27 @@ async function compute(): Promise<LeagueFixtures[]> {
         if (snap) weatherFor.set(f.id, scoreWeatherImpact(snap));
       }));
 
+      // Auto-adaptive Modifier-Trust pro Liga. Backtest-Ergebnis entscheidet:
+      // wenn H2H- oder Schiri-Signal im Pool historisch SCHADET, schalten wir
+      // ihn fuer diese Liga aus. Bei zu wenig Daten: Default-Vertrauen.
+      const backtest = backtestModifiers(finishedPool);
+      const trust = deriveModifierTrust(backtest);
+
       const upcoming: UpcomingFixture[] = future.slice(0, 50).map((f) => {
-        const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, finishedPool);
-        const tips = probabilities ? generateTips(probabilities, f.homeTeam, f.awayTeam) : null;
         const weather = weatherFor.get(f.id);
+        // H2H einmal berechnen, dann an predictor + probabilities BEIDE
+        // weitergeben — damit sehen Tipp-Ranker und UI-Prognose dasselbe.
+        const h2hRaw = computeHeadToHead(f.homeTeam, f.awayTeam, finishedPool);
+        const h2h = trust.h2hTrusted ? h2hRaw : undefined;
+        const refName = trust.refereeTrusted ? f.referee : null;
+        const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, finishedPool, weather, h2h, refName);
+        const tips = probabilities ? generateTips(probabilities, f.homeTeam, f.awayTeam) : null;
         return {
           ...f,
           status: 'upcoming',
           homeScore: null, // explizit löschen, falls TheSportsDB-Phantomwerte da waren
           awayScore: null,
-          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool, weather, computeHeadToHead(f.homeTeam, f.awayTeam, finishedPool), f.referee),
+          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool, weather, h2h, refName),
           probabilities,
           tips
         };

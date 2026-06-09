@@ -1,4 +1,7 @@
 import { Fixture } from '@/lib/sport/fetcher';
+import type { WeatherImpact } from '@/lib/sport/weather-impact';
+import { computeH2hModifier, type HeadToHeadResult } from '@/lib/sport/h2h';
+import { computeRefereeImpact, computeRefereeTendencies } from '@/lib/sport/referee-tendencies';
 
 export type ModelConfidence = 'low' | 'medium' | 'high';
 export type DataQuality = 'weak' | 'medium' | 'good';
@@ -132,10 +135,18 @@ function classifyModelConfidence(quality: DataQuality, decisiveness: number): Mo
 // Builds a full probability model for an upcoming match using a Poisson
 // distribution fed by each team's recent league form. Returns null if there
 // is literally no usable form data at all (both teams unknown).
+//
+// Wenn weather, h2h oder refereeName mitkommen, fliessen die gleichen
+// Modifier wie in predictMatch (Wetter * H2H-Multiplier * Schiri) durch —
+// damit der Safe-Tips-Ranker exakt dieselbe Sichtweise hat wie die UI-
+// Prognose.
 export function computeFootballProbabilities(
   homeTeam: string,
   awayTeam: string,
-  finishedLeagueEvents: Fixture[]
+  finishedLeagueEvents: Fixture[],
+  weather?: WeatherImpact,
+  h2h?: HeadToHeadResult,
+  refereeName?: string | null
 ): FootballProbabilityModel | null {
   const home = formFor(homeTeam, finishedLeagueEvents);
   const away = formFor(awayTeam, finishedLeagueEvents);
@@ -150,9 +161,18 @@ export function computeFootballProbabilities(
   const awayAvgScored = away.games > 0 ? away.goalsScored / away.games : leaguePerSide;
   const awayAvgConceded = away.games > 0 ? away.goalsConceded / away.games : leaguePerSide;
 
-  // Blend each team's attack with the opponent's defence, then apply home advantage.
-  const expectedHomeGoals = Math.max(0.15, ((homeAvgScored + awayAvgConceded) / 2) * HOME_ADVANTAGE);
-  const expectedAwayGoals = Math.max(0.15, (awayAvgScored + homeAvgConceded) / 2);
+  const weatherMul = weather?.lambdaMultiplier ?? 1.0;
+  const h2hMod = h2h ? computeH2hModifier(h2h) : undefined;
+  const homeH2hMul = h2hMod?.homeMultiplier ?? 1.0;
+  const awayH2hMul = h2hMod?.awayMultiplier ?? 1.0;
+  const refTendencies = refereeName ? computeRefereeTendencies(refereeName, finishedLeagueEvents) : null;
+  const refImpact = computeRefereeImpact(refTendencies);
+
+  // Blend each team's attack with the opponent's defence, then apply home advantage
+  // PLUS alle Modifier (gleichgewichtet auf beide via weather/refImpact.lambdaMul,
+  // asymmetrisch via h2h-Multiplier + refImpact home/away bias).
+  const expectedHomeGoals = Math.max(0.15, ((homeAvgScored + awayAvgConceded) / 2) * HOME_ADVANTAGE) * weatherMul * homeH2hMul * refImpact.lambdaMul * refImpact.homeBiasMul;
+  const expectedAwayGoals = Math.max(0.15, (awayAvgScored + homeAvgConceded) / 2) * weatherMul * awayH2hMul * refImpact.lambdaMul * refImpact.awayBiasMul;
 
   // Joint score matrix.
   let pHome = 0;
