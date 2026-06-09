@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backtestModifiers } from '@/lib/sport/modifier-backtest';
+import { backtestModifiers, deriveModifierTrust } from '@/lib/sport/modifier-backtest';
 import type { Fixture } from '@/lib/sport/fetcher';
 
 function past(home: string, away: string, hs: number, as_: number, date: string, ref: string | null = null): Fixture {
@@ -63,6 +63,50 @@ describe('backtestModifiers', () => {
     const out = backtestModifiers(pool);
     // Ohne Schiri-Eintraege: nRefSignal = 0
     expect(out.matchesWithRefereeSignal).toBe(0);
+  });
+
+  it('deriveModifierTrust: zu wenig Daten → vollstaendiges Default-Vertrauen', () => {
+    const trust = deriveModifierTrust({
+      matchesEvaluated: 5,
+      brierRaw: 0.5, brierWithH2h: 0.5, brierWithReferee: 0.5, brierWithBoth: 0.5,
+      liftH2hPct: -10, liftRefereePct: -10, liftCombinedPct: -10,
+      matchesWithH2hSignal: 3, matchesWithRefereeSignal: 2
+    });
+    expect(trust.h2hTrusted).toBe(true);
+    expect(trust.refereeTrusted).toBe(true);
+    expect(trust.basedOnBacktest).toBe(false);
+  });
+
+  it('deriveModifierTrust: H2H mit -3% Lift wird ausgeschaltet, Schiri mit +1% bleibt', () => {
+    const trust = deriveModifierTrust({
+      matchesEvaluated: 50,
+      brierRaw: 0.5, brierWithH2h: 0.515, brierWithReferee: 0.495, brierWithBoth: 0.5,
+      liftH2hPct: -3.0, liftRefereePct: 1.0, liftCombinedPct: 0,
+      matchesWithH2hSignal: 25, matchesWithRefereeSignal: 15
+    });
+    expect(trust.h2hTrusted).toBe(false);
+    expect(trust.refereeTrusted).toBe(true);
+    expect(trust.basedOnBacktest).toBe(true);
+  });
+
+  it('deriveModifierTrust: marginal-negativer Lift (-1%) bleibt aktiv (Rausch-Toleranz)', () => {
+    const trust = deriveModifierTrust({
+      matchesEvaluated: 50,
+      brierRaw: 0.5, brierWithH2h: 0.505, brierWithReferee: 0.5, brierWithBoth: 0.5,
+      liftH2hPct: -1.0, liftRefereePct: 0, liftCombinedPct: 0,
+      matchesWithH2hSignal: 25, matchesWithRefereeSignal: 0
+    });
+    expect(trust.h2hTrusted).toBe(true);
+  });
+
+  it('deriveModifierTrust: Schiri ohne Signal (kein einziger Match) bleibt trusted (kein Schaden moeglich)', () => {
+    const trust = deriveModifierTrust({
+      matchesEvaluated: 50,
+      brierRaw: 0.5, brierWithH2h: 0.5, brierWithReferee: 0.5, brierWithBoth: 0.5,
+      liftH2hPct: 0, liftRefereePct: -10, liftCombinedPct: 0,
+      matchesWithH2hSignal: 0, matchesWithRefereeSignal: 0
+    });
+    expect(trust.refereeTrusted).toBe(true);
   });
 
   it('Brier-Scores werden auf 3 Nachkommastellen gerundet', () => {

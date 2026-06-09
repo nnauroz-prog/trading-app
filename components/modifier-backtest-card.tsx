@@ -1,4 +1,4 @@
-import type { ModifierBacktestResult } from '@/lib/sport/modifier-backtest';
+import { deriveModifierTrust, type ModifierBacktestResult } from '@/lib/sport/modifier-backtest';
 
 interface Props {
   result: ModifierBacktestResult;
@@ -76,6 +76,25 @@ export function ModifierBacktestCard({ result, leagueName }: Props) {
             {result.matchesWithRefereeSignal} von {result.matchesEvaluated} Spielen — Effekt insgesamt {liftLabel(result.liftRefereePct)}.
           </li>
         </ul>
+        {(() => {
+          const trust = deriveModifierTrust(result);
+          if (!trust.basedOnBacktest) return null;
+          const disabled: string[] = [];
+          if (!trust.h2hTrusted) disabled.push('H2H');
+          if (!trust.refereeTrusted) disabled.push('Schiri');
+          if (disabled.length === 0) {
+            return (
+              <p className="rounded border border-emerald-400/30 bg-emerald-500/10 p-1.5 text-[10px] leading-snug text-emerald-200">
+                ✓ Beide Modifier zeigen im Backtest belastbaren Lift — werden fuer diese Liga aktiv eingerechnet.
+              </p>
+            );
+          }
+          return (
+            <p className="rounded border border-amber-400/40 bg-amber-500/10 p-1.5 text-[10px] leading-snug text-amber-200">
+              ⚠ Auto-disabled fuer diese Liga: {disabled.join(', ')} — Backtest-Lift zu schwach. Engine ignoriert das Signal hier, bis die Datenlage sich aendert.
+            </p>
+          );
+        })()}
         <p className="text-[10px] leading-snug text-slate-500">
           Negativer Lift heisst: der Modifier macht die Prognose im Backtest schlechter — das ist ehrlich gezeigt und nicht versteckt.
         </p>

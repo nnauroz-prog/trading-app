@@ -51,6 +51,33 @@ const MIN_PRIOR_GAMES = 30;
 // belastbar ist.
 const MIN_EVALUATED = 20;
 
+// Lift-Schwelle (in Prozent) ab der wir den Modifier in dieser Liga
+// vertrauen. Negativ heisst „darf etwas schlechter sein", weil die Brier-
+// Vergleiche bei kleinen Samples rauschen — wir wollen nur klar
+// schaedliche Modifier ausschalten.
+const TRUST_THRESHOLD_PCT = -1.5;
+
+export interface ModifierTrust {
+  h2hTrusted: boolean;
+  refereeTrusted: boolean;
+  // Ehrlich: wenn nicht genug Daten zum Backtesten waren, default vertrauen
+  // (modifier bleibt aktiv).
+  basedOnBacktest: boolean;
+}
+
+export function deriveModifierTrust(result: ModifierBacktestResult): ModifierTrust {
+  if (result.matchesEvaluated < MIN_EVALUATED) {
+    return { h2hTrusted: true, refereeTrusted: true, basedOnBacktest: false };
+  }
+  return {
+    // Nur ausschalten, wenn (a) Signal ueberhaupt aktiv war UND (b) Lift
+    // unter Schwelle.
+    h2hTrusted: result.matchesWithH2hSignal === 0 || result.liftH2hPct >= TRUST_THRESHOLD_PCT,
+    refereeTrusted: result.matchesWithRefereeSignal === 0 || result.liftRefereePct >= TRUST_THRESHOLD_PCT,
+    basedOnBacktest: true
+  };
+}
+
 // 1X2-Outcome aus einem Spielergebnis ableiten.
 function outcomeOf(home: number, away: number): 0 | 1 | 2 {
   if (home > away) return 0;
