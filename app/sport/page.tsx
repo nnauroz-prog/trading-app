@@ -13,6 +13,7 @@ import { TeamWatchlistPanel } from '@/components/team-watchlist-panel';
 import { TeamWatchToggle } from '@/components/team-watch-toggle';
 import { SafetyPicksSection } from '@/components/safety-picks-section';
 import { H2HBadge } from '@/components/h2h-badge';
+import { SquadOverridePanel } from '@/components/squad-override-panel';
 import { computeHeadToHead } from '@/lib/sport/h2h';
 import { predictWinner } from '@/lib/sport/winner-verdict';
 import { WinnerVerdictCard } from '@/components/winner-verdict-card';
@@ -262,6 +263,20 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
       {h2h && (
         <div className="mt-1.5">
           <H2HBadge h2h={h2h} />
+        </div>
+      )}
+      {f.prediction && (
+        <div className="mt-1.5">
+          <SquadOverridePanel
+            fixtureId={f.id}
+            homeTeam={f.homeTeam}
+            awayTeam={f.awayTeam}
+            baseLambdaHome={f.prediction.lambdaHome}
+            baseLambdaAway={f.prediction.lambdaAway}
+            basePHome={f.prediction.pHome}
+            basePDraw={f.prediction.pDraw}
+            basePAway={f.prediction.pAway}
+          />
         </div>
       )}
       {(() => {
