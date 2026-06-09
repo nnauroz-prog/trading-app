@@ -112,6 +112,7 @@ import { NewsFeed } from '@/components/news-feed';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { CryptoPrecisionDesk } from '@/components/crypto/crypto-precision-desk';
 import { CryptoPrecisionCalibrationHydrator } from '@/components/crypto/crypto-precision-calibration-hydrator';
+import { CryptoPrecisionOverrideBanner } from '@/components/crypto/crypto-precision-override-banner';
 import { evaluateCryptoPrecisionPick } from '@/lib/analysis/crypto-precision-gate';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
@@ -594,7 +595,15 @@ export default async function HomePage() {
             safety: x.safety
           });
         });
-        return <CryptoPrecisionDesk picks={cryptoPrecisionPicks} cryptoStrongCount={cryptoStrongCount} />;
+        return (
+          <>
+            <CryptoPrecisionDesk picks={cryptoPrecisionPicks} cryptoStrongCount={cryptoStrongCount} />
+            <CryptoPrecisionOverrideBanner
+              picks={cryptoPrecisionPicks.map((p) => ({ coinId: p.coinId, symbol: p.symbol, verdict: p.verdict }))}
+              latestPrices={latestPrices}
+            />
+          </>
+        );
       })()}
       <CryptoPrecisionCalibrationHydrator latestPrices={latestPrices} />
 
