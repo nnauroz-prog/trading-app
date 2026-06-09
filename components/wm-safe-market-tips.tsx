@@ -28,17 +28,17 @@ function fmtDate(iso: string): string {
 
 const TIER_STYLE: Record<SafeWmTip['tier'], { label: string; chip: string; tone: string }> = {
   'maximal': {
-    label: 'MAXIMAL SICHER',
+    label: 'HÖCHSTE MODELL-KONFLUENZ',
     chip: 'border-emerald-300/70 bg-emerald-400/20 text-emerald-100',
     tone: 'border-emerald-400/60 bg-emerald-500/10'
   },
   'sehr-sicher': {
-    label: 'SEHR SICHER',
+    label: 'STARKE KONFLUENZ',
     chip: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200',
     tone: 'border-emerald-400/40 bg-emerald-500/5'
   },
   'sicher': {
-    label: 'SICHER',
+    label: 'SOLIDE KONFLUENZ',
     chip: 'border-sky-400/40 bg-sky-500/10 text-sky-100',
     tone: 'border-sky-400/30 bg-sky-500/5'
   }
@@ -60,7 +60,7 @@ export function WmSafeMarketTips({
   if (tips.length === 0) {
     return (
       <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">🛡️ Sichere WM-Tipps (nächste {maxDays} Tage)</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">🛡️ Streng gefilterte WM-Modell-Picks (nächste {maxDays} Tage)</h2>
         <p className="text-[11px] leading-relaxed text-slate-500">
           Kein anstehendes Spiel erreicht aktuell ≥{Math.round(minProbability * 100)} % Profi-Engine-Wahrscheinlichkeit.
           Lieber abwarten — kein Tipp ist auch ein Tipp.
@@ -76,15 +76,15 @@ export function WmSafeMarketTips({
   return (
     <section className="space-y-3 rounded-2xl border border-emerald-400/50 bg-emerald-950/15 p-4">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">🛡️ Sichere WM-Tipps (nächste {maxDays} Tage)</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">🛡️ Streng gefilterte WM-Modell-Picks (nächste {maxDays} Tage)</h2>
         <span className="text-[10px] text-emerald-200/70">
-          {tips.length} Tipps · {maxTier.length} maximal · {sehrSicher.length} sehr sicher
+          {tips.length} Picks · {maxTier.length} höchste · {sehrSicher.length} starke Konfluenz
         </span>
       </div>
       <p className="text-[10.5px] leading-snug text-emerald-100/80">
-        Scannt ALLE Märkte pro Spiel (1X2, Doppelchance, Über/Unter, BTTS, Clean Sheet) — zeigt nur die,
-        die ≥{Math.round(minProbability * 100)} % Profi-Engine-Wahrscheinlichkeit erreichen UND auf einer Datenbasis ≥{minDataConfidence}/100 stehen.
-        Mehrere Tipps pro Spieltag möglich. Vergangenheit ≠ Zukunft — keine Garantie.
+        Scannt ALLE Märkte pro Spiel (1X2, Doppelchance, Über/Unter, BTTS, Clean Sheet) — zeigt nur Modell-Picks
+        ab {Math.round(minProbability * 100)} % Modell-Wahrscheinlichkeit auf Datenbasis ≥{minDataConfidence}/100.
+        Diese Liste ersetzt nicht die FREIGABE-Logik des Precision Desk oben — sie ist eine Rohdaten-Übersicht.
       </p>
 
       {(() => {
@@ -95,9 +95,9 @@ export function WmSafeMarketTips({
         ) : null;
       })()}
 
-      {maxTier.length > 0 && <TipGroup heading="🏆 Maximal sicher (≥85 %)" tips={maxTier} />}
-      {sehrSicher.length > 0 && <TipGroup heading="✓ Sehr sicher (78–84 %)" tips={sehrSicher} />}
-      {sicher.length > 0 && <TipGroup heading="◇ Sicher (70–77 %)" tips={sicher} />}
+      {maxTier.length > 0 && <TipGroup heading="🏆 Höchste Modell-Konfluenz (≥85 %)" tips={maxTier} />}
+      {sehrSicher.length > 0 && <TipGroup heading="✓ Starke Konfluenz (78–84 %)" tips={sehrSicher} />}
+      {sicher.length > 0 && <TipGroup heading="◇ Solide Konfluenz (70–77 %)" tips={sicher} />}
 
       <p className="text-[9.5px] leading-snug text-emerald-100/55">
         Quelle: Profi-Engine aus ELO + Form + xG + Spielort. Wahrscheinlichkeiten sind Modell-Schätzungen, nicht Garantien.

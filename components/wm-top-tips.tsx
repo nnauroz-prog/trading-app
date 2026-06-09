@@ -44,7 +44,7 @@ export function WmTopTips({ todayIso, openingIso = '2026-06-11', limit = 12 }: P
         <span className="text-[10px] text-emerald-200/60">{ranked.length} Spiele</span>
       </div>
       <p className="text-[10.5px] leading-snug text-emerald-100/80">
-        Sortiert nach Profi-Engine-Klarheit (ELO + Form + xG + Spielort + Datenbasis-Sicherheit). Klare Tipps oben, offene Spiele am Ende.
+        Sortiert nach Modell-Konfluenz (ELO + Form + xG + Spielort + Datenbasis). Modell-Tendenzen oben, offene Spiele am Ende. Diese Liste ist Rohdaten — die finale Freigabe macht der Precision Desk oben.
       </p>
 
       {clear.length > 0 && (

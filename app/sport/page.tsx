@@ -103,6 +103,9 @@ import { SeasonStartsCard } from '@/components/season-starts-card';
 import { PendingTipsReminder } from '@/components/pending-tips-reminder';
 import { LastResolvedStrip } from '@/components/last-resolved-strip';
 import { NotificationOptIn } from '@/components/notification-opt-in';
+import { SportPrecisionDesk } from '@/components/sport/sport-precision-desk';
+import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsible-legacy-section';
+import { buildLeaguePrecisionPicks } from '@/lib/sport/sport-precision-bridge';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -503,30 +506,25 @@ export default async function SportPage() {
       <SportTabsDock />
       <SportOnboardingHint />
 
-      {/* WM-Countdown VOR allem anderen, wenn ≤ 30 Tage bis Eröffnung — die
-          beste Antwort auf „nichts in den Ligen" ist „WM kommt". */}
-      <WmCountdownBanner todayIso={buckets.todayIso} />
+      {/* SPORT PRECISION DESK — fuehrender Entscheidungs-Filter ganz oben.
+          Alle alten Bereiche sind darunter eingeklappt und tragen klar das
+          Etikett „Rohdaten / Modell-Uebersicht", damit kein widersprueliches
+          Wording uebrig bleibt. */}
       {(() => {
-        const footballVerdicts = evaluateFootballPersonas(leagues, buckets.todayIso);
+        const precisionPicks = buildLeaguePrecisionPicks(leagues, { todayIso: buckets.todayIso });
+        const overallCoverage = (() => {
+          if (precisionPicks.length === 0) return 0;
+          const sum = precisionPicks.reduce((s, p) => s + (p.dataLabel === 'VOLLSTAENDIG' ? 100 : p.dataLabel === 'TEILWEISE' ? 60 : 30), 0);
+          return Math.round(sum / precisionPicks.length);
+        })();
         return (
-          <>
-            <PersonaConsensusBanner verdicts={footballVerdicts} context="Liga-Fußball" />
-            <FootballPersonaPanel verdicts={footballVerdicts} />
-          </>
+          <SportPrecisionDesk
+            picks={precisionPicks}
+            calibrationLabel="UNKLAR"
+            dataCoveragePct={overallCoverage}
+          />
         );
       })()}
-      <SafeFootballTips leagues={leagues} todayIso={buckets.todayIso} />
-      <WmSafeMarketTips todayIso={buckets.todayIso} />
-      <WmTopTips todayIso={buckets.todayIso} />
-      <WmOutrightCard todayIso={buckets.todayIso} />
-      <WmNextMatches todayIso={buckets.todayIso} />
-      <WmDayPicker todayIso={buckets.todayIso} />
-      <WmEngineHonesty todayIso={buckets.todayIso} />
-      <WmGroupsOverview todayIso={buckets.todayIso} />
-      <WmPhasesTimeline todayIso={buckets.todayIso} />
-      <WmTipprundeStats todayIso={buckets.todayIso} />
-      <WmCitiesCard todayIso={buckets.todayIso} />
-      <WmVenuesList todayIso={buckets.todayIso} />
 
       {/* Sommer-Banner steht VOR der besten Prognose: wenn nichts läuft,
           braucht der User die ehrliche Antwort zuerst statt eine leere Top-Karte. */}
@@ -537,52 +535,97 @@ export default async function SportPage() {
       <LastResolvedStrip />
       <NotificationOptIn />
 
-      {/* Ganz oben: beste Einzel-Prognose + Top-5-Ranking + Band-Verteilung. */}
-      <div id="top" />
-      <BestPredictionCard ranked={rankedPredictions} todayIso={buckets.todayIso} />
-      <div id="top-prognosen" />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[10px] uppercase tracking-wider text-slate-500">Top-Ranking-Filter:</span>
-        <StableOnlyToggle />
-      </div>
-      <TopPredictionsRanking ranked={rankedPredictions} limit={5} />
-      <ScoreColorKey />
-      <div id="verteilung" />
-      <QualityBandDistribution ranked={rankedPredictions} todayIso={buckets.todayIso} />
-      <div id="schwelle" />
-      <SportQuickFilter ranked={rankedPredictions} todayIso={buckets.todayIso} tomorrowIso={buckets.tomorrowIso} />
-      <QualityScoreFilter ranked={rankedPredictions} />
-      <QualityCompare ranked={rankedPredictions} />
-      <LigaSpotlight leagues={leagues} />
-      <div id="tipprunde" />
-      <TipprundeCard />
-      <WochenzielCard />
-      <HitRateSparkline />
-      <TipprundeWeeklyHistory />
-      <TipprundeByLeague />
-      <TipprundeByMarket />
-      <WeekdayHeatmap />
-      <BestWeekdayHint />
-      <SanityHints />
-      <AchievementsCard />
-      <FriendsLeaderboard />
-      <DailyRecapCard todayIso={buckets.todayIso} />
+      <SportCollapsibleLegacySection
+        title="Liga-Rohranking und Modellübersicht"
+        subtitle="ungefilterte Modell-Tendenzen, Quality-Score-Ranking"
+        hint="Rohdaten-Ansicht — der Precision Desk filtert oben strenger. Diese Karten zeigen ungefilterte Modell-Tendenzen und sind keine Freigabe."
+      >
+        <WmCountdownBanner todayIso={buckets.todayIso} />
+        {(() => {
+          const footballVerdicts = evaluateFootballPersonas(leagues, buckets.todayIso);
+          return (
+            <>
+              <PersonaConsensusBanner verdicts={footballVerdicts} context="Liga-Fußball" />
+              <FootballPersonaPanel verdicts={footballVerdicts} />
+            </>
+          );
+        })()}
+        <SafeFootballTips leagues={leagues} todayIso={buckets.todayIso} />
+        <div id="top" />
+        <BestPredictionCard ranked={rankedPredictions} todayIso={buckets.todayIso} />
+        <div id="top-prognosen" />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[10px] uppercase tracking-wider text-slate-500">Top-Ranking-Filter:</span>
+          <StableOnlyToggle />
+        </div>
+        <TopPredictionsRanking ranked={rankedPredictions} limit={5} />
+        <ScoreColorKey />
+        <div id="verteilung" />
+        <QualityBandDistribution ranked={rankedPredictions} todayIso={buckets.todayIso} />
+        <div id="schwelle" />
+        <SportQuickFilter ranked={rankedPredictions} todayIso={buckets.todayIso} tomorrowIso={buckets.tomorrowIso} />
+        <QualityScoreFilter ranked={rankedPredictions} />
+        <QualityCompare ranked={rankedPredictions} />
+        <LigaSpotlight leagues={leagues} />
+      </SportCollapsibleLegacySection>
 
-      {/* Kern-Blöcke darunter — alles weitere unter „Details ansehen". */}
+      <SportCollapsibleLegacySection
+        title="WM-Rohdaten und Turnierübersicht"
+        subtitle="Spielplan, Gruppen, Phasen, Stadien"
+        hint="Modell-Rohdaten zur WM — Spiele in der Zukunft sind oft noch nicht freigabefähig. Der Precision Desk oben filtert auf Datenqualität."
+      >
+        <WmSafeMarketTips todayIso={buckets.todayIso} />
+        <WmTopTips todayIso={buckets.todayIso} />
+        <WmOutrightCard todayIso={buckets.todayIso} />
+        <WmNextMatches todayIso={buckets.todayIso} />
+        <WmDayPicker todayIso={buckets.todayIso} />
+        <WmEngineHonesty todayIso={buckets.todayIso} />
+        <WmGroupsOverview todayIso={buckets.todayIso} />
+        <WmPhasesTimeline todayIso={buckets.todayIso} />
+        <WmCitiesCard todayIso={buckets.todayIso} />
+        <WmVenuesList todayIso={buckets.todayIso} />
+      </SportCollapsibleLegacySection>
 
-      <div id="tier-90" />
-      <Tier90Picks picks={consensusEnriched} />
-      <SportTier90Recorder picks={consensusEnriched} />
+      <SportCollapsibleLegacySection
+        title="Tipprunde und Verlauf"
+        subtitle="Tipp-Tagebuch, Hit-Rate, Wochenstatistik"
+        hint="Tipprunde mit Freunden — diese Bereiche zaehlen nicht zur Freigabe-Logik, sie sind Tagebuch und Spass-Faktor."
+      >
+        <div id="tipprunde" />
+        <TipprundeCard />
+        <WochenzielCard />
+        <HitRateSparkline />
+        <TipprundeWeeklyHistory />
+        <TipprundeByLeague />
+        <TipprundeByMarket />
+        <WmTipprundeStats todayIso={buckets.todayIso} />
+        <WeekdayHeatmap />
+        <BestWeekdayHint />
+        <SanityHints />
+        <AchievementsCard />
+        <FriendsLeaderboard />
+        <DailyRecapCard todayIso={buckets.todayIso} />
+      </SportCollapsibleLegacySection>
 
-      <SportTodayLive leagues={leagues} />
+      <SportCollapsibleLegacySection
+        title="Konsens-Picks, Live-Spiele und Wochenergebnisse"
+        subtitle="Tier-90, Heute Live, Resolver"
+        hint="Modell-Konsens und Resolver — Live-Stand und Ergebnis-Tracking laufen hier."
+      >
+        <div id="tier-90" />
+        <Tier90Picks picks={consensusEnriched} />
+        <SportTier90Recorder picks={consensusEnriched} />
 
-      <SportYesterdayResolved leagues={leagues} />
-      <SportTodayResolved leagues={leagues} />
+        <SportTodayLive leagues={leagues} />
 
-      <div id="ergebnisse" />
-      <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} consensusById={consensusById} />
+        <SportYesterdayResolved leagues={leagues} />
+        <SportTodayResolved leagues={leagues} />
 
-      <SeasonPauseBanner leagues={leagues} />
+        <div id="ergebnisse" />
+        <WochenErgebnisse synth={firmaSynth} h2hById={h2hById} consensusById={consensusById} />
+
+        <SeasonPauseBanner leagues={leagues} />
+      </SportCollapsibleLegacySection>
 
       <div className="flex items-center gap-2">
         <DataRefreshIndicator initialTimestamp={Date.now()} refreshIntervalMs={600_000} />

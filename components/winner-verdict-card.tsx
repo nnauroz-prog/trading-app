@@ -19,7 +19,7 @@ const CLARITY_COLOR: Record<WinnerVerdict['clarity'], string> = {
 };
 
 const CLARITY_LABEL: Record<WinnerVerdict['clarity'], string> = {
-  strong: 'klarer Tipp',
+  strong: 'Modell-Freigabe',
   leaning: 'leichter Favorit',
   open: 'offen — eher nicht tippen'
 };

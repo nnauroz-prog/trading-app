@@ -17,8 +17,8 @@ function fmtDate(iso: string): string {
 }
 
 function confidenceBand(conf: number): { label: string; tone: string; explanation: string } {
-  if (conf >= 0.65) return { label: 'sicher', tone: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200', explanation: 'über der 65 %-Schwelle.' };
-  if (conf >= 0.5) return { label: 'leichter Favorit', tone: 'border-sky-400/50 bg-sky-500/15 text-sky-200', explanation: 'Tendenz klar, aber unter der sicheren Schwelle.' };
+  if (conf >= 0.65) return { label: 'solide Konfluenz', tone: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200', explanation: 'über der 65 %-Schwelle.' };
+  if (conf >= 0.5) return { label: 'leichter Favorit', tone: 'border-sky-400/50 bg-sky-500/15 text-sky-200', explanation: 'Tendenz klar, aber unter der Konfluenz-Schwelle.' };
   if (conf >= 0.4) return { label: 'leichter Trend', tone: 'border-amber-400/40 bg-amber-500/10 text-amber-200', explanation: 'es gibt eine Richtung, mehr nicht.' };
   return { label: 'offenes Spiel', tone: 'border-slate-700 bg-slate-900 text-slate-300', explanation: 'das Modell sieht keinen klaren Favoriten.' };
 }
