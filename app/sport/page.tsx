@@ -196,6 +196,14 @@ function TopTipp({ leagues }: { leagues: LeagueFixtures[] }) {
         <span>Form {best.fixture.homeTeam}: <FormChips form={p.homeForm} /></span>
         <span>Form {best.fixture.awayTeam}: <FormChips form={p.awayForm} /></span>
       </div>
+      {p.weather && p.weather.riskLabel !== 'normal' && (
+        <p className="rounded-md border border-amber-400/40 bg-amber-950/15 px-2 py-1.5 text-[11px] leading-snug text-amber-100">
+          <span className="font-semibold">🌦 Wetter-Einfluss:</span>{' '}
+          {p.weather.factors.join(' · ')}. Modell rechnet mit{' '}
+          <span className="font-mono">×{p.weather.lambdaMultiplier.toFixed(2)}</span>{' '}
+          weniger Toren als sonst — Unter-2.5-Tipps haben heute mehr Wert.
+        </p>
+      )}
     </section>
   );
 }
@@ -221,6 +229,20 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
           <span>Form Heim: <FormChips form={f.prediction.homeForm} /></span>
           <span>Form Auswärts: <FormChips form={f.prediction.awayForm} /></span>
           {f.venue && <span className="text-slate-600">· 📍 {f.venue}</span>}
+          {f.prediction.weather && (
+            <span
+              className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                f.prediction.weather.riskLabel === 'sehr tor-arm'
+                  ? 'border-rose-400/50 bg-rose-500/15 text-rose-200'
+                  : f.prediction.weather.riskLabel === 'tor-arm-erwartet'
+                  ? 'border-amber-400/40 bg-amber-500/10 text-amber-200'
+                  : 'border-slate-700 bg-slate-900 text-slate-300'
+              }`}
+              title={f.prediction.weather.factors.join(' · ')}
+            >
+              🌦 {f.prediction.weather.riskLabel === 'normal' ? 'Wetter ok' : f.prediction.weather.riskLabel}
+            </span>
+          )}
         </div>
       )}
       {h2h && (
