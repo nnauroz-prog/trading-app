@@ -1,6 +1,9 @@
 import { unstable_cache } from 'next/cache';
 import { FOOTBALL_LEAGUES, League } from '@/lib/sport/leagues';
 import { MatchPrediction, predictMatch } from '@/lib/sport/predictor';
+import { lookupStadium } from '@/lib/sport/stadium-coords';
+import { fetchWeatherSnapshot } from '@/lib/providers/open-meteo';
+import { scoreWeatherImpact } from '@/lib/sport/weather-impact';
 import { FootballProbabilityModel, computeFootballProbabilities } from '@/lib/sport/probabilities';
 import { AllTips, generateTips } from '@/lib/sport/tip-selection';
 
@@ -191,15 +194,35 @@ async function compute(): Promise<LeagueFixtures[]> {
       // Sortiert die zukünftigen nach Datum aufsteigend (frühestes zuerst).
       future.sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''));
 
+      // Wetter parallel ziehen — nur fuer Spiele in den naechsten 7 Tagen
+      // (laenger ist Forecast nicht zuverlaessig) UND nur wenn wir die
+      // Heim-Stadion-Koordinaten kennen. Pro Heim-Stadion wird einmal pro
+      // 30 Minuten abgefragt (unstable_cache).
+      const horizonMs = Date.now() + 7 * 24 * 60 * 60 * 1000;
+      const weatherFor = new Map<string, ReturnType<typeof scoreWeatherImpact>>();
+      const inWindow = future.slice(0, 50).filter((f) => {
+        if (!f.time) return false;
+        const matchMs = new Date(`${f.date}T${f.time}:00Z`).getTime();
+        return Number.isFinite(matchMs) && matchMs >= Date.now() && matchMs <= horizonMs;
+      });
+      await Promise.all(inWindow.map(async (f) => {
+        const stadium = lookupStadium(f.homeTeam);
+        if (!stadium || !f.time) return;
+        const matchMs = new Date(`${f.date}T${f.time}:00Z`).getTime();
+        const snap = await fetchWeatherSnapshot(stadium.lat, stadium.lon, matchMs);
+        if (snap) weatherFor.set(f.id, scoreWeatherImpact(snap));
+      }));
+
       const upcoming: UpcomingFixture[] = future.slice(0, 50).map((f) => {
         const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, finishedPool);
         const tips = probabilities ? generateTips(probabilities, f.homeTeam, f.awayTeam) : null;
+        const weather = weatherFor.get(f.id);
         return {
           ...f,
           status: 'upcoming',
           homeScore: null, // explizit löschen, falls TheSportsDB-Phantomwerte da waren
           awayScore: null,
-          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool),
+          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool, weather),
           probabilities,
           tips
         };
