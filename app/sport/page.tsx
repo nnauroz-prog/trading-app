@@ -104,6 +104,7 @@ import { PendingTipsReminder } from '@/components/pending-tips-reminder';
 import { LastResolvedStrip } from '@/components/last-resolved-strip';
 import { NotificationOptIn } from '@/components/notification-opt-in';
 import { SportPrecisionDesk } from '@/components/sport/sport-precision-desk';
+import { SportPrecisionCalibrationHydrator } from '@/components/sport/sport-precision-calibration-hydrator';
 import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsible-legacy-section';
 import { buildLeaguePrecisionPicks } from '@/lib/sport/sport-precision-bridge';
 
@@ -525,6 +526,7 @@ export default async function SportPage() {
           />
         );
       })()}
+      <SportPrecisionCalibrationHydrator />
 
       {/* Sommer-Banner steht VOR der besten Prognose: wenn nichts läuft,
           braucht der User die ehrliche Antwort zuerst statt eine leere Top-Karte. */}
