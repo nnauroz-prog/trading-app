@@ -65,7 +65,9 @@ describe('predictWinner — Modell-Quelle', () => {
     const h2h: HeadToHeadResult = {
       meetings: 5, homeTeam: 'Bayern', awayTeam: 'Schalke',
       winsForHome: 4, draws: 1, winsForAway: 0,
-      goalsForHome: 10, goalsForAway: 2, lastMeeting: null
+      goalsForHome: 10, goalsForAway: 2, lastMeeting: null,
+      atHomeVenue: { meetings: 0, winsForHome: 0, draws: 0, winsForAway: 0, goalsForHome: 0, goalsForAway: 0 },
+      recent5: { meetings: 0, winsForHome: 0, draws: 0, winsForAway: 0, goalsForHome: 0, goalsForAway: 0 }
     };
     const withoutH2h = predictWinner({
       homeTeam: 'Bayern', awayTeam: 'Schalke',

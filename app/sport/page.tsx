@@ -243,6 +243,20 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
               🌦 {f.prediction.weather.riskLabel === 'normal' ? 'Wetter ok' : f.prediction.weather.riskLabel}
             </span>
           )}
+          {f.prediction.h2hMod && (
+            <span
+              className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                f.prediction.h2hMod.homeMultiplier > f.prediction.h2hMod.awayMultiplier
+                  ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
+                  : f.prediction.h2hMod.awayMultiplier > f.prediction.h2hMod.homeMultiplier
+                  ? 'border-rose-400/40 bg-rose-500/10 text-rose-200'
+                  : 'border-slate-700 bg-slate-900 text-slate-300'
+              }`}
+              title={f.prediction.h2hMod.factors.join(' · ')}
+            >
+              ⚔ H2H ×{Math.max(f.prediction.h2hMod.homeMultiplier, f.prediction.h2hMod.awayMultiplier).toFixed(2)}
+            </span>
+          )}
         </div>
       )}
       {h2h && (
