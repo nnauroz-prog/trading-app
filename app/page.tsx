@@ -110,6 +110,8 @@ import { LastSafeBuyCard } from '@/components/last-safe-buy-card';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
+import { CryptoPrecisionDesk } from '@/components/crypto/crypto-precision-desk';
+import { evaluateCryptoPrecisionPick } from '@/lib/analysis/crypto-precision-gate';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
 import { rankSafeFootballTips } from '@/lib/sport/safe-football-tips';
@@ -568,6 +570,31 @@ export default async function HomePage() {
         balanced={personas.find((p) => p.persona === 'balanced') ?? null}
         aggressive={personas.find((p) => p.persona === 'aggressive') ?? null}
       />
+
+      {(() => {
+        const cryptoPrecisionPicks = cryptoScored.map((x) => {
+          const edge = backtestSummary.perAssetEdge[x.c.coinId] ?? null;
+          return evaluateCryptoPrecisionPick({
+            coinId: x.c.coinId,
+            symbol: x.c.symbol,
+            passedCount: x.c.passedCount,
+            totalCount: x.c.totalCount,
+            marketMood: masterSignal.marketMood,
+            btcRegime: masterSignal.btcRegime,
+            structure: x.c.structure,
+            nearSupport: x.c.nearSupport,
+            quoteVolume: x.c.quoteVolume,
+            stopDistancePct: x.c.stopDistancePct,
+            priceChangePct24h: x.c.priceChangePct24h,
+            crowdCautious: masterSignal.crowd.cautious,
+            confirmed: x.c.confirmed,
+            backtestWinRatePct: edge?.winRatePct ?? null,
+            backtestSampleSize: backtestSummary.trades ?? 0,
+            safety: x.safety
+          });
+        });
+        return <CryptoPrecisionDesk picks={cryptoPrecisionPicks} cryptoStrongCount={cryptoStrongCount} />;
+      })()}
 
       {(() => {
         const cryptoVerdicts = personas;
