@@ -88,7 +88,10 @@ const IMPACTS: Record<CoinOverrideFactor, FactorImpact> = {
 // modellieren.
 const MAX_DELTA = 25;
 
-export function applyCoinAdjustment(override: CoinOverride | null): CoinAdjustment {
+// Optionaler Multiplier aus dem User-Track-Record (deriveUserOverrideWeight).
+// Skaliert die Score-Auslenkung — Hard-Veto bleibt unangetastet (Sicherheit).
+// Default 1 → vorher-Verhalten exakt erhalten.
+export function applyCoinAdjustment(override: CoinOverride | null, userWeight: number = 1): CoinAdjustment {
   if (!override || override.factors.length === 0) {
     return { scoreDelta: 0, capped: false, factors: [], hardVeto: false };
   }
@@ -102,10 +105,11 @@ export function applyCoinAdjustment(override: CoinOverride | null): CoinAdjustme
     if (imp.hardVeto) hardVeto = true;
     factors.push(imp.label);
   }
-  const clamped = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, rawDelta));
+  const weighted = Math.round(rawDelta * userWeight);
+  const clamped = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, weighted));
   return {
     scoreDelta: clamped,
-    capped: clamped !== rawDelta,
+    capped: clamped !== weighted,
     factors,
     hardVeto
   };

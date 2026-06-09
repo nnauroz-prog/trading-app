@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   aggregateOutcomes,
+  deriveUserOverrideWeight,
   evaluateOverrideOutcome,
   expectedDirection,
   type CoinOverrideHistoryEntry,
-  type OverrideOutcome
+  type OverrideOutcome,
+  type UserOverrideAccuracy
 } from '@/lib/agents/coin-override-history';
 
 function entry(over: Partial<CoinOverrideHistoryEntry> = {}): CoinOverrideHistoryEntry {
@@ -168,5 +170,53 @@ describe('aggregateOutcomes', () => {
     const arr = [make('btc', 'correct')];
     const acc = aggregateOutcomes(arr);
     expect(acc.byCoin[0].hitRatePct).toBeNull();
+  });
+});
+
+describe('deriveUserOverrideWeight', () => {
+  function acc(correct: number, wrong: number, hitRatePct: number | null): UserOverrideAccuracy {
+    return { evaluable: correct + wrong, correct, wrong, unclear: 0, hitRatePct, byCoin: [] };
+  }
+
+  it('Unter 5 decisive → 1× und reason insufficient', () => {
+    const w = deriveUserOverrideWeight(acc(2, 1, 67));
+    expect(w.multiplier).toBe(1);
+    expect(w.reason).toBe('insufficient');
+  });
+
+  it('Hit-Rate null → insufficient (auch wenn evaluable hoch)', () => {
+    const w = deriveUserOverrideWeight(acc(0, 0, null));
+    expect(w.multiplier).toBe(1);
+    expect(w.reason).toBe('insufficient');
+  });
+
+  it('70 % + 5+ decisive → strong 1.25', () => {
+    const w = deriveUserOverrideWeight(acc(7, 3, 70));
+    expect(w.multiplier).toBe(1.25);
+    expect(w.reason).toBe('strong');
+  });
+
+  it('60-69 % → good 1.10', () => {
+    const w = deriveUserOverrideWeight(acc(6, 4, 60));
+    expect(w.multiplier).toBe(1.10);
+    expect(w.reason).toBe('good');
+  });
+
+  it('45-59 % → neutral 1.0', () => {
+    const w = deriveUserOverrideWeight(acc(5, 5, 50));
+    expect(w.multiplier).toBe(1);
+    expect(w.reason).toBe('neutral');
+  });
+
+  it('30-44 % → weak 0.80', () => {
+    const w = deriveUserOverrideWeight(acc(3, 7, 30));
+    expect(w.multiplier).toBe(0.80);
+    expect(w.reason).toBe('weak');
+  });
+
+  it('Unter 30 % → poor 0.60', () => {
+    const w = deriveUserOverrideWeight(acc(1, 9, 10));
+    expect(w.multiplier).toBe(0.60);
+    expect(w.reason).toBe('poor');
   });
 });

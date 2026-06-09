@@ -81,3 +81,41 @@ describe('applyCoinAdjustment', () => {
     expect(adj.scoreDelta).toBe(0);
   });
 });
+
+describe('applyCoinAdjustment mit userWeight', () => {
+  it('Multiplier 1 == ohne Multiplier (kompatibel)', () => {
+    const a = applyCoinAdjustment(override(['major-event-today']));
+    const b = applyCoinAdjustment(override(['major-event-today']), 1);
+    expect(a.scoreDelta).toBe(b.scoreDelta);
+  });
+
+  it('Hoher User-Skill (1.25) verstaerkt positives Delta', () => {
+    const adj = applyCoinAdjustment(override(['major-event-today']), 1.25);
+    // 10 * 1.25 = 12.5 → 13
+    expect(adj.scoreDelta).toBe(13);
+  });
+
+  it('Niedriger User-Skill (0.6) daempft positives Delta', () => {
+    const adj = applyCoinAdjustment(override(['manual-conviction']), 0.6);
+    // 10 * 0.6 = 6
+    expect(adj.scoreDelta).toBe(6);
+  });
+
+  it('Niedriger User-Skill daempft auch negatives Delta', () => {
+    const adj = applyCoinAdjustment(override(['whale-selling-visible']), 0.6);
+    // -10 * 0.6 = -6
+    expect(adj.scoreDelta).toBe(-6);
+  });
+
+  it('Cap greift auch nach Multiplikation', () => {
+    // +25 raw * 1.25 = 31.25 → cap 25
+    const adj = applyCoinAdjustment(override(['major-event-today', 'whale-accumulating', 'manual-conviction']), 1.25);
+    expect(adj.scoreDelta).toBe(25);
+    expect(adj.capped).toBe(true);
+  });
+
+  it('HardVeto bleibt unabhaengig vom Multiplier bestehen', () => {
+    const adj = applyCoinAdjustment(override(['large-unlock-today']), 0.6);
+    expect(adj.hardVeto).toBe(true);
+  });
+});
