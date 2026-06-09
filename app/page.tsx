@@ -14,23 +14,13 @@ import { CandidateList } from '@/components/candidate-list';
 import { TodoBox } from '@/components/todo-box';
 import { DailyBriefing } from '@/components/daily-briefing';
 import { MarketBriefing } from '@/components/market-briefing';
-import { AgentRecorder } from '@/components/agent-recorder';
 import { FirmaStrip } from '@/components/firma-strip';
-import { VorstandStrip } from '@/components/vorstand-strip';
-import { VorstandLearningOverlay } from '@/components/vorstand-learning-overlay';
 import { FirmaPnlCard } from '@/components/firma-pnl-card';
 import { CoinOverridesStrip } from '@/components/coin-overrides-strip';
 import { OverrideConflictBanner } from '@/components/override-conflict-banner';
 import { UserOverrideAccuracyCard } from '@/components/user-override-accuracy-card';
 import { vorstandMediation } from '@/lib/agents/vorstand';
-import { FirmaRecorder } from '@/components/firma-recorder';
-import { IntelRecorder } from '@/components/intel-recorder';
-import { VorstandRecorder } from '@/components/vorstand-recorder';
-import { PersonaHistoryRecorder } from '@/components/persona-history-recorder';
-import { AkademieRecorder } from '@/components/akademie-recorder';
 import type { HistoryEntry } from '@/lib/agents/persona-history';
-import { StreitBanner } from '@/components/streit-banner';
-import { KonsensStreakCard } from '@/components/konsens-streak-card';
 import { SetupTrend } from '@/components/setup-trend';
 import { WatchlistStrip } from '@/components/watchlist-strip';
 import { AktienWatchlistStrip } from '@/components/aktien-watchlist-strip';
@@ -43,7 +33,6 @@ import { evaluateStockPersonas } from '@/lib/agents/stock-personas';
 import { evaluateCommodityPersonas } from '@/lib/agents/commodity-personas';
 import { CrossAssetConservativeCard, type CrossAssetConservativeRow } from '@/components/cross-asset-conservative-card';
 import { PersonaConsensusBanner } from '@/components/persona-consensus-banner';
-import { CoinScoreRecorder } from '@/components/coin-score-recorder';
 import { CoinScoreTrend } from '@/components/coin-score-trend';
 import { SportBriefingCard } from '@/components/sport-briefing-card';
 import { getEmployeeBacktest } from '@/lib/sport/firma/employee-backtest-cache';
@@ -56,13 +45,7 @@ import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { buildFirmaSynthesis } from '@/lib/sport/firma/synthesis';
 import { bucketByDay } from '@/lib/sport/day-buckets';
 import { DiffVsYesterday } from '@/components/diff-vs-yesterday';
-import { FirstVisitHint } from '@/components/first-visit-hint';
 import { TriggeredAlertsStrip } from '@/components/triggered-alerts-strip';
-import { InstallPrompt } from '@/components/install-prompt';
-import { WelcomeBack } from '@/components/welcome-back';
-import { FavoriteFirmaHero } from '@/components/favorite-firma-hero';
-import { FavoriteFirmaDivergence } from '@/components/favorite-firma-divergence';
-import { DailyCommandCenter } from '@/components/daily-command-center';
 import { AssetClassRadar, AssetClassCard } from '@/components/asset-class-radar';
 import { KapitalSchutz } from '@/components/kapital-schutz';
 import { PnlSummary } from '@/components/pnl-summary';
@@ -114,6 +97,7 @@ import { CryptoPrecisionDesk } from '@/components/crypto/crypto-precision-desk';
 import { CryptoPrecisionCalibrationHydrator } from '@/components/crypto/crypto-precision-calibration-hydrator';
 import { CryptoPrecisionOverrideBanner } from '@/components/crypto/crypto-precision-override-banner';
 import { evaluateCryptoPrecisionPick } from '@/lib/analysis/crypto-precision-gate';
+import { HomeLearningRecorders } from '@/components/home-learning-recorders';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
 import { rankSafeFootballTips } from '@/lib/sport/safe-football-tips';
@@ -708,21 +692,7 @@ export default async function HomePage() {
 
       <ScorePredictionsStrip synth={sportSynth} />
 
-      <AgentRecorder report={masterSignal} backtest={backtestSummary} />
-
-      <FirstVisitHint />
-
-      <WelcomeBack />
-
-      <FavoriteFirmaHero personas={personas} />
-      <FavoriteFirmaDivergence personas={personas} />
-
-      <InstallPrompt />
-
       <TriggeredAlertsStrip latestPrices={latestPrices} />
-
-      {/* 1. Daily Command Center */}
-      <DailyCommandCenter report={commandCenter} />
 
       {/* 2. Beste Chance heute — Detail-Tiefe nur wenn Konfidenz hoch genug.
           Der "Keine saubere Chance"-Fallback ist raus: das sagt der
@@ -740,8 +710,6 @@ export default async function HomePage() {
         fundingEthAnnualizedPct={fundingEth?.fundingRateAnnualizedPct ?? null}
       />
 
-      <VorstandStrip report={vorstandReport} />
-      <VorstandLearningOverlay personas={personas} serverReport={vorstandReport} latestPrices={latestPrices} />
       <OverrideConflictBanner
         recommendedCoins={(() => {
           const set = new Set<string>();
@@ -759,28 +727,32 @@ export default async function HomePage() {
       <CoinOverridesStrip />
       <UserOverrideAccuracyCard latestPrices={latestPrices} />
       <FirmaPnlCard latestPrices={latestPrices} />
-      {/* Headless: jeder Home-Page-Aufruf füttert den Lern-Loop. Ohne diese
-          Recorder wuchs der Track-Record nur, wenn der User /agent oder
-          /intel besuchte — das machten die wenigsten User taeglich. */}
-      <FirmaRecorder personas={personas} generatedAt={masterSignal.generatedAt} />
-      <IntelRecorder
-        reports={intelReports}
-        ceo={intelCeo}
-        btcPrice={latestPrices['btc'] ?? null}
-        generatedAt={masterSignal.generatedAt}
-      />
-      <VorstandRecorder report={vorstandReport} generatedAt={masterSignal.generatedAt} />
-      <AkademieRecorder lehrling={lehrlingReport} spaeher={spaeherReport} />
+      {/* Headless: jeder Home-Aufruf fuettert die Lern-Schleifen in
+          localStorage. Konsolidiert in eine Komponente — Recorder rendern
+          nichts sichtbares, vorher lagen sie einzeln auf Top-Level. */}
       {(() => {
         const historyEntries: HistoryEntry[] = [
           ...personas.map((v) => ({ dateIso: todayIso, klass: 'Krypto', personaId: v.persona, verdict: v.verdict, targetLabel: v.target?.symbol ?? null })),
           ...stockVerdicts.map((v) => ({ dateIso: todayIso, klass: 'Aktien', personaId: v.persona, verdict: v.verdict, targetLabel: v.target?.name ?? null })),
           ...commodityVerdicts.map((v) => ({ dateIso: todayIso, klass: 'Rohstoffe', personaId: v.persona, verdict: v.verdict, targetLabel: v.target?.name ?? null }))
         ];
-        return <PersonaHistoryRecorder entries={historyEntries} />;
+        return (
+          <HomeLearningRecorders
+            personas={personas}
+            masterSignal={masterSignal}
+            backtest={backtestSummary}
+            vorstandReport={vorstandReport}
+            intelReports={intelReports}
+            intelCeo={intelCeo}
+            lehrlingReport={lehrlingReport}
+            spaeherReport={spaeherReport}
+            historyEntries={historyEntries}
+            btcPrice={latestPrices['btc'] ?? null}
+            todayIso={todayIso}
+            coinScoreCandidates={masterSignal.candidates.map((c) => ({ coinId: c.coinId, symbol: c.symbol, passedCount: c.passedCount }))}
+          />
+        );
       })()}
-      <KonsensStreakCard />
-      <StreitBanner />
 
       {/* 3. Kapital-Schutz */}
       <KapitalSchutz latestPrices={latestPrices} />
@@ -806,10 +778,6 @@ export default async function HomePage() {
       />
       <RohstoffWatchlistStrip
         grades={commoditySafetyScan.map((e) => ({ symbol: e.symbol, grade: e.assessment.grade, score: e.assessment.score }))}
-      />
-      <CoinScoreRecorder
-        date={todayIso}
-        candidates={masterSignal.candidates.map((c) => ({ coinId: c.coinId, symbol: c.symbol, passedCount: c.passedCount }))}
       />
       <CoinScoreTrend />
 
