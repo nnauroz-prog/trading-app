@@ -289,7 +289,7 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
         return (
           <>
             <AssetSafetyCard symbol={asset.ticker} safety={safety} />
-            <CoinOverridePanel coinId={asset.id} symbol={asset.ticker} baseSafetyScore={safety.score} />
+            <CoinOverridePanel coinId={asset.id} symbol={asset.ticker} baseSafetyScore={safety.score} currentPrice={snapshot?.price ?? null} />
           </>
         );
       })()}

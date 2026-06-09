@@ -2,6 +2,7 @@
 // coin-override.ts, damit jene SSR-sicher bleibt.
 
 import type { CoinOverride, CoinOverrideFactor } from '@/lib/agents/coin-override';
+import { appendCoinOverrideHistory } from '@/lib/agents/coin-override-history-store';
 
 const STORAGE_KEY = 'trading-app.coin-overrides-v1';
 export const COIN_OVERRIDES_CHANGED_EVENT = 'trading-app:coin-overrides-changed';
@@ -38,7 +39,10 @@ export function loadCoinOverride(coinId: string): CoinOverride | null {
   return s[coinId.toLowerCase()] ?? null;
 }
 
-export function setCoinOverride(coinId: string, factors: CoinOverrideFactor[]): void {
+// Optional priceAtSet: damit wir den Preis zum Set-Zeitpunkt fuer die Outcome-
+// Auswertung in der History-Datei festhalten. Wenn die UI ihn nicht liefert,
+// wird nichts geloggt — wir wollen keine Outcomes ohne Anker.
+export function setCoinOverride(coinId: string, factors: CoinOverrideFactor[], priceAtSet?: number | null): void {
   const s = load();
   const key = coinId.toLowerCase();
   if (factors.length === 0) {
@@ -49,6 +53,9 @@ export function setCoinOverride(coinId: string, factors: CoinOverrideFactor[]): 
       factors,
       updatedAt: Date.now()
     };
+    if (typeof priceAtSet === 'number' && Number.isFinite(priceAtSet) && priceAtSet > 0) {
+      appendCoinOverrideHistory(key, factors, priceAtSet);
+    }
   }
   save(s);
 }

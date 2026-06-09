@@ -21,6 +21,10 @@ interface Props {
   coinId: string;
   symbol: string;
   baseSafetyScore: number; // 0-100, vor User-Override
+  // Optional: aktueller Coin-Preis. Wenn gesetzt, werden Override-Aenderungen
+  // mit Preis-Anker ins History-Log geschrieben, sodass spaeter eine
+  // Hit-Rate-Bewertung moeglich ist.
+  currentPrice?: number | null;
 }
 
 const FACTOR_ORDER: CoinOverrideFactor[] = [
@@ -33,7 +37,7 @@ const FACTOR_ORDER: CoinOverrideFactor[] = [
   'manual-distrust'
 ];
 
-export function CoinOverridePanel({ coinId, symbol, baseSafetyScore }: Props) {
+export function CoinOverridePanel({ coinId, symbol, baseSafetyScore, currentPrice }: Props) {
   const [selected, setSelected] = useState<CoinOverrideFactor[]>([]);
   const [mounted, setMounted] = useState(false);
 
@@ -61,7 +65,7 @@ export function CoinOverridePanel({ coinId, symbol, baseSafetyScore }: Props) {
       ? selected.filter((x) => x !== f)
       : [...selected, f];
     setSelected(next);
-    setCoinOverride(coinId, next);
+    setCoinOverride(coinId, next, currentPrice);
   };
 
   const adjustedScore = Math.max(0, Math.min(100, baseSafetyScore + adj.scoreDelta));
@@ -133,7 +137,7 @@ export function CoinOverridePanel({ coinId, symbol, baseSafetyScore }: Props) {
             type="button"
             onClick={() => {
               setSelected([]);
-              setCoinOverride(coinId, []);
+              setCoinOverride(coinId, [], currentPrice);
             }}
             className="mt-2 rounded border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] text-slate-400 hover:border-rose-400/50 hover:text-rose-300"
           >
