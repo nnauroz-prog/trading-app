@@ -1,6 +1,7 @@
 import { Fixture } from '@/lib/sport/fetcher';
 import type { WeatherImpact } from '@/lib/sport/weather-impact';
 import { computeH2hModifier, type HeadToHeadResult, type H2hModifier } from '@/lib/sport/h2h';
+import { computeRefereeImpact, computeRefereeTendencies, type RefereeTendencies } from '@/lib/sport/referee-tendencies';
 
 export interface MatchPrediction {
   lambdaHome: number;
@@ -25,6 +26,9 @@ export interface MatchPrediction {
   // Optionaler H2H-Modifier basierend auf venue-spezifischer Bilanz + Recency.
   // Wenn vorhanden, sind lambdaHome/lambdaAway bereits damit multipliziert.
   h2hMod?: H2hModifier;
+  // Optionale Schiedsrichter-Tendenzen aus dem Pool. Wenn vorhanden, sind
+  // lambdaHome/lambdaAway um die Tor- und Heim-Bias-Effekte korrigiert.
+  refereeTendencies?: RefereeTendencies;
 }
 
 export interface TeamForm5 {
@@ -116,7 +120,9 @@ function plainLabel(pHome: number, pDraw: number, pAway: number, homeTeam: strin
 // mit dem weather-multiplier multipliziert (Wetter trifft beide Teams).
 // Wenn h2h uebergeben wird, fliesst die venue-spezifische Bilanz + der
 // Recency-Trend als asymmetrischer Multiplier auf homeLambda und awayLambda.
-export function predictMatch(homeTeam: string, awayTeam: string, finishedLeagueEvents: Fixture[], weather?: WeatherImpact, h2h?: HeadToHeadResult): MatchPrediction | null {
+// Wenn refereeName + Pool genug Daten liefern, kommt zusaetzlich ein
+// kleiner Schiri-Modifier (Tor-Tendenz + Heim-Bias) hinzu.
+export function predictMatch(homeTeam: string, awayTeam: string, finishedLeagueEvents: Fixture[], weather?: WeatherImpact, h2h?: HeadToHeadResult, refereeName?: string | null): MatchPrediction | null {
   const homeForm = formFor(homeTeam, finishedLeagueEvents);
   const awayForm = formFor(awayTeam, finishedLeagueEvents);
   if (homeForm.games < 2 || awayForm.games < 2) return null;
@@ -130,8 +136,10 @@ export function predictMatch(homeTeam: string, awayTeam: string, finishedLeagueE
   const h2hMod = h2h ? computeH2hModifier(h2h) : undefined;
   const homeH2hMul = h2hMod?.homeMultiplier ?? 1.0;
   const awayH2hMul = h2hMod?.awayMultiplier ?? 1.0;
-  const lambdaHome = (Math.max(0.1, ((homeAvgScored + awayAvgConceded) / 2) * HOME_ADVANTAGE) || LEAGUE_AVG_GOALS) * weatherMul * homeH2hMul;
-  const lambdaAway = (Math.max(0.1, (awayAvgScored + homeAvgConceded) / 2) || LEAGUE_AVG_GOALS) * weatherMul * awayH2hMul;
+  const refTendencies = refereeName ? computeRefereeTendencies(refereeName, finishedLeagueEvents) : null;
+  const refImpact = computeRefereeImpact(refTendencies);
+  const lambdaHome = (Math.max(0.1, ((homeAvgScored + awayAvgConceded) / 2) * HOME_ADVANTAGE) || LEAGUE_AVG_GOALS) * weatherMul * homeH2hMul * refImpact.lambdaMul * refImpact.homeBiasMul;
+  const lambdaAway = (Math.max(0.1, (awayAvgScored + homeAvgConceded) / 2) || LEAGUE_AVG_GOALS) * weatherMul * awayH2hMul * refImpact.lambdaMul * refImpact.awayBiasMul;
 
   let pH = 0;
   let pD = 0;
@@ -175,6 +183,7 @@ export function predictMatch(homeTeam: string, awayTeam: string, finishedLeagueE
     homeForm: recentResults(homeTeam, finishedLeagueEvents),
     awayForm: recentResults(awayTeam, finishedLeagueEvents),
     weather: weather ?? undefined,
-    h2hMod: h2hMod && h2hMod.factors.length > 0 ? h2hMod : undefined
+    h2hMod: h2hMod && h2hMod.factors.length > 0 ? h2hMod : undefined,
+    refereeTendencies: refTendencies ?? undefined
   };
 }

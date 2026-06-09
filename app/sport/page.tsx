@@ -258,6 +258,14 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
               ⚔ H2H ×{Math.max(f.prediction.h2hMod.homeMultiplier, f.prediction.h2hMod.awayMultiplier).toFixed(2)}
             </span>
           )}
+          {f.prediction.refereeTendencies && (
+            <span
+              className="rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-300"
+              title={f.prediction.refereeTendencies.summary}
+            >
+              ⚖ {f.prediction.refereeTendencies.name.split(' ').slice(-1)[0]} ({f.prediction.refereeTendencies.games})
+            </span>
+          )}
         </div>
       )}
       {h2h && (
