@@ -111,6 +111,7 @@ import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { CryptoPrecisionDesk } from '@/components/crypto/crypto-precision-desk';
+import { CryptoPrecisionCalibrationHydrator } from '@/components/crypto/crypto-precision-calibration-hydrator';
 import { evaluateCryptoPrecisionPick } from '@/lib/analysis/crypto-precision-gate';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
@@ -595,6 +596,7 @@ export default async function HomePage() {
         });
         return <CryptoPrecisionDesk picks={cryptoPrecisionPicks} cryptoStrongCount={cryptoStrongCount} />;
       })()}
+      <CryptoPrecisionCalibrationHydrator latestPrices={latestPrices} />
 
       {(() => {
         const cryptoVerdicts = personas;
