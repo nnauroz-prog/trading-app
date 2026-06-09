@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { buildTopPlayReport } from '@/lib/analysis/top-play-engine';
 import { buildEventFeed } from '@/lib/analysis/event-feed';
 import { cookies } from 'next/headers';
-import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { fetchFearGreed, fetchBtcDominance } from '@/lib/providers/sentiment-indicators';
 import { fetchFundingRate } from '@/lib/providers/funding-rates';
 import { computeHalvingCyclePosition } from '@/lib/cycles/halving-cycle';
@@ -123,7 +123,7 @@ export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
   const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources, sportLeagues, basketballLeagues, tennisLeagues, hockeyLeagues, stockSafetyScan, commoditySafetyScan, sportEmployeeStats] = await Promise.all([
     buildTopPlayReport(),
-    buildMasterSignal(tradeMode),
+    getMasterSignal(tradeMode),
     fetchFearGreed(),
     fetchBtcDominance(),
     fetchFundingRate('BTCUSDT'),

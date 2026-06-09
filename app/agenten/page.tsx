@@ -4,7 +4,7 @@
 
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
@@ -32,7 +32,7 @@ export default async function AgentenPage() {
   const todayIso = new Date().toISOString().slice(0, 10);
 
   const [masterSignal, backtest, stockScan, commodityScan, leagues] = await Promise.all([
-    buildMasterSignal(tradeMode),
+    getMasterSignal(tradeMode),
     getBacktestSummary(),
     getStockSafetyScan(),
     getCommoditySafetyScan(),

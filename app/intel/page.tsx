@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { buildMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { fetchFearGreed, fetchBtcDominance } from '@/lib/providers/sentiment-indicators';
 import { fetchFundingRate } from '@/lib/providers/funding-rates';
@@ -64,7 +64,7 @@ function EmployeeCard({ r }: { r: EmployeeReport }) {
 export default async function IntelPage() {
   const tradeMode: TradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
   const [masterSignal, backtest, newsItems, fearGreed, btcDominance, fundingBtc, fundingEth, tickers] = await Promise.all([
-    buildMasterSignal(tradeMode),
+    getMasterSignal(tradeMode),
     getBacktestSummary(),
     getCryptoNews(),
     fetchFearGreed(),

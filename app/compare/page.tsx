@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { buildMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
 import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,7 @@ interface PageProps {
 export default async function ComparePage({ searchParams }: PageProps) {
   const params = await searchParams;
   const tradeMode: TradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const masterSignal = await buildMasterSignal(tradeMode);
+  const masterSignal = await getMasterSignal(tradeMode);
 
   const requestedSymbols = (params.coins ?? '')
     .split(',')

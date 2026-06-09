@@ -7,7 +7,7 @@ import { getSnapshots } from '@/lib/providers';
 import { fetchAssetHeadlines } from '@/lib/providers/sentiment';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
-import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { getCryptoNews } from '@/lib/news/news-agent';
 import { runSpaeher } from '@/lib/akademie/spaeher';
@@ -91,7 +91,7 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
     hasBinance && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1h', 200) : Promise.resolve(null),
     hasBinance && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1d', 35) : Promise.resolve(null),
     !mockAsset ? fetchAllTickers() : Promise.resolve(null),
-    universeCoin ? buildMasterSignal('swing') : Promise.resolve(null),
+    universeCoin ? getMasterSignal('swing') : Promise.resolve(null),
     universeCoin ? getBacktestSummary() : Promise.resolve(null),
     universeCoin ? getCryptoNews() : Promise.resolve([])
   ]);

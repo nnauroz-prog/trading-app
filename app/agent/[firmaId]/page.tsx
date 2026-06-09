@@ -5,7 +5,7 @@ import { CEO_BIOS, SUBAGENT_BIOS } from '@/lib/agents/personalities';
 import { evaluatePersonas, evaluatePersonasForCoin, type PersonaId } from '@/lib/agents/personas';
 import { FirmaCandidateRundown } from '@/components/firma-candidate-rundown';
 import { FirmaHitRateBadge } from '@/components/firma-hit-rate-badge';
-import { buildMasterSignal, type TradeMode } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal, type TradeMode } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { getCryptoNews } from '@/lib/news/news-agent';
@@ -73,7 +73,7 @@ export default async function FirmaDetailPage({ params }: PageProps) {
   // Live-Entscheidung der Firma berechnen — daraus wird die Top-Card oben.
   const tradeMode: TradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
   const [report, backtest, newsItems] = await Promise.all([
-    buildMasterSignal(tradeMode),
+    getMasterSignal(tradeMode),
     getBacktestSummary(),
     getCryptoNews()
   ]);

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { buildMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { runSpaeher } from '@/lib/akademie/spaeher';
@@ -21,7 +21,7 @@ export const revalidate = 0;
 export default async function FirmenPage() {
   const tradeMode: TradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
   const [report, backtest, newsItems, firmaBacktest] = await Promise.all([
-    buildMasterSignal(tradeMode), getBacktestSummary(), getCryptoNews(), getFirmaBacktest()
+    getMasterSignal(tradeMode), getBacktestSummary(), getCryptoNews(), getFirmaBacktest()
   ]);
   const spaeher = runSpaeher(newsItems);
   const eventWindow = computeEventWindow(listMacroEventsThisWeek());
