@@ -34,6 +34,20 @@ export interface FirmaTradePnl {
   pnlPct: number | null;
 }
 
+// Per-Coin Aufschluesselung: war die Firma auf BTC stark, auf DOGE schwach?
+// So kann der User die heutige Empfehlung pro-spezifisch einordnen statt
+// pauschal an der Firma-Gesamtbilanz zu hängen.
+export interface FirmaCoinPnl {
+  coin: string;
+  trades: number;       // gesamt bewertbar (HIT_TP + HIT_SL + OPEN)
+  wins: number;         // HIT_TP
+  losses: number;       // HIT_SL
+  open: number;         // OPEN
+  totalPnlPct: number;
+  avgPnlPct: number;
+  hitRatePct: number | null; // wins / resolved (auf 2 Nachkomma gerundet weggelassen)
+}
+
 export interface FirmaPnlSummary {
   firma: PersonaId;
   firmaName: string;
@@ -60,6 +74,9 @@ export interface FirmaPnlSummary {
   // Groesster Peak-to-Trough-Einbruch der Equity-Kurve (≤ 0). Misst, wie tief
   // der schlimmste zwischenzeitliche Drawdown war.
   maxDrawdownPct: number;
+  // Per-Coin Aufschluesselung, sortiert nach totalPnlPct desc. Damit kann
+  // der UI „top winners" und „top losers" pro Firma zeigen.
+  perCoin: FirmaCoinPnl[];
   // Letzte 20 Trades fuer Detail-Anzeige (neueste zuerst).
   trades: FirmaTradePnl[];
 }
@@ -139,6 +156,33 @@ export function computeFirmaPnl(
       if (dd < maxDrawdownPct) maxDrawdownPct = dd;
     }
 
+    // Per-Coin: gruppiere alle bewertbaren Trades nach Coin und aggregiere.
+    const byCoin = new Map<string, FirmaTradePnl[]>();
+    for (const t of evaluatable) {
+      if (!byCoin.has(t.coin)) byCoin.set(t.coin, []);
+      byCoin.get(t.coin)!.push(t);
+    }
+    const perCoin: FirmaCoinPnl[] = [];
+    for (const [coin, ts] of byCoin.entries()) {
+      const cWins = ts.filter((t) => t.outcome === 'HIT_TP').length;
+      const cLosses = ts.filter((t) => t.outcome === 'HIT_SL').length;
+      const cOpen = ts.filter((t) => t.outcome === 'OPEN').length;
+      const cTotal = ts.reduce((sum, t) => sum + (t.pnlPct ?? 0), 0);
+      const cAvg = ts.length > 0 ? cTotal / ts.length : 0;
+      const cResolved = cWins + cLosses;
+      perCoin.push({
+        coin,
+        trades: ts.length,
+        wins: cWins,
+        losses: cLosses,
+        open: cOpen,
+        totalPnlPct: Math.round(cTotal * 10) / 10,
+        avgPnlPct: Math.round(cAvg * 100) / 100,
+        hitRatePct: cResolved > 0 ? Math.round((cWins / cResolved) * 100) : null
+      });
+    }
+    perCoin.sort((a, b) => b.totalPnlPct - a.totalPnlPct);
+
     out.push({
       firma,
       firmaName: entries[0]?.firmaName ?? firma,
@@ -154,6 +198,7 @@ export function computeFirmaPnl(
       worstTradePct: worstTradePct !== null ? Math.round(worstTradePct * 10) / 10 : null,
       equityCurve,
       maxDrawdownPct: Math.round(maxDrawdownPct * 10) / 10,
+      perCoin,
       trades: trades.slice(0, 20)
     });
   }

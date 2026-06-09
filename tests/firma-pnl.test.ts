@@ -183,4 +183,50 @@ describe('computeFirmaPnl', () => {
       expect(out[0].equityCurve[out[0].equityCurve.length - 1]).toBe(20);
     });
   });
+
+  describe('Per-Coin Aufschluesselung', () => {
+    it('gruppiert mehrere Trades desselben Coins zusammen', () => {
+      const log = [
+        dec({ date: '2026-05-01', coin: 'BTC', entry: 100, stopLoss: 90, takeProfit1: 110 }),
+        dec({ date: '2026-05-02', coin: 'BTC', entry: 100, stopLoss: 90, takeProfit1: 110 }),
+        dec({ date: '2026-05-03', coin: 'ETH', entry: 200, stopLoss: 180, takeProfit1: 220 })
+      ];
+      // BTC: zwei mal HIT_TP (+10 jeweils), ETH: HIT_SL (-10)
+      const prices = new Map<string, number>([['BTC', 115], ['ETH', 170]]);
+      const out = computeFirmaPnl(log, (s) => prices.get(s) ?? null);
+      expect(out[0].perCoin).toHaveLength(2);
+      const btc = out[0].perCoin.find((c) => c.coin === 'BTC')!;
+      expect(btc.trades).toBe(2);
+      expect(btc.wins).toBe(2);
+      expect(btc.losses).toBe(0);
+      expect(btc.totalPnlPct).toBe(20);
+      expect(btc.avgPnlPct).toBe(10);
+      expect(btc.hitRatePct).toBe(100);
+      const eth = out[0].perCoin.find((c) => c.coin === 'ETH')!;
+      expect(eth.totalPnlPct).toBe(-10);
+      expect(eth.hitRatePct).toBe(0);
+    });
+
+    it('sortiert perCoin nach totalPnlPct desc — Gewinner zuerst', () => {
+      const log = [
+        dec({ date: '2026-05-01', coin: 'DOGE', entry: 100, stopLoss: 90, takeProfit1: 110 }),
+        dec({ date: '2026-05-02', coin: 'BTC', entry: 100, stopLoss: 90, takeProfit1: 110 }),
+        dec({ date: '2026-05-03', coin: 'ETH', entry: 200, stopLoss: 180, takeProfit1: 220 })
+      ];
+      // BTC +10 (TP), DOGE -10 (SL), ETH 0 (OPEN, current = entry)
+      const prices = new Map<string, number>([['BTC', 115], ['DOGE', 85], ['ETH', 200]]);
+      const out = computeFirmaPnl(log, (s) => prices.get(s) ?? null);
+      expect(out[0].perCoin.map((c) => c.coin)).toEqual(['BTC', 'ETH', 'DOGE']);
+    });
+
+    it('open trade ohne resolved → hitRatePct null', () => {
+      const log = [
+        dec({ date: '2026-05-01', coin: 'SOL', entry: 100, stopLoss: 90, takeProfit1: 110 })
+      ];
+      const out = computeFirmaPnl(log, () => 105); // OPEN
+      const sol = out[0].perCoin.find((c) => c.coin === 'SOL')!;
+      expect(sol.open).toBe(1);
+      expect(sol.hitRatePct).toBeNull();
+    });
+  });
 });
