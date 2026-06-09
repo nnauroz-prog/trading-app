@@ -19,6 +19,7 @@ function pnl(over: Partial<FirmaPnlSummary> = {}): FirmaPnlSummary {
     worstTradePct: -5,
     equityCurve: [0],
     maxDrawdownPct: 0,
+    perCoin: [],
     trades: [],
     ...over
   };
