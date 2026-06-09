@@ -38,6 +38,13 @@ export interface CryptoPrecisionInput {
   backtestWinRatePct: number | null;
   backtestSampleSize: number;
   safety: SafetyAssessment;
+  // News-Verarbeitung im Hintergrund (Spaeher-Sentiment pro Coin).
+  // null = keine News-Daten fuer diesen Coin — ehrlich neutral, kein Veto.
+  newsTilt?: 'bullisch' | 'bärisch' | 'neutral' | null;
+  newsNetScore?: number | null;
+  // true wenn der Chase-Detektor "News schon eingepreist" meldet
+  // (bullische News + Preis bereits >5 % gelaufen).
+  chaseWarning?: boolean;
 }
 
 export interface CryptoPrecisionResult {
@@ -129,6 +136,13 @@ export function evaluateCryptoModelAgent(input: CryptoPrecisionInput): CryptoAge
     status = escalate(status, 'WARNUNG');
     reasons.push('Crowd-Stimmung vorsichtig');
   }
+  // News-Sentiment: stark baerische Nachrichtenlage widerspricht einem
+  // Long-Setup — Warnung (verhindert FREIGABE, blockiert aber nicht hart,
+  // weil News-Scores Rauschen enthalten).
+  if (input.newsTilt === 'bärisch' && typeof input.newsNetScore === 'number' && input.newsNetScore <= -2) {
+    status = escalate(status, 'WARNUNG');
+    reasons.push(`News-Lage baerisch (Score ${input.newsNetScore})`);
+  }
   if (reasons.length === 0) reasons.push('Markt-Regime, Struktur und Stimmung konfluent.');
   return { id: 'model', label: 'Modellpruefer', status, reason: reasons.join(' · ') };
 }
@@ -153,6 +167,13 @@ export function evaluateCryptoRiskAgent(input: CryptoPrecisionInput): CryptoAgen
   if (!input.nearSupport) {
     status = escalate(status, 'WARNUNG');
     reasons.push('nicht in der Naehe einer Unterstuetzung');
+  }
+  // Chase-Detektor: bullische News + Preis schon >5 % gelaufen = die
+  // Impulsphase ist vorbei. Hinterherjagen ist historisch ein Verlust-
+  // Muster — hartes Veto.
+  if (input.chaseWarning) {
+    status = escalate(status, 'BLOCKIERT');
+    reasons.push('News schon eingepreist — nicht hinterherjagen');
   }
   if (reasons.length === 0) reasons.push('Stop-Band, Volatilitaet und Unterstuetzung in Ordnung.');
   return { id: 'risk', label: 'Risiko-Veto', status, reason: reasons.join(' · ') };
