@@ -14,6 +14,7 @@ import { TeamWatchToggle } from '@/components/team-watch-toggle';
 import { SafetyPicksSection } from '@/components/safety-picks-section';
 import { H2HBadge } from '@/components/h2h-badge';
 import { SquadOverridePanel } from '@/components/squad-override-panel';
+import { ModifierTransparencyStrip } from '@/components/modifier-transparency-strip';
 import { RefreshSportButton } from '@/components/refresh-sport-button';
 import { ModifierBacktestCard } from '@/components/modifier-backtest-card';
 import { backtestModifiers } from '@/lib/sport/modifier-backtest';
@@ -277,7 +278,8 @@ function UpcomingFixtureRow({ f, leagueLabel, h2h }: { f: UpcomingFixture; leagu
         </div>
       )}
       {f.prediction && (
-        <div className="mt-1.5">
+        <div className="mt-1.5 space-y-1.5">
+          <ModifierTransparencyStrip fixtureId={f.id} prediction={f.prediction} />
           <SquadOverridePanel
             fixtureId={f.id}
             homeTeam={f.homeTeam}
