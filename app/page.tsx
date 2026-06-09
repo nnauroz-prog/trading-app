@@ -19,6 +19,7 @@ import { FirmaStrip } from '@/components/firma-strip';
 import { VorstandStrip } from '@/components/vorstand-strip';
 import { VorstandLearningOverlay } from '@/components/vorstand-learning-overlay';
 import { FirmaPnlCard } from '@/components/firma-pnl-card';
+import { CoinOverridesStrip } from '@/components/coin-overrides-strip';
 import { vorstandMediation } from '@/lib/agents/vorstand';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { IntelRecorder } from '@/components/intel-recorder';
@@ -706,6 +707,7 @@ export default async function HomePage() {
 
       <VorstandStrip report={vorstandReport} />
       <VorstandLearningOverlay personas={personas} serverReport={vorstandReport} latestPrices={latestPrices} />
+      <CoinOverridesStrip />
       <FirmaPnlCard latestPrices={latestPrices} />
       {/* Headless: jeder Home-Page-Aufruf füttert den Lern-Loop. Ohne diese
           Recorder wuchs der Track-Record nur, wenn der User /agent oder
