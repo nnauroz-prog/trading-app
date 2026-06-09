@@ -21,7 +21,7 @@ const CLARITY_COLOR: Record<string, string> = {
 };
 
 const CLARITY_LABEL: Record<string, string> = {
-  strong: 'klarer Tipp',
+  strong: 'Modell-Freigabe',
   leaning: 'leichter Favorit',
   open: 'offen — eher nicht tippen'
 };
@@ -64,7 +64,7 @@ export function WmProPredictionCard({ prediction, showExtraTime = false }: Props
       </div>
 
       <div className="rounded-md border-2 border-current/40 bg-black/25 p-2.5">
-        <div className="text-[9.5px] font-semibold uppercase tracking-wider opacity-70">Profi-Empfehlung — bester Markt</div>
+        <div className="text-[9.5px] font-semibold uppercase tracking-wider opacity-70">Modell-Einschätzung — stärkster Markt</div>
         <div className="mt-0.5 flex items-baseline justify-between gap-2">
           <div className="font-bold leading-tight">{bestMarket.market}</div>
           <div className="font-mono text-sm font-bold">{Math.round(bestMarket.probability * 100)} %</div>

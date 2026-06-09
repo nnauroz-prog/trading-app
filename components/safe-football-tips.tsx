@@ -22,17 +22,17 @@ function fmtDate(iso: string): string {
 
 const TIER_STYLE: Record<SafeFootballTip['tier'], { label: string; chip: string; tone: string }> = {
   'maximal': {
-    label: 'MAXIMAL SICHER',
+    label: 'HÖCHSTE MODELL-KONFLUENZ',
     chip: 'border-emerald-300/70 bg-emerald-400/20 text-emerald-100',
     tone: 'border-emerald-400/60 bg-emerald-500/10'
   },
   'sehr-sicher': {
-    label: 'SEHR SICHER',
+    label: 'STARKE KONFLUENZ',
     chip: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200',
     tone: 'border-emerald-400/40 bg-emerald-500/5'
   },
   'sicher': {
-    label: 'SICHER',
+    label: 'SOLIDE KONFLUENZ',
     chip: 'border-sky-400/40 bg-sky-500/10 text-sky-100',
     tone: 'border-sky-400/30 bg-sky-500/5'
   }
@@ -55,15 +55,15 @@ export function SafeFootballTips({
   return (
     <section className="space-y-3 rounded-2xl border border-emerald-400/40 bg-emerald-950/15 p-4">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">🛡️ Sichere Fußball-Tipps (alle Ligen)</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">🛡️ Streng gefilterte Fußball-Modell-Picks (alle Ligen)</h2>
         <span className="text-[10px] text-emerald-200/70">
-          {tips.length} Tipps · {maxTier.length} maximal · {sehrSicher.length} sehr sicher
+          {tips.length} Picks · {maxTier.length} höchste · {sehrSicher.length} starke Konfluenz
         </span>
       </div>
       <p className="text-[10.5px] leading-snug text-emerald-100/80">
         Scannt jedes anstehende Spiel der nächsten {horizonDays} Tage durch ALLE Märkte (1X2, Doppelchance, Über/Unter, BTTS) —
-        zeigt nur die, die ≥{Math.round(minProbability * 100)} % Modell-Wahrscheinlichkeit erreichen UND auf mindestens mittlerer Datenqualität stehen.
-        Mehr Märkte heißt mehr und sicherere Signale als reine 1X2-Tipps. Modell-Schätzungen, keine Garantien.
+        zeigt nur Modell-Picks ab {Math.round(minProbability * 100)} % Wahrscheinlichkeit auf mindestens mittlerer Datenqualität.
+        Diese Liste ersetzt nicht die FREIGABE-Logik des Precision Desk oben — sie ist eine Rohdaten-Übersicht.
       </p>
 
       {(() => {
@@ -74,12 +74,12 @@ export function SafeFootballTips({
         ) : null;
       })()}
 
-      {maxTier.length > 0 && <TipGroup heading="🏆 Maximal sicher (≥85 %, beste Datenbasis)" tips={maxTier} />}
-      {sehrSicher.length > 0 && <TipGroup heading="✓ Sehr sicher (78–84 %)" tips={sehrSicher} />}
-      {sicher.length > 0 && <TipGroup heading="◇ Sicher (70–77 %)" tips={sicher} />}
+      {maxTier.length > 0 && <TipGroup heading="🏆 Höchste Modell-Konfluenz (≥85 %, beste Datenbasis)" tips={maxTier} />}
+      {sehrSicher.length > 0 && <TipGroup heading="✓ Starke Konfluenz (78–84 %)" tips={sehrSicher} />}
+      {sicher.length > 0 && <TipGroup heading="◇ Solide Konfluenz (70–77 %)" tips={sicher} />}
 
       <p className="text-[9.5px] leading-snug text-emerald-100/55">
-        Datenbasis: TheSportsDB-Form pro Liga (Tore-Pro/Gegen) + Poisson-Modell. Trefferquote über viele Tipps zählt — keine Einzel-Garantie.
+        Datenbasis: TheSportsDB-Form pro Liga (Tore-Pro/Gegen) + Poisson-Modell. Modell-Tendenzen, keine Garantien. Für eine echte Freigabe siehe Precision Desk oben.
       </p>
     </section>
   );

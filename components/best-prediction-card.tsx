@@ -1,4 +1,4 @@
-// „Beste Prognose heute" — die Top-Karte ganz oben.
+// „Stärkste Modell-Tendenz heute" — die Top-Karte ganz oben.
 // Wählt aus allen anstehenden Spielen das mit dem höchsten Quality-Score, zeigt
 // Spiel, Liga, Anstoß, Prognose-Markt, Wahrscheinlichkeit, Confidence, Datenqualität,
 // Begründung + Risiko-Hinweis. Kein „sicher", kein „garantiert".
@@ -53,7 +53,7 @@ export function BestPredictionCard({ ranked, todayIso }: Props) {
   if (!top) {
     return (
       <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Beste Prognose</div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Stärkste Modell-Tendenz</div>
         <p className="mt-2 text-[12px] leading-snug text-slate-400">
           Aktuell keine Prognose verfügbar — Spielplan-Daten oder Form-Pool sind leer.
         </p>
@@ -74,7 +74,7 @@ export function BestPredictionCard({ ranked, todayIso }: Props) {
     <section className={`rounded-2xl border p-4 ${colorClass}`}>
       <div className="flex items-baseline justify-between gap-2">
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em]">
-          Beste Prognose {isToday ? 'heute' : ''}
+          Stärkste Modell-Tendenz {isToday ? 'heute' : ''}
         </div>
         <div className="text-[10px] uppercase tracking-wider opacity-80">{bandLabel}</div>
       </div>
