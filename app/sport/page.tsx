@@ -14,6 +14,7 @@ import { TeamWatchToggle } from '@/components/team-watch-toggle';
 import { SafetyPicksSection } from '@/components/safety-picks-section';
 import { H2HBadge } from '@/components/h2h-badge';
 import { SquadOverridePanel } from '@/components/squad-override-panel';
+import { RefreshSportButton } from '@/components/refresh-sport-button';
 import { computeHeadToHead } from '@/lib/sport/h2h';
 import { predictWinner } from '@/lib/sport/winner-verdict';
 import { WinnerVerdictCard } from '@/components/winner-verdict-card';
@@ -485,7 +486,10 @@ export default async function SportPage() {
       </Link>
 
       <header className="space-y-2">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Sport · Fußball-Prognosen</div>
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Sport · Fußball-Prognosen</div>
+          <RefreshSportButton />
+        </div>
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Fußball-Prognosen für Tipprunden</h1>
         <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>
       </header>
