@@ -114,6 +114,31 @@ describe('Agenten einzeln', () => {
   });
 });
 
+describe('News-Verarbeitung im Hintergrund', () => {
+  it('Baerische News-Lage (netScore <= -2) → WARNUNG, verhindert FREIGABE', () => {
+    const r = evaluateCryptoPrecisionPick(input({ newsTilt: 'bärisch', newsNetScore: -3 }));
+    expect(r.verdict).toBe('BEOBACHTEN');
+    expect(r.warnings.some((w) => w.toLowerCase().includes('news'))).toBe(true);
+  });
+  it('Leicht baerische News (netScore -1) → keine Warnung', () => {
+    const r = evaluateCryptoPrecisionPick(input({ newsTilt: 'bärisch', newsNetScore: -1 }));
+    expect(r.verdict).toBe('FREIGABE');
+  });
+  it('Bullische News → kein Boost, FREIGABE bleibt von Pflicht-Kriterien abhaengig', () => {
+    const weak = evaluateCryptoPrecisionPick(input({ passedCount: 8, safety: safety({ maxSafety: false, grade: 'B' }), newsTilt: 'bullisch', newsNetScore: 5 }));
+    expect(weak.verdict).toBe('BEOBACHTEN');
+  });
+  it('Chase-Warnung (News schon eingepreist) → NICHT_VERWENDEN', () => {
+    const r = evaluateCryptoPrecisionPick(input({ chaseWarning: true }));
+    expect(r.verdict).toBe('NICHT_VERWENDEN');
+    expect(r.blockers.some((b) => b.includes('eingepreist'))).toBe(true);
+  });
+  it('Keine News-Daten (null) → neutral, kein Veto', () => {
+    const r = evaluateCryptoPrecisionPick(input({ newsTilt: null, newsNetScore: null }));
+    expect(r.verdict).toBe('FREIGABE');
+  });
+});
+
 describe('Wording — keine verbotenen Begriffe', () => {
   const FORBIDDEN = ['sicher', 'maximal sicher', 'sehr sicher', 'sicherer tipp', 'bank', 'garantiert', 'todsicher', 'free money', 'geldmaschine', 'risikolos', 'muss kommen'];
   it('Reasons / Blockers / Warnings sind frei von verbotenen Begriffen', () => {

@@ -527,15 +527,8 @@ export default async function HomePage() {
     latestPrices[symbol] = t.price;
   }
 
-  const tickerChanges = report.tickers.map((t) => t.priceChangePct);
-  const negativeCount = tickerChanges.filter((c) => c < -2).length;
-  const positiveCount = tickerChanges.filter((c) => c > 2).length;
-  const totalCount = tickerChanges.length || 1;
-  const negShare = negativeCount / totalCount;
-  const posShare = positiveCount / totalCount;
-  let marketMood: 'risk-on' | 'neutral' | 'risk-off' = 'neutral';
-  if (negShare > 0.6) marketMood = 'risk-off';
-  else if (posShare > 0.6) marketMood = 'risk-on';
+  // Identische Logik wie moodForPlan — eine Berechnung reicht.
+  const marketMood = moodForPlan;
 
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:space-y-6 md:p-6">
@@ -574,8 +567,14 @@ export default async function HomePage() {
       />
 
       {(() => {
+        // News-Verarbeitung im Hintergrund: Spaeher-Sentiment + Chase-Detektor
+        // fliessen direkt ins Precision-Gate. Baerische News-Lage = Warnung
+        // (verhindert FREIGABE), "News schon eingepreist" = hartes Veto.
+        const sentimentBySymbol = new Map(spaeherReport.perCoin.map((s) => [s.coin.toUpperCase(), s]));
+        const chaseSet = new Set(chaseSignals.filter((c) => c.kind === 'hot_news_already_run').map((c) => c.coin.toUpperCase()));
         const cryptoPrecisionPicks = cryptoScored.map((x) => {
           const edge = backtestSummary.perAssetEdge[x.c.coinId] ?? null;
+          const sentiment = sentimentBySymbol.get(x.c.symbol.toUpperCase()) ?? null;
           return evaluateCryptoPrecisionPick({
             coinId: x.c.coinId,
             symbol: x.c.symbol,
@@ -592,7 +591,10 @@ export default async function HomePage() {
             confirmed: x.c.confirmed,
             backtestWinRatePct: edge?.winRatePct ?? null,
             backtestSampleSize: backtestSummary.trades ?? 0,
-            safety: x.safety
+            safety: x.safety,
+            newsTilt: sentiment?.tilt ?? null,
+            newsNetScore: sentiment?.netScore ?? null,
+            chaseWarning: chaseSet.has(x.c.symbol.toUpperCase())
           });
         });
         return (
@@ -722,18 +724,11 @@ export default async function HomePage() {
       {/* 1. Daily Command Center */}
       <DailyCommandCenter report={commandCenter} />
 
-      {/* 2. Beste Chance heute — nur wenn Konfidenz hoch genug */}
+      {/* 2. Beste Chance heute — Detail-Tiefe nur wenn Konfidenz hoch genug.
+          Der "Keine saubere Chance"-Fallback ist raus: das sagt der
+          Precision Desk oben bereits klarer (Verdict + Blocker). */}
       {cryptoBest && cryptoBest.score.score >= 60 && (
         <HeuteEntscheidung personas={personas} perCoinSentiment={spaeherReport.perCoin} setupSimilarity={setupSimilarity} eventWindow={eventWindow} intelSignal={intelCeo.netSignal} />
-      )}
-      {(!cryptoBest || cryptoBest.score.score < 60) && (
-        <section className="rounded-2xl border-2 border-slate-700 bg-slate-900/60 p-5">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Beste Chance heute</div>
-          <h2 className="mt-2 text-lg font-bold text-white">Keine saubere Chance — Kapital schützen</h2>
-          <p className="mt-2 text-[13px] text-slate-300">
-            Aktuelles bestes Setup liegt unter Score 60. Heute ist Watchlist-Pflege und Cash-Halten die bessere Entscheidung als ein erzwungener Trade.
-          </p>
-        </section>
       )}
 
       <SportTodayBanner leagues={sportLeagues} />
@@ -854,12 +849,15 @@ export default async function HomePage() {
         <ViewModeToggle />
       </div>
 
-      <SafetyCheck report={masterSignal} backtest={backtestSummary} />
-      <LastSafeBuyCard />
-      <SafetyHistoryStrip />
-      <ProofCard summary={backtestSummary} />
-
       <AdvancedOnly>
+        {/* Safety-Detail-Karten: redundant zum Precision Desk oben, daher
+            nur noch im Advanced-Modus. Die Kriterien-Aufschluesselung bleibt
+            fuer Power-User erhalten. */}
+        <SafetyCheck report={masterSignal} backtest={backtestSummary} />
+        <LastSafeBuyCard />
+        <SafetyHistoryStrip />
+        <ProofCard summary={backtestSummary} />
+
         <AccountConfigBar />
 
         <TodoBox report={masterSignal} />
