@@ -37,7 +37,9 @@ const BACKUP_KEYS = [
   'trading-app.tipprunde-wochenziel-v1',
   'trading-app.friends-mode-v1',
   // Firma-Präferenz (welche Firma der User bevorzugt)
-  'trading-app.firma-preference-v1'
+  'trading-app.firma-preference-v1',
+  // User-gesteuerte Aufstellungs-Overrides pro Fixture
+  'trading-app.squad-overrides-v1'
 ] as const;
 
 const CHANGE_EVENTS = [
