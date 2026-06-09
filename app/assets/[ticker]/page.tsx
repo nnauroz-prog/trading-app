@@ -13,6 +13,7 @@ import { getCryptoNews } from '@/lib/news/news-agent';
 import { runSpaeher } from '@/lib/akademie/spaeher';
 import { evaluatePersonas, evaluatePersonasForCoin } from '@/lib/agents/personas';
 import { PerCoinFirmaTakes } from '@/components/per-coin-firma-takes';
+import { CoinOverrideEffectBanner } from '@/components/coin-override-effect-banner';
 import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
 import { detectChaseSignals, detectOpportunitySignals, PriceContext } from '@/lib/analysis/chase-detector';
 import { Asset, PriceSnapshot } from '@/lib/types/domain';
@@ -365,7 +366,10 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
       {/* Cross-Persona-Take auf GENAU diesen Coin: zwingt alle 3 Firmen, ihn
           zu bewerten, statt nur den jeweils eigenen Top-Pick zu zeigen. */}
       {perCoinFirmaTakes.length > 0 && (
-        <PerCoinFirmaTakes verdicts={perCoinFirmaTakes} coinSymbol={asset.ticker} />
+        <>
+          <CoinOverrideEffectBanner coinId={asset.id} symbol={asset.ticker} serverVerdicts={perCoinFirmaTakes} />
+          <PerCoinFirmaTakes verdicts={perCoinFirmaTakes} coinSymbol={asset.ticker} />
+        </>
       )}
 
       {/* Fallback für Mock-Assets ohne Universe-Eintrag: zeigt die natürlichen
