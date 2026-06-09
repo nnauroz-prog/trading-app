@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { buildMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
 import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +29,7 @@ function toneClasses(t: Slot['tone']): string {
 
 export default async function ChancenPage() {
   const tradeMode: TradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const masterSignal = await buildMasterSignal(tradeMode);
+  const masterSignal = await getMasterSignal(tradeMode);
 
   const scored = masterSignal.candidates.slice(0, 15).map((c) => {
     const userBroker = c.brokers.includes('Coinbase') || c.brokers.includes('Scalable Capital');

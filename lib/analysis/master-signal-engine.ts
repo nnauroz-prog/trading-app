@@ -1,4 +1,5 @@
 import { Candle } from '@/lib/types/domain';
+import { unstable_cache } from 'next/cache';
 import { adx, atr, bollinger, detectSwingLow, ema, macd, macdState, rsi, sma, stochastic, last } from '@/lib/analysis/indicators';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { fetchAllTickers, TickerSnapshot } from '@/lib/providers/binance-tickers';
@@ -681,4 +682,16 @@ export async function buildMasterSignal(mode: TradeMode = 'swing', deepAnalyzeCo
     candidates: rankedCandidates,
     generatedAt: new Date().toISOString()
   };
+}
+
+// 60-Sekunden-Cache fuer den teuren Master-Signal-Lauf (Bybit-Ticker +
+// Klines pro Coin + 12-Punkt-Konfluenz). AutoRefresh laeuft alle 20 s —
+// ohne Cache wuerden alle Calls Daten neu holen und durchrechnen, mit
+// 60-s-Cache ist das eine Berechnung pro Minute statt drei. Live genug,
+// da die Konfluenz auf 4 h/1 h-Kerzen basiert.
+const compute = (mode: TradeMode, deepAnalyzeCount: number) => buildMasterSignal(mode, deepAnalyzeCount);
+const cachedSwing = unstable_cache(() => compute('swing', 12), ['master-signal-swing-v1'], { revalidate: 60 });
+const cachedDaytrade = unstable_cache(() => compute('daytrade', 12), ['master-signal-daytrade-v1'], { revalidate: 60 });
+export function getMasterSignal(mode: TradeMode = 'swing'): Promise<MasterSignalReport> {
+  return mode === 'daytrade' ? cachedDaytrade() : cachedSwing();
 }

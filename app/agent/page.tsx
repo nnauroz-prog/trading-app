@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { buildMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';
@@ -120,7 +120,7 @@ function MessageRow({ msg }: { msg: InternalMessage }) {
 
 export default async function AgentPage() {
   const tradeMode: TradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, backtest, newsItems, firmaBacktest] = await Promise.all([buildMasterSignal(tradeMode), getBacktestSummary(), getCryptoNews(), getFirmaBacktest()]);
+  const [report, backtest, newsItems, firmaBacktest] = await Promise.all([getMasterSignal(tradeMode), getBacktestSummary(), getCryptoNews(), getFirmaBacktest()]);
   const spaeher = runSpaeher(newsItems);
   const eventWindow = computeEventWindow(listMacroEventsThisWeek());
   const personas = evaluatePersonas(report, backtest, spaeher, eventWindow);

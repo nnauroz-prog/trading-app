@@ -11,7 +11,7 @@ import { detectHotSectors } from '@/lib/market/sector-safety-summary';
 import { detectHotCommodityGroups } from '@/lib/market/commodity-group-summary';
 import { HotSectorBanner } from '@/components/hot-sector-banner';
 import { HotCommodityGroupBanner } from '@/components/hot-commodity-group-banner';
-import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
 import type { SafetyAssessment } from '@/lib/analysis/safety-gate';
@@ -26,7 +26,7 @@ export default async function HeuteSicherPage() {
     getStockSafetyScan(),
     getCommoditySafetyScan(),
     getFootballFixtures(),
-    buildMasterSignal('swing'),
+    getMasterSignal('swing'),
     getBacktestSummary()
   ]);
 

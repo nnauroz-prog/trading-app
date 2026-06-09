@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { fetchBothTickerSources } from '@/lib/providers/binance-tickers';
 import { checkCrossExchangePrices } from '@/lib/analysis/cross-exchange-check';
 import { runSpaeher } from '@/lib/akademie/spaeher';
@@ -17,7 +17,7 @@ export const revalidate = 0;
 
 export default async function RiskPage() {
   const [masterSignal, newsItems, exchangeSources] = await Promise.all([
-    buildMasterSignal('swing'),
+    getMasterSignal('swing'),
     getCryptoNews(),
     fetchBothTickerSources()
   ]);

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { PositionsPanel } from '@/components/positions-panel';
 import { PositionHealthStrip, type CoinHealth } from '@/components/position-health-strip';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
-import { buildMasterSignal } from '@/lib/analysis/master-signal-engine';
+import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
 
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export default async function PositionsPage() {
   const [tickers, masterSignal, backtestSummary] = await Promise.all([
     fetchAllTickers(),
-    buildMasterSignal('swing'),
+    getMasterSignal('swing'),
     getBacktestSummary()
   ]);
 
