@@ -20,6 +20,7 @@ import { VorstandStrip } from '@/components/vorstand-strip';
 import { VorstandLearningOverlay } from '@/components/vorstand-learning-overlay';
 import { FirmaPnlCard } from '@/components/firma-pnl-card';
 import { CoinOverridesStrip } from '@/components/coin-overrides-strip';
+import { OverrideConflictBanner } from '@/components/override-conflict-banner';
 import { vorstandMediation } from '@/lib/agents/vorstand';
 import { FirmaRecorder } from '@/components/firma-recorder';
 import { IntelRecorder } from '@/components/intel-recorder';
@@ -707,6 +708,20 @@ export default async function HomePage() {
 
       <VorstandStrip report={vorstandReport} />
       <VorstandLearningOverlay personas={personas} serverReport={vorstandReport} latestPrices={latestPrices} />
+      <OverrideConflictBanner
+        recommendedCoins={(() => {
+          const set = new Set<string>();
+          // Vorstand-Konsens
+          if (vorstandReport.consensusCoin) set.add(vorstandReport.consensusCoin.toLowerCase());
+          // Heute-machen KryptoCard
+          if (cryptoTop?.c.symbol) set.add(cryptoTop.c.symbol.toLowerCase());
+          // Jede kaufende Firma
+          for (const p of personas) {
+            if (p.verdict === 'BUY' && p.target?.symbol) set.add(p.target.symbol.toLowerCase());
+          }
+          return [...set];
+        })()}
+      />
       <CoinOverridesStrip />
       <FirmaPnlCard latestPrices={latestPrices} />
       {/* Headless: jeder Home-Page-Aufruf füttert den Lern-Loop. Ohne diese
