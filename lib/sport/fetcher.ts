@@ -19,6 +19,10 @@ export interface Fixture {
   homeScore: number | null;
   awayScore: number | null;
   status: 'upcoming' | 'finished';
+  // Schiedsrichter, falls TheSportsDB ihn liefert. Spaerlich besetzt —
+  // typischerweise Top-5-Ligen + bei naher Anstoss-Zeit. Optional, damit
+  // bestehende Test-Fixtures + andere Sportarten nicht alle muessen.
+  referee?: string | null;
 }
 
 export interface UpcomingFixture extends Fixture {
@@ -42,6 +46,7 @@ interface ApiEvent {
   dateEvent?: string;
   strTime?: string;
   strVenue?: string;
+  strReferee?: string;
   intHomeScore?: string | null;
   intAwayScore?: string | null;
 }
@@ -112,7 +117,8 @@ function normalize(e: ApiEvent, status: 'upcoming' | 'finished'): Fixture | null
     venue: e.strVenue ?? null,
     homeScore: home,
     awayScore: away,
-    status
+    status,
+    referee: e.strReferee && e.strReferee.trim().length > 0 ? e.strReferee.trim() : null
   };
 }
 
@@ -223,7 +229,7 @@ async function compute(): Promise<LeagueFixtures[]> {
           status: 'upcoming',
           homeScore: null, // explizit löschen, falls TheSportsDB-Phantomwerte da waren
           awayScore: null,
-          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool, weather, computeHeadToHead(f.homeTeam, f.awayTeam, finishedPool)),
+          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool, weather, computeHeadToHead(f.homeTeam, f.awayTeam, finishedPool), f.referee),
           probabilities,
           tips
         };
