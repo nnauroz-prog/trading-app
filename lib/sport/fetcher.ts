@@ -4,6 +4,7 @@ import { MatchPrediction, predictMatch } from '@/lib/sport/predictor';
 import { lookupStadium } from '@/lib/sport/stadium-coords';
 import { fetchWeatherSnapshot } from '@/lib/providers/open-meteo';
 import { scoreWeatherImpact } from '@/lib/sport/weather-impact';
+import { computeHeadToHead } from '@/lib/sport/h2h';
 import { FootballProbabilityModel, computeFootballProbabilities } from '@/lib/sport/probabilities';
 import { AllTips, generateTips } from '@/lib/sport/tip-selection';
 
@@ -222,7 +223,7 @@ async function compute(): Promise<LeagueFixtures[]> {
           status: 'upcoming',
           homeScore: null, // explizit löschen, falls TheSportsDB-Phantomwerte da waren
           awayScore: null,
-          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool, weather),
+          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool, weather, computeHeadToHead(f.homeTeam, f.awayTeam, finishedPool)),
           probabilities,
           tips
         };

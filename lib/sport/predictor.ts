@@ -1,5 +1,6 @@
 import { Fixture } from '@/lib/sport/fetcher';
 import type { WeatherImpact } from '@/lib/sport/weather-impact';
+import { computeH2hModifier, type HeadToHeadResult, type H2hModifier } from '@/lib/sport/h2h';
 
 export interface MatchPrediction {
   lambdaHome: number;
@@ -21,6 +22,9 @@ export interface MatchPrediction {
   // bereits damit multipliziert. Das Feld erklaert den Effekt + erlaubt
   // dem UI, das Wetter zu zeigen.
   weather?: WeatherImpact;
+  // Optionaler H2H-Modifier basierend auf venue-spezifischer Bilanz + Recency.
+  // Wenn vorhanden, sind lambdaHome/lambdaAway bereits damit multipliziert.
+  h2hMod?: H2hModifier;
 }
 
 export interface TeamForm5 {
@@ -110,7 +114,9 @@ function plainLabel(pHome: number, pDraw: number, pAway: number, homeTeam: strin
 // tool — not for betting. Returns null when there isn't enough data.
 // Wenn weather uebergeben wird, werden lambdaHome/lambdaAway gleichgewichtet
 // mit dem weather-multiplier multipliziert (Wetter trifft beide Teams).
-export function predictMatch(homeTeam: string, awayTeam: string, finishedLeagueEvents: Fixture[], weather?: WeatherImpact): MatchPrediction | null {
+// Wenn h2h uebergeben wird, fliesst die venue-spezifische Bilanz + der
+// Recency-Trend als asymmetrischer Multiplier auf homeLambda und awayLambda.
+export function predictMatch(homeTeam: string, awayTeam: string, finishedLeagueEvents: Fixture[], weather?: WeatherImpact, h2h?: HeadToHeadResult): MatchPrediction | null {
   const homeForm = formFor(homeTeam, finishedLeagueEvents);
   const awayForm = formFor(awayTeam, finishedLeagueEvents);
   if (homeForm.games < 2 || awayForm.games < 2) return null;
@@ -121,8 +127,11 @@ export function predictMatch(homeTeam: string, awayTeam: string, finishedLeagueE
   const awayAvgConceded = awayForm.goalsConceded / awayForm.games;
 
   const weatherMul = weather?.lambdaMultiplier ?? 1.0;
-  const lambdaHome = (Math.max(0.1, ((homeAvgScored + awayAvgConceded) / 2) * HOME_ADVANTAGE) || LEAGUE_AVG_GOALS) * weatherMul;
-  const lambdaAway = (Math.max(0.1, (awayAvgScored + homeAvgConceded) / 2) || LEAGUE_AVG_GOALS) * weatherMul;
+  const h2hMod = h2h ? computeH2hModifier(h2h) : undefined;
+  const homeH2hMul = h2hMod?.homeMultiplier ?? 1.0;
+  const awayH2hMul = h2hMod?.awayMultiplier ?? 1.0;
+  const lambdaHome = (Math.max(0.1, ((homeAvgScored + awayAvgConceded) / 2) * HOME_ADVANTAGE) || LEAGUE_AVG_GOALS) * weatherMul * homeH2hMul;
+  const lambdaAway = (Math.max(0.1, (awayAvgScored + homeAvgConceded) / 2) || LEAGUE_AVG_GOALS) * weatherMul * awayH2hMul;
 
   let pH = 0;
   let pD = 0;
@@ -165,6 +174,7 @@ export function predictMatch(homeTeam: string, awayTeam: string, finishedLeagueE
     pickPlain: plain.plain,
     homeForm: recentResults(homeTeam, finishedLeagueEvents),
     awayForm: recentResults(awayTeam, finishedLeagueEvents),
-    weather: weather ?? undefined
+    weather: weather ?? undefined,
+    h2hMod: h2hMod && h2hMod.factors.length > 0 ? h2hMod : undefined
   };
 }

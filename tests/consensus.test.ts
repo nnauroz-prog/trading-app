@@ -44,7 +44,7 @@ describe('computeConsensus', () => {
       fixture: fx,
       homeForm: form('Bayern', 5, 0, 0, 15, 2), // perfect form, lots of goals
       awayForm: form('Nobody', 0, 1, 4, 2, 12),
-      h2h: { homeTeam: 'Bayern', awayTeam: 'Nobody', meetings: 5, winsForHome: 4, draws: 1, winsForAway: 0, goalsForHome: 12, goalsForAway: 3, lastMeeting: null },
+      h2h: { homeTeam: 'Bayern', awayTeam: 'Nobody', meetings: 5, winsForHome: 4, draws: 1, winsForAway: 0, goalsForHome: 12, goalsForAway: 3, lastMeeting: null, atHomeVenue: { meetings: 0, winsForHome: 0, draws: 0, winsForAway: 0, goalsForHome: 0, goalsForAway: 0 }, recent5: { meetings: 0, winsForHome: 0, draws: 0, winsForAway: 0, goalsForHome: 0, goalsForAway: 0 } },
       leagueHomeWinPct: 45,
       leagueGoalsPerMatch: 3.0,
       finishedPool: []
@@ -63,7 +63,7 @@ describe('computeConsensus', () => {
       fixture: fx,
       homeForm: form('A', 0, 1, 4), // away team is much better
       awayForm: form('B', 4, 1, 0, 12, 3),
-      h2h: { homeTeam: 'A', awayTeam: 'B', meetings: 5, winsForHome: 0, draws: 1, winsForAway: 4, goalsForHome: 3, goalsForAway: 12, lastMeeting: null },
+      h2h: { homeTeam: 'A', awayTeam: 'B', meetings: 5, winsForHome: 0, draws: 1, winsForAway: 4, goalsForHome: 3, goalsForAway: 12, lastMeeting: null, atHomeVenue: { meetings: 0, winsForHome: 0, draws: 0, winsForAway: 0, goalsForHome: 0, goalsForAway: 0 }, recent5: { meetings: 0, winsForHome: 0, draws: 0, winsForAway: 0, goalsForHome: 0, goalsForAway: 0 } },
       leagueHomeWinPct: 45,
       leagueGoalsPerMatch: 2.5,
       finishedPool: []
