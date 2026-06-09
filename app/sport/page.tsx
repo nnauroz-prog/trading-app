@@ -15,6 +15,8 @@ import { SafetyPicksSection } from '@/components/safety-picks-section';
 import { H2HBadge } from '@/components/h2h-badge';
 import { SquadOverridePanel } from '@/components/squad-override-panel';
 import { RefreshSportButton } from '@/components/refresh-sport-button';
+import { ModifierBacktestCard } from '@/components/modifier-backtest-card';
+import { backtestModifiers } from '@/lib/sport/modifier-backtest';
 import { computeHeadToHead } from '@/lib/sport/h2h';
 import { predictWinner } from '@/lib/sport/winner-verdict';
 import { WinnerVerdictCard } from '@/components/winner-verdict-card';
@@ -865,6 +867,25 @@ export default async function SportPage() {
 
       <div id="tagebuch" />
       <SportTipJournal finishedFixtures={finishedLite} />
+
+      {/* Ehrlicher Modifier-Self-Check pro Liga: bringen die H2H- und
+          Schiri-Anpassungen tatsaechlich Lift im Backtest? Wenn negativ,
+          wird das hier offen gezeigt. */}
+      <details className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
+        <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+          🔬 Modifier-Backtest pro Liga (ehrlicher Self-Check)
+        </summary>
+        <div className="mt-2 space-y-1.5">
+          {leagues.map((lf) => (
+            <ModifierBacktestCard
+              key={lf.league.id}
+              result={backtestModifiers(lf.last)}
+              leagueName={lf.league.name}
+            />
+          ))}
+        </div>
+      </details>
+
       <SportFaq />
       <SportDataReset />
 
