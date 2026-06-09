@@ -5,6 +5,8 @@ import { FIRMA_DECISIONS_CHANGED_EVENT, loadFirmaLog } from '@/lib/firma-memory'
 import { INTEL_LOG_CHANGED_EVENT, computeIntelAccuracy, loadIntelLog } from '@/lib/intel/memory';
 import { VORSTAND_LOG_CHANGED_EVENT, computeVorstandAccuracy, loadVorstandLog } from '@/lib/agents/vorstand-memory';
 import { computeFirmaAccuracy, MIN_EVAL_FOR_SKILL, type FirmaAccuracy } from '@/lib/firma-accuracy';
+import { COIN_OVERRIDES_CHANGED_EVENT, loadAllCoinOverrides } from '@/lib/agents/coin-override-store';
+import { applyCoinAdjustment, type CoinOverride } from '@/lib/agents/coin-override';
 
 interface Props {
   date: string;
@@ -22,6 +24,7 @@ interface TrackRecord {
   intelEvaluated: number;
   vorstandHitRatePct: number | null;
   vorstandEvaluated: number;
+  coinOverrides: Array<{ coinId: string; factorCount: number; scoreDelta: number; hardVeto: boolean }>;
 }
 
 // Generates a copy-able plain-text morning briefing for sharing or journaling.
@@ -39,6 +42,15 @@ export function MorningBriefingExport(props: Props) {
       const priceMap = new Map<string, number>();
       for (const s of intelLog) if (s.btcPriceAtRecord !== null) priceMap.set(s.date, s.btcPriceAtRecord);
       const firmas = computeFirmaAccuracy(firmaLog, (d) => priceMap.get(d) ?? null);
+      const overrides = loadAllCoinOverrides();
+      const coinOverrides: TrackRecord['coinOverrides'] = [];
+      for (const [coinId, ov] of Object.entries(overrides)) {
+        const o = ov as CoinOverride;
+        if (o.factors.length === 0) continue;
+        const adj = applyCoinAdjustment(o);
+        coinOverrides.push({ coinId, factorCount: o.factors.length, scoreDelta: adj.scoreDelta, hardVeto: adj.hardVeto });
+      }
+      coinOverrides.sort((a, b) => (b.hardVeto ? 1 : 0) - (a.hardVeto ? 1 : 0) || Math.abs(b.scoreDelta) - Math.abs(a.scoreDelta));
       const intelAcc = computeIntelAccuracy(intelLog);
       const vorstandAcc = computeVorstandAccuracy(vorstandLog, (d) => priceMap.get(d) ?? null);
       setTrackRecord({
@@ -46,17 +58,20 @@ export function MorningBriefingExport(props: Props) {
         intelHitRatePct: intelAcc.hitRatePct,
         intelEvaluated: intelAcc.evaluated,
         vorstandHitRatePct: vorstandAcc.hitRatePct,
-        vorstandEvaluated: vorstandAcc.evaluated
+        vorstandEvaluated: vorstandAcc.evaluated,
+        coinOverrides
       });
     };
     sync();
     window.addEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
     window.addEventListener(INTEL_LOG_CHANGED_EVENT, sync);
     window.addEventListener(VORSTAND_LOG_CHANGED_EVENT, sync);
+    window.addEventListener(COIN_OVERRIDES_CHANGED_EVENT, sync);
     return () => {
       window.removeEventListener(FIRMA_DECISIONS_CHANGED_EVENT, sync);
       window.removeEventListener(INTEL_LOG_CHANGED_EVENT, sync);
       window.removeEventListener(VORSTAND_LOG_CHANGED_EVENT, sync);
+      window.removeEventListener(COIN_OVERRIDES_CHANGED_EVENT, sync);
     };
   }, []);
 
@@ -133,6 +148,16 @@ function buildText(p: Props, tr: TrackRecord | null): string {
       }
       if (intelTrained) {
         lines.push(`· Chefredakteur: ${tr.intelHitRatePct} % (über ${tr.intelEvaluated} bewertete Tage)`);
+      }
+      lines.push('');
+    }
+    // Coin-User-Overrides: was hat der User selbst markiert?
+    if (tr.coinOverrides.length > 0) {
+      lines.push('AKTIVE USER-FAKTOREN (Coin-Overrides):');
+      for (const o of tr.coinOverrides) {
+        const sign = o.scoreDelta >= 0 ? '+' : '';
+        const veto = o.hardVeto ? ' [VETO]' : '';
+        lines.push(`· ${o.coinId.toUpperCase()}: ${o.factorCount} Faktor${o.factorCount === 1 ? '' : 'en'}, Safety ${sign}${o.scoreDelta} Punkte${veto}`);
       }
       lines.push('');
     }
