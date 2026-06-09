@@ -131,3 +131,38 @@ export function aggregateOutcomes(outcomes: OverrideOutcome[]): UserOverrideAccu
 
   return { evaluable: evaluable.length, correct, wrong, unclear, hitRatePct, byCoin };
 }
+
+// Aus dem Track-Record leiten wir einen Multiplier ab, der spaeter die
+// Score-Auslenkung der User-Overrides skaliert. Niedrige Hit-Rate -> daempfen,
+// hohe -> verstaerken. So lernt das System aus dem eigenen Bauchgefuehl.
+//
+// Schwelle bewusst hoch (mind. 5 decisive Outcomes) — vorher kein Vertrauen.
+// Hard-Veto wird NICHT skaliert, das bleibt eine Sicherheits-Konstante.
+export interface UserOverrideWeight {
+  multiplier: number;          // 0.6..1.25
+  basedOnDecisive: number;
+  hitRatePct: number | null;
+  reason: 'insufficient' | 'strong' | 'good' | 'neutral' | 'weak' | 'poor';
+  label: string;               // Klartext fuer UI
+}
+
+const MIN_DECISIVE_FOR_WEIGHT = 5;
+
+export function deriveUserOverrideWeight(acc: UserOverrideAccuracy): UserOverrideWeight {
+  const decisive = acc.correct + acc.wrong;
+  if (decisive < MIN_DECISIVE_FOR_WEIGHT || acc.hitRatePct === null) {
+    return {
+      multiplier: 1,
+      basedOnDecisive: decisive,
+      hitRatePct: acc.hitRatePct,
+      reason: 'insufficient',
+      label: `Noch zu wenig Bewertungen (${decisive}/${MIN_DECISIVE_FOR_WEIGHT}) — Override zaehlt 1×.`
+    };
+  }
+  const r = acc.hitRatePct;
+  if (r >= 70) return { multiplier: 1.25, basedOnDecisive: decisive, hitRatePct: r, reason: 'strong', label: `Hit-Rate ${r} % → Dein Override zaehlt 1.25× staerker.` };
+  if (r >= 60) return { multiplier: 1.10, basedOnDecisive: decisive, hitRatePct: r, reason: 'good', label: `Hit-Rate ${r} % → Dein Override zaehlt 1.10× staerker.` };
+  if (r >= 45) return { multiplier: 1.00, basedOnDecisive: decisive, hitRatePct: r, reason: 'neutral', label: `Hit-Rate ${r} % → Dein Override zaehlt 1×.` };
+  if (r >= 30) return { multiplier: 0.80, basedOnDecisive: decisive, hitRatePct: r, reason: 'weak', label: `Hit-Rate ${r} % → Dein Override wird auf 0.80× gedaempft.` };
+  return { multiplier: 0.60, basedOnDecisive: decisive, hitRatePct: r, reason: 'poor', label: `Hit-Rate ${r} % → Dein Override wird auf 0.60× gedaempft.` };
+}

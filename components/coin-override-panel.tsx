@@ -5,7 +5,7 @@
 // regulatorische Unsicherheit, persoenliches Misstrauen / Conviction).
 // Live-Anzeige des adjustierten Safety-Score Delta.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   applyCoinAdjustment,
   COIN_FACTOR_META,
@@ -16,6 +16,16 @@ import {
   loadCoinOverride,
   setCoinOverride
 } from '@/lib/agents/coin-override-store';
+import {
+  COIN_OVERRIDE_HISTORY_CHANGED_EVENT,
+  loadCoinOverrideHistory
+} from '@/lib/agents/coin-override-history-store';
+import {
+  aggregateOutcomes,
+  deriveUserOverrideWeight,
+  evaluateOverrideOutcome,
+  type CoinOverrideHistoryEntry
+} from '@/lib/agents/coin-override-history';
 
 interface Props {
   coinId: string;
@@ -40,22 +50,42 @@ const FACTOR_ORDER: CoinOverrideFactor[] = [
 export function CoinOverridePanel({ coinId, symbol, baseSafetyScore, currentPrice }: Props) {
   const [selected, setSelected] = useState<CoinOverrideFactor[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [history, setHistory] = useState<CoinOverrideHistoryEntry[]>([]);
 
   useEffect(() => {
     const sync = () => {
       const ov = loadCoinOverride(coinId);
       setSelected(ov?.factors ?? []);
     };
+    const syncHistory = () => setHistory(loadCoinOverrideHistory());
     sync();
+    syncHistory();
     setMounted(true);
     window.addEventListener(COIN_OVERRIDES_CHANGED_EVENT, sync);
-    return () => window.removeEventListener(COIN_OVERRIDES_CHANGED_EVENT, sync);
+    window.addEventListener(COIN_OVERRIDE_HISTORY_CHANGED_EVENT, syncHistory);
+    return () => {
+      window.removeEventListener(COIN_OVERRIDES_CHANGED_EVENT, sync);
+      window.removeEventListener(COIN_OVERRIDE_HISTORY_CHANGED_EVENT, syncHistory);
+    };
   }, [coinId]);
+
+  // Track-Record-Gewicht: Hit-Rate des Users ueber alle Coins. Bei <5 decisive
+  // Outcomes 1× (kein Vertrauen). Mehr Treffer → mehr Einfluss, Daneben →
+  // gedaempft. Preis-Anker steckt im History-Eintrag, hier brauchen wir den
+  // aktuellen Preis nur zur Bewertung des laufenden Eintrags. Damit das Panel
+  // nicht von latestPrices abhaengt, bewerten wir mit priceNow=null wo unbekannt.
+  // Outcomes ohne Preis enden als 'no-price' und zaehlen nicht — sauber.
+  const userWeight = useMemo(() => {
+    const priceForCoin = (id: string): number | null => id === coinId ? (currentPrice ?? null) : null;
+    const outcomes = history.map((e) => evaluateOverrideOutcome(e, priceForCoin(e.coinId)));
+    return deriveUserOverrideWeight(aggregateOutcomes(outcomes));
+  }, [history, coinId, currentPrice]);
 
   const adj = applyCoinAdjustment(
     mounted && selected.length > 0
       ? { coinId, factors: selected, updatedAt: 0 }
-      : null
+      : null,
+    userWeight.multiplier
   );
 
   if (!mounted) return null;
@@ -128,9 +158,14 @@ export function CoinOverridePanel({ coinId, symbol, baseSafetyScore, currentPric
               </div>
             </div>
           </div>
+          {userWeight.reason !== 'insufficient' && userWeight.multiplier !== 1 && (
+            <p className={`mt-1.5 rounded border p-1.5 text-[10.5px] leading-snug ${userWeight.multiplier > 1 ? 'border-emerald-500/40 bg-emerald-950/20 text-emerald-100' : 'border-amber-500/40 bg-amber-950/20 text-amber-100'}`}>
+              📊 {userWeight.label}
+            </p>
+          )}
           {adj.hardVeto && (
             <p className="mt-1.5 rounded border border-rose-500/50 bg-rose-950/30 p-1.5 text-[10.5px] leading-snug text-rose-100">
-              ⚠ Hartes Veto aktiv: bei &bdquo;Token-Unlock heute&ldquo; oder &bdquo;Manuelles Misstrauen&ldquo; geht die Empfehlung sicherheitshalber auf WATCH-only.
+              ⚠ Hartes Veto aktiv: bei &bdquo;Token-Unlock heute&ldquo; oder &bdquo;Manuelles Misstrauen&ldquo; geht die Empfehlung sicherheitshalber auf WATCH-only. Veto bleibt ungewichtet — Sicherheits-Konstante.
             </p>
           )}
           <button

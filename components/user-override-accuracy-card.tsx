@@ -15,6 +15,7 @@ import {
 } from '@/lib/agents/coin-override-history-store';
 import {
   aggregateOutcomes,
+  deriveUserOverrideWeight,
   evaluateOverrideOutcome,
   type CoinOverrideHistoryEntry,
   type OverrideOutcome
@@ -51,6 +52,7 @@ export function UserOverrideAccuracyCard({ latestPrices }: Props) {
   }, [history, latestPrices]);
 
   const acc = useMemo(() => aggregateOutcomes(outcomes), [outcomes]);
+  const weight = useMemo(() => deriveUserOverrideWeight(acc), [acc]);
 
   if (!mounted) return null;
   if (acc.evaluable === 0) return null;
@@ -75,6 +77,17 @@ export function UserOverrideAccuracyCard({ latestPrices }: Props) {
       {waiting > 0 && (
         <p className="text-[10px] text-slate-500">
           {waiting} weitere{waiting === 1 ? 'r' : ''} Override{waiting === 1 ? '' : 's'} bewertet sich frühestens nach 12 h.
+        </p>
+      )}
+
+      {weight.reason !== 'insufficient' && weight.multiplier !== 1 && (
+        <p className={`rounded border p-1.5 text-[10.5px] leading-snug ${weight.multiplier > 1 ? 'border-emerald-500/40 bg-emerald-950/20 text-emerald-100' : 'border-amber-500/40 bg-amber-950/20 text-amber-100'}`}>
+          ⚖ Aktive Gewichtung: {weight.label} Wirkt live auf jeden neuen Override (Hard-Veto bleibt ungewichtet).
+        </p>
+      )}
+      {weight.reason === 'insufficient' && acc.evaluable >= 1 && (
+        <p className="text-[10px] text-slate-500">
+          Ab {weight.basedOnDecisive < 5 ? `${5 - weight.basedOnDecisive} weiteren bewerteten` : '5 bewerteten'} Overrides faengt das System an, Deinen Track-Record als Gewichtung zu nutzen.
         </p>
       )}
 
