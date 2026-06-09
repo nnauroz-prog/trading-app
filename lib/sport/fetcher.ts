@@ -221,15 +221,18 @@ async function compute(): Promise<LeagueFixtures[]> {
       }));
 
       const upcoming: UpcomingFixture[] = future.slice(0, 50).map((f) => {
-        const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, finishedPool);
-        const tips = probabilities ? generateTips(probabilities, f.homeTeam, f.awayTeam) : null;
         const weather = weatherFor.get(f.id);
+        // H2H einmal berechnen, dann an predictor + probabilities BEIDE
+        // weitergeben — damit sehen Tipp-Ranker und UI-Prognose dasselbe.
+        const h2h = computeHeadToHead(f.homeTeam, f.awayTeam, finishedPool);
+        const probabilities = computeFootballProbabilities(f.homeTeam, f.awayTeam, finishedPool, weather, h2h, f.referee);
+        const tips = probabilities ? generateTips(probabilities, f.homeTeam, f.awayTeam) : null;
         return {
           ...f,
           status: 'upcoming',
           homeScore: null, // explizit löschen, falls TheSportsDB-Phantomwerte da waren
           awayScore: null,
-          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool, weather, computeHeadToHead(f.homeTeam, f.awayTeam, finishedPool), f.referee),
+          prediction: predictMatch(f.homeTeam, f.awayTeam, finishedPool, weather, h2h, f.referee),
           probabilities,
           tips
         };
