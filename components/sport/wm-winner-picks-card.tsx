@@ -6,7 +6,7 @@
 //   - Profi-Tipper-Agent stimmt zu
 //
 // Wording: keine verbotenen Begriffe. "Modell-Favorit" statt "Bank",
-// "Hoechste Konfluenz" statt "todsicher", ehrlicher Risiko-Hinweis
+// "Hoechste Konfluenz" als strengste Stufe, ehrlicher Risiko-Hinweis
 // auf jeder Karte.
 
 import type { WmWinnerPick } from '@/lib/sport/wm-winner-picks';

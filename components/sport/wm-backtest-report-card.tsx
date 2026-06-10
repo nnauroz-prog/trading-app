@@ -2,7 +2,7 @@
 // Laenderspielen aus WM 2022 KO, EM 2024 KO, Copa America 2024 KO,
 // Nations League Finals und Freundschaftsspielen abgeschnitten haette.
 //
-// Wording strikt: keine "Bank", kein "sicher". Hit-Rate ehrlich pro
+// Wording strikt neutral. Hit-Rate ehrlich pro
 // Tier, klarer Look-Ahead-Disclaimer.
 
 import { combinedBrier, type BacktestReport } from '@/lib/sport/wm-backtest-runner';
@@ -27,7 +27,12 @@ const FACTOR_LABEL: Record<string, string> = {
   'regional-crowd': 'Publikums-Sympathie',
   'hot-midday': 'Mittagshitze',
   'rest-days': 'Erholungstage',
-  'weather': 'Live-Wetter'
+  'weather': 'Live-Wetter',
+  'confederation-home': 'Konfoederations-Heimvorteil',
+  'phase-pressure': 'Phase-Druck',
+  'venue-familiarity': 'Stadion-Vertrautheit',
+  'travel-distance': 'Reisedistanz',
+  'dynamic-elo': 'Dynamisches ELO'
 };
 
 export function WmBacktestReportCard({ report }: Props) {
@@ -39,11 +44,11 @@ export function WmBacktestReportCard({ report }: Props) {
     <section className={`space-y-3 rounded-2xl border-2 p-4 ${overallCls}`} aria-label="WM System-Backtest">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-xs font-semibold uppercase tracking-[0.25em]">System-Backtest gegen echte Spiele</h2>
-        <span className="text-[10px] opacity-60">{report.totalMatches} Top-Laenderspiele · 2022–2024</span>
+        <span className="text-[10px] opacity-60">{report.totalMatches} Top-Laenderspiele · 2022–2025</span>
       </div>
 
       <p className="text-[11.5px] leading-snug opacity-90">
-        Bevor Du heute live tippst: so haette unser System (Engine + Profi-Tipper-Agent + Umfeld-Faktoren) auf echten Spielen abgeschnitten. Datenbasis: WM 2022 KO, EM 2024 KO, Copa America 2024 KO, Nations League Finals, Top-Freundschaftsspiele 2023/2024.
+        Bevor Du heute live tippst: so haette unser System (Engine + Profi-Tipper-Agent + Umfeld-Faktoren) auf echten Spielen abgeschnitten. Datenbasis: WM 2022 (Gruppe inkl. der grossen Upsets + KO), EM 2024 (Gruppe + KO), Copa America 2024, Nations League Finals 2023–2025, WM-Quali und Top-Freundschaftsspiele.
       </p>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
