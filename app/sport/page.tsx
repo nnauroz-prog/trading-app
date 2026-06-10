@@ -108,6 +108,8 @@ import { SportPrecisionCalibrationHydrator } from '@/components/sport/sport-prec
 import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsible-legacy-section';
 import { buildLeaguePrecisionPicks } from '@/lib/sport/sport-precision-bridge';
 import { buildWmPrecisionPicks } from '@/lib/sport/wm-precision-bridge';
+import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
+import { WmWinnerPicksCard } from '@/components/sport/wm-winner-picks-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -537,6 +539,16 @@ export default async function SportPage() {
             dataCoveragePct={overallCoverage}
           />
         );
+      })()}
+
+      {/* WM Sieger-Picks — die strengste Schicht der App: nur 1X2-Sieger-
+          Tipps, gefiltert durch den Profi-Tipper-Agenten (ELO-Vorteil,
+          Engine-Klarheit, xG-Konfluenz, Lineup-Sensitivitaet). Zeigt
+          maximal die naechsten 7 Tage. */}
+      {(() => {
+        const horizonDays = 7;
+        const winnerPicks = rankWmWinnerPicks({ todayIso: buckets.todayIso, horizonDays });
+        return <WmWinnerPicksCard picks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />;
       })()}
 
       {(() => {

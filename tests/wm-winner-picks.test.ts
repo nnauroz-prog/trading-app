@@ -1,0 +1,71 @@
+import { describe, expect, it } from 'vitest';
+import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
+
+describe('rankWmWinnerPicks', () => {
+  it('Liefert nur 1X2-Sieger-Picks (kein Remis, keine TBD)', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 14 });
+    for (const p of picks) {
+      expect(['home', 'away']).toContain(p.winnerSide);
+      expect(p.fixture.homeTeam.startsWith('Sieger')).toBe(false);
+      expect(p.fixture.awayTeam.startsWith('Sieger')).toBe(false);
+      expect(p.fixture.homeTeam.startsWith('Zweiter')).toBe(false);
+      expect(p.fixture.awayTeam.startsWith('Zweiter')).toBe(false);
+    }
+  });
+
+  it('Alle Picks haben Profi-Tipper-Status OK oder WARNUNG (nie BLOCKIERT)', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 14 });
+    for (const p of picks) {
+      expect(p.proTipper.status).not.toBe('BLOCKIERT');
+    }
+  });
+
+  it('ELO-Mindestschwelle 80 wird respektiert', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 14 });
+    for (const p of picks) {
+      expect(Math.abs(p.eloDiff)).toBeGreaterThanOrEqual(80);
+    }
+  });
+
+  it('Modell-Wahrscheinlichkeit >= 60 %', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 14 });
+    for (const p of picks) {
+      expect(p.modelProbabilityPct).toBeGreaterThanOrEqual(60);
+    }
+  });
+
+  it('"Hoechste Konfluenz"-Tier verlangt strengere Schwellen', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 30 });
+    for (const p of picks) {
+      if (p.tier === 'hoechste-konfluenz') {
+        expect(Math.abs(p.eloDiff)).toBeGreaterThanOrEqual(120);
+        expect(p.modelProbabilityPct).toBeGreaterThanOrEqual(70);
+        expect(p.proTipper.status).toBe('OK');
+      }
+    }
+  });
+
+  it('Horizont 1 Tag → nur Spiele heute/morgen', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 1 });
+    for (const p of picks) {
+      const t = new Date(`${p.fixture.date}T00:00:00`).getTime();
+      const cutoff = new Date('2026-06-12T23:59:59').getTime();
+      expect(t).toBeLessThanOrEqual(cutoff);
+    }
+  });
+});
+
+describe('Wording — keine verbotenen Begriffe', () => {
+  const FORBIDDEN = ['sicher', 'bank', 'garantiert', 'todsicher', 'risikolos', 'muss kommen', 'free money'];
+  it('reasons + riskNotes frei von verbotenen Begriffen', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 14 });
+    for (const p of picks) {
+      for (const text of [...p.reasons, ...p.riskNotes]) {
+        const lower = text.toLowerCase();
+        for (const f of FORBIDDEN) {
+          expect(lower.includes(f), `Verbotenes "${f}" in: ${text}`).toBe(false);
+        }
+      }
+    }
+  });
+});
