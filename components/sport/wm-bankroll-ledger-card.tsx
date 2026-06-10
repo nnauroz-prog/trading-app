@@ -15,6 +15,7 @@ import {
   summarizeLedger,
   type LedgerRow
 } from '@/lib/sport/wm-bankroll-ledger';
+import { rowsToCsv, csvFilenameForToday } from '@/lib/sport/wm-ledger-csv';
 import {
   loadWmPickLog,
   WM_PICK_LEARNING_CHANGED_EVENT
@@ -86,7 +87,27 @@ export function WmBankrollLedgerCard() {
     <section className="space-y-2 rounded-2xl border border-emerald-400/30 bg-emerald-950/10 p-3" aria-label="WM Bankroll-Ledger">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-300">Turnier-Ledger · virtuelles P&amp;L</h3>
-        <span className="text-[10px] text-emerald-200/70">{summary.totalEntries} Stakes · {summary.pendingCount} offen</span>
+        <div className="flex items-baseline gap-2">
+          <span className="text-[10px] text-emerald-200/70">{summary.totalEntries} Stakes · {summary.pendingCount} offen</span>
+          <button
+            type="button"
+            onClick={() => {
+              const csv = rowsToCsv(rows);
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const todayIso = new Date().toISOString().slice(0, 10);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = csvFilenameForToday(todayIso);
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="rounded border border-slate-700 bg-slate-900 px-2 py-0.5 text-[9px] uppercase tracking-wider text-slate-300 hover:border-emerald-400/50 hover:text-emerald-200"
+            aria-label="Ledger als CSV herunterladen"
+          >CSV</button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
