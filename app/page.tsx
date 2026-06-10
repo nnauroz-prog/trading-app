@@ -632,7 +632,7 @@ export default async function HomePage() {
             <WmJetztCard todayIso={todayIso} plan={plan} />
             <PlainHint id="day-plan" />
             <WmDayPlanCard plan={plan} />
-            <WmTrefferquoteCard />
+            <WmTrefferquoteCard todayIso={todayIso} />
             <WmResultsBoardCard todayIso={todayIso} lookbackDays={7} />
             <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso, horizonDays: 7, picks: wmWinnerPicksHome })} />
           </>
