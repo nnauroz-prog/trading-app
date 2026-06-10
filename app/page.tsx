@@ -79,6 +79,7 @@ import { WmWeekPlanCard } from '@/components/sport/wm-week-plan-card';
 import { buildWmWeekPlan } from '@/lib/sport/wm-week-plan';
 import { WmPickExplainCard } from '@/components/sport/wm-pick-explain-card';
 import { WmResultsBoardCard } from '@/components/sport/wm-results-board-card';
+import { WmTrefferquoteCard } from '@/components/sport/wm-trefferquote-card';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
@@ -631,6 +632,7 @@ export default async function HomePage() {
             <WmJetztCard todayIso={todayIso} plan={plan} />
             <PlainHint id="day-plan" />
             <WmDayPlanCard plan={plan} />
+            <WmTrefferquoteCard />
             <WmResultsBoardCard todayIso={todayIso} lookbackDays={7} />
             <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso, horizonDays: 7, picks: wmWinnerPicksHome })} />
           </>
