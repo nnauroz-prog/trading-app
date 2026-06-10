@@ -182,7 +182,7 @@ function runOne(match: BacktestHistoricalMatch): BacktestMatchResult {
   };
 }
 
-const FACTOR_IDS = ['acclimatization', 'altitude', 'jetlag', 'host-advantage', 'regional-crowd', 'hot-midday'] as const;
+const FACTOR_IDS = ['acclimatization', 'altitude', 'jetlag', 'host-advantage', 'regional-crowd', 'hot-midday', 'rest-days', 'weather'] as const;
 
 export function runWmBacktest(): BacktestReport {
   const results = WM_BACKTEST_DATASET.map(runOne);

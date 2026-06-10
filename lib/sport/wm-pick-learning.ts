@@ -145,7 +145,12 @@ export const KNOWN_FACTOR_IDS = [
   'host-advantage',
   'regional-crowd',
   'hot-midday',
-  'weather'
+  'rest-days',
+  'weather',
+  'confederation-home',
+  'phase-pressure',
+  'venue-familiarity',
+  'travel-distance'
 ] as const;
 export type WmFactorId = typeof KNOWN_FACTOR_IDS[number];
 

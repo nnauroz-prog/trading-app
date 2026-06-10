@@ -17,7 +17,11 @@
 import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
 import { predictWmMatch, type WmMatchPrediction } from '@/lib/sport/wm-match-engine';
 import { evaluateProTipperAgent, type ProTipperResult } from '@/lib/sport/sport-pro-tipper-agent';
-import { evaluateWmConditions, eloDiffShift, type WmConditionsReport } from '@/lib/sport/wm-conditions';
+import { evaluateWmConditions, eloDiffShift, type WmConditionFactor, type WmConditionsReport } from '@/lib/sport/wm-conditions';
+import { evaluateRestDays } from '@/lib/sport/wm-rest-days';
+import { weatherFactor } from '@/lib/sport/wm-live-weather';
+import { evaluateExtraFactors } from '@/lib/sport/wm-extra-factors';
+import type { WeatherSnapshot } from '@/lib/providers/open-meteo';
 import type { FactorWeightMap } from '@/lib/sport/wm-pick-learning';
 
 export interface WmWinnerPick {
@@ -51,6 +55,9 @@ interface BuildOptions {
   // gelernten Multiplier skaliert (BESTAETIGT verstaerkt, KONTRA daempft).
   // Reine Pure-Lib bleibt — der Caller liefert die Map.
   factorWeights?: FactorWeightMap | null;
+  // Optional: Live-Wetter-Snapshots pro fixtureId. Wenn vorhanden,
+  // fliesst der Wetter-Faktor in conditions ein.
+  weatherByFixtureId?: Record<string, WeatherSnapshot | null>;
 }
 
 function daysBetween(todayIso: string, fixtureIso: string): number {
@@ -103,8 +110,32 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
     // Profi-Conditions zuerst — dann fliessen ihre Werte in den
     // Profi-Tipper-Agenten und in die Reasons. Wenn gelernte Faktor-
     // Gewichte uebergeben wurden, skalieren wir die ELO-Deltas pro
-    // Faktor entsprechend.
-    const rawConditions = evaluateWmConditions({ fixture: f });
+    // Faktor entsprechend. Erweiterte Faktoren (Erholungstage,
+    // Live-Wetter) werden hier aggregiert.
+    const extra: WmConditionFactor[] = [];
+    const rest = evaluateRestDays({ fixture: f });
+    if (rest.homeRestDays !== null || rest.awayRestDays !== null) {
+      const restFactorActive = rest.homeEloDelta !== 0 || rest.awayEloDelta !== 0 || rest.homeGoalMultiplier !== 1 || rest.awayGoalMultiplier !== 1;
+      if (restFactorActive) {
+        extra.push({
+          id: 'rest-days',
+          label: rest.label,
+          homeGoalMultiplier: rest.homeGoalMultiplier,
+          awayGoalMultiplier: rest.awayGoalMultiplier,
+          homeEloDelta: rest.homeEloDelta,
+          awayEloDelta: rest.awayEloDelta,
+          confidenceShift: rest.confidenceShift
+        });
+      }
+    }
+    const weather = opts.weatherByFixtureId?.[f.id] ?? null;
+    const wf = weatherFactor(weather);
+    if (wf) extra.push(wf);
+    // Zusatzfaktoren: Konfoederations-Heimvorteil, Phase-Druck,
+    // Stadion-Vertrautheit, Reisedistanz.
+    extra.push(...evaluateExtraFactors(f));
+
+    const rawConditions = evaluateWmConditions({ fixture: f, extraFactors: extra });
     const conditions = applyFactorWeights(rawConditions, opts.factorWeights ?? null);
     const condEloShift = eloDiffShift(conditions);
 
