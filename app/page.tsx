@@ -602,8 +602,9 @@ export default async function HomePage() {
       <WmCountdownBanner todayIso={todayIso} />
 
       {/* Daten-Integritaets-Agent — Live-Pille. Sichtbar nur wenn aktiv
-          etwas blockiert oder warnt. Refresh alle 30 s. */}
-      <WmIntegrityPill initial={evaluateIntegrityAction()} />
+          etwas blockiert oder warnt. Refresh alle 30 s. Reconciler-
+          Mismatches (Quellen-Konflikte) zaehlen als Blocks mit. */}
+      <WmIntegrityPill initial={evaluateIntegrityAction()} reconcilerMismatches={wmReconcileHome.mismatched} />
 
       {/* Heute bei der WM: alle heutigen Spiele mit Anstosszeit (Berlin),
           Pick-Status und konkretem Block-Grund. Versteckt sich an

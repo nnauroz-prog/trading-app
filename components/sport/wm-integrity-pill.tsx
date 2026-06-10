@@ -10,11 +10,14 @@ import { evaluateIntegrityAction, type IntegrityAction } from '@/lib/sport/wm-da
 
 interface Props {
   initial: IntegrityAction;
+  // Server-seitig ermittelte Reconciler-Mismatches (externe Quelle
+  // widerspricht interner Paarung). Zaehlen als zusaetzliche Blocks.
+  reconcilerMismatches?: number;
 }
 
 const REFRESH_MS = 30_000;
 
-export function WmIntegrityPill({ initial }: Props) {
+export function WmIntegrityPill({ initial, reconcilerMismatches = 0 }: Props) {
   const [action, setAction] = useState<IntegrityAction>(initial);
 
   useEffect(() => {
@@ -24,7 +27,7 @@ export function WmIntegrityPill({ initial }: Props) {
     return () => clearInterval(id);
   }, []);
 
-  const blocked = action.issues.filter((i) => i.severity === 'BLOCKIERT').length;
+  const blocked = action.issues.filter((i) => i.severity === 'BLOCKIERT').length + reconcilerMismatches;
   const warnings = action.issues.filter((i) => i.severity === 'WARNUNG').length;
   if (blocked === 0 && warnings === 0) return null;
 
@@ -41,6 +44,7 @@ export function WmIntegrityPill({ initial }: Props) {
       <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" aria-hidden />
       <span className="font-semibold">Daten-Integritaets-Agent live:</span>
       {blocked > 0 && <span className="font-mono">{blocked} BLOCKIERT</span>}
+      {reconcilerMismatches > 0 && <span className="font-mono">davon {reconcilerMismatches} Quellen-Konflikt</span>}
       {warnings > 0 && <span className="font-mono">{warnings} WARNUNG</span>}
       {action.activeBlocks > 0 && <span className="font-mono">{action.activeBlocks} Veto aktiv</span>}
       <span className="ml-auto text-[10px] opacity-70">→ /sport</span>
