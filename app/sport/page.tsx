@@ -107,6 +107,7 @@ import { SportPrecisionDesk } from '@/components/sport/sport-precision-desk';
 import { SportPrecisionCalibrationHydrator } from '@/components/sport/sport-precision-calibration-hydrator';
 import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsible-legacy-section';
 import { buildLeaguePrecisionPicks } from '@/lib/sport/sport-precision-bridge';
+import { buildWmPrecisionPicks } from '@/lib/sport/wm-precision-bridge';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -511,6 +512,33 @@ export default async function SportPage() {
           Alle alten Bereiche sind darunter eingeklappt und tragen klar das
           Etikett „Rohdaten / Modell-Uebersicht", damit kein widersprueliches
           Wording uebrig bleibt. */}
+
+      {/* WM-Countdown ganz oben, solange < 30 Tage bis Start oder waehrend
+          der laufenden WM. Mountet vor den Picks, damit der User sofort
+          weiss „WM-Modus aktiv". */}
+      <WmCountdownBanner todayIso={buckets.todayIso} />
+
+      {/* WM Precision Desk: dasselbe 3-Verdict-Pattern, aber auf die WM-
+          Fixtures der naechsten 14 Tage angewendet. TBD-Teams werden hart
+          blockiert, Spielort + bestaetigte Teams = hasOfficialFixture. */}
+      {(() => {
+        const wmPicks = buildWmPrecisionPicks({ todayIso: buckets.todayIso, horizonDays: 14 });
+        if (wmPicks.length === 0) return null;
+        const overallCoverage = (() => {
+          if (wmPicks.length === 0) return 0;
+          const sum = wmPicks.reduce((s, p) => s + (p.dataLabel === 'VOLLSTAENDIG' ? 100 : p.dataLabel === 'TEILWEISE' ? 60 : 30), 0);
+          return Math.round(sum / wmPicks.length);
+        })();
+        return (
+          <SportPrecisionDesk
+            title="WM Precision Desk"
+            picks={wmPicks}
+            calibrationLabel="UNKLAR"
+            dataCoveragePct={overallCoverage}
+          />
+        );
+      })()}
+
       {(() => {
         const precisionPicks = buildLeaguePrecisionPicks(leagues, { todayIso: buckets.todayIso });
         const overallCoverage = (() => {
@@ -520,6 +548,7 @@ export default async function SportPage() {
         })();
         return (
           <SportPrecisionDesk
+            title="Liga Precision Desk"
             picks={precisionPicks}
             calibrationLabel="UNKLAR"
             dataCoveragePct={overallCoverage}
@@ -542,7 +571,6 @@ export default async function SportPage() {
         subtitle="ungefilterte Modell-Tendenzen, Quality-Score-Ranking"
         hint="Rohdaten-Ansicht — der Precision Desk filtert oben strenger. Diese Karten zeigen ungefilterte Modell-Tendenzen und sind keine Freigabe."
       >
-        <WmCountdownBanner todayIso={buckets.todayIso} />
         {(() => {
           const footballVerdicts = evaluateFootballPersonas(leagues, buckets.todayIso);
           return (

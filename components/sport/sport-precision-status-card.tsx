@@ -18,6 +18,7 @@ interface Props {
   topBlocker: string | null;
   dataCoveragePct: number; // 0..100
   calibrationLabel: CalibrationLabel;
+  title?: string;
 }
 
 const VERDICT_LABEL: Record<PrecisionVerdict, string> = {
@@ -54,7 +55,7 @@ export function SportPrecisionStatusCard(props: Props) {
   return (
     <section className={`space-y-3 rounded-2xl border-2 p-4 ${VERDICT_CLASS[props.overallVerdict]}`} aria-label="Sport Precision Desk Status">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.25em] opacity-80">Sport Precision Desk</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.25em] opacity-80">{props.title ?? 'Sport Precision Desk'}</span>
         <span className="text-[10px] opacity-60">strenger Modell-Filter</span>
       </div>
       <div className="flex items-baseline gap-3">

@@ -35,6 +35,9 @@ interface Props {
   // Wenn null, deuten wir an, dass keine Kalibrierungs-Historie vorliegt.
   calibrationLabel: CalibrationLabel;
   dataCoveragePct: number;
+  // Optional: eigener Titel — der gleiche Desk wird auf /sport zweimal
+  // gemountet (WM + Liga). Default: "Sport Precision Desk".
+  title?: string;
 }
 
 function computeOverallVerdict(picks: PrecisionPickWithAgents[]): PrecisionVerdict {
@@ -91,7 +94,7 @@ function aggregateAgents(picks: PrecisionPickWithAgents[]): Array<{ status: Prec
   });
 }
 
-export function SportPrecisionDesk({ picks, calibrationLabel, dataCoveragePct }: Props) {
+export function SportPrecisionDesk({ picks, calibrationLabel, dataCoveragePct, title = 'Sport Precision Desk' }: Props) {
   const selection = selectTopPrecisionPicks(picks, { limit: 5, includeRejected: false, allowExplainerWhenEmpty: true });
   const overall = computeOverallVerdict(selection.picks);
   const topBlockerLabel = topBlockersFn(picks)[0]?.label ?? null;
@@ -112,6 +115,7 @@ export function SportPrecisionDesk({ picks, calibrationLabel, dataCoveragePct }:
         topBlocker={topBlockerLabel}
         dataCoveragePct={dataCoveragePct}
         calibrationLabel={calibrationLabel}
+        title={title}
       />
 
       {hero && (

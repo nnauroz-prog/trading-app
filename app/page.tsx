@@ -58,6 +58,7 @@ import { evaluatePersonas } from '@/lib/agents/personas';
 import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
 import { TradeTier90Card } from '@/components/trade-tier-90-card';
 import { TradingTodayCard } from '@/components/trading-today-card';
+import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
 import { AppOverviewStats } from '@/components/app-overview-stats';
@@ -541,6 +542,10 @@ export default async function HomePage() {
           <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Mehr</Link>
         </nav>
       </header>
+
+      {/* WM-Countdown ganz oben — solange <30 Tage bis Start oder waehrend
+          der laufenden WM. Versteckt sich automatisch danach. */}
+      <WmCountdownBanner todayIso={todayIso} />
 
       <TradingTodayCard
         tier90={tier90}
