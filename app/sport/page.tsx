@@ -114,6 +114,7 @@ import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
 import { reconcileWmSchedule, verifiedFixtureIds, mismatchedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
 import { WmReconcilerCard } from '@/components/sport/wm-reconciler-card';
 import { WmJetztCard } from '@/components/sport/wm-jetzt-card';
+import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
@@ -644,6 +645,7 @@ export default async function SportPage() {
         });
         return (
           <>
+            <WmErsteSchritte />
             <WmJetztCard todayIso={buckets.todayIso} plan={dayPlan} />
             <PlainHint id="day-plan" />
             <WmDayPlanCard plan={dayPlan} />
