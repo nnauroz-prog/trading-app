@@ -1,10 +1,18 @@
+'use client';
+
 // Zeigt 2er- und 3er-Combos der heutigen Sieger-Picks mit konkretem
-// erwartetem Wert (Expected Value).
+// erwartetem Wert (Expected Value). Quoten: pro Pick aus dem Bankroll-
+// Ledger (falls der Stake uebernommen wurde), sonst Default 2.00.
 //
 // Versteckt sich, wenn weniger als 2 Picks vorliegen.
 
+import { useEffect, useMemo, useState } from 'react';
 import { rankWmComboPicks, type ComboPickCandidate } from '@/lib/sport/wm-combo-picks';
 import type { WmWinnerPick } from '@/lib/sport/wm-winner-picks';
+import {
+  loadStakeRecords,
+  WM_BANKROLL_LEDGER_CHANGED_EVENT
+} from '@/lib/sport/wm-bankroll-ledger-store';
 
 interface Props {
   picks: WmWinnerPick[];
@@ -17,7 +25,26 @@ const EV_CLASS: Record<ComboPickCandidate['evLabel'], string> = {
 };
 
 export function WmComboPicksCard({ picks }: Props) {
-  const combos = rankWmComboPicks({ picks, maxSize: 3 });
+  const [oddsByPickId, setOddsByPickId] = useState<Record<string, number>>({});
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const sync = () => {
+      const map: Record<string, number> = {};
+      for (const s of loadStakeRecords()) map[s.id] = s.decimalOdds;
+      setOddsByPickId(map);
+    };
+    sync();
+    setMounted(true);
+    window.addEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
+    return () => window.removeEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
+  }, []);
+
+  const combos = useMemo(
+    () => rankWmComboPicks({ picks, maxSize: 3, oddsByPickId: mounted ? oddsByPickId : undefined }),
+    [picks, oddsByPickId, mounted]
+  );
+  const usedLedgerOdds = mounted && Object.keys(oddsByPickId).length > 0;
   if (combos.length === 0) return null;
   const top = combos.slice(0, 5);
 
@@ -25,7 +52,7 @@ export function WmComboPicksCard({ picks }: Props) {
     <section className="space-y-2 rounded-2xl border border-slate-700 bg-slate-900/40 p-3" aria-label="Combo-Picks">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">Combo-Picks · Top 5 nach Erwartungswert</h3>
-        <span className="text-[10px] text-slate-500">2er / 3er · Default-Quote 2.00</span>
+        <span className="text-[10px] text-slate-500">2er / 3er · {usedLedgerOdds ? 'Ledger-Quoten wo vorhanden' : 'Default-Quote 2.00'}</span>
       </div>
       <ul className="space-y-1.5">
         {top.map((c, idx) => (

@@ -71,3 +71,42 @@ describe('rankWmComboPicks', () => {
     }
   });
 });
+
+describe('oddsByPickId — echte Quoten pro Pick', () => {
+  it('Combo-Quote = Produkt der pick-spezifischen Quoten', () => {
+    const combos = rankWmComboPicks({
+      picks: [
+        pick({ fixtureId: 'a', modelProbabilityPct: 80 }),
+        pick({ fixtureId: 'b', modelProbabilityPct: 80 })
+      ],
+      maxSize: 2,
+      oddsByPickId: { 'a-home': 1.5, 'b-home': 1.8 }
+    });
+    expect(combos[0].comboOdds).toBeCloseTo(2.7, 2); // 1.5 * 1.8
+  });
+
+  it('Pick ohne Ledger-Quote faellt auf defaultOdds zurueck', () => {
+    const combos = rankWmComboPicks({
+      picks: [
+        pick({ fixtureId: 'a', modelProbabilityPct: 80 }),
+        pick({ fixtureId: 'b', modelProbabilityPct: 80 })
+      ],
+      maxSize: 2,
+      defaultOdds: 2.0,
+      oddsByPickId: { 'a-home': 1.5 } // b fehlt
+    });
+    expect(combos[0].comboOdds).toBeCloseTo(3.0, 2); // 1.5 * 2.0
+  });
+
+  it('Ungueltige Quote (<= 1) wird ignoriert → default', () => {
+    const combos = rankWmComboPicks({
+      picks: [
+        pick({ fixtureId: 'a', modelProbabilityPct: 80 }),
+        pick({ fixtureId: 'b', modelProbabilityPct: 80 })
+      ],
+      maxSize: 2,
+      oddsByPickId: { 'a-home': 0.5, 'b-home': 1.0 }
+    });
+    expect(combos[0].comboOdds).toBeCloseTo(4.0, 2); // beide default 2.0
+  });
+});

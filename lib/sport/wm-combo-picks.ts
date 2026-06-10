@@ -33,6 +33,9 @@ interface BuildOptions {
   picks: WmWinnerPick[];
   // Default decimal odds pro Pick (wenn nicht ueberschrieben).
   defaultOdds?: number;
+  // Optional: konkrete Quote pro pickId (`${fixtureId}-${winnerSide}`),
+  // z. B. aus dem Bankroll-Ledger. Faellt pro Pick auf defaultOdds zurueck.
+  oddsByPickId?: Record<string, number>;
   // Maximalgroesse einer Combo (Default 3).
   maxSize?: number;
   // Mindestens FREIGABE-Tier? Default true (nur "modell-favorit" + "hoechste-konfluenz").
@@ -51,17 +54,23 @@ function combinations<T>(arr: T[], size: number): T[][] {
 }
 
 export function rankWmComboPicks(opts: BuildOptions): ComboPickCandidate[] {
-  const { picks, defaultOdds = 2.0, maxSize = 3, onlyFreigabe = true } = opts;
+  const { picks, defaultOdds = 2.0, oddsByPickId, maxSize = 3, onlyFreigabe = true } = opts;
   const pool = onlyFreigabe
     ? picks.filter((p) => p.tier === 'hoechste-konfluenz' || p.tier === 'modell-favorit')
     : picks;
   if (pool.length < 2) return [];
 
+  const oddsFor = (p: WmWinnerPick): number => {
+    const id = `${p.fixture.id}-${p.winnerSide}`;
+    const o = oddsByPickId?.[id];
+    return typeof o === 'number' && o > 1 ? o : defaultOdds;
+  };
+
   const out: ComboPickCandidate[] = [];
   for (let size = 2; size <= Math.min(maxSize, pool.length); size++) {
     for (const combo of combinations(pool, size)) {
       const jointProb = combo.reduce((p, c) => p * (c.modelProbabilityPct / 100), 1);
-      const comboOdds = Math.pow(defaultOdds, size);
+      const comboOdds = combo.reduce((acc, c) => acc * oddsFor(c), 1);
       const ev = jointProb * (comboOdds - 1) - (1 - jointProb);
       const evPct = ev * 100;
       const evLabel: ComboPickCandidate['evLabel'] = evPct > 5 ? 'POSITIV' : evPct > 0 ? 'GRENZWERTIG' : 'NEGATIV';
