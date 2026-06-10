@@ -60,7 +60,8 @@ import { TradeTier90Card } from '@/components/trade-tier-90-card';
 import { TradingTodayCard } from '@/components/trading-today-card';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
-import { WmWinnerPicksCard } from '@/components/sport/wm-winner-picks-card';
+import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
+import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
 import { AppOverviewStats } from '@/components/app-overview-stats';
@@ -571,12 +572,15 @@ export default async function HomePage() {
       <WmCountdownBanner todayIso={todayIso} />
 
       {/* WM Sieger-Picks: nur sichtbar wenn fuer die naechsten 7 Tage
-          mindestens ein Profi-Pick durch alle Filter kommt. Damit hat der
-          User morgen frueh die Sieger-Tipps sofort beim Oeffnen, ohne
-          erst auf /sport navigieren zu muessen. */}
+          mindestens ein Profi-Pick durch alle Filter kommt. WmWinner-
+          PicksWithLearning rechnet die Picks mit den gelernten Faktor-
+          Gewichten neu, sobald >=5 Picks resolved sind. */}
       {wmWinnerPicksHome.length > 0 && (
-        <WmWinnerPicksCard picks={wmWinnerPicksHome} todayIso={todayIso} horizonDays={wmWinnerHorizonDays} />
+        <WmWinnerPicksWithLearning serverPicks={wmWinnerPicksHome} todayIso={todayIso} horizonDays={wmWinnerHorizonDays} />
       )}
+
+      {/* Live-Lern-Stand: zeigt sich erst sobald 5+ Picks im Log sind. */}
+      <WmLearningStatusCard />
 
       <TradingTodayCard
         tier90={tier90}
