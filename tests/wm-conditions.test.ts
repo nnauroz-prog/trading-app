@@ -188,3 +188,21 @@ describe('Wording', () => {
     }
   });
 });
+
+describe('findVenue — Sponsor-Aliase und Stadt-Fallback', () => {
+  it('GEHA Field at Arrowhead, Kansas City → Arrowhead Stadium', async () => {
+    const { findVenue } = await import('@/lib/sport/wm-venues');
+    const v = findVenue('GEHA Field at Arrowhead, Kansas City');
+    expect(v?.name).toBe('Arrowhead Stadium');
+  });
+
+  it('Estadio Azteca, Mexico City → Azteca (Substring)', async () => {
+    const { findVenue } = await import('@/lib/sport/wm-venues');
+    expect(findVenue('Estadio Azteca, Mexico City')?.name).toBe('Estadio Azteca');
+  });
+
+  it('Unbekanntes Stadion ohne Stadt-Match → null', async () => {
+    const { findVenue } = await import('@/lib/sport/wm-venues');
+    expect(findVenue('Phantasie-Arena, Nirgendwo')).toBeNull();
+  });
+});
