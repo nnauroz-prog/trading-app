@@ -55,6 +55,27 @@ describe('rankWmWinnerPicks', () => {
   });
 });
 
+describe('Conditions sind im Pick enthalten', () => {
+  it('Jeder Pick hat conditions.factors als Array', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 14 });
+    for (const p of picks) {
+      expect(Array.isArray(p.conditions.factors)).toBe(true);
+      expect(p.conditions.dataCoverage).toBeGreaterThanOrEqual(0);
+      expect(p.conditions.dataCoverage).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('Wenn conditions vorhanden sind, taucht der erste Faktor in reasons auf', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 14 });
+    for (const p of picks) {
+      if (p.conditions.factors.length > 0) {
+        const firstLabel = p.conditions.factors[0].label;
+        expect(p.reasons).toContain(firstLabel);
+      }
+    }
+  });
+});
+
 describe('Wording — keine verbotenen Begriffe', () => {
   const FORBIDDEN = ['sicher', 'bank', 'garantiert', 'todsicher', 'risikolos', 'muss kommen', 'free money'];
   it('reasons + riskNotes frei von verbotenen Begriffen', () => {

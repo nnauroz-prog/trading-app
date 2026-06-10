@@ -29,6 +29,12 @@ export interface ProTipperInput {
   dataConfidence: number;           // 0..100
   lineupAvailable: boolean;
   phase: WmFixture['phase'];
+  // Profi-Conditions: ELO-Shift aus Akklimatisierung, Hoehe, Jetlag,
+  // Heimvorteil etc. Wenn die Conditions das Vorzeichen der Pick-Seite
+  // schwaechen oder kippen, blockt der Agent.
+  conditionsEloShift?: number;       // home_delta - away_delta
+  conditionsConfidenceShift?: number; // > 0 stuetzt Heim, < 0 stuetzt Auswaerts
+  conditionsDataCoverage?: number;   // 0..1
 }
 
 export interface ProTipperResult {
@@ -121,6 +127,37 @@ export function evaluateProTipperAgent(input: ProTipperInput): ProTipperResult {
     status = escalate(status, 'BLOCKIERT');
     reasons.push(`Sieger-Quote nur ${input.confidencePct} %`);
   } else okChecks += 1;
+
+  // 9) Profi-Conditions: wenn die kombinierten Umfeld-Faktoren
+  // (Akklimatisierung, Hoehe, Jetlag, Heimvorteil, Mittagshitze,
+  // Publikum) gegen die Pick-Seite arbeiten, blockt der Agent.
+  if (typeof input.conditionsEloShift === 'number') {
+    totalChecks += 1;
+    const shiftMagnitude = Math.abs(input.conditionsEloShift);
+    const shiftSign = input.conditionsEloShift; // > 0 = stuetzt Heim
+    const pickSign = input.winnerSide === 'home' ? 1 : -1;
+    // Conditions widersprechen Pick stark? (mind. 60 ELO Shift gegen Pick)
+    if (shiftMagnitude >= 60 && Math.sign(shiftSign) === -Math.sign(pickSign)) {
+      status = escalate(status, 'BLOCKIERT');
+      reasons.push(`Umfeld-Faktoren ${shiftMagnitude > 0 ? '+' : ''}${Math.round(shiftSign)} ELO gegen Sieger-Pick`);
+    } else if (shiftMagnitude >= 30 && Math.sign(shiftSign) === -Math.sign(pickSign)) {
+      status = escalate(status, 'WARNUNG');
+      reasons.push(`Umfeld-Faktoren ${Math.round(shiftSign)} ELO leicht gegen Pick`);
+      okChecks += 0.5;
+    } else okChecks += 1;
+  }
+
+  // 10) Profi-Conditions Daten-Abdeckung: wenn weniger als 2 von 3
+  // Quellen aufloesbar sind (Venue / Heim / Auswaerts), ist die
+  // Conditions-Bewertung selbst zu duenn.
+  if (typeof input.conditionsDataCoverage === 'number') {
+    totalChecks += 1;
+    if (input.conditionsDataCoverage < 0.66) {
+      status = escalate(status, 'WARNUNG');
+      reasons.push(`Conditions-Datenbasis nur ${Math.round(input.conditionsDataCoverage * 100)} %`);
+      okChecks += 0.5;
+    } else okChecks += 1;
+  }
 
   const conviction = okChecks / totalChecks;
   const reason = reasons.length > 0

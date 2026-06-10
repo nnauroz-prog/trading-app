@@ -17,6 +17,7 @@
 import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
 import { predictWmMatch, type WmMatchPrediction } from '@/lib/sport/wm-match-engine';
 import { evaluateProTipperAgent, type ProTipperResult } from '@/lib/sport/sport-pro-tipper-agent';
+import { evaluateWmConditions, eloDiffShift, type WmConditionsReport } from '@/lib/sport/wm-conditions';
 
 export interface WmWinnerPick {
   fixture: WmFixture;
@@ -27,6 +28,9 @@ export interface WmWinnerPick {
   eloDiff: number;
   daysUntilMatch: number;
   proTipper: ProTipperResult;
+  // Umfeld-Faktoren (Akklimatisierung, Hoehe, Jetlag, Heimvorteil,
+  // Publikum, Mittagshitze). Jeder Faktor mit konkretem ELO-/Tor-Delta.
+  conditions: WmConditionsReport;
   // Tier nach Profi-Tipper-Klassifikation. Streng aufsteigend:
   //   'kein-freigabe-pick' wird nicht in die UI uebernommen.
   //   'modell-favorit'      = Standard-Profi-Pick.
@@ -90,6 +94,11 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
     const winnerTeam = winnerSide === 'home' ? f.homeTeam : f.awayTeam;
     const daysUntilMatch = daysBetween(todayIso, f.date);
 
+    // Profi-Conditions zuerst — dann fliessen ihre Werte in den
+    // Profi-Tipper-Agenten und in die Reasons.
+    const conditions = evaluateWmConditions({ fixture: f });
+    const condEloShift = eloDiffShift(conditions);
+
     // Profi-Tipper-Agent muss zustimmen — sonst gibt es keinen Pick.
     const proTipper = evaluateProTipperAgent({
       eloDiff: prediction.eloDiff,
@@ -102,7 +111,10 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
       isNeutralVenue: true,
       dataConfidence: prediction.dataConfidence,
       lineupAvailable: false,
-      phase: f.phase
+      phase: f.phase,
+      conditionsEloShift: condEloShift,
+      conditionsConfidenceShift: conditions.confidenceShiftTotal,
+      conditionsDataCoverage: conditions.dataCoverage
     });
     if (proTipper.status === 'BLOCKIERT') continue;
 
@@ -110,11 +122,18 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
     reasons.push(`ELO-Vorteil ${winnerTeam} +${Math.abs(prediction.eloDiff)} Punkte.`);
     reasons.push(`Modell sieht ${prediction.pick.confidencePct} % Sieger-Quote.`);
     if (prediction.reasoning.length > 0) reasons.push(prediction.reasoning[0]);
+    // Profi-Conditions: jeder konkrete Faktor in die Reasons aufnehmen.
+    for (const c of conditions.factors) {
+      reasons.push(c.label);
+    }
 
     const riskNotes: string[] = [];
     riskNotes.push('Lineup und Verletzungen unbekannt — kurz vor Anstoss pruefen.');
     if (daysUntilMatch > 3) riskNotes.push('Form-Lage kann sich bis zum Anstoss noch aendern.');
     if (proTipper.status === 'WARNUNG') riskNotes.push(proTipper.reason);
+    if (conditions.dataCoverage < 1) {
+      riskNotes.push(`Conditions-Daten unvollstaendig: ${Math.round(conditions.dataCoverage * 100)} % Quellen verfuegbar.`);
+    }
 
     const tier: WmWinnerPick['tier'] = (
       proTipper.status === 'OK' &&
@@ -132,6 +151,7 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
       eloDiff: prediction.eloDiff,
       daysUntilMatch,
       proTipper,
+      conditions,
       tier,
       reasons,
       riskNotes
