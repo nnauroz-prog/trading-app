@@ -69,6 +69,10 @@ interface BuildOptions {
   // Fixtures wie auslosung — der Pick darf durch, wenn die externe
   // Quelle die interne Paarung bestaetigt.
   verifiedFixtureIds?: Set<string>;
+  // Optional: Set von fixtureIds mit MISMATCH — externe Quelle
+  // widerspricht der internen Paarung. Hartes Veto, unabhaengig von
+  // der internen Confidence.
+  mismatchedFixtureIds?: Set<string>;
 }
 
 // Cap fuer den dynamischen ELO-Einfluss pro Team.
@@ -115,6 +119,10 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
     // ausser ein externer Reconciler hat sie als MATCH bestaetigt.
     const isVerified = opts.verifiedFixtureIds?.has(f.id) ?? false;
     if (effectiveConfidence(f) === 'placeholder' && !isVerified) continue;
+    // MISMATCH-Veto: externe Quelle widerspricht der internen Paarung.
+    // Schlaegt jede Confidence — wir picken kein Spiel, dessen Paarung
+    // zwei Quellen unterschiedlich sehen.
+    if (opts.mismatchedFixtureIds?.has(f.id)) continue;
     if (blacklistedPhase(f.phase)) continue;
     // Hartes Veto durch Datenintegritaets-Agent
     if (isTeamBlocked(f.homeTeam, integrity.blockedTeams) || isTeamBlocked(f.awayTeam, integrity.blockedTeams)) continue;

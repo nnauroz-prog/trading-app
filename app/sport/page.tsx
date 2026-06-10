@@ -110,13 +110,14 @@ import { buildLeaguePrecisionPicks } from '@/lib/sport/sport-precision-bridge';
 import { buildWmPrecisionPicks } from '@/lib/sport/wm-precision-bridge';
 import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
 import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
-import { reconcileWmSchedule, verifiedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
+import { reconcileWmSchedule, verifiedFixtureIds, mismatchedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
 import { WmReconcilerCard } from '@/components/sport/wm-reconciler-card';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
 import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
 import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
 import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
+import { WmBankrollLedgerCard } from '@/components/sport/wm-bankroll-ledger-card';
 import { WmEloDriftCard } from '@/components/sport/wm-elo-drift-card';
 import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
 import { getCachedWmBacktest } from '@/lib/sport/wm-backtest-runner';
@@ -610,17 +611,20 @@ export default async function SportPage() {
           toIso: horizonEndIso
         });
         const verifiedIds = verifiedFixtureIds(reconcile);
+        const mismatchedIds = mismatchedFixtureIds(reconcile);
         const winnerPicks = rankWmWinnerPicks({
           todayIso: buckets.todayIso,
           horizonDays,
           weatherByFixtureId,
-          verifiedFixtureIds: verifiedIds
+          verifiedFixtureIds: verifiedIds,
+          mismatchedFixtureIds: mismatchedIds
         });
         return (
           <>
             <WmReconcilerCard result={reconcile} />
             <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />
             <WmBankrollCard picks={winnerPicks} />
+            <WmBankrollLedgerCard />
             <WmComboPicksCard picks={winnerPicks} />
             <WmEloDriftCard />
           </>
