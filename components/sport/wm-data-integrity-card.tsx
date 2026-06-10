@@ -29,7 +29,8 @@ const KIND_LABEL: Record<IntegrityIssue['kind'], string> = {
   MISSING_VENUE: 'Stadion nicht aufloesbar',
   IMPLAUSIBLE_ELO: 'ELO ausserhalb plausiblem Bereich',
   OVERLAPPING_ALIASES: 'Alias-Ueberlappung',
-  PLACEHOLDER_TEAM: 'TBD-Platzhalter'
+  PLACEHOLDER_TEAM: 'TBD-Platzhalter',
+  PLACEHOLDER_FIXTURE: 'Paarung nicht verifiziert'
 };
 
 function fmtAgo(iso?: string): string {

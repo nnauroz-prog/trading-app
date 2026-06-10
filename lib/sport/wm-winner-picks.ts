@@ -14,7 +14,7 @@
 //
 // Reine Funktion. Wording strikt ohne verbotene Begriffe.
 
-import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
+import { WM_2026_FIXTURES, effectiveConfidence, type WmFixture } from '@/lib/sport/wm-schedule-2026';
 import { predictWmMatch, type WmMatchPrediction } from '@/lib/sport/wm-match-engine';
 import { evaluateProTipperAgent, type ProTipperResult } from '@/lib/sport/sport-pro-tipper-agent';
 import { evaluateWmConditions, eloDiffShift, type WmConditionFactor, type WmConditionsReport } from '@/lib/sport/wm-conditions';
@@ -105,6 +105,9 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
 
   for (const f of WM_2026_FIXTURES) {
     if (isTbd(f.homeTeam) || isTbd(f.awayTeam)) continue;
+    // Schedule-Confidence: placeholder-Fixtures sind im Schedule, aber
+    // ihre konkrete Paarung ist nicht 100 % verifiziert. Kein Pick darauf.
+    if (effectiveConfidence(f) === 'placeholder') continue;
     if (blacklistedPhase(f.phase)) continue;
     // Hartes Veto durch Datenintegritaets-Agent
     if (isTeamBlocked(f.homeTeam, integrity.blockedTeams) || isTeamBlocked(f.awayTeam, integrity.blockedTeams)) continue;

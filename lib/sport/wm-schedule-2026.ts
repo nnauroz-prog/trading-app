@@ -3,6 +3,12 @@
 // FIFA bestätigt; Mannschafts-Paarungen werden nach Auslosung (Dez 2025) und
 // nach Quali-Abschluss progressiv eingepflegt.
 
+export type WmFixtureConfidence =
+  | 'official'    // Termin + Stadion + Teams alle von FIFA bestaetigt
+  | 'auslosung'   // Paarung aus offizieller Gruppen-Auslosung, Detail kann variieren
+  | 'placeholder' // best-guess aus aelteren Quellen, NICHT verifiziert
+  | 'tbd';        // Sieger/Verlierer-Slot, Team nicht feststellbar
+
 export interface WmFixture {
   id: string;
   date: string; // YYYY-MM-DD (UTC nominal — wir behandeln als Berlin-Datum für die Anzeige)
@@ -12,6 +18,19 @@ export interface WmFixture {
   venue: string;
   phase: 'Gruppe' | 'Achtelfinale' | 'Viertelfinale' | 'Halbfinale' | 'Spiel um Platz 3' | 'Finale';
   group?: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L';
+  // Vertrauensgrad der Schedule-Eintragung. Wenn nicht gesetzt, behandelt
+  // das System es als 'auslosung' (Standard fuer Gruppenphase, Paarung
+  // bekannt aber Detail nicht 100 % verifiziert).
+  sourceConfidence?: WmFixtureConfidence;
+}
+
+// Liefert effektive Confidence — Default 'auslosung' fuer Gruppen-
+// Fixtures mit konkreten Teams, 'tbd' fuer Sieger/Verlierer-Slots.
+export function effectiveConfidence(f: WmFixture): WmFixtureConfidence {
+  if (f.sourceConfidence) return f.sourceConfidence;
+  const hasPlaceholder = (t: string) => /^(Sieger|Verlierer|Zweiter|Erster)\s/i.test(t.trim()) || t.includes('TBD');
+  if (hasPlaceholder(f.homeTeam) || hasPlaceholder(f.awayTeam)) return 'tbd';
+  return 'auslosung';
 }
 
 // Eine Auswahl an Spielen mit bestätigten oder hoch-wahrscheinlichen Paarungen.
@@ -19,17 +38,22 @@ export interface WmFixture {
 // dass die Mannschaft noch nicht feststeht. So entsteht kein Eindruck einer
 // erfundenen Vorhersage.
 export const WM_2026_FIXTURES: WmFixture[] = [
-  // Eröffnung — bestätigt durch fifa.com „Estadio Azteca hosts opening match"
-  // und sports.yahoo.com „Group A: Mexico face their big test".
+  // Eröffnung — Datum + Stadion offiziell bestätigt durch FIFA
+  // ("Estadio Azteca hosts opening match"). Konkrete Paarung
+  // Mexiko-Südafrika stammt aus älteren Sekundärquellen und ist
+  // NICHT 100 % verifiziert — daher sourceConfidence='placeholder'.
+  // Der Profi-Tipper blockt placeholder-Picks automatisch.
   {
     id: 'wm-1', date: '2026-06-11', time: '15:00',
     homeTeam: 'Mexiko', awayTeam: 'Südafrika',
-    venue: 'Estadio Azteca, Mexico City', phase: 'Gruppe', group: 'A'
+    venue: 'Estadio Azteca, Mexico City', phase: 'Gruppe', group: 'A',
+    sourceConfidence: 'placeholder'
   },
   {
     id: 'wm-1b', date: '2026-06-11', time: '21:00',
     homeTeam: 'Südkorea', awayTeam: 'Tschechien',
-    venue: 'TBD', phase: 'Gruppe', group: 'A'
+    venue: 'TBD', phase: 'Gruppe', group: 'A',
+    sourceConfidence: 'placeholder'
   },
   // Gruppe-A-Spieltage 2 + 3 (Schedule nach Yahoo Sports / amNewYork)
   {
@@ -47,17 +71,20 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     homeTeam: 'Tschechien', awayTeam: 'Mexiko',
     venue: 'TBD', phase: 'Gruppe', group: 'A'
   },
-  // Kanada-Eröffnung (Gruppe B) — Termin offiziell
+  // Kanada-Eröffnung (Gruppe B) — Termin offiziell, Gegner placeholder
   {
     id: 'wm-2', date: '2026-06-12', time: '18:00',
     homeTeam: 'Kanada', awayTeam: 'Bosnien-Herzegowina',
-    venue: 'BMO Field, Toronto', phase: 'Gruppe', group: 'B'
+    venue: 'BMO Field, Toronto', phase: 'Gruppe', group: 'B',
+    sourceConfidence: 'placeholder'
   },
-  // USA-Eröffnung (Gruppe D) — Termin offiziell, Gegner Türkei lt. Auslosung
+  // USA-Eröffnung (Gruppe D) — Termin offiziell, Gegner Türkei lt. Auslosung,
+  // konkret aber NICHT 100 % verifiziert.
   {
     id: 'wm-3', date: '2026-06-12', time: '21:00',
     homeTeam: 'USA', awayTeam: 'Türkei',
-    venue: 'SoFi Stadium, Los Angeles', phase: 'Gruppe', group: 'D'
+    venue: 'SoFi Stadium, Los Angeles', phase: 'Gruppe', group: 'D',
+    sourceConfidence: 'placeholder'
   },
   // Deutschland startet in Gruppe E (Auslosung bestätigt)
   {

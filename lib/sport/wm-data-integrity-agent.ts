@@ -15,7 +15,7 @@
 // rot angezeigt werden und im Profi-Tipper-Agent als BLOCKIERT-Quelle
 // dienen koennen.
 
-import { WM_2026_FIXTURES } from '@/lib/sport/wm-schedule-2026';
+import { WM_2026_FIXTURES, effectiveConfidence } from '@/lib/sport/wm-schedule-2026';
 import { WM_2026_TEAMS, findTeamStrength } from '@/lib/sport/wm-team-strength';
 import { findTeamOrigin, WM_TEAM_ORIGINS } from '@/lib/sport/wm-team-origins';
 import { findVenue, WM_2026_VENUES } from '@/lib/sport/wm-venues';
@@ -27,7 +27,8 @@ export type IntegrityIssueKind =
   | 'MISSING_VENUE'
   | 'IMPLAUSIBLE_ELO'
   | 'OVERLAPPING_ALIASES'
-  | 'PLACEHOLDER_TEAM';
+  | 'PLACEHOLDER_TEAM'
+  | 'PLACEHOLDER_FIXTURE';
 
 export interface IntegrityIssue {
   severity: IntegrityIssueSeverity;
@@ -43,6 +44,20 @@ function isPlaceholderTeam(name: string): boolean {
 
 export function auditWmData(): IntegrityIssue[] {
   const issues: IntegrityIssue[] = [];
+
+  // 0) Schedule-Confidence: placeholder-Fixtures werden als WARNUNG
+  // gemeldet. Sie sind im Schedule eingetragen, aber Paarung nicht
+  // 100 % von FIFA verifiziert.
+  for (const f of WM_2026_FIXTURES) {
+    if (effectiveConfidence(f) === 'placeholder') {
+      issues.push({
+        severity: 'WARNUNG',
+        kind: 'PLACEHOLDER_FIXTURE',
+        subject: `${f.homeTeam} – ${f.awayTeam}`,
+        detail: `Fixture ${f.id} (${f.date}) hat sourceConfidence='placeholder'. Termin und Stadion sind offiziell, die konkrete Paarung stammt aus aelteren Sekundaerquellen und ist nicht final verifiziert. Picks dieses Spiels werden vom Profi-Tipper blockiert.`
+      });
+    }
+  }
 
   // 1) Alle Teams aus den Fixtures sammeln (TBD-Slots ignorieren).
   const fixtureTeams = new Set<string>();
