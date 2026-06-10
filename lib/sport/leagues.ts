@@ -44,6 +44,12 @@ export const FOOTBALL_LEAGUES: League[] = [
   { id: '4480', name: 'UEFA Champions League', country: 'Europa' },
   { id: '4481', name: 'UEFA Europa League', country: 'Europa' },
   { id: '4548', name: 'UEFA Nations League', country: 'Europa' },
+  // === Welt-Turniere ===
+  // FIFA World Cup: wichtig fuer den WM-Pick-Resolver — finished
+  // Fixtures aus dieser Liga matchen automatisch gegen das WM-Schedule
+  // (lib/sport/wm-results-matcher) und loesen Picks ohne manuelle
+  // Eingabe auf.
+  { id: '4429', name: 'FIFA World Cup', country: 'Welt' },
   // === Amerika ===
   { id: '4346', name: 'MLS', country: 'USA' },
   { id: '4351', name: 'Brasileirão Série A', country: 'Brasilien' },

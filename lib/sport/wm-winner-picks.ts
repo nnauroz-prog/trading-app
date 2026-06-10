@@ -59,7 +59,15 @@ interface BuildOptions {
   // Optional: Live-Wetter-Snapshots pro fixtureId. Wenn vorhanden,
   // fliesst der Wetter-Faktor in conditions ein.
   weatherByFixtureId?: Record<string, WeatherSnapshot | null>;
+  // Optional: gelernte ELO-Deltas pro Team aus echten Spielergebnissen
+  // (wm-dynamic-elo). Fliessen als 'dynamic-elo' Conditions-Faktor in
+  // jeden Pick ein — gedeckelt bei +/-60 ELO, damit ein einzelnes
+  // Ausreisser-Resultat nicht alles kippt.
+  eloDeltaByTeam?: Record<string, number>;
 }
+
+// Cap fuer den dynamischen ELO-Einfluss pro Team.
+const DYNAMIC_ELO_CAP = 60;
 
 function daysBetween(todayIso: string, fixtureIso: string): number {
   const t = new Date(`${todayIso}T00:00:00`).getTime();
@@ -142,6 +150,28 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
     // Zusatzfaktoren: Konfoederations-Heimvorteil, Phase-Druck,
     // Stadion-Vertrautheit, Reisedistanz.
     extra.push(...evaluateExtraFactors(f));
+    // Dynamisches ELO aus echten Spielergebnissen — das System handelt
+    // nach dem was es gelernt hat, nicht nur Anzeige.
+    if (opts.eloDeltaByTeam) {
+      const rawHome = opts.eloDeltaByTeam[f.homeTeam] ?? 0;
+      const rawAway = opts.eloDeltaByTeam[f.awayTeam] ?? 0;
+      const homeDelta = Math.max(-DYNAMIC_ELO_CAP, Math.min(DYNAMIC_ELO_CAP, rawHome));
+      const awayDelta = Math.max(-DYNAMIC_ELO_CAP, Math.min(DYNAMIC_ELO_CAP, rawAway));
+      if (homeDelta !== 0 || awayDelta !== 0) {
+        const parts: string[] = [];
+        if (homeDelta !== 0) parts.push(`${f.homeTeam} ${homeDelta > 0 ? '+' : ''}${homeDelta}`);
+        if (awayDelta !== 0) parts.push(`${f.awayTeam} ${awayDelta > 0 ? '+' : ''}${awayDelta}`);
+        extra.push({
+          id: 'dynamic-elo',
+          label: `Dynamisches ELO aus Turnier-Ergebnissen: ${parts.join(', ')}`,
+          homeGoalMultiplier: 1,
+          awayGoalMultiplier: 1,
+          homeEloDelta: homeDelta,
+          awayEloDelta: awayDelta,
+          confidenceShift: (homeDelta - awayDelta) / 6
+        });
+      }
+    }
 
     const rawConditions = evaluateWmConditions({ fixture: f, extraFactors: extra });
     const conditions = applyFactorWeights(rawConditions, opts.factorWeights ?? null);

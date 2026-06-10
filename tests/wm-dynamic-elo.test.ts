@@ -59,3 +59,43 @@ describe('summarizeEloDeltas', () => {
     }
   });
 });
+
+describe('collectResultsForElo', () => {
+  const log = [
+    { fixtureId: 'fx-1', outcome: 'win' as const, finalHomeScore: 2, finalAwayScore: 0 },
+    { fixtureId: 'fx-2', outcome: 'pending' as const },
+    { fixtureId: 'fx-3', outcome: 'loss' as const, finalHomeScore: 0, finalAwayScore: 1 }
+  ];
+
+  it('Pending Picks werden ignoriert', async () => {
+    const { collectResultsForElo } = await import('@/lib/sport/wm-dynamic-elo');
+    const results = collectResultsForElo(log, []);
+    expect(results.length).toBe(2);
+    expect(results.find((r) => r.fixtureId === 'fx-2')).toBeUndefined();
+  });
+
+  it('Manuelle Eintraege haben Vorrang vor Log-Scores', async () => {
+    const { collectResultsForElo } = await import('@/lib/sport/wm-dynamic-elo');
+    const results = collectResultsForElo(log, [{ fixtureId: 'fx-1', homeScore: 5, awayScore: 5 }]);
+    const fx1 = results.find((r) => r.fixtureId === 'fx-1');
+    expect(fx1?.homeScore).toBe(5);
+  });
+
+  it('Manuelle Eintraege ohne Pick-Log zaehlen ebenfalls', async () => {
+    const { collectResultsForElo } = await import('@/lib/sport/wm-dynamic-elo');
+    const results = collectResultsForElo(log, [{ fixtureId: 'fx-99', homeScore: 1, awayScore: 0 }]);
+    expect(results.find((r) => r.fixtureId === 'fx-99')).toBeDefined();
+  });
+});
+
+describe('eloDeltaByTeam', () => {
+  it('Nur Teams mit Delta != 0 in der Map', async () => {
+    const { applyResultsToElo, eloDeltaByTeam } = await import('@/lib/sport/wm-dynamic-elo');
+    const map = applyResultsToElo([{ fixtureId: WM_2026_FIXTURES[0].id, homeScore: 3, awayScore: 0 }]);
+    const deltas = eloDeltaByTeam(map);
+    for (const v of Object.values(deltas)) {
+      expect(v).not.toBe(0);
+    }
+    expect(Object.keys(deltas).length).toBeGreaterThan(0);
+  });
+});

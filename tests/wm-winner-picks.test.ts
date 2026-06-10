@@ -90,3 +90,45 @@ describe('Wording — keine verbotenen Begriffe', () => {
     }
   });
 });
+
+describe('Dynamisches ELO im Pick-Ranking', () => {
+  it('eloDeltaByTeam erzeugt dynamic-elo Faktor in den conditions', () => {
+    const base = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 14 });
+    if (base.length === 0) return; // kein Pick heute → nichts zu pruefen
+    const target = base[0];
+    const withElo = rankWmWinnerPicks({
+      todayIso: '2026-06-11',
+      horizonDays: 14,
+      eloDeltaByTeam: { [target.fixture.homeTeam]: 40 }
+    });
+    const samePick = withElo.find((p) => p.fixture.id === target.fixture.id);
+    if (samePick) {
+      const dyn = samePick.conditions.factors.find((f) => f.id === 'dynamic-elo');
+      expect(dyn).toBeDefined();
+      expect(dyn!.homeEloDelta).toBe(40);
+    }
+  });
+
+  it('Delta wird bei +/-60 gedeckelt', () => {
+    const base = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 14 });
+    if (base.length === 0) return;
+    const target = base[0];
+    const withElo = rankWmWinnerPicks({
+      todayIso: '2026-06-11',
+      horizonDays: 14,
+      eloDeltaByTeam: { [target.fixture.homeTeam]: 250 }
+    });
+    const samePick = withElo.find((p) => p.fixture.id === target.fixture.id);
+    if (samePick) {
+      const dyn = samePick.conditions.factors.find((f) => f.id === 'dynamic-elo');
+      expect(dyn!.homeEloDelta).toBe(60);
+    }
+  });
+
+  it('Ohne Deltas → kein dynamic-elo Faktor', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 14 });
+    for (const p of picks) {
+      expect(p.conditions.factors.find((f) => f.id === 'dynamic-elo')).toBeUndefined();
+    }
+  });
+});
