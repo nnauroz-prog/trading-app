@@ -24,6 +24,9 @@ import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-wi
 import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
 import { WmBankrollLedgerCard } from '@/components/sport/wm-bankroll-ledger-card';
 import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
+import { WmJetztCard } from '@/components/sport/wm-jetzt-card';
+import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
+import { PlainHint } from '@/components/sport/plain-hint';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
 import { WmCalibrationCard } from '@/components/sport/wm-calibration-card';
 import { WmEloDriftCard } from '@/components/sport/wm-elo-drift-card';
@@ -167,20 +170,32 @@ export default async function WorldCupPage() {
         });
         return (
           <>
+            <WmJetztCard todayIso={todayIso} plan={dayPlan} />
+            <PlainHint id="day-plan" />
             <WmDayPlanCard plan={dayPlan} />
+            <PlainHint id="reconciler" />
             <WmReconcilerCard result={reconcile} />
+            <PlainHint id="winner-picks" />
             <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={todayIso} horizonDays={horizonDays} />
+            <PlainHint id="bankroll" />
             <WmBankrollCard picks={winnerPicks} />
+            <PlainHint id="ledger" />
             <WmBankrollLedgerCard />
+            <PlainHint id="combo" />
             <WmComboPicksCard picks={winnerPicks} />
             <WmPickResolver externalFinished={liveLast
               .filter((f) => f.homeScore !== null && f.awayScore !== null)
               .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date }))}
             />
+            <PlainHint id="learning" />
             <WmLearningStatusCard />
-      <WmCalibrationCard />
+            <PlainHint id="calibration" />
+            <WmCalibrationCard />
+            <PlainHint id="elo-drift" />
             <WmEloDriftCard />
+            <PlainHint id="result-input" />
             <WmResultInputCard />
+            <WmGlossarCard />
           </>
         );
       })()}

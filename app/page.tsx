@@ -74,6 +74,9 @@ import { evaluateIntegrityAction } from '@/lib/sport/wm-data-integrity-action';
 import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
 import { WmBankrollLedgerCard } from '@/components/sport/wm-bankroll-ledger-card';
 import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
+import { WmJetztCard } from '@/components/sport/wm-jetzt-card';
+import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
+import { PlainHint } from '@/components/sport/plain-hint';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
 import { AppOverviewStats } from '@/components/app-overview-stats';
@@ -608,16 +611,23 @@ export default async function HomePage() {
           Mismatches (Quellen-Konflikte) zaehlen als Blocks mit. */}
       <WmIntegrityPill initial={evaluateIntegrityAction()} reconcilerMismatches={wmReconcileHome.mismatched} />
 
-      {/* Heute bei der WM: alle heutigen Spiele mit Anstosszeit (Berlin),
-          Pick-Status und konkretem Block-Grund. Versteckt sich an
-          spielfreien Tagen. */}
-      <WmDayPlanCard plan={buildWmDayPlan({
-        todayIso,
-        picks: wmWinnerPicksHome,
-        weatherByFixtureId: wmWeatherByFixtureIdHome,
-        verifiedFixtureIds: verifiedFixtureIds(wmReconcileHome),
-        mismatchedFixtureIds: mismatchedFixtureIds(wmReconcileHome)
-      })} />
+      {/* "Was passiert jetzt?" + Tagesplan (mit Klartext-Hinweis). */}
+      {(() => {
+        const plan = buildWmDayPlan({
+          todayIso,
+          picks: wmWinnerPicksHome,
+          weatherByFixtureId: wmWeatherByFixtureIdHome,
+          verifiedFixtureIds: verifiedFixtureIds(wmReconcileHome),
+          mismatchedFixtureIds: mismatchedFixtureIds(wmReconcileHome)
+        });
+        return (
+          <>
+            <WmJetztCard todayIso={todayIso} plan={plan} />
+            <PlainHint id="day-plan" />
+            <WmDayPlanCard plan={plan} />
+          </>
+        );
+      })()}
 
       {/* WM Sieger-Picks: nur sichtbar wenn fuer die naechsten 7 Tage
           mindestens ein Profi-Pick durch alle Filter kommt. WmWinner-
@@ -626,9 +636,13 @@ export default async function HomePage() {
       {wmWinnerPicksHome.length > 0 && (
         <>
           <WmWinnerPicksWithLearning serverPicks={wmWinnerPicksHome} todayIso={todayIso} horizonDays={wmWinnerHorizonDays} />
+          <PlainHint id="winner-picks" />
           <WmBankrollCard picks={wmWinnerPicksHome} />
+          <PlainHint id="ledger" />
           <WmBankrollLedgerCard />
+          <PlainHint id="combo" />
           <WmComboPicksCard picks={wmWinnerPicksHome} />
+          <WmGlossarCard />
         </>
       )}
 

@@ -113,6 +113,9 @@ import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
 import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
 import { reconcileWmSchedule, verifiedFixtureIds, mismatchedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
 import { WmReconcilerCard } from '@/components/sport/wm-reconciler-card';
+import { WmJetztCard } from '@/components/sport/wm-jetzt-card';
+import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
+import { PlainHint } from '@/components/sport/plain-hint';
 import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
 import { WmDayPlanCard } from '@/components/sport/wm-day-plan-card';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
@@ -560,15 +563,15 @@ export default async function SportPage() {
         );
       })()}
 
-      {/* Daten-Integritaets-Agent — LIVE.
-          Greift direkt in rankWmWinnerPicks ein (Pick-Veto), refresh-t
-          sich client-seitig alle 30 s und zeigt einen Live-Zeitstempel. */}
+      {/* System-Guide (aufklappbar) + Klartext-Erklaerungen pro Karte. */}
       <WmSystemGuide />
+
+      {/* Daten-Integritaets-Agent — LIVE. */}
+      <PlainHint id="integrity" />
       <WmDataIntegrityLive initial={evaluateIntegrityAction()} />
 
-      {/* System-Backtest gegen echte Spiele 2022-2024 — VOR den heutigen
-          Picks, damit der User sieht ob das System ueberhaupt funktioniert.
-          Cache 24 h, reine in-memory Berechnung. */}
+      {/* System-Backtest gegen echte Spiele. */}
+      <PlainHint id="backtest" />
       <WmBacktestReportCard report={await getCachedWmBacktest()} />
 
       {/* Live-Lern-Stand: zeigt sich automatisch sobald >= 5 Picks geloggt
@@ -582,8 +585,11 @@ export default async function SportPage() {
             .filter((f) => f.homeScore !== null && f.awayScore !== null)
             .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date })))}
       />
+      <PlainHint id="learning" />
       <WmLearningStatusCard />
+      <PlainHint id="calibration" />
       <WmCalibrationCard />
+      <PlainHint id="result-input" />
       <WmResultInputCard />
 
       {/* WM Sieger-Picks — die strengste Schicht der App: nur 1X2-Sieger-
@@ -638,16 +644,27 @@ export default async function SportPage() {
         });
         return (
           <>
+            <WmJetztCard todayIso={buckets.todayIso} plan={dayPlan} />
+            <PlainHint id="day-plan" />
             <WmDayPlanCard plan={dayPlan} />
+            <PlainHint id="reconciler" />
             <WmReconcilerCard result={reconcile} />
+            <PlainHint id="winner-picks" />
             <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />
+            <PlainHint id="bankroll" />
             <WmBankrollCard picks={winnerPicks} />
+            <PlainHint id="ledger" />
             <WmBankrollLedgerCard />
+            <PlainHint id="combo" />
             <WmComboPicksCard picks={winnerPicks} />
+            <PlainHint id="elo-drift" />
             <WmEloDriftCard />
           </>
         );
       })()}
+
+      {/* Klartext-Glossar ganz unten: jeder Begriff in einem Satz. */}
+      <WmGlossarCard />
 
       {(() => {
         const precisionPicks = buildLeaguePrecisionPicks(leagues, { todayIso: buckets.todayIso });
