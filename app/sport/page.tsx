@@ -110,6 +110,8 @@ import { buildLeaguePrecisionPicks } from '@/lib/sport/sport-precision-bridge';
 import { buildWmPrecisionPicks } from '@/lib/sport/wm-precision-bridge';
 import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
 import { WmWinnerPicksCard } from '@/components/sport/wm-winner-picks-card';
+import { getCachedWmBacktest } from '@/lib/sport/wm-backtest-runner';
+import { WmBacktestReportCard } from '@/components/sport/wm-backtest-report-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -540,6 +542,11 @@ export default async function SportPage() {
           />
         );
       })()}
+
+      {/* System-Backtest gegen echte Spiele 2022-2024 — VOR den heutigen
+          Picks, damit der User sieht ob das System ueberhaupt funktioniert.
+          Cache 24 h, reine in-memory Berechnung. */}
+      <WmBacktestReportCard report={await getCachedWmBacktest()} />
 
       {/* WM Sieger-Picks — die strengste Schicht der App: nur 1X2-Sieger-
           Tipps, gefiltert durch den Profi-Tipper-Agenten (ELO-Vorteil,

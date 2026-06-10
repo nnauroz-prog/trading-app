@@ -18,6 +18,7 @@ import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
 import { predictWmMatch, type WmMatchPrediction } from '@/lib/sport/wm-match-engine';
 import { evaluateProTipperAgent, type ProTipperResult } from '@/lib/sport/sport-pro-tipper-agent';
 import { evaluateWmConditions, eloDiffShift, type WmConditionsReport } from '@/lib/sport/wm-conditions';
+import type { FactorWeightMap } from '@/lib/sport/wm-pick-learning';
 
 export interface WmWinnerPick {
   fixture: WmFixture;
@@ -45,6 +46,11 @@ interface BuildOptions {
   horizonDays?: number; // Default 7 — Profi-Tipps sind kein Langzeit-Tipp.
   minProbability?: number; // Default 0.60 (1X2-Sieger).
   minEloDiff?: number;     // Default 80.
+  // Optional: empirisch gelernte Faktor-Gewichte aus dem WM-Pick-Log.
+  // Wenn gesetzt, werden die Conditions-ELO-Deltas pro Faktor mit dem
+  // gelernten Multiplier skaliert (BESTAETIGT verstaerkt, KONTRA daempft).
+  // Reine Pure-Lib bleibt — der Caller liefert die Map.
+  factorWeights?: FactorWeightMap | null;
 }
 
 function daysBetween(todayIso: string, fixtureIso: string): number {
@@ -95,8 +101,11 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
     const daysUntilMatch = daysBetween(todayIso, f.date);
 
     // Profi-Conditions zuerst — dann fliessen ihre Werte in den
-    // Profi-Tipper-Agenten und in die Reasons.
-    const conditions = evaluateWmConditions({ fixture: f });
+    // Profi-Tipper-Agenten und in die Reasons. Wenn gelernte Faktor-
+    // Gewichte uebergeben wurden, skalieren wir die ELO-Deltas pro
+    // Faktor entsprechend.
+    const rawConditions = evaluateWmConditions({ fixture: f });
+    const conditions = applyFactorWeights(rawConditions, opts.factorWeights ?? null);
     const condEloShift = eloDiffShift(conditions);
 
     // Profi-Tipper-Agent muss zustimmen — sonst gibt es keinen Pick.
@@ -167,4 +176,29 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
   });
 
   return out;
+}
+
+
+// Skaliert die ELO-Deltas pro Faktor mit den empirisch gelernten Gewichten.
+// BESTAETIGT (Weight > 1) verstaerkt die Wirkung; KONTRA (Weight < 1) daempft sie.
+// Tor-Multiplier bleiben unveraendert (sind physiologisch gerechnete Werte).
+function applyFactorWeights(report: WmConditionsReport, weights: FactorWeightMap | null): WmConditionsReport {
+  if (!weights) return report;
+  const adjustedFactors = report.factors.map((f) => {
+    const w = weights.weights[f.id];
+    if (typeof w !== "number" || w === 1) return f;
+    return {
+      ...f,
+      homeEloDelta: f.homeEloDelta * w,
+      awayEloDelta: f.awayEloDelta * w,
+      confidenceShift: f.confidenceShift * w
+    };
+  });
+  return {
+    ...report,
+    factors: adjustedFactors,
+    homeEloDeltaTotal: adjustedFactors.reduce((s, f) => s + f.homeEloDelta, 0),
+    awayEloDeltaTotal: adjustedFactors.reduce((s, f) => s + f.awayEloDelta, 0),
+    confidenceShiftTotal: adjustedFactors.reduce((s, f) => s + f.confidenceShift, 0)
+  };
 }
