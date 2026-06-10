@@ -150,7 +150,8 @@ export const KNOWN_FACTOR_IDS = [
   'confederation-home',
   'phase-pressure',
   'venue-familiarity',
-  'travel-distance'
+  'travel-distance',
+  'dynamic-elo'
 ] as const;
 export type WmFactorId = typeof KNOWN_FACTOR_IDS[number];
 

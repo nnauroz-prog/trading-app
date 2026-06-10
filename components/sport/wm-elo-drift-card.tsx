@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   applyResultsToElo,
+  collectResultsForElo,
   summarizeEloDeltas,
   type EloDelta
 } from '@/lib/sport/wm-dynamic-elo';
@@ -49,28 +50,9 @@ export function WmEloDriftCard() {
     if (!mounted) return [];
     void logTick;
     void resultTick;
-    const log = loadWmPickLog();
-    const manual = loadManualWmResults();
-    // Bevorzugt manuelle Eintraege (authoritativ), sonst die im Log
-    // gespeicherten finalHomeScore/finalAwayScore aus resolved Picks.
-    const manualMap = new Map(manual.map((m) => [m.fixtureId, { homeScore: m.homeScore, awayScore: m.awayScore }]));
-    const results = log
-      .filter((e) => e.outcome !== 'pending')
-      .map((e) => {
-        const m = manualMap.get(e.fixtureId);
-        if (m) return { fixtureId: e.fixtureId, homeScore: m.homeScore, awayScore: m.awayScore };
-        if (typeof e.finalHomeScore === 'number' && typeof e.finalAwayScore === 'number') {
-          return { fixtureId: e.fixtureId, homeScore: e.finalHomeScore, awayScore: e.finalAwayScore };
-        }
-        return null;
-      })
-      .filter((x): x is { fixtureId: string; homeScore: number; awayScore: number } => x !== null);
-    // Manuelle Eintraege auch fuer Fixtures ohne Pick-Log einrechnen.
-    for (const m of manual) {
-      if (!results.find((r) => r.fixtureId === m.fixtureId)) {
-        results.push({ fixtureId: m.fixtureId, homeScore: m.homeScore, awayScore: m.awayScore });
-      }
-    }
+    // Geteilte Pure-Logik: dieselbe Result-Sammlung wie im Pick-Ranking
+    // (WmWinnerPicksWithLearning) — Anzeige und Handeln bleiben konsistent.
+    const results = collectResultsForElo(loadWmPickLog(), loadManualWmResults());
     if (results.length === 0) return [];
     return summarizeEloDeltas(applyResultsToElo(results));
   }, [mounted, logTick, resultTick]);

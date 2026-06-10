@@ -95,3 +95,55 @@ export function summarizeEloDeltas(map: EloMap): EloDelta[] {
   out.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
   return out;
 }
+
+// Sammelt Final-Scores aus dem Pick-Lern-Log + manuellen Eintraegen.
+// Manuelle Eintraege sind authoritativ; Log-Scores ergaenzen; Fixtures
+// ohne Pick-Log aber mit manuellem Ergebnis zaehlen ebenfalls.
+// Pure — wird vom ELO-Drift-Display UND vom Pick-Ranking benutzt.
+export interface MinimalResolvedPick {
+  fixtureId: string;
+  outcome: 'pending' | 'win' | 'loss' | 'push';
+  finalHomeScore?: number;
+  finalAwayScore?: number;
+}
+
+export interface MinimalManualResult {
+  fixtureId: string;
+  homeScore: number;
+  awayScore: number;
+}
+
+export function collectResultsForElo(
+  log: MinimalResolvedPick[],
+  manual: MinimalManualResult[]
+): FinishedFixtureLite[] {
+  const manualMap = new Map(manual.map((m) => [m.fixtureId, m]));
+  const results: FinishedFixtureLite[] = [];
+  for (const e of log) {
+    if (e.outcome === 'pending') continue;
+    const m = manualMap.get(e.fixtureId);
+    if (m) {
+      results.push({ fixtureId: e.fixtureId, homeScore: m.homeScore, awayScore: m.awayScore });
+      continue;
+    }
+    if (typeof e.finalHomeScore === 'number' && typeof e.finalAwayScore === 'number') {
+      results.push({ fixtureId: e.fixtureId, homeScore: e.finalHomeScore, awayScore: e.finalAwayScore });
+    }
+  }
+  for (const m of manual) {
+    if (!results.find((r) => r.fixtureId === m.fixtureId)) {
+      results.push({ fixtureId: m.fixtureId, homeScore: m.homeScore, awayScore: m.awayScore });
+    }
+  }
+  return results;
+}
+
+// Liefert pro Team das gelernte ELO-Delta als Map — Eingabe fuer das
+// Pick-Ranking (dynamic-elo Conditions-Faktor).
+export function eloDeltaByTeam(map: EloMap): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const d of summarizeEloDeltas(map)) {
+    if (d.delta !== 0) out[d.team] = d.delta;
+  }
+  return out;
+}
