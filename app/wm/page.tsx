@@ -27,6 +27,7 @@ import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
 import { WmJetztCard } from '@/components/sport/wm-jetzt-card';
 import { WmWeekPlanCard } from '@/components/sport/wm-week-plan-card';
 import { buildWmWeekPlan } from '@/lib/sport/wm-week-plan';
+import { WmPickExplainCard } from '@/components/sport/wm-pick-explain-card';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
@@ -182,6 +183,7 @@ export default async function WorldCupPage() {
             <WmReconcilerCard result={reconcile} />
             <PlainHint id="winner-picks" />
             <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={todayIso} horizonDays={horizonDays} />
+            <WmPickExplainCard picks={winnerPicks} />
             <PlainHint id="bankroll" />
             <WmBankrollCard picks={winnerPicks} />
             <PlainHint id="ledger" />
