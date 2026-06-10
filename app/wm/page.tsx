@@ -9,6 +9,25 @@ import { WmSafeMarketTips } from '@/components/wm-safe-market-tips';
 import { evaluateWmPersonas } from '@/lib/agents/wm-personas';
 import { WmPersonaPanel } from '@/components/wm-persona-panel';
 import { PersonaConsensusBanner } from '@/components/persona-consensus-banner';
+import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
+import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
+import { reconcileWmSchedule, verifiedFixtureIds, mismatchedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
+import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
+import { evaluateIntegrityAction } from '@/lib/sport/wm-data-integrity-action';
+import { getCachedWmBacktest } from '@/lib/sport/wm-backtest-runner';
+import { WmDayPlanCard } from '@/components/sport/wm-day-plan-card';
+import { WmReconcilerCard } from '@/components/sport/wm-reconciler-card';
+import { WmDataIntegrityLive } from '@/components/sport/wm-data-integrity-live';
+import { WmBacktestReportCard } from '@/components/sport/wm-backtest-report-card';
+import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
+import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
+import { WmBankrollLedgerCard } from '@/components/sport/wm-bankroll-ledger-card';
+import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
+import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
+import { WmEloDriftCard } from '@/components/sport/wm-elo-drift-card';
+import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
+import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
+import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsible-legacy-section';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -117,17 +136,68 @@ export default async function WorldCupPage() {
         </p>
       </header>
 
-      <WmSafeMarketTips todayIso={new Date().toISOString().slice(0, 10)} />
-      {(() => {
-        const wmVerdicts = evaluateWmPersonas(new Date().toISOString().slice(0, 10));
+      {/* === NEUER PRECISION-STACK — identisch zu /sport und / === */}
+      <WmDataIntegrityLive initial={evaluateIntegrityAction()} />
+      <WmBacktestReportCard report={await getCachedWmBacktest()} />
+      {await (async () => {
+        const todayIso = new Date().toISOString().slice(0, 10);
+        const horizonDays = 7;
+        const weatherByFixtureId = await fetchWmWeatherByFixture({ todayIso, horizonDays });
+        const wmExternalFixtures = [...liveNext, ...liveLast].map((f) => ({
+          date: f.date, time: f.time ?? null, homeTeam: f.homeTeam, awayTeam: f.awayTeam
+        }));
+        const horizonEndIso = (() => {
+          const d = new Date(`${todayIso}T00:00:00`);
+          d.setUTCDate(d.getUTCDate() + 14);
+          return d.toISOString().slice(0, 10);
+        })();
+        const reconcile = reconcileWmSchedule({ external: wmExternalFixtures, fromIso: todayIso, toIso: horizonEndIso });
+        const verifiedIds = verifiedFixtureIds(reconcile);
+        const mismatchedIds = mismatchedFixtureIds(reconcile);
+        const winnerPicks = rankWmWinnerPicks({
+          todayIso, horizonDays, weatherByFixtureId,
+          verifiedFixtureIds: verifiedIds, mismatchedFixtureIds: mismatchedIds
+        });
+        const dayPlan = buildWmDayPlan({
+          todayIso, picks: winnerPicks, weatherByFixtureId,
+          verifiedFixtureIds: verifiedIds, mismatchedFixtureIds: mismatchedIds
+        });
         return (
           <>
-            <PersonaConsensusBanner verdicts={wmVerdicts} context="WM" />
-            <WmPersonaPanel verdicts={wmVerdicts} />
+            <WmDayPlanCard plan={dayPlan} />
+            <WmReconcilerCard result={reconcile} />
+            <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={todayIso} horizonDays={horizonDays} />
+            <WmBankrollCard picks={winnerPicks} />
+            <WmBankrollLedgerCard />
+            <WmComboPicksCard picks={winnerPicks} />
+            <WmPickResolver externalFinished={liveLast
+              .filter((f) => f.homeScore !== null && f.awayScore !== null)
+              .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date }))}
+            />
+            <WmLearningStatusCard />
+            <WmEloDriftCard />
+            <WmResultInputCard />
           </>
         );
       })()}
-      <WmOutrightCard todayIso={new Date().toISOString().slice(0, 10)} />
+
+      <SportCollapsibleLegacySection
+        title="WM-Rohranking und Modellübersicht"
+        subtitle="Multi-Markt-Picks, Personas, Turniersieger"
+        hint="Rohdaten-Ansicht — der Precision-Stack oben filtert strenger. Diese Karten zeigen ungefilterte Modell-Tendenzen und sind keine Freigabe."
+      >
+        <WmSafeMarketTips todayIso={new Date().toISOString().slice(0, 10)} />
+        {(() => {
+          const wmVerdicts = evaluateWmPersonas(new Date().toISOString().slice(0, 10));
+          return (
+            <>
+              <PersonaConsensusBanner verdicts={wmVerdicts} context="WM" />
+              <WmPersonaPanel verdicts={wmVerdicts} />
+            </>
+          );
+        })()}
+        <WmOutrightCard todayIso={new Date().toISOString().slice(0, 10)} />
+      </SportCollapsibleLegacySection>
 
       <section className="rounded-2xl border border-emerald-400/30 bg-emerald-950/15 p-3 text-[11.5px] leading-snug text-emerald-100/90">
         <span className="font-semibold">Datenquelle: </span>

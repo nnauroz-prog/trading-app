@@ -81,6 +81,48 @@ export const WM_BACKTEST_DATASET: BacktestHistoricalMatch[] = [
   { id: 'nl2023-final',date: '2023-06-18', homeTeam: 'Kroatien',      awayTeam: 'Spanien',     venue: '', phase: 'Finale',     competition: 'Nations League', homeScore: 0, awayScore: 0 },
   { id: 'nl2024-final',date: '2024-06-09', homeTeam: 'Portugal',      awayTeam: 'Spanien',     venue: '', phase: 'Finale',     competition: 'Nations League', homeScore: 2, awayScore: 3 },
 
+  // ===== WM 2022 Gruppenphase — markante Spiele inkl. Upsets (13) =====
+  // Bewusst auch die grossen Ueberraschungen drin (Saudi-Arabien schlaegt
+  // Argentinien, Japan schlaegt Deutschland UND Spanien) — der Backtest
+  // muss zeigen wie das System mit solchen Spielen umgeht, nicht nur
+  // mit den brav-erwartbaren.
+  { id: 'wm2022-g-1',  date: '2022-11-22', homeTeam: 'Argentinien',  awayTeam: 'Saudi-Arabien', venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 1, awayScore: 2 },
+  { id: 'wm2022-g-2',  date: '2022-11-23', homeTeam: 'Deutschland',  awayTeam: 'Japan',         venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 1, awayScore: 2 },
+  { id: 'wm2022-g-3',  date: '2022-11-24', homeTeam: 'Brasilien',    awayTeam: 'Serbien',       venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 2, awayScore: 0 },
+  { id: 'wm2022-g-4',  date: '2022-11-25', homeTeam: 'England',      awayTeam: 'USA',           venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 0, awayScore: 0 },
+  { id: 'wm2022-g-5',  date: '2022-11-26', homeTeam: 'Frankreich',   awayTeam: 'Dänemark',      venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 2, awayScore: 1 },
+  { id: 'wm2022-g-6',  date: '2022-11-27', homeTeam: 'Spanien',      awayTeam: 'Deutschland',   venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 1, awayScore: 1 },
+  { id: 'wm2022-g-7',  date: '2022-11-28', homeTeam: 'Portugal',     awayTeam: 'Uruguay',       venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 2, awayScore: 0 },
+  { id: 'wm2022-g-8',  date: '2022-11-28', homeTeam: 'Brasilien',    awayTeam: 'Schweiz',       venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 1, awayScore: 0 },
+  { id: 'wm2022-g-9',  date: '2022-11-29', homeTeam: 'Iran',         awayTeam: 'USA',           venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 0, awayScore: 1 },
+  { id: 'wm2022-g-10', date: '2022-11-30', homeTeam: 'Polen',        awayTeam: 'Argentinien',   venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 0, awayScore: 2 },
+  { id: 'wm2022-g-11', date: '2022-12-01', homeTeam: 'Japan',        awayTeam: 'Spanien',       venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 2, awayScore: 1 },
+  { id: 'wm2022-g-12', date: '2022-12-02', homeTeam: 'Südkorea',     awayTeam: 'Portugal',      venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 2, awayScore: 1 },
+  { id: 'wm2022-g-13', date: '2022-12-02', homeTeam: 'Serbien',      awayTeam: 'Schweiz',       venue: '', phase: 'Gruppe', competition: 'WM 2022', homeScore: 2, awayScore: 3 },
+
+  // ===== EM 2024 Gruppenphase (8) =====
+  { id: 'em2024-g-1', date: '2024-06-15', homeTeam: 'Spanien',     awayTeam: 'Kroatien',    venue: '', phase: 'Gruppe', competition: 'EM 2024', homeScore: 3, awayScore: 0 },
+  { id: 'em2024-g-2', date: '2024-06-16', homeTeam: 'Niederlande', awayTeam: 'Polen',       venue: '', phase: 'Gruppe', competition: 'EM 2024', homeScore: 2, awayScore: 1 },
+  { id: 'em2024-g-3', date: '2024-06-16', homeTeam: 'England',     awayTeam: 'Serbien',     venue: '', phase: 'Gruppe', competition: 'EM 2024', homeScore: 1, awayScore: 0 },
+  { id: 'em2024-g-4', date: '2024-06-17', homeTeam: 'Frankreich',  awayTeam: 'Österreich',  venue: '', phase: 'Gruppe', competition: 'EM 2024', homeScore: 1, awayScore: 0 },
+  { id: 'em2024-g-5', date: '2024-06-18', homeTeam: 'Portugal',    awayTeam: 'Tschechien',  venue: '', phase: 'Gruppe', competition: 'EM 2024', homeScore: 2, awayScore: 1 },
+  { id: 'em2024-g-6', date: '2024-06-21', homeTeam: 'Niederlande', awayTeam: 'Frankreich',  venue: '', phase: 'Gruppe', competition: 'EM 2024', homeScore: 0, awayScore: 0 },
+  { id: 'em2024-g-7', date: '2024-06-25', homeTeam: 'Frankreich',  awayTeam: 'Polen',       venue: '', phase: 'Gruppe', competition: 'EM 2024', homeScore: 1, awayScore: 1 },
+  { id: 'em2024-g-8', date: '2024-06-26', homeTeam: 'Tschechien',  awayTeam: 'Türkei',      venue: '', phase: 'Gruppe', competition: 'EM 2024', homeScore: 1, awayScore: 2 },
+
+  // ===== Copa America 2024 Gruppenphase — USA-Stadien (3) =====
+  { id: 'copa2024-g-1', date: '2024-06-20', homeTeam: 'Argentinien', awayTeam: 'Kanada',    venue: 'Mercedes-Benz Stadium', phase: 'Gruppe', competition: 'Copa America 2024', homeScore: 2, awayScore: 0 },
+  { id: 'copa2024-g-2', date: '2024-06-28', homeTeam: 'Brasilien',   awayTeam: 'Paraguay',  venue: 'Allegiant Stadium',     phase: 'Gruppe', competition: 'Copa America 2024', homeScore: 4, awayScore: 1 },
+  { id: 'copa2024-g-3', date: '2024-07-02', homeTeam: 'Brasilien',   awayTeam: 'Kolumbien', venue: 'Levi\'s Stadium',       phase: 'Gruppe', competition: 'Copa America 2024', homeScore: 1, awayScore: 1 },
+
+  // ===== Nations League Finals 2025 (3) =====
+  { id: 'nl2025-sf-1',  date: '2025-06-04', homeTeam: 'Deutschland', awayTeam: 'Portugal',  venue: '', phase: 'Halbfinale', competition: 'Nations League', homeScore: 1, awayScore: 2 },
+  { id: 'nl2025-sf-2',  date: '2025-06-05', homeTeam: 'Spanien',     awayTeam: 'Frankreich', venue: '', phase: 'Halbfinale', competition: 'Nations League', homeScore: 5, awayScore: 4 },
+  { id: 'nl2025-final', date: '2025-06-08', homeTeam: 'Portugal',    awayTeam: 'Spanien',   venue: '', phase: 'Finale',     competition: 'Nations League', homeScore: 2, awayScore: 2 },
+
+  // ===== WM-Quali Suedamerika 2025 (1) =====
+  { id: 'quali2025-1', date: '2025-03-25', homeTeam: 'Argentinien', awayTeam: 'Brasilien', venue: '', phase: 'Qualifikation', competition: 'Freundschaft', homeScore: 4, awayScore: 1 },
+
   // ===== Top-Freundschaftsspiele 2023-2024 (8) =====
   { id: 'fr2024-1', date: '2024-03-22', homeTeam: 'Brasilien',     awayTeam: 'England',     venue: '', phase: 'Freundschaft', competition: 'Freundschaft', homeScore: 1, awayScore: 0 },
   { id: 'fr2024-2', date: '2024-03-26', homeTeam: 'Spanien',       awayTeam: 'Brasilien',   venue: '', phase: 'Freundschaft', competition: 'Freundschaft', homeScore: 3, awayScore: 3 },
