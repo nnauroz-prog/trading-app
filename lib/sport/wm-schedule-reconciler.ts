@@ -158,3 +158,11 @@ export function reconcileWmSchedule(opts: BuildOptions): ReconcileResult {
 export function verifiedFixtureIds(result: ReconcileResult): Set<string> {
   return new Set(result.entries.filter((e) => e.status === 'MATCH').map((e) => e.fixtureId));
 }
+
+// Liefert ein Set von fixtureIds mit MISMATCH-Status — die externe
+// Quelle widerspricht unserer internen Paarung. Hartes Pick-Veto:
+// solche Spiele duerfen NICHT gepickt werden, egal welche Confidence
+// die interne Eintragung hat.
+export function mismatchedFixtureIds(result: ReconcileResult): Set<string> {
+  return new Set(result.entries.filter((e) => e.status === 'MISMATCH').map((e) => e.fixtureId));
+}

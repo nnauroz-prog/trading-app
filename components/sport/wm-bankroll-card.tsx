@@ -10,6 +10,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { suggestBankroll } from '@/lib/sport/wm-bankroll';
 import type { WmWinnerPick } from '@/lib/sport/wm-winner-picks';
+import {
+  isStaked,
+  recordStake,
+  WM_BANKROLL_LEDGER_CHANGED_EVENT
+} from '@/lib/sport/wm-bankroll-ledger-store';
 
 const STORAGE_KEY = 'trading-app.wm-bankroll-eur-v1';
 
@@ -34,15 +39,36 @@ export function WmBankrollCard({ picks }: Props) {
   const [bankroll, setBankroll] = useState<number | null>(null);
   const [draft, setDraft] = useState('');
   const [mounted, setMounted] = useState(false);
+  // Pro Pick: vom User angepasste Quote (Default 2.00).
+  const [oddsDrafts, setOddsDrafts] = useState<Record<string, string>>({});
+  // Tick fuer Re-Render nach Ledger-Schreiben (isStaked-Refresh).
+  const [ledgerTick, setLedgerTick] = useState(0);
 
   useEffect(() => {
     const initial = loadBankroll();
     setBankroll(initial);
     if (initial !== null) setDraft(String(initial));
     setMounted(true);
+    const sync = () => setLedgerTick((t) => t + 1);
+    window.addEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
+    return () => window.removeEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
   }, []);
 
-  const suggestions = useMemo(() => picks.map((p) => suggestBankroll({ pick: p, bankrollEur: bankroll })), [picks, bankroll]);
+  const oddsFor = (pickId: string): number => {
+    const raw = oddsDrafts[pickId];
+    const n = raw === undefined ? NaN : parseFloat(raw.replace(',', '.'));
+    return Number.isFinite(n) && n > 1 ? n : 2.0;
+  };
+
+  const suggestions = useMemo(() => {
+    void ledgerTick;
+    return picks.map((p) => suggestBankroll({
+      pick: p,
+      bankrollEur: bankroll,
+      decimalOdds: oddsFor(`${p.fixture.id}-${p.winnerSide}`)
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [picks, bankroll, oddsDrafts, ledgerTick]);
   const totalStake = suggestions.reduce((s, x) => s + (x.stakeEur ?? 0), 0);
 
   if (!mounted || picks.length === 0) return null;
@@ -86,27 +112,67 @@ export function WmBankrollCard({ picks }: Props) {
       <ul className="space-y-1">
         {suggestions.map((s, i) => {
           const p = picks[i];
+          const pickId = `${p.fixture.id}-${p.winnerSide}`;
+          const staked = mounted && isStaked(pickId);
+          const oddsValue = oddsDrafts[pickId] ?? '2.00';
           return (
             <li key={s.pickId} className="rounded border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-[10.5px]">
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="font-semibold text-slate-100">{p.winnerTeam}</span>
                 <span className="text-slate-500">gegen</span>
                 <span className="text-slate-300">{p.winnerSide === 'home' ? p.fixture.awayTeam : p.fixture.homeTeam}</span>
-                <span className="ml-auto font-mono text-[10px] text-slate-400">{p.modelProbabilityPct} % bei Quote {s.decimalOdds.toFixed(2)}</span>
+                <span className="ml-auto font-mono text-[10px] text-slate-400">{p.modelProbabilityPct} %</span>
               </div>
-              <div className="mt-1 flex flex-wrap items-baseline gap-2 text-[10px]">
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px]">
                 <span className="font-mono font-bold text-emerald-300">{s.stakePct.toFixed(2)} %</span>
                 {s.stakeEur !== null && <span className="font-mono text-slate-200">≈ {s.stakeEur.toFixed(2)} EUR</span>}
                 {s.cappedByTier && <span className="rounded border border-amber-500/40 bg-amber-950/20 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-amber-200">tier-cap</span>}
-                <span className="ml-auto text-[9.5px] text-slate-500 truncate">{s.reason}</span>
+                <span className="ml-auto inline-flex items-center gap-1">
+                  <span className="text-slate-500">Quote</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={oddsValue}
+                    onChange={(e) => setOddsDrafts((d) => ({ ...d, [pickId]: e.target.value }))}
+                    className="w-14 rounded border border-slate-700 bg-slate-950/70 px-1.5 py-0.5 text-center text-[11px] text-slate-100"
+                    aria-label={`Buchmacher-Quote fuer ${p.winnerTeam}`}
+                    disabled={staked}
+                  />
+                </span>
+                {staked ? (
+                  <span className="rounded border border-emerald-400/50 bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200">im Ledger ✓</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="rounded border border-sky-500/40 bg-sky-950/30 px-2 py-0.5 text-[9.5px] uppercase tracking-wider text-sky-200 hover:border-sky-400 disabled:opacity-40"
+                    disabled={s.stakeEur === null || s.stakeEur <= 0}
+                    onClick={() => {
+                      if (s.stakeEur === null || s.stakeEur <= 0) return;
+                      recordStake({
+                        id: pickId,
+                        fixtureId: p.fixture.id,
+                        winnerSide: p.winnerSide,
+                        winnerTeam: p.winnerTeam,
+                        opponentTeam: p.winnerSide === 'home' ? p.fixture.awayTeam : p.fixture.homeTeam,
+                        dateIso: p.fixture.date,
+                        stakePct: s.stakePct,
+                        stakeEur: s.stakeEur,
+                        decimalOdds: oddsFor(pickId),
+                        modelProbabilityPct: p.modelProbabilityPct,
+                        tier: p.tier
+                      });
+                    }}
+                  >Stake uebernehmen</button>
+                )}
               </div>
+              <p className="mt-0.5 text-[9.5px] text-slate-500 truncate">{s.reason}</p>
             </li>
           );
         })}
       </ul>
 
       <p className="text-[9.5px] leading-snug text-slate-500">
-        Default-Quote 2.00 (Sieger-Tipp). Wenn Deine Buchmacher-Quote davon abweicht, ist die Empfehlung entsprechend anders. Tier-Caps schuetzen die Bankroll vor Einzel-Pick-Risiko. Modell-Tendenzen, keine Ergebnis-Zusage.
+        Quote pro Pick anpassbar (Default 2.00) — die Half-Kelly-Empfehlung rechnet live mit Deiner Quote. &bdquo;Stake uebernehmen&ldquo; schreibt den Einsatz ins virtuelle Ledger; das P&amp;L ergibt sich automatisch aus den Spielergebnissen. Bankroll noetig fuer EUR-Betraege. Tier-Caps schuetzen vor Einzel-Pick-Risiko. Modell-Tendenzen, keine Ergebnis-Zusage.
       </p>
     </section>
   );

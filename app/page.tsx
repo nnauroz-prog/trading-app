@@ -61,11 +61,13 @@ import { TradingTodayCard } from '@/components/trading-today-card';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
 import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
+import { reconcileWmSchedule, verifiedFixtureIds, mismatchedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
 import { WmIntegrityPill } from '@/components/sport/wm-integrity-pill';
 import { evaluateIntegrityAction } from '@/lib/sport/wm-data-integrity-action';
 import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
+import { WmBankrollLedgerCard } from '@/components/sport/wm-bankroll-ledger-card';
 import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
@@ -172,7 +174,26 @@ export default async function HomePage() {
   // vor dem Multi-Markt-safe-tip.
   const wmWinnerHorizonDays = 7;
   const wmWeatherByFixtureIdHome = await fetchWmWeatherByFixture({ todayIso: safeSportTodayIso, horizonDays: wmWinnerHorizonDays });
-  const wmWinnerPicksHome = rankWmWinnerPicks({ todayIso: safeSportTodayIso, horizonDays: wmWinnerHorizonDays, weatherByFixtureId: wmWeatherByFixtureIdHome });
+  // Schedule-Reconciler auch auf der Home — identisches Veto/Upgrade-
+  // Verhalten wie auf /sport, damit beide Ansichten dieselben Picks zeigen.
+  const wmExternalLeagueHome = sportLeagues.find((lf) => lf.league.id === '4429');
+  const wmExternalFixturesHome = wmExternalLeagueHome
+    ? [...wmExternalLeagueHome.next, ...wmExternalLeagueHome.last].map((f) => ({
+        date: f.date, time: f.time ?? null, homeTeam: f.homeTeam, awayTeam: f.awayTeam
+      }))
+    : [];
+  const wmReconcileHome = reconcileWmSchedule({
+    external: wmExternalFixturesHome,
+    fromIso: safeSportTodayIso,
+    toIso: (() => { const d = new Date(`${safeSportTodayIso}T00:00:00`); d.setUTCDate(d.getUTCDate() + 14); return d.toISOString().slice(0, 10); })()
+  });
+  const wmWinnerPicksHome = rankWmWinnerPicks({
+    todayIso: safeSportTodayIso,
+    horizonDays: wmWinnerHorizonDays,
+    weatherByFixtureId: wmWeatherByFixtureIdHome,
+    verifiedFixtureIds: verifiedFixtureIds(wmReconcileHome),
+    mismatchedFixtureIds: mismatchedFixtureIds(wmReconcileHome)
+  });
   const wmWinnerLeadHome = wmWinnerPicksHome[0] ?? null;
   const safeWmTips = rankSafeWmTips({ todayIso: safeSportTodayIso, maxDays: 14, minProbability: 0.7, limit: 5 });
   const safeFootballTips = rankSafeFootballTips(sportLeagues, { todayIso: safeSportTodayIso, horizonDays: 14, minProbability: 0.7, limit: 5 });
@@ -589,6 +610,7 @@ export default async function HomePage() {
         <>
           <WmWinnerPicksWithLearning serverPicks={wmWinnerPicksHome} todayIso={todayIso} horizonDays={wmWinnerHorizonDays} />
           <WmBankrollCard picks={wmWinnerPicksHome} />
+          <WmBankrollLedgerCard />
           <WmComboPicksCard picks={wmWinnerPicksHome} />
         </>
       )}

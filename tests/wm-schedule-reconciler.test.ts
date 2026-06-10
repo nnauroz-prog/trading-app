@@ -98,3 +98,31 @@ describe('reconcileWmSchedule', () => {
     expect(r.verifiedPct).toBe(50);
   });
 });
+
+describe('mismatchedFixtureIds + Pick-Veto', () => {
+  it('mismatchedFixtureIds liefert nur MISMATCH-Fixtures', async () => {
+    const { mismatchedFixtureIds } = await import('@/lib/sport/wm-schedule-reconciler');
+    const external: ExternalScheduleEntry[] = [
+      { date: '2026-06-11', time: null, homeTeam: 'Mexiko', awayTeam: 'Tschechien' } // widerspricht intern
+    ];
+    const r = reconcileWmSchedule({ external, fromIso: '2026-06-11', toIso: '2026-06-12', schedule });
+    const ids = mismatchedFixtureIds(r);
+    expect(ids.has('wm-test-1')).toBe(true);
+    expect(ids.has('wm-test-3')).toBe(false);
+  });
+
+  it('rankWmWinnerPicks blockt MISMATCH-Fixtures auch bei auslosung-Confidence', async () => {
+    const { rankWmWinnerPicks } = await import('@/lib/sport/wm-winner-picks');
+    // Baseline ohne Veto
+    const base = rankWmWinnerPicks({ todayIso: '2026-06-15', horizonDays: 7 });
+    if (base.length === 0) return; // heute keine Picks → nichts zu pruefen
+    const target = base[0];
+    // Mit Mismatch-Veto auf genau diesem Fixture
+    const withVeto = rankWmWinnerPicks({
+      todayIso: '2026-06-15',
+      horizonDays: 7,
+      mismatchedFixtureIds: new Set([target.fixture.id])
+    });
+    expect(withVeto.find((p) => p.fixture.id === target.fixture.id)).toBeUndefined();
+  });
+});
