@@ -21,6 +21,7 @@ import { evaluateWmConditions, eloDiffShift, type WmConditionFactor, type WmCond
 import { evaluateRestDays } from '@/lib/sport/wm-rest-days';
 import { weatherFactor } from '@/lib/sport/wm-live-weather';
 import { evaluateExtraFactors } from '@/lib/sport/wm-extra-factors';
+import { evaluateIntegrityAction, isTeamBlocked } from '@/lib/sport/wm-data-integrity-action';
 import type { WeatherSnapshot } from '@/lib/providers/open-meteo';
 import type { FactorWeightMap } from '@/lib/sport/wm-pick-learning';
 
@@ -89,10 +90,17 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
   const todayMs = new Date(`${todayIso}T00:00:00`).getTime();
   const horizonMs = todayMs + horizonDays * 24 * 60 * 60 * 1000;
   const out: WmWinnerPick[] = [];
+  // Datenintegritaets-Agent live: blockierte Teams/Stadien sofort
+  // aus dem Pick-Universum entfernen. Damit handelt der Agent — nicht
+  // nur anzeigen.
+  const integrity = evaluateIntegrityAction();
 
   for (const f of WM_2026_FIXTURES) {
     if (isTbd(f.homeTeam) || isTbd(f.awayTeam)) continue;
     if (blacklistedPhase(f.phase)) continue;
+    // Hartes Veto durch Datenintegritaets-Agent
+    if (isTeamBlocked(f.homeTeam, integrity.blockedTeams) || isTeamBlocked(f.awayTeam, integrity.blockedTeams)) continue;
+    if (f.venue && integrity.blockedVenues.has(f.venue)) continue;
     const fMs = new Date(`${f.date}T00:00:00`).getTime();
     if (fMs < todayMs || fMs > horizonMs) continue;
 

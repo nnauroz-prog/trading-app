@@ -62,6 +62,8 @@ import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
+import { WmIntegrityPill } from '@/components/sport/wm-integrity-pill';
+import { evaluateIntegrityAction } from '@/lib/sport/wm-data-integrity-action';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
 import { AppOverviewStats } from '@/components/app-overview-stats';
@@ -570,6 +572,10 @@ export default async function HomePage() {
       {/* WM-Countdown ganz oben — solange <30 Tage bis Start oder waehrend
           der laufenden WM. Versteckt sich automatisch danach. */}
       <WmCountdownBanner todayIso={todayIso} />
+
+      {/* Daten-Integritaets-Agent — Live-Pille. Sichtbar nur wenn aktiv
+          etwas blockiert oder warnt. Refresh alle 30 s. */}
+      <WmIntegrityPill initial={evaluateIntegrityAction()} />
 
       {/* WM Sieger-Picks: nur sichtbar wenn fuer die naechsten 7 Tage
           mindestens ein Profi-Pick durch alle Filter kommt. WmWinner-
