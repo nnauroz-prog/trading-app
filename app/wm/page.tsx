@@ -24,6 +24,7 @@ import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
 import { WmBankrollLedgerCard } from '@/components/sport/wm-bankroll-ledger-card';
 import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
+import { WmCalibrationCard } from '@/components/sport/wm-calibration-card';
 import { WmEloDriftCard } from '@/components/sport/wm-elo-drift-card';
 import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
 import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
@@ -175,6 +176,7 @@ export default async function WorldCupPage() {
               .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date }))}
             />
             <WmLearningStatusCard />
+      <WmCalibrationCard />
             <WmEloDriftCard />
             <WmResultInputCard />
           </>
