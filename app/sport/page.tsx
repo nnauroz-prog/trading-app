@@ -110,6 +110,8 @@ import { buildLeaguePrecisionPicks } from '@/lib/sport/sport-precision-bridge';
 import { buildWmPrecisionPicks } from '@/lib/sport/wm-precision-bridge';
 import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
 import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
+import { reconcileWmSchedule, verifiedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
+import { WmReconcilerCard } from '@/components/sport/wm-reconciler-card';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
 import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
@@ -585,9 +587,38 @@ export default async function SportPage() {
         // mit 30-min-Cache. Schlaegt der Forecast fehl (null), bleibt der
         // Wetter-Faktor fuer dieses Spiel einfach inaktiv.
         const weatherByFixtureId = await fetchWmWeatherByFixture({ todayIso: buckets.todayIso, horizonDays });
-        const winnerPicks = rankWmWinnerPicks({ todayIso: buckets.todayIso, horizonDays, weatherByFixtureId });
+        // Schedule-Reconciler: vergleicht das interne Schedule mit der
+        // FIFA-World-Cup-Liga (TheSportsDB 4429). Picks auf bestaetigten
+        // placeholder-Paarungen werden wieder freigegeben.
+        const wmExternal = leagues.find((lf) => lf.league.id === '4429');
+        const wmExternalFixtures = wmExternal
+          ? [...wmExternal.next, ...wmExternal.last].map((f) => ({
+              date: f.date,
+              time: f.time ?? null,
+              homeTeam: f.homeTeam,
+              awayTeam: f.awayTeam
+            }))
+          : [];
+        const horizonEndIso = (() => {
+          const d = new Date(`${buckets.todayIso}T00:00:00`);
+          d.setUTCDate(d.getUTCDate() + 14);
+          return d.toISOString().slice(0, 10);
+        })();
+        const reconcile = reconcileWmSchedule({
+          external: wmExternalFixtures,
+          fromIso: buckets.todayIso,
+          toIso: horizonEndIso
+        });
+        const verifiedIds = verifiedFixtureIds(reconcile);
+        const winnerPicks = rankWmWinnerPicks({
+          todayIso: buckets.todayIso,
+          horizonDays,
+          weatherByFixtureId,
+          verifiedFixtureIds: verifiedIds
+        });
         return (
           <>
+            <WmReconcilerCard result={reconcile} />
             <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />
             <WmBankrollCard picks={winnerPicks} />
             <WmComboPicksCard picks={winnerPicks} />

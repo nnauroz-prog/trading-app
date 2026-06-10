@@ -64,6 +64,11 @@ interface BuildOptions {
   // jeden Pick ein — gedeckelt bei +/-60 ELO, damit ein einzelnes
   // Ausreisser-Resultat nicht alles kippt.
   eloDeltaByTeam?: Record<string, number>;
+  // Optional: Set von fixtureIds, die durch einen externen Schedule-
+  // Reconciler als MATCH bestaetigt wurden. Aktiviert placeholder-
+  // Fixtures wie auslosung — der Pick darf durch, wenn die externe
+  // Quelle die interne Paarung bestaetigt.
+  verifiedFixtureIds?: Set<string>;
 }
 
 // Cap fuer den dynamischen ELO-Einfluss pro Team.
@@ -106,8 +111,10 @@ export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
   for (const f of WM_2026_FIXTURES) {
     if (isTbd(f.homeTeam) || isTbd(f.awayTeam)) continue;
     // Schedule-Confidence: placeholder-Fixtures sind im Schedule, aber
-    // ihre konkrete Paarung ist nicht 100 % verifiziert. Kein Pick darauf.
-    if (effectiveConfidence(f) === 'placeholder') continue;
+    // ihre konkrete Paarung ist nicht 100 % verifiziert. Kein Pick darauf —
+    // ausser ein externer Reconciler hat sie als MATCH bestaetigt.
+    const isVerified = opts.verifiedFixtureIds?.has(f.id) ?? false;
+    if (effectiveConfidence(f) === 'placeholder' && !isVerified) continue;
     if (blacklistedPhase(f.phase)) continue;
     // Hartes Veto durch Datenintegritaets-Agent
     if (isTeamBlocked(f.homeTeam, integrity.blockedTeams) || isTeamBlocked(f.awayTeam, integrity.blockedTeams)) continue;
