@@ -109,7 +109,10 @@ import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsi
 import { buildLeaguePrecisionPicks } from '@/lib/sport/sport-precision-bridge';
 import { buildWmPrecisionPicks } from '@/lib/sport/wm-precision-bridge';
 import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
-import { WmWinnerPicksCard } from '@/components/sport/wm-winner-picks-card';
+import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
+import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
+import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
+import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
 import { getCachedWmBacktest } from '@/lib/sport/wm-backtest-runner';
 import { WmBacktestReportCard } from '@/components/sport/wm-backtest-report-card';
 
@@ -548,14 +551,29 @@ export default async function SportPage() {
           Cache 24 h, reine in-memory Berechnung. */}
       <WmBacktestReportCard report={await getCachedWmBacktest()} />
 
+      {/* Live-Lern-Stand: zeigt sich automatisch sobald >= 5 Picks geloggt
+          sind. Sammelt Faktor-Performance und passt Gewichte an. Resolver
+          schreibt Outcomes ins Log (manuell + extern). */}
+      <WmPickResolver
+        externalFinished={leagues.flatMap((lf) => lf.last
+          .filter((f) => f.homeScore !== null && f.awayScore !== null)
+          .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date })))}
+      />
+      <WmLearningStatusCard />
+      <WmResultInputCard />
+
       {/* WM Sieger-Picks — die strengste Schicht der App: nur 1X2-Sieger-
           Tipps, gefiltert durch den Profi-Tipper-Agenten (ELO-Vorteil,
           Engine-Klarheit, xG-Konfluenz, Lineup-Sensitivitaet). Zeigt
-          maximal die naechsten 7 Tage. */}
+          maximal die naechsten 7 Tage. WmWinnerPicksWithLearning rechnet
+          die Picks client-seitig mit den gelernten Faktor-Gewichten neu,
+          sobald 5+ Picks resolved sind. */}
       {(() => {
         const horizonDays = 7;
         const winnerPicks = rankWmWinnerPicks({ todayIso: buckets.todayIso, horizonDays });
-        return <WmWinnerPicksCard picks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />;
+        return (
+          <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />
+        );
       })()}
 
       {(() => {
