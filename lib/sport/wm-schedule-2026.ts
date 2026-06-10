@@ -109,55 +109,101 @@ export const WM_2026_FIXTURES: WmFixture[] = [
   },
   // Deutschland startet in Gruppe E (Auslosung bestätigt)
   {
-    id: 'wm-4', date: '2026-06-15', time: '18:00',
-    homeTeam: 'Deutschland', awayTeam: 'TBD (Gruppe E)',
-    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'E'
-  },
-  // Gruppe J — verifiziert über skysports.com / rotowire.com
-  {
-    id: 'wm-j-md1-1', date: '2026-06-16', time: '21:00',
-    homeTeam: 'Argentinien', awayTeam: 'Algerien',
-    venue: 'Arrowhead Stadium, Kansas City', phase: 'Gruppe', group: 'J'
-  },
-  {
-    id: 'wm-j-md1-2', date: '2026-06-17', time: '00:00',
-    homeTeam: 'Österreich', awayTeam: 'Jordanien',
-    venue: "Levi's Stadium, San Francisco Bay", phase: 'Gruppe', group: 'J'
+    // Gruppe E: Deutschland, Curaçao, Elfenbeinküste, Ecuador —
+    // verifiziert via FOX Sports: 14.06. vs Curaçao Houston 13:00 ET
+    // = 17:00 UTC; 20.06. vs Elfenbeinküste Toronto 16:00 ET = 20:00
+    // UTC; 25.06. vs Ecuador MetLife 16:00 ET = 20:00 UTC.
+    id: 'wm-4', date: '2026-06-14', time: '17:00',
+    homeTeam: 'Deutschland', awayTeam: 'Curaçao',
+    venue: 'NRG Stadium, Houston', phase: 'Gruppe', group: 'E',
+    sourceConfidence: 'official'
   },
   {
-    id: 'wm-j-md2-1', date: '2026-06-22', time: '13:00',
+    id: 'wm-e-md2', date: '2026-06-20', time: '20:00',
+    homeTeam: 'Deutschland', awayTeam: 'Elfenbeinküste',
+    venue: 'BMO Field, Toronto', phase: 'Gruppe', group: 'E',
+    sourceConfidence: 'official'
+  },
+  {
+    id: 'wm-e-md3', date: '2026-06-25', time: '20:00',
+    homeTeam: 'Deutschland', awayTeam: 'Ecuador',
+    venue: 'MetLife Stadium, New York/New Jersey', phase: 'Gruppe', group: 'E',
+    sourceConfidence: 'official'
+  },
+  // Gruppe J (Argentinien, Algerien, Österreich, Jordanien) —
+  // Argentiniens AUFTAKT ist 22.06. vs Österreich (Yahoo Sports,
+  // 13:00 ET = 17:00 UTC, Arlington). Die alten md1-Eintraege
+  // (16./17.06.) waren unbelegt und sind ENTFERNT.
+  {
+    id: 'wm-j-md2-1', date: '2026-06-22', time: '17:00',
     homeTeam: 'Argentinien', awayTeam: 'Österreich',
-    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'J'
+    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'J',
+    sourceConfidence: 'official'
   },
+  // Restliche Gruppe-J-Paarungen plausibel, Termine NICHT verifiziert.
   {
     id: 'wm-j-md2-2', date: '2026-06-22', time: '23:00',
     homeTeam: 'Jordanien', awayTeam: 'Algerien',
-    venue: "Levi's Stadium, San Francisco Bay", phase: 'Gruppe', group: 'J'
+    venue: "Levi's Stadium, San Francisco Bay", phase: 'Gruppe', group: 'J',
+    sourceConfidence: 'placeholder'
   },
   {
     id: 'wm-j-md3-1', date: '2026-06-27', time: '22:00',
     homeTeam: 'Jordanien', awayTeam: 'Argentinien',
-    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'J'
+    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'J',
+    sourceConfidence: 'placeholder'
   },
   {
     id: 'wm-j-md3-2', date: '2026-06-27', time: '22:00',
     homeTeam: 'Algerien', awayTeam: 'Österreich',
-    venue: 'Arrowhead Stadium, Kansas City', phase: 'Gruppe', group: 'J'
+    venue: 'Arrowhead Stadium, Kansas City', phase: 'Gruppe', group: 'J',
+    sourceConfidence: 'placeholder'
   },
+  // Gruppe I: Frankreich, Senegal, Norwegen, Irak — Frankreich-Auftakt
+  // 25.06. vs Norwegen (Yahoo Sports). Stadion nicht bestaetigt.
   {
-    id: 'wm-6', date: '2026-06-17', time: '18:00',
-    homeTeam: 'Frankreich', awayTeam: 'TBD',
-    venue: 'Lincoln Financial Field, Philadelphia', phase: 'Gruppe'
+    id: 'wm-6', date: '2026-06-25', time: '18:00',
+    homeTeam: 'Frankreich', awayTeam: 'Norwegen',
+    venue: '', phase: 'Gruppe', group: 'I',
+    sourceConfidence: 'auslosung'
   },
+  // Gruppe C: Brasilien, Marokko, Haiti, Schottland — Brasilien-Auftakt
+  // 20.06. vs Haiti, Philadelphia, 21:00 ET = 01:00 UTC am 21.06.
   {
-    id: 'wm-7', date: '2026-06-18', time: '21:00',
-    homeTeam: 'Brasilien', awayTeam: 'TBD',
-    venue: 'Lumen Field, Seattle', phase: 'Gruppe'
+    id: 'wm-7', date: '2026-06-21', time: '01:00',
+    homeTeam: 'Brasilien', awayTeam: 'Haiti',
+    venue: 'Lincoln Financial Field, Philadelphia', phase: 'Gruppe', group: 'C',
+    sourceConfidence: 'official'
   },
+  // Gruppe H: Spanien, Kap Verde, Saudi-Arabien, Uruguay — Spanien-
+  // Auftakt 15.06. vs Kap Verde, Atlanta, 13:00 ET = 17:00 UTC.
   {
-    id: 'wm-8', date: '2026-06-19', time: '18:00',
-    homeTeam: 'Spanien', awayTeam: 'TBD',
-    venue: 'Mercedes-Benz Stadium, Atlanta', phase: 'Gruppe'
+    id: 'wm-8', date: '2026-06-15', time: '17:00',
+    homeTeam: 'Spanien', awayTeam: 'Kap Verde',
+    venue: 'Mercedes-Benz Stadium, Atlanta', phase: 'Gruppe', group: 'H',
+    sourceConfidence: 'official'
+  },
+  // Weitere verifizierte Auftakt-Spiele (10.06.2026):
+  // Gruppe K: Portugal, Usbekistan, Kolumbien, DR Kongo.
+  {
+    id: 'wm-k-md1', date: '2026-06-17', time: '17:00',
+    homeTeam: 'Portugal', awayTeam: 'DR Kongo',
+    venue: 'NRG Stadium, Houston', phase: 'Gruppe', group: 'K',
+    sourceConfidence: 'official'
+  },
+  // Gruppe F: Niederlande, Japan, Tunesien, Schweden.
+  {
+    id: 'wm-f-md1', date: '2026-06-21', time: '20:00',
+    homeTeam: 'Niederlande', awayTeam: 'Japan',
+    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'F',
+    sourceConfidence: 'official'
+  },
+  // Gruppe L: England, Kroatien, Ghana, Panama.
+  {
+    id: 'wm-l-md1', date: '2026-06-27', time: '21:00',
+    homeTeam: 'Panama', awayTeam: 'England',
+    venue: 'MetLife Stadium, New York/New Jersey', phase: 'Gruppe', group: 'L',
+    sourceConfidence: 'official'
   },
 
   // K.O.-Phase (Termine offiziell laut FIFA)

@@ -94,6 +94,18 @@ export const WM_2026_TEAMS: TeamStrength[] = [
   { name: 'Kap Verde', aliases: ['Cape Verde', 'Cabo Verde'], elo: 1620, offensive: 62, defensive: 64, formIndex: 1, confederation: 'CAF' },
   { name: 'Irak', aliases: ['Iraq'], elo: 1620, offensive: 60, defensive: 65, formIndex: 0, confederation: 'AFC' },
   { name: 'Jordanien', aliases: ['Jordan'], elo: 1580, offensive: 58, defensive: 63, formIndex: 0, confederation: 'AFC' },
+  // Verifizierte Gruppen-Gegner (eingepflegt 10.06.2026 nach Gruppen-Bestaetigung):
+  { name: 'Norwegen', aliases: ['Norway'], elo: 1860, offensive: 78, defensive: 70, formIndex: 4, confederation: 'UEFA' },
+  { name: 'Elfenbeinküste', aliases: ['Ivory Coast', 'Cote d\'Ivoire', 'Côte d\'Ivoire'], elo: 1780, offensive: 72, defensive: 70, formIndex: 2, confederation: 'CAF' },
+  { name: 'Schottland', aliases: ['Scotland'], elo: 1740, offensive: 65, defensive: 68, formIndex: 1, confederation: 'UEFA' },
+  { name: 'Panama', elo: 1730, offensive: 64, defensive: 68, formIndex: 1, confederation: 'CONCACAF' },
+  { name: 'Ghana', elo: 1700, offensive: 68, defensive: 64, formIndex: 0, confederation: 'CAF' },
+  { name: 'Usbekistan', aliases: ['Uzbekistan'], elo: 1640, offensive: 62, defensive: 64, formIndex: 1, confederation: 'AFC' },
+  { name: 'DR Kongo', aliases: ['Congo DR', 'DR Congo', 'Demokratische Republik Kongo'], elo: 1640, offensive: 63, defensive: 63, formIndex: 1, confederation: 'CAF' },
+  { name: 'Irak', aliases: ['Iraq'], elo: 1620, offensive: 60, defensive: 65, formIndex: 0, confederation: 'AFC' },
+  { name: 'Kap Verde', aliases: ['Cape Verde', 'Cabo Verde'], elo: 1610, offensive: 60, defensive: 63, formIndex: 1, confederation: 'CAF' },
+  { name: 'Curaçao', aliases: ['Curacao'], elo: 1570, offensive: 60, defensive: 61, formIndex: 0, confederation: 'CONCACAF' },
+  { name: 'Haiti', elo: 1530, offensive: 58, defensive: 58, formIndex: 0, confederation: 'CONCACAF' },
   { name: 'DR Kongo', aliases: ['DR Congo', 'Congo DR', 'Demokratische Republik Kongo'], elo: 1735, offensive: 68, defensive: 65, formIndex: 1, confederation: 'CAF' },
   { name: 'Usbekistan', aliases: ['Uzbekistan'], elo: 1645, offensive: 62, defensive: 65, formIndex: 0, confederation: 'AFC' },
   { name: 'Panama', elo: 1670, offensive: 64, defensive: 63, formIndex: 0, confederation: 'CONCACAF' }
