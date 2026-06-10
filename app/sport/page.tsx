@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getFootballFixtures, Fixture, UpcomingFixture, LeagueFixtures } from '@/lib/sport/fetcher';
+import { WORLD_CUP_LEAGUE_IDS } from '@/lib/sport/leagues';
 import { TeamForm5 } from '@/lib/sport/predictor';
 import { ProbabilityCard } from '@/components/probability-card';
 import { SportTipJournal } from '@/components/sport-tip-journal';
@@ -572,11 +573,14 @@ export default async function SportPage() {
 
       {/* Live-Lern-Stand: zeigt sich automatisch sobald >= 5 Picks geloggt
           sind. Sammelt Faktor-Performance und passt Gewichte an. Resolver
-          schreibt Outcomes ins Log (manuell + extern). */}
+          schreibt Outcomes ins Log (manuell + extern). Gefiltert auf die
+          WM-Ligen — Vereins-Spiele koennen ohnehin nicht matchen. */}
       <WmPickResolver
-        externalFinished={leagues.flatMap((lf) => lf.last
-          .filter((f) => f.homeScore !== null && f.awayScore !== null)
-          .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date })))}
+        externalFinished={leagues
+          .filter((lf) => WORLD_CUP_LEAGUE_IDS.includes(lf.league.id))
+          .flatMap((lf) => lf.last
+            .filter((f) => f.homeScore !== null && f.awayScore !== null)
+            .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date })))}
       />
       <WmLearningStatusCard />
       <WmCalibrationCard />
