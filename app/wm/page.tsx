@@ -25,6 +25,7 @@ import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
 import { WmBankrollLedgerCard } from '@/components/sport/wm-bankroll-ledger-card';
 import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
 import { WmJetztCard } from '@/components/sport/wm-jetzt-card';
+import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
@@ -170,6 +171,7 @@ export default async function WorldCupPage() {
         });
         return (
           <>
+            <WmErsteSchritte />
             <WmJetztCard todayIso={todayIso} plan={dayPlan} />
             <PlainHint id="day-plan" />
             <WmDayPlanCard plan={dayPlan} />
