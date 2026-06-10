@@ -109,10 +109,14 @@ import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsi
 import { buildLeaguePrecisionPicks } from '@/lib/sport/sport-precision-bridge';
 import { buildWmPrecisionPicks } from '@/lib/sport/wm-precision-bridge';
 import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
+import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
 import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
 import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
+import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
+import { WmEloDriftCard } from '@/components/sport/wm-elo-drift-card';
+import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
 import { getCachedWmBacktest } from '@/lib/sport/wm-backtest-runner';
 import { WmBacktestReportCard } from '@/components/sport/wm-backtest-report-card';
 import { evaluateIntegrityAction } from '@/lib/sport/wm-data-integrity-action';
@@ -575,11 +579,20 @@ export default async function SportPage() {
           maximal die naechsten 7 Tage. WmWinnerPicksWithLearning rechnet
           die Picks client-seitig mit den gelernten Faktor-Gewichten neu,
           sobald 5+ Picks resolved sind. */}
-      {(() => {
+      {await (async () => {
         const horizonDays = 7;
-        const winnerPicks = rankWmWinnerPicks({ todayIso: buckets.todayIso, horizonDays });
+        // Live-Wetter fuer die kommenden WM-Spiele holen — Open-Meteo
+        // mit 30-min-Cache. Schlaegt der Forecast fehl (null), bleibt der
+        // Wetter-Faktor fuer dieses Spiel einfach inaktiv.
+        const weatherByFixtureId = await fetchWmWeatherByFixture({ todayIso: buckets.todayIso, horizonDays });
+        const winnerPicks = rankWmWinnerPicks({ todayIso: buckets.todayIso, horizonDays, weatherByFixtureId });
         return (
-          <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />
+          <>
+            <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />
+            <WmBankrollCard picks={winnerPicks} />
+            <WmComboPicksCard picks={winnerPicks} />
+            <WmEloDriftCard />
+          </>
         );
       })()}
 

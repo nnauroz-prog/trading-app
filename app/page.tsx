@@ -60,10 +60,13 @@ import { TradeTier90Card } from '@/components/trade-tier-90-card';
 import { TradingTodayCard } from '@/components/trading-today-card';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
+import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
 import { WmIntegrityPill } from '@/components/sport/wm-integrity-pill';
 import { evaluateIntegrityAction } from '@/lib/sport/wm-data-integrity-action';
+import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
+import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
 import { AppOverviewStats } from '@/components/app-overview-stats';
@@ -168,7 +171,8 @@ export default async function HomePage() {
   // App. Wenn fuer heute/morgen ein Pick durchkommt, hat er Prioritaet
   // vor dem Multi-Markt-safe-tip.
   const wmWinnerHorizonDays = 7;
-  const wmWinnerPicksHome = rankWmWinnerPicks({ todayIso: safeSportTodayIso, horizonDays: wmWinnerHorizonDays });
+  const wmWeatherByFixtureIdHome = await fetchWmWeatherByFixture({ todayIso: safeSportTodayIso, horizonDays: wmWinnerHorizonDays });
+  const wmWinnerPicksHome = rankWmWinnerPicks({ todayIso: safeSportTodayIso, horizonDays: wmWinnerHorizonDays, weatherByFixtureId: wmWeatherByFixtureIdHome });
   const wmWinnerLeadHome = wmWinnerPicksHome[0] ?? null;
   const safeWmTips = rankSafeWmTips({ todayIso: safeSportTodayIso, maxDays: 14, minProbability: 0.7, limit: 5 });
   const safeFootballTips = rankSafeFootballTips(sportLeagues, { todayIso: safeSportTodayIso, horizonDays: 14, minProbability: 0.7, limit: 5 });
@@ -582,7 +586,11 @@ export default async function HomePage() {
           PicksWithLearning rechnet die Picks mit den gelernten Faktor-
           Gewichten neu, sobald >=5 Picks resolved sind. */}
       {wmWinnerPicksHome.length > 0 && (
-        <WmWinnerPicksWithLearning serverPicks={wmWinnerPicksHome} todayIso={todayIso} horizonDays={wmWinnerHorizonDays} />
+        <>
+          <WmWinnerPicksWithLearning serverPicks={wmWinnerPicksHome} todayIso={todayIso} horizonDays={wmWinnerHorizonDays} />
+          <WmBankrollCard picks={wmWinnerPicksHome} />
+          <WmComboPicksCard picks={wmWinnerPicksHome} />
+        </>
       )}
 
       {/* Live-Lern-Stand: zeigt sich erst sobald 5+ Picks im Log sind. */}
