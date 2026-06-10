@@ -9,6 +9,8 @@ import { fetchManyQuotes } from '@/lib/market/yahoo-quote';
 import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
 import { getCommoditySafetyBacktestSummary } from '@/lib/market/commodity-safety-backtest-scan';
 import { SafeCommodityPicks } from '@/components/safe-commodity-picks';
+import { InstrumentPrecisionDesk } from '@/components/instruments/instrument-precision-desk';
+import { evaluateInstrumentPrecisionPick } from '@/lib/analysis/instrument-precision-gate';
 import { CommoditySafetyBacktestCard } from '@/components/commodity-safety-backtest-card';
 import { CommoditySectorSafetyHeatmap } from '@/components/commodity-sector-safety-heatmap';
 import { detectHotCommodityGroups } from '@/lib/market/commodity-group-summary';
@@ -77,6 +79,24 @@ export default async function RohstoffePage() {
           {liveCount > 0 && <span> · <span className="text-emerald-300">{liveCount} Live-Quotes</span></span>}
         </p>
       </header>
+
+      {(() => {
+        // Rohstoffe Precision Desk: identisches Pattern wie Aktien/Krypto.
+        // Rohstoffe folgen oft eigener Dynamik (Gold steigt bei Risk-Off),
+        // daher kein Markt-Veto im modelAgent.
+        const precisionPicks = safetyScan.map((e) => evaluateInstrumentPrecisionPick({
+          symbol: e.symbol,
+          name: e.name,
+          group: e.group,
+          kind: 'commodity',
+          price: e.price,
+          safety: e.assessment,
+          marketTrendPct: null,
+          backtestHitRatePct: safetyBacktest.combinedWinRatePct ?? null,
+          backtestSampleSize: safetyBacktest.totalTrades ?? 0
+        }));
+        return <InstrumentPrecisionDesk title="Rohstoffe Precision Desk" hrefBase="/rohstoffe" picks={precisionPicks} />;
+      })()}
 
       <SectorHeatmap buckets={sectorBuckets} title="Sektor-Heatmap (Rohstoffe)" />
 
