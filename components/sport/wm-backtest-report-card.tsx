@@ -25,7 +25,9 @@ const FACTOR_LABEL: Record<string, string> = {
   'jetlag': 'Jetlag',
   'host-advantage': 'Gastgeber-Heimvorteil',
   'regional-crowd': 'Publikums-Sympathie',
-  'hot-midday': 'Mittagshitze'
+  'hot-midday': 'Mittagshitze',
+  'rest-days': 'Erholungstage',
+  'weather': 'Live-Wetter'
 };
 
 export function WmBacktestReportCard({ report }: Props) {

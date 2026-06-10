@@ -29,7 +29,12 @@ const FACTOR_LABEL: Record<string, string> = {
   'host-advantage': 'Gastgeber-Heimvorteil',
   'regional-crowd': 'Publikums-Sympathie',
   'hot-midday': 'Mittagshitze',
-  'weather': 'Live-Wetter'
+  'rest-days': 'Erholungstage',
+  'weather': 'Live-Wetter',
+  'confederation-home': 'Konfoederations-Heimvorteil',
+  'phase-pressure': 'Phase-Druck',
+  'venue-familiarity': 'Stadion-Vertrautheit',
+  'travel-distance': 'Reisedistanz'
 };
 
 const STATUS_CLASS: Record<string, string> = {

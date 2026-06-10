@@ -45,7 +45,7 @@ export const WM_2026_TEAMS: TeamStrength[] = [
   { name: 'Niederlande', aliases: ['Netherlands', 'Holland'], elo: 2030, offensive: 80, defensive: 75, formIndex: 2, confederation: 'UEFA' },
   { name: 'Deutschland', aliases: ['Germany'], elo: 2015, offensive: 78, defensive: 72, formIndex: 1, confederation: 'UEFA' },
   { name: 'Belgien', aliases: ['Belgium'], elo: 1995, offensive: 78, defensive: 71, formIndex: 0, confederation: 'UEFA' },
-  { name: 'Italien', aliases: ['Italy'], elo: 1985, offensive: 73, defensive: 79, formIndex: 1, confederation: 'UEFA' },
+  // Italien NICHT in der Liste — fuer WM 2026 nicht qualifiziert (UEFA-Playoffs).
   { name: 'Kroatien', aliases: ['Croatia'], elo: 1975, offensive: 72, defensive: 74, formIndex: 0, confederation: 'UEFA' },
   { name: 'Marokko', aliases: ['Morocco'], elo: 1955, offensive: 70, defensive: 78, formIndex: 3, confederation: 'CAF' },
 

@@ -115,6 +115,8 @@ import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
 import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
 import { getCachedWmBacktest } from '@/lib/sport/wm-backtest-runner';
 import { WmBacktestReportCard } from '@/components/sport/wm-backtest-report-card';
+import { auditWmData } from '@/lib/sport/wm-data-integrity-agent';
+import { WmDataIntegrityCard } from '@/components/sport/wm-data-integrity-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -545,6 +547,11 @@ export default async function SportPage() {
           />
         );
       })()}
+
+      {/* Daten-Integritaets-Agent: pruefte alle Teams in den Fixtures gegen
+          die ELO- und Heimat-DB. Findet fehlende Eintraege, Encoding-Probleme,
+          implausible ELOs und Alias-Ueberlappungen. */}
+      <WmDataIntegrityCard issues={auditWmData()} />
 
       {/* System-Backtest gegen echte Spiele 2022-2024 — VOR den heutigen
           Picks, damit der User sieht ob das System ueberhaupt funktioniert.

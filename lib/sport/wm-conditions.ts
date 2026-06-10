@@ -270,6 +270,9 @@ function hotMiddayFactor(fixture: WmFixture, venue: WmVenue): WmConditionFactor 
 
 export interface BuildOptions {
   fixture: WmFixture;
+  // Optional: zusaetzliche Faktoren aus parallelen Modulen
+  // (Rest-Days, Live-Wetter). Werden 1:1 in factors aufgenommen.
+  extraFactors?: WmConditionFactor[];
 }
 
 export function evaluateWmConditions(opts: BuildOptions): WmConditionsReport {
@@ -291,6 +294,11 @@ export function evaluateWmConditions(opts: BuildOptions): WmConditionsReport {
     if (f5) factors.push(f5);
     const f6 = hotMiddayFactor(opts.fixture, venue);
     if (f6) factors.push(f6);
+  }
+  // Zusatzfaktoren (z. B. rest-days, weather) am Ende, damit sie
+  // unabhaengig von der Venue/Origin-Coverage immer durchschlagen.
+  if (opts.extraFactors && opts.extraFactors.length > 0) {
+    factors.push(...opts.extraFactors);
   }
 
   const homeGoalMultiplierTotal = factors.reduce((p, f) => p * f.homeGoalMultiplier, 1);
