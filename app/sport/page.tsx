@@ -127,6 +127,7 @@ import { getCachedWmBacktest } from '@/lib/sport/wm-backtest-runner';
 import { WmBacktestReportCard } from '@/components/sport/wm-backtest-report-card';
 import { evaluateIntegrityAction } from '@/lib/sport/wm-data-integrity-action';
 import { WmDataIntegrityLive } from '@/components/sport/wm-data-integrity-live';
+import { WmSystemGuide } from '@/components/sport/wm-system-guide';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -561,6 +562,7 @@ export default async function SportPage() {
       {/* Daten-Integritaets-Agent — LIVE.
           Greift direkt in rankWmWinnerPicks ein (Pick-Veto), refresh-t
           sich client-seitig alle 30 s und zeigt einen Live-Zeitstempel. */}
+      <WmSystemGuide />
       <WmDataIntegrityLive initial={evaluateIntegrityAction()} />
 
       {/* System-Backtest gegen echte Spiele 2022-2024 — VOR den heutigen

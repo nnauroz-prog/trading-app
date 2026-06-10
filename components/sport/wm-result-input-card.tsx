@@ -7,7 +7,7 @@
 // Zeigt nur Picks deren Outcome noch 'pending' ist und das Spieldatum
 // in der Vergangenheit liegt. Damit bleibt die Liste fokussiert.
 //
-// Wording strikt: kein "sicher", "Bank" etc.
+// Wording strikt neutral.
 
 import { useEffect, useMemo, useState } from 'react';
 import {

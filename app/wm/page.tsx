@@ -18,6 +18,7 @@ import { getCachedWmBacktest } from '@/lib/sport/wm-backtest-runner';
 import { WmDayPlanCard } from '@/components/sport/wm-day-plan-card';
 import { WmReconcilerCard } from '@/components/sport/wm-reconciler-card';
 import { WmDataIntegrityLive } from '@/components/sport/wm-data-integrity-live';
+import { WmSystemGuide } from '@/components/sport/wm-system-guide';
 import { WmBacktestReportCard } from '@/components/sport/wm-backtest-report-card';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
@@ -138,6 +139,7 @@ export default async function WorldCupPage() {
       </header>
 
       {/* === NEUER PRECISION-STACK — identisch zu /sport und / === */}
+      <WmSystemGuide />
       <WmDataIntegrityLive initial={evaluateIntegrityAction()} />
       <WmBacktestReportCard report={await getCachedWmBacktest()} />
       {await (async () => {
