@@ -115,6 +115,7 @@ import { reconcileWmSchedule, verifiedFixtureIds, mismatchedFixtureIds } from '@
 import { WmReconcilerCard } from '@/components/sport/wm-reconciler-card';
 import { WmJetztCard } from '@/components/sport/wm-jetzt-card';
 import { WmWeekPlanCard } from '@/components/sport/wm-week-plan-card';
+import { WmPickExplainCard } from '@/components/sport/wm-pick-explain-card';
 import { buildWmWeekPlan } from '@/lib/sport/wm-week-plan';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
@@ -656,6 +657,7 @@ export default async function SportPage() {
             <WmReconcilerCard result={reconcile} />
             <PlainHint id="winner-picks" />
             <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />
+            <WmPickExplainCard picks={winnerPicks} />
             <PlainHint id="bankroll" />
             <WmBankrollCard picks={winnerPicks} />
             <PlainHint id="ledger" />
