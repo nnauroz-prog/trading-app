@@ -116,6 +116,7 @@ import { WmReconcilerCard } from '@/components/sport/wm-reconciler-card';
 import { WmJetztCard } from '@/components/sport/wm-jetzt-card';
 import { WmWeekPlanCard } from '@/components/sport/wm-week-plan-card';
 import { WmPickExplainCard } from '@/components/sport/wm-pick-explain-card';
+import { WmResultsBoardCard } from '@/components/sport/wm-results-board-card';
 import { buildWmWeekPlan } from '@/lib/sport/wm-week-plan';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
@@ -652,6 +653,7 @@ export default async function SportPage() {
             <WmJetztCard todayIso={buckets.todayIso} plan={dayPlan} />
             <PlainHint id="day-plan" />
             <WmDayPlanCard plan={dayPlan} />
+            <WmResultsBoardCard todayIso={buckets.todayIso} lookbackDays={7} />
             <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso: buckets.todayIso, horizonDays: 7, picks: winnerPicks })} />
             <PlainHint id="reconciler" />
             <WmReconcilerCard result={reconcile} />
