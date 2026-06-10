@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { summarizeWmTrefferquote, type WmTrefferquoteBucket } from '@/lib/sport/wm-trefferquote';
 import { computeWmStreak } from '@/lib/sport/wm-streak';
+import { computeWmForm } from '@/lib/sport/wm-form-window';
 import { loadWmPickLog, WM_PICK_LEARNING_CHANGED_EVENT } from '@/lib/sport/wm-pick-learning-store';
 
 function Bucket({ label, bucket }: { label: string; bucket: WmTrefferquoteBucket }) {
@@ -24,7 +25,12 @@ function Bucket({ label, bucket }: { label: string; bucket: WmTrefferquoteBucket
   );
 }
 
-export function WmTrefferquoteCard() {
+interface Props {
+  todayIso: string;
+  formWindowDays?: number;
+}
+
+export function WmTrefferquoteCard({ todayIso, formWindowDays = 7 }: Props) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
     const refresh = () => setTick((t) => t + 1);
@@ -32,11 +38,16 @@ export function WmTrefferquoteCard() {
     return () => window.removeEventListener(WM_PICK_LEARNING_CHANGED_EVENT, refresh);
   }, []);
 
-  const { summary, streak } = useMemo(() => {
+  const { summary, streak, form } = useMemo(() => {
     const log = loadWmPickLog();
-    return { summary: summarizeWmTrefferquote(log), streak: computeWmStreak(log) };
+    const s = summarizeWmTrefferquote(log);
+    return {
+      summary: s,
+      streak: computeWmStreak(log),
+      form: computeWmForm(log, todayIso, formWindowDays, s.total.hitRatePct)
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tick]);
+  }, [tick, todayIso, formWindowDays]);
 
   if (summary.total.decided === 0 && summary.pending === 0) return null;
 
@@ -61,6 +72,18 @@ export function WmTrefferquoteCard() {
         <Bucket label="Modell-Favorit" bucket={summary.modellFavorit} />
       </div>
       <div className={`rounded border px-2 py-1 text-[11px] font-semibold ${streakStyle}`}>Strecke: {streakLabel}</div>
+      {form.bucket.decided > 0 && (
+        <div className="rounded border border-slate-700 bg-slate-900/40 px-2 py-1 text-[11px] text-slate-200">
+          <span className="opacity-70">Form letzte {form.windowDays} Tage:</span>{' '}
+          <span className="font-mono font-bold">{form.bucket.hitRatePct} %</span>
+          <span className="opacity-70"> ({form.bucket.wins}W / {form.bucket.losses}L)</span>
+          {form.vsTotalDeltaPpct !== null && form.vsTotalDeltaPpct !== 0 && (
+            <span className={`ml-1.5 font-mono text-[10px] ${form.vsTotalDeltaPpct > 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+              {form.vsTotalDeltaPpct > 0 ? '+' : ''}{form.vsTotalDeltaPpct} ppt ggue. Gesamt
+            </span>
+          )}
+        </div>
+      )}
       <p className="text-[9.5px] leading-snug text-slate-500">
         Nur entschiedene Picks zaehlen — Remis bei Sieger-Tipp bleibt &quot;push&quot;.
         Kleine Stichproben sind nicht aussagekraeftig: ab ~20 entschiedenen Tipps wird die Quote belastbarer.

@@ -654,7 +654,7 @@ export default async function SportPage() {
             <WmJetztCard todayIso={buckets.todayIso} plan={dayPlan} />
             <PlainHint id="day-plan" />
             <WmDayPlanCard plan={dayPlan} />
-            <WmTrefferquoteCard />
+            <WmTrefferquoteCard todayIso={buckets.todayIso} />
             <WmResultsBoardCard todayIso={buckets.todayIso} lookbackDays={7} />
             <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso: buckets.todayIso, horizonDays: 7, picks: winnerPicks })} />
             <PlainHint id="reconciler" />
