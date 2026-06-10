@@ -10,6 +10,8 @@ import { marketAverageChangePct, scoreUniverse } from '@/lib/market/stock-setup-
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
 import { getStockSafetyBacktestSummary } from '@/lib/market/stock-safety-backtest-scan';
 import { SafeStockPicks } from '@/components/safe-stock-picks';
+import { InstrumentPrecisionDesk } from '@/components/instruments/instrument-precision-desk';
+import { evaluateInstrumentPrecisionPick } from '@/lib/analysis/instrument-precision-gate';
 import { StockSafetyBacktestCard } from '@/components/stock-safety-backtest-card';
 import { SectorSafetyHeatmap } from '@/components/sector-safety-heatmap';
 import { MarketStatusBadges } from '@/components/market-status-badges';
@@ -88,6 +90,24 @@ export default async function AktienPage() {
       </header>
 
       <MarketStatusBadges states={[usMarketState(), xetraMarketState()]} />
+
+      {(() => {
+        // Aktien Precision Desk: fuehrender Decision-Filter, identisches
+        // Pattern wie Krypto/Sport. Mountet direkt unter dem Header.
+        const marketTrend = marketAverageChangePct(stocks);
+        const precisionPicks = safetyScan.map((e) => evaluateInstrumentPrecisionPick({
+          symbol: e.symbol,
+          name: e.name,
+          group: e.group,
+          kind: 'stock',
+          price: e.price,
+          safety: e.assessment,
+          marketTrendPct: marketTrend,
+          backtestHitRatePct: safetyBacktest.combinedWinRatePct ?? null,
+          backtestSampleSize: safetyBacktest.totalTrades ?? 0
+        }));
+        return <InstrumentPrecisionDesk title="Aktien Precision Desk" hrefBase="/aktien" picks={precisionPicks} />;
+      })()}
 
       <HotSectorBanner hotSectors={detectHotSectors(safetyScan)} />
 
