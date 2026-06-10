@@ -66,6 +66,7 @@ import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
 import { WmDayPlanCard } from '@/components/sport/wm-day-plan-card';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
+import { WmCalibrationCard } from '@/components/sport/wm-calibration-card';
 import { WmIntegrityPill } from '@/components/sport/wm-integrity-pill';
 import { evaluateIntegrityAction } from '@/lib/sport/wm-data-integrity-action';
 import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
@@ -630,6 +631,7 @@ export default async function HomePage() {
 
       {/* Live-Lern-Stand: zeigt sich erst sobald 5+ Picks im Log sind. */}
       <WmLearningStatusCard />
+      <WmCalibrationCard />
 
       <TradingTodayCard
         tier90={tier90}

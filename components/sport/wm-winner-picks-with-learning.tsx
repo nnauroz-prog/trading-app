@@ -26,6 +26,7 @@ import {
   collectResultsForElo,
   eloDeltaByTeam
 } from '@/lib/sport/wm-dynamic-elo';
+import { buildWmCalibrationFromLog, calibrationWarningFor } from '@/lib/sport/wm-calibration';
 import { WmWinnerPicksCard } from '@/components/sport/wm-winner-picks-card';
 import { WmPickLearningRecorder } from '@/components/sport/wm-pick-learning-recorder';
 
@@ -67,19 +68,32 @@ export function WmWinnerPicksWithLearning({ serverPicks, todayIso, horizonDays }
   }, [mounted, log, manualTick]);
 
   const learnedPicks = useMemo(() => {
-    if (!mounted) return serverPicks;
-    const hasWeights = factorWeights.totalResolved >= 5;
-    const hasElo = dynamicElo !== null && Object.keys(dynamicElo).length > 0;
-    if (!hasWeights && !hasElo) return serverPicks;
-    // Sobald echte Resolved-Daten existieren, rechnen wir die Picks mit
-    // Gewichten und/oder gelernten ELO-Deltas neu.
-    return rankWmWinnerPicks({
-      todayIso,
-      horizonDays,
-      factorWeights: hasWeights ? factorWeights : null,
-      eloDeltaByTeam: dynamicElo ?? undefined
+    const base = (() => {
+      if (!mounted) return serverPicks;
+      const hasWeights = factorWeights.totalResolved >= 5;
+      const hasElo = dynamicElo !== null && Object.keys(dynamicElo).length > 0;
+      if (!hasWeights && !hasElo) return serverPicks;
+      // Sobald echte Resolved-Daten existieren, rechnen wir die Picks mit
+      // Gewichten und/oder gelernten ELO-Deltas neu.
+      return rankWmWinnerPicks({
+        todayIso,
+        horizonDays,
+        factorWeights: hasWeights ? factorWeights : null,
+        eloDeltaByTeam: dynamicElo ?? undefined
+      });
+    })();
+    // Eigenkalibrierung: wenn das Probability-Bucket eines Picks in der
+    // eigenen WM-Historie ueberschaetzt ist, haengen wir die Warnung an
+    // die riskNotes — non-invasiv, der Pick bleibt sichtbar.
+    if (!mounted) return base;
+    const calibration = buildWmCalibrationFromLog(log);
+    if (calibration.totalDecisive === 0) return base;
+    return base.map((p) => {
+      const warning = calibrationWarningFor(p.modelProbabilityPct, calibration);
+      if (!warning) return p;
+      return { ...p, riskNotes: [warning, ...p.riskNotes] };
     });
-  }, [mounted, factorWeights, dynamicElo, serverPicks, todayIso, horizonDays]);
+  }, [mounted, factorWeights, dynamicElo, serverPicks, todayIso, horizonDays, log]);
 
   return (
     <>

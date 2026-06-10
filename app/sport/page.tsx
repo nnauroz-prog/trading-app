@@ -116,6 +116,7 @@ import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
 import { WmDayPlanCard } from '@/components/sport/wm-day-plan-card';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
+import { WmCalibrationCard } from '@/components/sport/wm-calibration-card';
 import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
 import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
 import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
@@ -576,6 +577,7 @@ export default async function SportPage() {
           .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date })))}
       />
       <WmLearningStatusCard />
+      <WmCalibrationCard />
       <WmResultInputCard />
 
       {/* WM Sieger-Picks — die strengste Schicht der App: nur 1X2-Sieger-
