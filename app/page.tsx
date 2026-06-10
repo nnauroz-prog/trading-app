@@ -64,6 +64,8 @@ import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
 import { reconcileWmSchedule, verifiedFixtureIds, mismatchedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
 import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
 import { WmDayPlanCard } from '@/components/sport/wm-day-plan-card';
+import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
+import { WORLD_CUP_LEAGUE_IDS } from '@/lib/sport/leagues';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
 import { WmCalibrationCard } from '@/components/sport/wm-calibration-card';
@@ -629,6 +631,16 @@ export default async function HomePage() {
           <WmComboPicksCard picks={wmWinnerPicksHome} />
         </>
       )}
+
+      {/* Headless Resolver: matcht WM-Final-Scores (extern + manuell) gegen
+          pending Picks — auch fuer User die nur die Home oeffnen. */}
+      <WmPickResolver
+        externalFinished={sportLeagues
+          .filter((lf) => WORLD_CUP_LEAGUE_IDS.includes(lf.league.id))
+          .flatMap((lf) => lf.last
+            .filter((f) => f.homeScore !== null && f.awayScore !== null)
+            .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date })))}
+      />
 
       {/* Live-Lern-Stand: zeigt sich erst sobald 5+ Picks im Log sind. */}
       <WmLearningStatusCard />
