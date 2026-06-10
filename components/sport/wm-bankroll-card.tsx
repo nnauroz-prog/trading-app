@@ -15,6 +15,7 @@ import {
   recordStake,
   WM_BANKROLL_LEDGER_CHANGED_EVENT
 } from '@/lib/sport/wm-bankroll-ledger-store';
+import { evaluateWmValue } from '@/lib/sport/wm-value-check';
 
 const STORAGE_KEY = 'trading-app.wm-bankroll-eur-v1';
 
@@ -115,6 +116,16 @@ export function WmBankrollCard({ picks }: Props) {
           const pickId = `${p.fixture.id}-${p.winnerSide}`;
           const staked = mounted && isStaked(pickId);
           const oddsValue = oddsDrafts[pickId] ?? '2.00';
+          const value = evaluateWmValue(p.modelProbabilityPct, oddsFor(pickId));
+          const valueTone =
+            value.verdict === 'value' ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200' :
+            value.verdict === 'unter-quote' ? 'border-rose-400/60 bg-rose-500/15 text-rose-200' :
+            value.verdict === 'fair' ? 'border-slate-700 bg-slate-900/40 text-slate-300' :
+            'border-amber-400/40 bg-amber-500/10 text-amber-200';
+          const valueShort =
+            value.verdict === 'value' && value.edgePct !== null ? `Edge +${value.edgePct.toFixed(1)} %` :
+            value.verdict === 'unter-quote' && value.edgePct !== null ? `Edge ${value.edgePct.toFixed(1)} %` :
+            value.verdict === 'fair' ? 'fair' : 'ungueltig';
           return (
             <li key={s.pickId} className="rounded border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-[10.5px]">
               <div className="flex flex-wrap items-baseline gap-2">
@@ -163,6 +174,12 @@ export function WmBankrollCard({ picks }: Props) {
                       });
                     }}
                   >Stake uebernehmen</button>
+                )}
+              </div>
+              <div className="mt-1 flex flex-wrap items-baseline gap-2 text-[10px]">
+                <span className={`rounded border px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider ${valueTone}`} title={value.hint}>{valueShort}</span>
+                {value.fairOdds !== null && (
+                  <span className="font-mono text-[9.5px] text-slate-500">faire Quote {value.fairOdds.toFixed(2)}</span>
                 )}
               </div>
               <p className="mt-0.5 text-[9.5px] text-slate-500 truncate">{s.reason}</p>
