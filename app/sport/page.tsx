@@ -112,6 +112,8 @@ import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
 import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
 import { reconcileWmSchedule, verifiedFixtureIds, mismatchedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
 import { WmReconcilerCard } from '@/components/sport/wm-reconciler-card';
+import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
+import { WmDayPlanCard } from '@/components/sport/wm-day-plan-card';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
 import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
@@ -619,8 +621,16 @@ export default async function SportPage() {
           verifiedFixtureIds: verifiedIds,
           mismatchedFixtureIds: mismatchedIds
         });
+        const dayPlan = buildWmDayPlan({
+          todayIso: buckets.todayIso,
+          picks: winnerPicks,
+          weatherByFixtureId,
+          verifiedFixtureIds: verifiedIds,
+          mismatchedFixtureIds: mismatchedIds
+        });
         return (
           <>
+            <WmDayPlanCard plan={dayPlan} />
             <WmReconcilerCard result={reconcile} />
             <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />
             <WmBankrollCard picks={winnerPicks} />

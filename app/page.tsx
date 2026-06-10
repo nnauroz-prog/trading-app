@@ -62,6 +62,8 @@ import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
 import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
 import { reconcileWmSchedule, verifiedFixtureIds, mismatchedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
+import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
+import { WmDayPlanCard } from '@/components/sport/wm-day-plan-card';
 import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
 import { WmIntegrityPill } from '@/components/sport/wm-integrity-pill';
@@ -601,6 +603,17 @@ export default async function HomePage() {
       {/* Daten-Integritaets-Agent — Live-Pille. Sichtbar nur wenn aktiv
           etwas blockiert oder warnt. Refresh alle 30 s. */}
       <WmIntegrityPill initial={evaluateIntegrityAction()} />
+
+      {/* Heute bei der WM: alle heutigen Spiele mit Anstosszeit (Berlin),
+          Pick-Status und konkretem Block-Grund. Versteckt sich an
+          spielfreien Tagen. */}
+      <WmDayPlanCard plan={buildWmDayPlan({
+        todayIso,
+        picks: wmWinnerPicksHome,
+        weatherByFixtureId: wmWeatherByFixtureIdHome,
+        verifiedFixtureIds: verifiedFixtureIds(wmReconcileHome),
+        mismatchedFixtureIds: mismatchedFixtureIds(wmReconcileHome)
+      })} />
 
       {/* WM Sieger-Picks: nur sichtbar wenn fuer die naechsten 7 Tage
           mindestens ein Profi-Pick durch alle Filter kommt. WmWinner-
