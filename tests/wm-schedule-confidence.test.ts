@@ -33,28 +33,20 @@ describe('effectiveConfidence', () => {
   });
 });
 
-describe('WM_2026_FIXTURES — Eroeffnung als placeholder markiert', () => {
-  it('wm-1 (Mexiko-Eroeffnung) ist placeholder', () => {
-    const opening = WM_2026_FIXTURES.find((f) => f.id === 'wm-1');
-    expect(opening).toBeDefined();
-    expect(effectiveConfidence(opening!)).toBe('placeholder');
-  });
-
-  it('Gastgeber-Eroeffnung Kanada + USA ebenfalls placeholder', () => {
-    expect(effectiveConfidence(WM_2026_FIXTURES.find((f) => f.id === 'wm-2')!)).toBe('placeholder');
-    expect(effectiveConfidence(WM_2026_FIXTURES.find((f) => f.id === 'wm-3')!)).toBe('placeholder');
+describe('WM_2026_FIXTURES — Eroeffnungs-Paarungen verifiziert (Stand 10.06.2026)', () => {
+  it('Eroeffnungs-Fixtures sind NICHT mehr placeholder', () => {
+    for (const id of ['wm-1', 'wm-2', 'wm-3']) {
+      const f = WM_2026_FIXTURES.find((x) => x.id === id);
+      expect(f).toBeDefined();
+      expect(effectiveConfidence(f!)).not.toBe('placeholder');
+    }
   });
 });
 
-describe('Integritaets-Agent meldet placeholder als WARNUNG', () => {
+describe('Integritaets-Agent — placeholder-Mechanik bleibt funktionsfaehig', () => {
   const issues = auditWmData();
 
-  it('Mindestens ein PLACEHOLDER_FIXTURE-Issue', () => {
-    const placeholders = issues.filter((i) => i.kind === 'PLACEHOLDER_FIXTURE');
-    expect(placeholders.length).toBeGreaterThan(0);
-  });
-
-  it('Placeholder-Issues haben Severity WARNUNG', () => {
+  it('Placeholder-Issues (falls vorhanden) haben Severity WARNUNG', () => {
     const placeholders = issues.filter((i) => i.kind === 'PLACEHOLDER_FIXTURE');
     for (const p of placeholders) expect(p.severity).toBe('WARNUNG');
   });
@@ -63,6 +55,36 @@ describe('Integritaets-Agent meldet placeholder als WARNUNG', () => {
 describe('rankWmWinnerPicks schliesst placeholder-Fixtures aus', () => {
   it('Eroeffnung erscheint nie als Sieger-Pick', () => {
     const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 1 });
+    for (const p of picks) {
+      expect(effectiveConfidence(p.fixture)).not.toBe('placeholder');
+    }
+  });
+});
+
+describe('Verifizierte Eroeffnungs-Paarungen (10.06.2026 gegen ESPN/FIFA/Globe and Mail)', () => {
+  it('Mexiko-Suedafrika ist jetzt official', () => {
+    const opening = WM_2026_FIXTURES.find((f) => f.id === 'wm-1')!;
+    expect(opening.awayTeam).toBe('Südafrika');
+    expect(effectiveConfidence(opening)).toBe('official');
+  });
+
+  it('USA-Gegner wurde auf Paraguay korrigiert (war faelschlich Tuerkei)', () => {
+    const usa = WM_2026_FIXTURES.find((f) => f.id === 'wm-3')!;
+    expect(usa.awayTeam).toBe('Paraguay');
+    expect(effectiveConfidence(usa)).toBe('official');
+  });
+
+  it('Kanada-Bosnien official, Gruppe-B-Folgespiele vorhanden', () => {
+    expect(effectiveConfidence(WM_2026_FIXTURES.find((f) => f.id === 'wm-2')!)).toBe('official');
+    expect(WM_2026_FIXTURES.find((f) => f.id === 'wm-b-md2')?.awayTeam).toBe('Katar');
+    expect(WM_2026_FIXTURES.find((f) => f.id === 'wm-b-md3')?.awayTeam).toBe('Schweiz');
+  });
+
+  it('Official-Fixtures werden vom Picks-Ranking NICHT mehr geblockt', () => {
+    const picks = rankWmWinnerPicks({ todayIso: '2026-06-11', horizonDays: 2 });
+    // Es muss moeglich sein, dass Eroeffnungs-Picks erscheinen (sofern
+    // Engine-Filter passen). Mindestens darf der placeholder-Block nicht
+    // mehr greifen.
     for (const p of picks) {
       expect(effectiveConfidence(p.fixture)).not.toBe('placeholder');
     }

@@ -10,6 +10,9 @@ export interface WmVenue {
   city: string;
   country: WmCountry;
   name: string;
+  // Sponsor-/FIFA-Namen, unter denen das Stadion ebenfalls auftaucht
+  // (z. B. "GEHA Field at Arrowhead" fuer Arrowhead Stadium).
+  aliases?: string[];
   capacity: number;
   // Geo + Klima — neu seit Welle 24101.
   lat: number;
@@ -35,7 +38,7 @@ export const WM_2026_VENUES: WmVenue[] = [
   { city: 'Los Angeles', country: 'USA', name: 'SoFi Stadium', capacity: 70000, lat: 33.95, lon: -118.34, altitudeM: 11, meanHighTempJunJulC: 24, climate: 'mild', hotMiddayRisk: false },
   { city: 'San Francisco Bay', country: 'USA', name: "Levi's Stadium", capacity: 68500, lat: 37.40, lon: -121.97, altitudeM: 3, meanHighTempJunJulC: 26, climate: 'mild', hotMiddayRisk: false },
   { city: 'Seattle', country: 'USA', name: 'Lumen Field', capacity: 69000, lat: 47.59, lon: -122.33, altitudeM: 27, meanHighTempJunJulC: 23, climate: 'kuehl', hotMiddayRisk: false },
-  { city: 'Kansas City', country: 'USA', name: 'Arrowhead Stadium', capacity: 76000, lat: 39.05, lon: -94.48, altitudeM: 270, meanHighTempJunJulC: 32, climate: 'heiss', hotMiddayRisk: true },
+  { city: 'Kansas City', country: 'USA', name: 'Arrowhead Stadium', aliases: ['GEHA Field at Arrowhead', 'Kansas City Stadium'], capacity: 76000, lat: 39.05, lon: -94.48, altitudeM: 270, meanHighTempJunJulC: 32, climate: 'heiss', hotMiddayRisk: true },
   { city: 'Dallas', country: 'USA', name: 'AT&T Stadium', capacity: 80000, lat: 32.75, lon: -97.09, altitudeM: 180, meanHighTempJunJulC: 35, climate: 'heiss', hotMiddayRisk: true },
   { city: 'Houston', country: 'USA', name: 'NRG Stadium', capacity: 72000, lat: 29.68, lon: -95.41, altitudeM: 15, meanHighTempJunJulC: 34, climate: 'heiss', hotMiddayRisk: true },
   { city: 'Atlanta', country: 'USA', name: 'Mercedes-Benz Stadium', capacity: 71000, lat: 33.76, lon: -84.40, altitudeM: 320, meanHighTempJunJulC: 32, climate: 'heiss', hotMiddayRisk: true },
@@ -54,7 +57,9 @@ export function venuesByCountry(): Record<WmCountry, WmVenue[]> {
 }
 
 // Findet das WM-Stadion anhand des venue-Strings aus WmFixture.
-// Toleranz fuer Apostroph-Varianten und Substring-Treffer.
+// Toleranz fuer Apostroph-Varianten, Substring-Treffer, Sponsor-
+// Aliase und Stadt-Namen ("GEHA Field at Arrowhead, Kansas City"
+// matcht ueber Alias UND Stadt).
 export function findVenue(name: string | undefined): WmVenue | null {
   if (!name) return null;
   const norm = name.toLowerCase().replace(/[’'`]/g, '').trim();
@@ -62,6 +67,14 @@ export function findVenue(name: string | undefined): WmVenue | null {
     const vn = v.name.toLowerCase().replace(/[’'`]/g, '').trim();
     if (vn === norm) return v;
     if (vn.includes(norm) || norm.includes(vn)) return v;
+    // Sponsor-/FIFA-Aliase
+    for (const a of v.aliases ?? []) {
+      const an = a.toLowerCase().replace(/[’'`]/g, '').trim();
+      if (an === norm || an.includes(norm) || norm.includes(an)) return v;
+    }
   }
+  // Fallback: eindeutiger Stadt-Match ("..., Kansas City" → Arrowhead).
+  const cityMatches = WM_2026_VENUES.filter((v) => norm.includes(v.city.toLowerCase()));
+  if (cityMatches.length === 1) return cityMatches[0];
   return null;
 }

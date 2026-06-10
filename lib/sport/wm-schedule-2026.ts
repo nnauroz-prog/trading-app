@@ -38,22 +38,23 @@ export function effectiveConfidence(f: WmFixture): WmFixtureConfidence {
 // dass die Mannschaft noch nicht feststeht. So entsteht kein Eindruck einer
 // erfundenen Vorhersage.
 export const WM_2026_FIXTURES: WmFixture[] = [
-  // Eröffnung — Datum + Stadion offiziell bestätigt durch FIFA
-  // ("Estadio Azteca hosts opening match"). Konkrete Paarung
-  // Mexiko-Südafrika stammt aus älteren Sekundärquellen und ist
-  // NICHT 100 % verifiziert — daher sourceConfidence='placeholder'.
-  // Der Profi-Tipper blockt placeholder-Picks automatisch.
+  // Eröffnung — VERIFIZIERT am 10.06.2026 gegen ESPN ("Mexico vs.
+  // South Africa - FIFA World Cup opener") und fifa.com. Anstoss
+  // 15:00 Mexiko-Zeit (UTC-6) = 21:00 UTC = 23:00 Berlin.
   {
-    id: 'wm-1', date: '2026-06-11', time: '15:00',
+    id: 'wm-1', date: '2026-06-11', time: '21:00',
     homeTeam: 'Mexiko', awayTeam: 'Südafrika',
     venue: 'Estadio Azteca, Mexico City', phase: 'Gruppe', group: 'A',
-    sourceConfidence: 'placeholder'
+    sourceConfidence: 'official'
   },
+  // Gruppe A (Mexiko, Südafrika, Südkorea, Tschechien) durch ESPN/
+  // latintimes bestätigt — Paarung Südkorea-Tschechien als Gruppen-
+  // Spiel plausibel-verifiziert, exakte Anstosszeit noch offen.
   {
     id: 'wm-1b', date: '2026-06-11', time: '21:00',
     homeTeam: 'Südkorea', awayTeam: 'Tschechien',
     venue: 'TBD', phase: 'Gruppe', group: 'A',
-    sourceConfidence: 'placeholder'
+    sourceConfidence: 'auslosung'
   },
   // Gruppe-A-Spieltage 2 + 3 (Schedule nach Yahoo Sports / amNewYork)
   {
@@ -71,20 +72,40 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     homeTeam: 'Tschechien', awayTeam: 'Mexiko',
     venue: 'TBD', phase: 'Gruppe', group: 'A'
   },
-  // Kanada-Eröffnung (Gruppe B) — Termin offiziell, Gegner placeholder
+  // Kanada-Eröffnung (Gruppe B) — VERIFIZIERT am 10.06.2026 gegen
+  // theglobeandmail/fifa.com: Kanada vs Bosnien-Herzegowina, BMO Field,
+  // 15:00 ET = 19:00 UTC = 21:00 Berlin.
   {
-    id: 'wm-2', date: '2026-06-12', time: '18:00',
+    id: 'wm-2', date: '2026-06-12', time: '19:00',
     homeTeam: 'Kanada', awayTeam: 'Bosnien-Herzegowina',
     venue: 'BMO Field, Toronto', phase: 'Gruppe', group: 'B',
-    sourceConfidence: 'placeholder'
+    sourceConfidence: 'official'
   },
-  // USA-Eröffnung (Gruppe D) — Termin offiziell, Gegner Türkei lt. Auslosung,
-  // konkret aber NICHT 100 % verifiziert.
+  // USA-Eröffnung — KORRIGIERT am 10.06.2026: Gegner ist PARAGUAY,
+  // nicht Türkei (goal.com "USA vs Paraguay tickets", sofistadium.com).
+  // Der placeholder-Block hat hier einen Pick auf falscher Paarung
+  // verhindert — genau dafür existiert er. Anstoss 18:00 PT = 01:00 UTC
+  // am Folgetag = 03:00 Berlin.
   {
-    id: 'wm-3', date: '2026-06-12', time: '21:00',
-    homeTeam: 'USA', awayTeam: 'Türkei',
+    id: 'wm-3', date: '2026-06-13', time: '01:00',
+    homeTeam: 'USA', awayTeam: 'Paraguay',
     venue: 'SoFi Stadium, Los Angeles', phase: 'Gruppe', group: 'D',
-    sourceConfidence: 'placeholder'
+    sourceConfidence: 'official'
+  },
+  // Kanadas weitere Gruppe-B-Spiele — verifiziert via theglobeandmail:
+  // 18.06. vs Katar (Vancouver, 18:00 ET = 22:00 UTC), 24.06. vs
+  // Schweiz (Vancouver, 15:00 ET = 19:00 UTC).
+  {
+    id: 'wm-b-md2', date: '2026-06-18', time: '22:00',
+    homeTeam: 'Kanada', awayTeam: 'Katar',
+    venue: 'BC Place, Vancouver', phase: 'Gruppe', group: 'B',
+    sourceConfidence: 'official'
+  },
+  {
+    id: 'wm-b-md3', date: '2026-06-24', time: '19:00',
+    homeTeam: 'Kanada', awayTeam: 'Schweiz',
+    venue: 'BC Place, Vancouver', phase: 'Gruppe', group: 'B',
+    sourceConfidence: 'official'
   },
   // Deutschland startet in Gruppe E (Auslosung bestätigt)
   {
