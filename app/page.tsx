@@ -59,6 +59,8 @@ import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
 import { TradeTier90Card } from '@/components/trade-tier-90-card';
 import { TradingTodayCard } from '@/components/trading-today-card';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
+import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
+import { WmWinnerPicksCard } from '@/components/sport/wm-winner-picks-card';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
 import { Tier90HomeSummary } from '@/components/tier-90-home-summary';
 import { AppOverviewStats } from '@/components/app-overview-stats';
@@ -159,6 +161,12 @@ export default async function HomePage() {
   // Multi-Markt-Scan (Über 1,5, Doppelchance, BTTS, 1X2) — höchste
   // Modell-Wahrscheinlichkeit der nächsten 14 Tage gewinnt.
   const safeSportTodayIso = new Date().toISOString().slice(0, 10);
+  // WM Sieger-Picks aus dem Profi-Tipper-Agent — strengste Auswahl der
+  // App. Wenn fuer heute/morgen ein Pick durchkommt, hat er Prioritaet
+  // vor dem Multi-Markt-safe-tip.
+  const wmWinnerHorizonDays = 7;
+  const wmWinnerPicksHome = rankWmWinnerPicks({ todayIso: safeSportTodayIso, horizonDays: wmWinnerHorizonDays });
+  const wmWinnerLeadHome = wmWinnerPicksHome[0] ?? null;
   const safeWmTips = rankSafeWmTips({ todayIso: safeSportTodayIso, maxDays: 14, minProbability: 0.7, limit: 5 });
   const safeFootballTips = rankSafeFootballTips(sportLeagues, { todayIso: safeSportTodayIso, horizonDays: 14, minProbability: 0.7, limit: 5 });
   const safeSportLead = (() => {
@@ -302,10 +310,25 @@ export default async function HomePage() {
         href: '/gold'
       };
     })(),
-    // Sport-Karte: bevorzugt den sichersten Multi-Markt-Tipp (Über 1,5,
-    // Doppelchance etc.) statt nur das 1X2-Endergebnis. Fallback auf den
-    // klassischen sportLead, wenn nichts ≥70 % schafft.
-    safeSportLead
+    // Sport-Karte: hoechste Prioritaet hat der WM-Sieger-Profi-Pick
+    // (haerteste Filter-Schicht). Fallback in dieser Reihenfolge:
+    // 1. wmWinnerLeadHome (Profi-Tipper-Agent + ELO + xG-Konfluenz)
+    // 2. safeSportLead (Multi-Markt-Tipp ≥70 %)
+    // 3. sportLead (klassischer Engine-Pick)
+    wmWinnerLeadHome
+      ? {
+          klass: 'sport',
+          emoji: '🏆',
+          label: 'WM Sieger-Pick',
+          verdict: 'tippen',
+          headline: `${wmWinnerLeadHome.fixture.homeTeam} – ${wmWinnerLeadHome.fixture.awayTeam}`,
+          detail: `→ ${wmWinnerLeadHome.winnerTeam} gewinnt · ${wmWinnerLeadHome.fixture.phase}${wmWinnerLeadHome.fixture.group ? ` ${wmWinnerLeadHome.fixture.group}` : ''}. ELO Δ ${wmWinnerLeadHome.eloDiff >= 0 ? '+' : ''}${wmWinnerLeadHome.eloDiff}, Profi-Conviction ${Math.round(wmWinnerLeadHome.proTipper.conviction * 100)} %.`,
+          target: `${wmWinnerLeadHome.winnerTeam} gewinnt`,
+          confidence: wmWinnerLeadHome.modelProbabilityPct,
+          href: '/sport',
+          extraTips: sportExtraTips
+        }
+      : safeSportLead
       ? {
           klass: 'sport',
           emoji: '⚽',
@@ -546,6 +569,14 @@ export default async function HomePage() {
       {/* WM-Countdown ganz oben — solange <30 Tage bis Start oder waehrend
           der laufenden WM. Versteckt sich automatisch danach. */}
       <WmCountdownBanner todayIso={todayIso} />
+
+      {/* WM Sieger-Picks: nur sichtbar wenn fuer die naechsten 7 Tage
+          mindestens ein Profi-Pick durch alle Filter kommt. Damit hat der
+          User morgen frueh die Sieger-Tipps sofort beim Oeffnen, ohne
+          erst auf /sport navigieren zu muessen. */}
+      {wmWinnerPicksHome.length > 0 && (
+        <WmWinnerPicksCard picks={wmWinnerPicksHome} todayIso={todayIso} horizonDays={wmWinnerHorizonDays} />
+      )}
 
       <TradingTodayCard
         tier90={tier90}
