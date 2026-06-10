@@ -92,6 +92,27 @@ export function WmWinnerPicksCard({ picks, todayIso, horizonDays }: Props) {
               {p.reasons.slice(0, 3).map((r, i) => <li key={i}>{r}</li>)}
             </ul>
 
+            {p.conditions.factors.length > 0 && (
+              <details className="mt-2 rounded border border-slate-800 bg-slate-950/40 p-2">
+                <summary className="cursor-pointer text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+                  ▸ Umfeld-Faktoren ({p.conditions.factors.length}) · ELO-Shift {p.conditions.homeEloDeltaTotal - p.conditions.awayEloDeltaTotal >= 0 ? '+' : ''}{Math.round(p.conditions.homeEloDeltaTotal - p.conditions.awayEloDeltaTotal)} · Daten {Math.round(p.conditions.dataCoverage * 100)} %
+                </summary>
+                <ul className="mt-1.5 space-y-1 text-[10.5px] leading-snug text-slate-300">
+                  {p.conditions.factors.map((c) => (
+                    <li key={c.id} className="rounded border border-slate-800/60 bg-slate-950/30 p-1.5">
+                      <span className="font-mono text-[9.5px] uppercase tracking-wider text-slate-500">{c.id}</span>
+                      <p className="mt-0.5">{c.label}</p>
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[9.5px] text-slate-500">
+                        <span>Heim ×{c.homeGoalMultiplier.toFixed(2)}</span>
+                        <span>Auswaerts ×{c.awayGoalMultiplier.toFixed(2)}</span>
+                        <span>ELO Δ {c.homeEloDelta >= 0 ? '+' : ''}{Math.round(c.homeEloDelta)} / {c.awayEloDelta >= 0 ? '+' : ''}{Math.round(c.awayEloDelta)}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+
             {p.riskNotes.length > 0 && (
               <div className="mt-2 rounded border border-amber-500/30 bg-amber-950/15 p-1.5 text-[10.5px] leading-snug text-amber-100">
                 ⚠ {p.riskNotes[0]}
@@ -102,7 +123,7 @@ export function WmWinnerPicksCard({ picks, todayIso, horizonDays }: Props) {
             )}
 
             <p className="mt-1.5 text-[9.5px] text-slate-500">
-              Profi-Tipper-Conviction: {Math.round(p.proTipper.conviction * 100)} % · Status {p.proTipper.status}
+              Profi-Tipper-Conviction: {Math.round(p.proTipper.conviction * 100)} % · Status {p.proTipper.status} · Conditions-Confidence {p.conditions.confidenceShiftTotal >= 0 ? '+' : ''}{Math.round(p.conditions.confidenceShiftTotal)}
             </p>
           </li>
         ))}

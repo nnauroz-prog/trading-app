@@ -1,39 +1,67 @@
 // Alle 16 WM-2026-Stadien — Quelle: FIFA offizielle Auswahl.
-// Kapazitäten gerundet, sortiert nach Land + Stadt.
+// Erweitert um Geo-/Klima-/Hoehen-Felder fuer das Profi-Adjustment-Modul
+// (lib/sport/wm-conditions). Werte aus oeffentlichen Wetterdurchschnitt-
+// Quellen (OpenMeteo Archiv, NOAA-Klimanormen) konservativ gerundet.
+
+export type WmCountry = 'USA' | 'Kanada' | 'Mexiko';
+export type WmClimateZone = 'kuehl' | 'mild' | 'warm' | 'heiss' | 'tropisch' | 'hochgebirge';
 
 export interface WmVenue {
   city: string;
-  country: 'USA' | 'Kanada' | 'Mexiko';
+  country: WmCountry;
   name: string;
   capacity: number;
+  // Geo + Klima — neu seit Welle 24101.
+  lat: number;
+  lon: number;
+  altitudeM: number;
+  // Mittlere Tageshoechsttemperatur Juni/Juli in Celsius.
+  meanHighTempJunJulC: number;
+  climate: WmClimateZone;
+  // Lokale Anstosszeit-Risikoklasse: Mittagsspiele in Hitze-Stadien
+  // erzeugen historisch weniger Tore.
+  hotMiddayRisk: boolean;
 }
 
 export const WM_2026_VENUES: WmVenue[] = [
   // Mexiko
-  { city: 'Mexico City', country: 'Mexiko', name: 'Estadio Azteca', capacity: 87000 },
-  { city: 'Guadalajara', country: 'Mexiko', name: 'Estadio Akron', capacity: 49000 },
-  { city: 'Monterrey', country: 'Mexiko', name: 'Estadio BBVA', capacity: 53000 },
+  { city: 'Mexico City', country: 'Mexiko', name: 'Estadio Azteca', capacity: 87000, lat: 19.30, lon: -99.15, altitudeM: 2240, meanHighTempJunJulC: 24, climate: 'hochgebirge', hotMiddayRisk: false },
+  { city: 'Guadalajara', country: 'Mexiko', name: 'Estadio Akron', capacity: 49000, lat: 20.68, lon: -103.46, altitudeM: 1600, meanHighTempJunJulC: 27, climate: 'mild', hotMiddayRisk: false },
+  { city: 'Monterrey', country: 'Mexiko', name: 'Estadio BBVA', capacity: 53000, lat: 25.67, lon: -100.31, altitudeM: 500, meanHighTempJunJulC: 33, climate: 'heiss', hotMiddayRisk: true },
   // Kanada
-  { city: 'Toronto', country: 'Kanada', name: 'BMO Field', capacity: 45000 },
-  { city: 'Vancouver', country: 'Kanada', name: 'BC Place', capacity: 54000 },
+  { city: 'Toronto', country: 'Kanada', name: 'BMO Field', capacity: 45000, lat: 43.63, lon: -79.41, altitudeM: 76, meanHighTempJunJulC: 26, climate: 'mild', hotMiddayRisk: false },
+  { city: 'Vancouver', country: 'Kanada', name: 'BC Place', capacity: 54000, lat: 49.27, lon: -123.11, altitudeM: 0, meanHighTempJunJulC: 22, climate: 'kuehl', hotMiddayRisk: false },
   // USA
-  { city: 'Los Angeles', country: 'USA', name: 'SoFi Stadium', capacity: 70000 },
-  { city: 'San Francisco Bay', country: 'USA', name: "Levi's Stadium", capacity: 68500 },
-  { city: 'Seattle', country: 'USA', name: 'Lumen Field', capacity: 69000 },
-  { city: 'Kansas City', country: 'USA', name: 'Arrowhead Stadium', capacity: 76000 },
-  { city: 'Dallas', country: 'USA', name: 'AT&T Stadium', capacity: 80000 },
-  { city: 'Houston', country: 'USA', name: 'NRG Stadium', capacity: 72000 },
-  { city: 'Atlanta', country: 'USA', name: 'Mercedes-Benz Stadium', capacity: 71000 },
-  { city: 'Boston', country: 'USA', name: 'Gillette Stadium', capacity: 65000 },
-  { city: 'New York / New Jersey', country: 'USA', name: 'MetLife Stadium', capacity: 82500 },
-  { city: 'Philadelphia', country: 'USA', name: 'Lincoln Financial Field', capacity: 69000 },
-  { city: 'Miami', country: 'USA', name: 'Hard Rock Stadium', capacity: 65000 }
+  { city: 'Los Angeles', country: 'USA', name: 'SoFi Stadium', capacity: 70000, lat: 33.95, lon: -118.34, altitudeM: 11, meanHighTempJunJulC: 24, climate: 'mild', hotMiddayRisk: false },
+  { city: 'San Francisco Bay', country: 'USA', name: "Levi's Stadium", capacity: 68500, lat: 37.40, lon: -121.97, altitudeM: 3, meanHighTempJunJulC: 26, climate: 'mild', hotMiddayRisk: false },
+  { city: 'Seattle', country: 'USA', name: 'Lumen Field', capacity: 69000, lat: 47.59, lon: -122.33, altitudeM: 27, meanHighTempJunJulC: 23, climate: 'kuehl', hotMiddayRisk: false },
+  { city: 'Kansas City', country: 'USA', name: 'Arrowhead Stadium', capacity: 76000, lat: 39.05, lon: -94.48, altitudeM: 270, meanHighTempJunJulC: 32, climate: 'heiss', hotMiddayRisk: true },
+  { city: 'Dallas', country: 'USA', name: 'AT&T Stadium', capacity: 80000, lat: 32.75, lon: -97.09, altitudeM: 180, meanHighTempJunJulC: 35, climate: 'heiss', hotMiddayRisk: true },
+  { city: 'Houston', country: 'USA', name: 'NRG Stadium', capacity: 72000, lat: 29.68, lon: -95.41, altitudeM: 15, meanHighTempJunJulC: 34, climate: 'heiss', hotMiddayRisk: true },
+  { city: 'Atlanta', country: 'USA', name: 'Mercedes-Benz Stadium', capacity: 71000, lat: 33.76, lon: -84.40, altitudeM: 320, meanHighTempJunJulC: 32, climate: 'heiss', hotMiddayRisk: true },
+  { city: 'Boston', country: 'USA', name: 'Gillette Stadium', capacity: 65000, lat: 42.09, lon: -71.26, altitudeM: 30, meanHighTempJunJulC: 27, climate: 'mild', hotMiddayRisk: false },
+  { city: 'New York / New Jersey', country: 'USA', name: 'MetLife Stadium', capacity: 82500, lat: 40.81, lon: -74.07, altitudeM: 3, meanHighTempJunJulC: 29, climate: 'warm', hotMiddayRisk: false },
+  { city: 'Philadelphia', country: 'USA', name: 'Lincoln Financial Field', capacity: 69000, lat: 39.90, lon: -75.17, altitudeM: 10, meanHighTempJunJulC: 30, climate: 'warm', hotMiddayRisk: false },
+  { city: 'Miami', country: 'USA', name: 'Hard Rock Stadium', capacity: 65000, lat: 25.96, lon: -80.24, altitudeM: 2, meanHighTempJunJulC: 33, climate: 'tropisch', hotMiddayRisk: true }
 ];
 
-export function venuesByCountry(): Record<'USA' | 'Kanada' | 'Mexiko', WmVenue[]> {
+export function venuesByCountry(): Record<WmCountry, WmVenue[]> {
   return {
     USA: WM_2026_VENUES.filter((v) => v.country === 'USA'),
     Kanada: WM_2026_VENUES.filter((v) => v.country === 'Kanada'),
     Mexiko: WM_2026_VENUES.filter((v) => v.country === 'Mexiko')
   };
+}
+
+// Findet das WM-Stadion anhand des venue-Strings aus WmFixture.
+// Toleranz fuer Apostroph-Varianten und Substring-Treffer.
+export function findVenue(name: string | undefined): WmVenue | null {
+  if (!name) return null;
+  const norm = name.toLowerCase().replace(/[’'`]/g, '').trim();
+  for (const v of WM_2026_VENUES) {
+    const vn = v.name.toLowerCase().replace(/[’'`]/g, '').trim();
+    if (vn === norm) return v;
+    if (vn.includes(norm) || norm.includes(vn)) return v;
+  }
+  return null;
 }
