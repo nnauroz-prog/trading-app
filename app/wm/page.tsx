@@ -40,6 +40,7 @@ import { WmSection } from '@/components/sport/wm-section';
 import { WmHeuteZusammenfassung } from '@/components/sport/wm-heute-zusammenfassung';
 import { WmAnstossWarnungCard } from '@/components/sport/wm-anstoss-warnung-card';
 import { WmErgebnisNachtragCard } from '@/components/sport/wm-ergebnis-nachtrag-card';
+import { WmHeuteBilanzStrip } from '@/components/sport/wm-heute-bilanz-strip';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
@@ -191,6 +192,7 @@ export default async function WorldCupPage() {
               <WmAnstossWarnungCard picks={winnerPicks} />
               <WmErgebnisNachtragCard picks={winnerPicks} />
               <WmHeuteZusammenfassung picks={winnerPicks} todayIso={todayIso} />
+              <WmHeuteBilanzStrip todayIso={todayIso} />
               <PlainHint id="day-plan" />
               <WmDayPlanCard plan={dayPlan} />
               <PlainHint id="winner-picks" />
