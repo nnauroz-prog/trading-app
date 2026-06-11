@@ -10,6 +10,7 @@
 // auf jeder Karte.
 
 import type { WmWinnerPick } from '@/lib/sport/wm-winner-picks';
+import { WmKickoffBadge } from '@/components/sport/wm-kickoff-badge';
 
 interface Props {
   picks: WmWinnerPick[];
@@ -71,6 +72,7 @@ export function WmWinnerPicksCard({ picks, todayIso, horizonDays }: Props) {
               <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${TIER_CLASS[p.tier]}`}>{TIER_LABEL[p.tier]}</span>
               <span className="font-mono text-[10px] text-slate-500">{p.modelProbabilityPct} %</span>
               <span className="font-mono text-[10px] text-slate-500">ELO Δ {p.eloDiff >= 0 ? '+' : ''}{p.eloDiff}</span>
+              <WmKickoffBadge dateIso={p.fixture.date} time={p.fixture.time} />
               <span className="ml-auto text-[10px] text-slate-500">{fmtDate(p.fixture.date)}{p.fixture.time ? ` · ${p.fixture.time}` : ''}</span>
             </header>
 
