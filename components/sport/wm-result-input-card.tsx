@@ -69,7 +69,7 @@ export function WmResultInputCard() {
   if (pendingPastPicks.length === 0) return null;
 
   return (
-    <section className="space-y-2 rounded-2xl border border-amber-400/30 bg-amber-950/15 p-3" aria-label="WM Ergebnis-Eingabe">
+    <section id="wm-result-input" className="space-y-2 rounded-2xl border border-amber-400/30 bg-amber-950/15 p-3" aria-label="WM Ergebnis-Eingabe">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-300">Ergebnisse nachpflegen</h3>
         <span className="text-[10px] text-amber-200/70">{pendingPastPicks.length} offen</span>
