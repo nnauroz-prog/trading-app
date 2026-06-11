@@ -49,6 +49,26 @@ function hasOddsForPick(pickId: string): boolean {
   });
 }
 
+const TARGET_ID: Record<'quote' | 'stake' | 'notiz', string> = {
+  quote: 'wm-odds-compare',
+  stake: 'wm-bankroll',
+  notiz: 'wm-pick-notes'
+};
+
+function jumpToTarget(id: string) {
+  if (typeof window === 'undefined') return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  let parent: HTMLElement | null = el.parentElement;
+  while (parent) {
+    if (parent.tagName.toLowerCase() === 'details') {
+      (parent as HTMLDetailsElement).open = true;
+    }
+    parent = parent.parentElement;
+  }
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 export function WmPickStatusBadges({ pickId }: Props) {
   const [tick, setTick] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -82,13 +102,15 @@ export function WmPickStatusBadges({ pickId }: Props) {
         {AMPEL_LABEL[status.ampel]} · {status.doneCount}/{status.totalCount}
       </span>
       {status.items.map((it) => (
-        <span
+        <button
           key={it.id}
-          className={`inline-flex items-center gap-0.5 rounded border px-1 py-0.5 text-[8.5px] font-mono uppercase tracking-wider ${it.done ? 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200' : 'border-slate-700 bg-slate-900/50 text-slate-500'}`}
-          title={it.hint}
+          type="button"
+          onClick={() => jumpToTarget(TARGET_ID[it.id])}
+          className={`inline-flex items-center gap-0.5 rounded border px-1 py-0.5 text-[8.5px] font-mono uppercase tracking-wider hover:border-emerald-400/70 ${it.done ? 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200' : 'border-slate-700 bg-slate-900/50 text-slate-500'}`}
+          title={`${it.hint} (Tippen springt zur Karte)`}
         >
           {it.done ? '✓' : '·'} {it.label}
-        </span>
+        </button>
       ))}
     </span>
   );

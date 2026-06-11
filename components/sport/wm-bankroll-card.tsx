@@ -75,7 +75,7 @@ export function WmBankrollCard({ picks }: Props) {
   if (!mounted || picks.length === 0) return null;
 
   return (
-    <section className="space-y-2 rounded-2xl border border-sky-400/30 bg-sky-950/15 p-3" aria-label="Bankroll-Empfehlung">
+    <section id="wm-bankroll" className="space-y-2 rounded-2xl border border-sky-400/30 bg-sky-950/15 p-3" aria-label="Bankroll-Empfehlung">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-300">Bankroll-Empfehlung · Half-Kelly</h3>
         <span className="text-[10px] text-sky-200/70">Tier-Cap 4 % / 2 %</span>
