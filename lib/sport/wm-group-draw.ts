@@ -41,9 +41,14 @@ export const WM_2026_GROUP_DRAW: Record<string, GroupDrawEntry | null> = {
     teams: ['Brasilien', 'Marokko', 'Haiti', 'Schottland'],
     source: 'wm-schedule-2026.ts Kommentar Z. 170 — Brasilien-Auftakt'
   },
-  // D: nicht vollstaendig dokumentiert in der Codebase. Bekannt sind
-  // USA und Paraguay. Bleibt null bis Quelle nachgewiesen.
-  D: null,
+  // D: verifiziert am 11.06.2026 gegen ESPN ("Group D at the 2026
+  // World Cup: USA, Paraguay, Australia, Türkiye"), Sky Sports und
+  // DAZN-Gruppen-Guide.
+  D: {
+    group: 'D',
+    teams: ['USA', 'Paraguay', 'Australien', 'Türkei'],
+    source: 'ESPN/Sky Sports/DAZN Group-D-Guides — verifiziert 11.06.2026'
+  },
   E: {
     group: 'E',
     teams: ['Deutschland', 'Curaçao', 'Elfenbeinküste', 'Ecuador'],
@@ -54,8 +59,14 @@ export const WM_2026_GROUP_DRAW: Record<string, GroupDrawEntry | null> = {
     teams: ['Niederlande', 'Japan', 'Tunesien', 'Schweden'],
     source: 'wm-schedule-2026.ts Kommentar Z. 194'
   },
-  // G: nicht in der Codebase dokumentiert. Bleibt null.
-  G: null,
+  // G: verifiziert am 11.06.2026 gegen Wikipedia "2026 FIFA World Cup
+  // Group G" + NBC Sports Gruppen-Standings: Belgien, Aegypten, Iran,
+  // Neuseeland (alle Spiele Westkueste: SoFi, Lumen Field, BC Place).
+  G: {
+    group: 'G',
+    teams: ['Belgien', 'Ägypten', 'Iran', 'Neuseeland'],
+    source: 'Wikipedia Group G / NBC Sports — verifiziert 11.06.2026'
+  },
   H: {
     group: 'H',
     teams: ['Spanien', 'Kap Verde', 'Saudi-Arabien', 'Uruguay'],
