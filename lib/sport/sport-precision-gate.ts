@@ -87,6 +87,19 @@ export interface PrecisionPickResult {
   riskLabel: RiskLabel;
   dataLabel: DataLabel;
   calibrationLabel: CalibrationLabel;
+  // Kontext fuer den Odds/Value-Layer. Optional, damit existierende
+  // Aufrufer ohne Anpassung bleiben.
+  oddsContext?: {
+    modelProbability: number;
+    dataConfidence: number;
+    qualityScore: number;
+    marketStability: MarketStability;
+    modelDisagreement: ModelDisagreement;
+    sourceCompleteness: number;
+    isPairingVerified: boolean;
+    isTbdTeam: boolean;
+    hasOfficialFixture: boolean;
+  };
 }
 
 // Schwellen — zentral, damit Tests und UI dasselbe Bild ziehen.
@@ -356,6 +369,20 @@ export function evaluateSportPrecisionPick(input: PrecisionPickInput): Precision
     shouldShowAsTopPick: verdict !== 'NICHT_VERWENDEN',
     riskLabel,
     dataLabel,
-    calibrationLabel
+    calibrationLabel,
+    oddsContext: {
+      modelProbability: input.modelProbability,
+      dataConfidence: input.dataConfidence,
+      qualityScore: input.qualityScore,
+      marketStability: input.marketStability,
+      modelDisagreement: input.modelDisagreement,
+      sourceCompleteness: input.sourceCompleteness,
+      // Paarung gilt als verifiziert wenn offizielles Fixture + nicht-TBD.
+      // Echte WM-Reconciler-Verifizierung kommt ueber den Caller (Bridge),
+      // der die Felder ueberschreiben kann.
+      isPairingVerified: input.hasOfficialFixture && !input.isTbdTeam,
+      isTbdTeam: input.isTbdTeam,
+      hasOfficialFixture: input.hasOfficialFixture
+    }
   };
 }

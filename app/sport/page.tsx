@@ -104,7 +104,7 @@ import { SeasonStartsCard } from '@/components/season-starts-card';
 import { PendingTipsReminder } from '@/components/pending-tips-reminder';
 import { LastResolvedStrip } from '@/components/last-resolved-strip';
 import { NotificationOptIn } from '@/components/notification-opt-in';
-import { SportPrecisionDesk } from '@/components/sport/sport-precision-desk';
+import { SportPrecisionDeskClient } from '@/components/sport/sport-precision-desk-client';
 import { SportPrecisionCalibrationHydrator } from '@/components/sport/sport-precision-calibration-hydrator';
 import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsible-legacy-section';
 import { buildLeaguePrecisionPicks } from '@/lib/sport/sport-precision-bridge';
@@ -573,7 +573,7 @@ export default async function SportPage() {
           return Math.round(sum / wmPicks.length);
         })();
         return (
-          <SportPrecisionDesk
+          <SportPrecisionDeskClient
             title="WM Precision Desk"
             picks={wmPicks}
             calibrationLabel="UNKLAR"
@@ -716,7 +716,7 @@ export default async function SportPage() {
           return Math.round(sum / precisionPicks.length);
         })();
         return (
-          <SportPrecisionDesk
+          <SportPrecisionDeskClient
             title="Liga Precision Desk"
             picks={precisionPicks}
             calibrationLabel="UNKLAR"
