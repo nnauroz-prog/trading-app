@@ -18,6 +18,7 @@ import {
 import { evaluateWmValue } from '@/lib/sport/wm-value-check';
 import { bestOddsFromDrafts } from '@/lib/sport/wm-best-odds';
 import { evaluateStakeWindow } from '@/lib/sport/wm-stake-window';
+import { adjustStake, labelForMode, STAKE_MODES, type WmStakeMode } from '@/lib/sport/wm-stake-adjust';
 import {
   loadAllQuotes,
   WM_ODDS_COMPARE_CHANGED_EVENT
@@ -48,6 +49,8 @@ export function WmBankrollCard({ picks }: Props) {
   const [mounted, setMounted] = useState(false);
   // Pro Pick: vom User angepasste Quote (Default 2.00).
   const [oddsDrafts, setOddsDrafts] = useState<Record<string, string>>({});
+  // Pro Pick: aktiver Stake-Mode (Default standard).
+  const [stakeModes, setStakeModes] = useState<Record<string, WmStakeMode>>({});
   // Tick fuer Re-Render nach Ledger-Schreiben (isStaked-Refresh).
   const [ledgerTick, setLedgerTick] = useState(0);
   // Minuten-Tick fuer das Stake-Fenster (Anstoss-Sperre).
@@ -84,7 +87,12 @@ export function WmBankrollCard({ picks }: Props) {
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [picks, bankroll, oddsDrafts, ledgerTick]);
-  const totalStake = suggestions.reduce((s, x) => s + (x.stakeEur ?? 0), 0);
+  const totalStake = suggestions.reduce((sum, x, i) => {
+    const p = picks[i];
+    const pickId = `${p.fixture.id}-${p.winnerSide}`;
+    const adj = adjustStake(x.stakePct, x.stakeEur, p.tier, stakeModes[pickId] ?? 'standard');
+    return sum + (adj.stakeEur ?? 0);
+  }, 0);
 
   if (!mounted || picks.length === 0) return null;
 
@@ -133,6 +141,8 @@ export function WmBankrollCard({ picks }: Props) {
           const bestCompared = mounted ? bestOddsFromDrafts(loadAllQuotes()[pickId]?.drafts) : null;
           const stakeWindow = evaluateStakeWindow(p.fixture.date, p.fixture.time, now);
           const showBestButton = !staked && stakeWindow.open && bestCompared !== null && Math.abs(bestCompared - oddsFor(pickId)) > 0.001;
+          const mode: WmStakeMode = stakeModes[pickId] ?? 'standard';
+          const adjusted = adjustStake(s.stakePct, s.stakeEur, p.tier, mode);
           const value = evaluateWmValue(p.modelProbabilityPct, oddsFor(pickId));
           const valueTone =
             value.verdict === 'value' ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200' :
@@ -152,9 +162,12 @@ export function WmBankrollCard({ picks }: Props) {
                 <span className="ml-auto font-mono text-[10px] text-slate-400">{p.modelProbabilityPct} %</span>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px]">
-                <span className="font-mono font-bold text-emerald-300">{s.stakePct.toFixed(2)} %</span>
-                {s.stakeEur !== null && <span className="font-mono text-slate-200">≈ {s.stakeEur.toFixed(2)} EUR</span>}
-                {s.cappedByTier && <span className="rounded border border-amber-500/40 bg-amber-950/20 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-amber-200">tier-cap</span>}
+                <span className="font-mono font-bold text-emerald-300">{adjusted.stakePct.toFixed(2)} %</span>
+                {adjusted.stakeEur !== null && <span className="font-mono text-slate-200">≈ {adjusted.stakeEur.toFixed(2)} EUR</span>}
+                {adjusted.cappedByTier && <span className="rounded border border-amber-500/40 bg-amber-950/20 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-amber-200">tier-cap</span>}
+                {mode !== 'standard' && (
+                  <span className="rounded border border-sky-400/40 bg-sky-950/30 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-sky-200">{labelForMode(mode)}</span>
+                )}
                 <span className="ml-auto inline-flex items-center gap-1">
                   <span className="text-slate-500">Quote</span>
                   <input
@@ -186,9 +199,9 @@ export function WmBankrollCard({ picks }: Props) {
                   <button
                     type="button"
                     className="rounded border border-sky-500/40 bg-sky-950/30 px-2 py-0.5 text-[9.5px] uppercase tracking-wider text-sky-200 hover:border-sky-400 disabled:opacity-40"
-                    disabled={s.stakeEur === null || s.stakeEur <= 0}
+                    disabled={adjusted.stakeEur === null || adjusted.stakeEur <= 0}
                     onClick={() => {
-                      if (s.stakeEur === null || s.stakeEur <= 0) return;
+                      if (adjusted.stakeEur === null || adjusted.stakeEur <= 0) return;
                       if (!evaluateStakeWindow(p.fixture.date, p.fixture.time, new Date()).open) return;
                       recordStake({
                         id: pickId,
@@ -197,8 +210,8 @@ export function WmBankrollCard({ picks }: Props) {
                         winnerTeam: p.winnerTeam,
                         opponentTeam: p.winnerSide === 'home' ? p.fixture.awayTeam : p.fixture.homeTeam,
                         dateIso: p.fixture.date,
-                        stakePct: s.stakePct,
-                        stakeEur: s.stakeEur,
+                        stakePct: adjusted.stakePct,
+                        stakeEur: adjusted.stakeEur,
                         decimalOdds: oddsFor(pickId),
                         modelProbabilityPct: p.modelProbabilityPct,
                         tier: p.tier
@@ -207,6 +220,20 @@ export function WmBankrollCard({ picks }: Props) {
                   >Stake uebernehmen</button>
                 )}
               </div>
+              {!staked && stakeWindow.open && (
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  <span className="text-[9px] uppercase tracking-wider text-slate-500">Anpassung:</span>
+                  {STAKE_MODES.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setStakeModes((prev) => ({ ...prev, [pickId]: m }))}
+                      className={`rounded border px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider ${mode === m ? 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100' : 'border-slate-700 bg-slate-900/60 text-slate-400 hover:border-slate-500'}`}
+                      title={`Stake-Empfehlung mal ${({ minus50: 0.5, minus25: 0.75, standard: 1.0, plus25: 1.25, plus50: 1.5 })[m]}`}
+                    >{labelForMode(m)}</button>
+                  ))}
+                </div>
+              )}
               <div className="mt-1 flex flex-wrap items-baseline gap-2 text-[10px]">
                 <span className={`rounded border px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider ${valueTone}`} title={value.hint}>{valueShort}</span>
                 {value.fairOdds !== null && (
