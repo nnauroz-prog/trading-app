@@ -41,6 +41,7 @@ import { WmHeuteZusammenfassung } from '@/components/sport/wm-heute-zusammenfass
 import { WmAnstossWarnungCard } from '@/components/sport/wm-anstoss-warnung-card';
 import { WmErgebnisNachtragCard } from '@/components/sport/wm-ergebnis-nachtrag-card';
 import { WmHeuteBilanzStrip } from '@/components/sport/wm-heute-bilanz-strip';
+import { WmTabTitleUpdater } from '@/components/sport/wm-tab-title-updater';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
@@ -186,6 +187,7 @@ export default async function WorldCupPage() {
         });
         return (
           <>
+            <WmTabTitleUpdater picks={winnerPicks} />
             <WmOpeningBanner todayIso={todayIso} />
             <WmJetztCard todayIso={todayIso} plan={dayPlan} />
             <WmSection title="Heute" hint="Was los ist + Tipps" defaultOpen>
