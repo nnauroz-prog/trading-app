@@ -74,4 +74,50 @@ describe('buildWmSimplePicks', () => {
     const picks = buildWmSimplePicks();
     expect(picks.length).toBeGreaterThanOrEqual(30);
   });
+
+  it('Ohne Endstand -> result null', () => {
+    const picks = buildWmSimplePicks({ schedule });
+    expect(picks.every((p) => p.result === null)).toBe(true);
+  });
+
+  it('Endstand bei Sieger-Tipp Treffer = "treffer"', () => {
+    const picks = buildWmSimplePicks({
+      schedule,
+      finished: [{ fixtureId: 'wm-late', homeScore: 3, awayScore: 0 }]
+    });
+    const sp = picks.find((p) => p.fixtureId === 'wm-late')!;
+    expect(sp.result).not.toBeNull();
+    expect(sp.result?.outcome).toBe('treffer');
+    expect(sp.result?.actualWinner).toBe('Spanien');
+    expect(sp.result?.homeScore).toBe(3);
+  });
+
+  it('Endstand: Auswaerts gewinnt obwohl Heim getippt = "daneben"', () => {
+    const picks = buildWmSimplePicks({
+      schedule,
+      finished: [{ fixtureId: 'wm-late', homeScore: 0, awayScore: 2 }]
+    });
+    const sp = picks.find((p) => p.fixtureId === 'wm-late')!;
+    expect(sp.result?.outcome).toBe('daneben');
+    expect(sp.result?.actualWinner).toBe('Kap Verde');
+  });
+
+  it('Remis bei Sieger-Tipp = "remis-push"', () => {
+    const picks = buildWmSimplePicks({
+      schedule,
+      finished: [{ fixtureId: 'wm-late', homeScore: 1, awayScore: 1 }]
+    });
+    const sp = picks.find((p) => p.fixtureId === 'wm-late')!;
+    expect(sp.result?.outcome).toBe('remis-push');
+    expect(sp.result?.actualWinner).toBeNull();
+  });
+
+  it('TBD-Spiel ignoriert Endstand-Eintraege', () => {
+    const picks = buildWmSimplePicks({
+      schedule,
+      finished: [{ fixtureId: 'wm-tbd', homeScore: 2, awayScore: 1 }]
+    });
+    const sp = picks.find((p) => p.fixtureId === 'wm-tbd')!;
+    expect(sp.result).toBeNull();
+  });
 });
