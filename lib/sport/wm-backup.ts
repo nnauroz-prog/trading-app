@@ -15,6 +15,7 @@ export const WM_BACKUP_VERSION = 1;
 const WM_LOCAL_STORAGE_KEYS = [
   'trading-app.wm-bankroll-eur-v1',
   'trading-app.wm-bankroll-ledger-v1',
+  'trading-app.wm-day-cap-pct-v1',
   'trading-app.wm-erste-schritte-dismissed-v1',
   'trading-app.wm-manual-results-v1',
   'trading-app.wm-odds-compare-quotes-v1',
