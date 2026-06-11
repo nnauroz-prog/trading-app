@@ -11,6 +11,7 @@
 
 import type { WmWinnerPick } from '@/lib/sport/wm-winner-picks';
 import { WmKickoffBadge } from '@/components/sport/wm-kickoff-badge';
+import { WmPickStatusBadges } from '@/components/sport/wm-pick-status-badges';
 
 interface Props {
   picks: WmWinnerPick[];
@@ -75,6 +76,9 @@ export function WmWinnerPicksCard({ picks, todayIso, horizonDays }: Props) {
               <WmKickoffBadge dateIso={p.fixture.date} time={p.fixture.time} />
               <span className="ml-auto text-[10px] text-slate-500">{fmtDate(p.fixture.date)}{p.fixture.time ? ` · ${p.fixture.time}` : ''}</span>
             </header>
+            <div className="mt-1">
+              <WmPickStatusBadges pickId={`${p.fixture.id}-${p.winnerSide}`} />
+            </div>
 
             <div className="mt-2 text-[13px] text-slate-100">
               <span className="font-semibold">{p.fixture.homeTeam}</span>
