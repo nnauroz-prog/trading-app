@@ -7,12 +7,22 @@ import type {
   PrecisionVerdict
 } from '@/lib/sport/sport-precision-gate';
 import type { PrecisionPickWithAgents } from '@/lib/sport/sport-precision-bridge';
+import type { SportRiskMode } from '@/lib/sport/sport-odds-value';
+import { SportOddsValueCard } from '@/components/sport/sport-odds-value-card';
 
 interface Props {
   pick: PrecisionPickWithAgents;
   // Wenn true, wird die Karte als „bester Pick" mit etwas mehr Detail
   // gerendert. Sonst kompakte Listen-Variante.
   hero?: boolean;
+  // Aktueller Signal-Modus, beeinflusst den Odds/Value-Layer. Default
+  // PRECISION (strenger Modus).
+  riskMode?: SportRiskMode;
+  // Optionale Provider-Quote (z. B. aus einem zukuenftigen offiziellen
+  // Adapter). null wenn keine echte Quote verfuegbar.
+  providerOdds?: number | null;
+  providerName?: string;
+  providerStatusHint?: string | null;
 }
 
 const VERDICT_PILL: Record<PrecisionVerdict, string> = {
@@ -52,7 +62,7 @@ function fmtTime(date: string, time: string | null): string {
   return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
 }
 
-export function SportPrecisionPickCard({ pick, hero = false }: Props) {
+export function SportPrecisionPickCard({ pick, hero = false, riskMode = 'PRECISION', providerOdds = null, providerName, providerStatusHint }: Props) {
   const displayPct = Math.round(pick.displayProbability * 100);
   const capPct = Math.round(pick.confidenceCap);
   const showCap = capPct < 100 && pick.rawProbability * 100 > pick.confidenceCap;
@@ -108,6 +118,34 @@ export function SportPrecisionPickCard({ pick, hero = false }: Props) {
         <ul className="mt-2 list-disc space-y-0.5 pl-4 text-[10.5px] text-rose-200">
           {pick.blockers.slice(0, 2).map((b, i) => <li key={i}>{b}</li>)}
         </ul>
+      )}
+
+      {pick.oddsContext && (
+        <div className="mt-2">
+          <SportOddsValueCard
+            input={{
+              modelProbability: pick.oddsContext.modelProbability,
+              displayProbability: pick.displayProbability,
+              decimalOdds: providerOdds,
+              marketType: pick.marketType,
+              dataConfidence: pick.oddsContext.dataConfidence,
+              qualityScore: pick.oddsContext.qualityScore,
+              marketStability: pick.oddsContext.marketStability,
+              modelDisagreement: pick.oddsContext.modelDisagreement,
+              calibrationLabel: pick.calibrationLabel,
+              baseVerdict: pick.verdict,
+              hasOfficialFixture: pick.oddsContext.hasOfficialFixture,
+              isTbdTeam: pick.oddsContext.isTbdTeam,
+              isPairingVerified: pick.oddsContext.isPairingVerified,
+              sourceCompleteness: pick.oddsContext.sourceCompleteness,
+              hasHardBlocker: pick.blockers.length > 0,
+              riskMode
+            }}
+            providerOdds={providerOdds}
+            providerName={providerName}
+            providerStatusHint={providerStatusHint ?? (providerOdds === null ? 'Tipico-Quoten aktuell nicht angebunden. Manuelle Quote moeglich.' : null)}
+          />
+        </div>
       )}
     </article>
   );

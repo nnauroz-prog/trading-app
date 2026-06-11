@@ -38,6 +38,10 @@ interface Props {
   // Optional: eigener Titel — der gleiche Desk wird auf /sport zweimal
   // gemountet (WM + Liga). Default: "Sport Precision Desk".
   title?: string;
+  // Optional: aktueller Signal-Modus aus dem Toggle.
+  riskMode?: import('@/lib/sport/sport-odds-value').SportRiskMode;
+  // Optional: Hinweis-Text, wenn aktuell keine Provider-Quote verfuegbar ist.
+  providerStatusHint?: string | null;
 }
 
 function computeOverallVerdict(picks: PrecisionPickWithAgents[]): PrecisionVerdict {
@@ -94,7 +98,7 @@ function aggregateAgents(picks: PrecisionPickWithAgents[]): Array<{ status: Prec
   });
 }
 
-export function SportPrecisionDesk({ picks, calibrationLabel, dataCoveragePct, title = 'Sport Precision Desk' }: Props) {
+export function SportPrecisionDesk({ picks, calibrationLabel, dataCoveragePct, title = 'Sport Precision Desk', riskMode = 'PRECISION', providerStatusHint = null }: Props) {
   const selection = selectTopPrecisionPicks(picks, { limit: 5, includeRejected: false, allowExplainerWhenEmpty: true });
   const overall = computeOverallVerdict(selection.picks);
   const topBlockerLabel = topBlockersFn(picks)[0]?.label ?? null;
@@ -119,7 +123,7 @@ export function SportPrecisionDesk({ picks, calibrationLabel, dataCoveragePct, t
       />
 
       {hero && (
-        <SportPrecisionPickCard pick={hero} hero />
+        <SportPrecisionPickCard pick={hero} hero riskMode={riskMode} providerStatusHint={providerStatusHint} />
       )}
 
       {!hero && selection.emptyTopList && (
@@ -144,7 +148,7 @@ export function SportPrecisionDesk({ picks, calibrationLabel, dataCoveragePct, t
           <ul className="space-y-2">
             {selection.picks.map((p) => (
               <li key={`${p.matchId}-${p.marketType}`}>
-                <SportPrecisionPickCard pick={p} />
+                <SportPrecisionPickCard pick={p} riskMode={riskMode} providerStatusHint={providerStatusHint} />
               </li>
             ))}
           </ul>
