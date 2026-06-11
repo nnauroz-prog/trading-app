@@ -43,6 +43,7 @@ import { WmErgebnisNachtragCard } from '@/components/sport/wm-ergebnis-nachtrag-
 import { WmHeuteBilanzStrip } from '@/components/sport/wm-heute-bilanz-strip';
 import { WmTabTitleUpdater } from '@/components/sport/wm-tab-title-updater';
 import { WmMorgenVorschauStrip } from '@/components/sport/wm-morgen-vorschau-strip';
+import { WmRoiVerlaufStrip } from '@/components/sport/wm-roi-verlauf-strip';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
@@ -207,6 +208,7 @@ export default async function WorldCupPage() {
               <WmMorgenVorschauStrip picks={winnerPicks} todayIso={todayIso} />
             </WmSection>
             <WmSection title="Bilanz & Verlauf" hint="wie laeuft es bisher">
+              <WmRoiVerlaufStrip todayIso={todayIso} />
               <WmTrefferquoteCard todayIso={todayIso} />
               <WmTagesHeldCard todayIso={todayIso} />
               <WmResultsBoardCard todayIso={todayIso} lookbackDays={7} />
