@@ -77,7 +77,7 @@ export function WmOddsCompareCard({ picks }: Props) {
   };
 
   return (
-    <section className="space-y-2 rounded-2xl border border-sky-400/30 bg-sky-950/10 p-3" aria-label="WM Quoten-Vergleich">
+    <section id="wm-odds-compare" className="space-y-2 rounded-2xl border border-sky-400/30 bg-sky-950/10 p-3" aria-label="WM Quoten-Vergleich">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-300">Quoten-Vergleich pro Pick</h3>
         <div className="flex items-baseline gap-2">

@@ -43,7 +43,7 @@ export function WmPickNotesCard({ picks }: Props) {
   const totalWithNotes = Object.values(notes).filter((n) => n.trim().length > 0).length;
 
   return (
-    <section className="space-y-2 rounded-2xl border border-slate-700 bg-slate-950/40 p-3" aria-label="WM Pick-Notizen">
+    <section id="wm-pick-notes" className="space-y-2 rounded-2xl border border-slate-700 bg-slate-950/40 p-3" aria-label="WM Pick-Notizen">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">Deine Notizen zu den Tipps</h3>
         <span className="text-[10px] text-slate-500">{totalWithNotes} mit Notiz</span>
