@@ -145,6 +145,7 @@ export function SportPrecisionPickCard({ pick, hero = false, riskMode = 'PRECISI
             providerOdds={providerOdds}
             providerName={providerName}
             providerStatusHint={providerStatusHint ?? (providerOdds === null ? 'Tipico-Quoten aktuell nicht angebunden. Manuelle Quote moeglich.' : null)}
+            variant={hero ? 'detail' : 'list'}
           />
         </div>
       )}
