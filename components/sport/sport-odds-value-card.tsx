@@ -31,6 +31,9 @@ interface Props {
   providerOdds: number | null;
   providerName?: string;
   providerStatusHint?: string | null;
+  // 'list' = kompakte einzeilige Anzeige mit Aufklapp-Toggle (Default
+  // fuer Listen-Picks). 'detail' = vollstaendige Anzeige (Hero-Pick).
+  variant?: 'list' | 'detail';
 }
 
 function parseQuote(raw: string): number | null {
@@ -54,11 +57,12 @@ const LABEL_TEXT: Record<ValueLabel, string> = {
   NO_QUOTE: 'KEINE QUOTE'
 };
 
-export function SportOddsValueCard({ input, matchId, providerOdds, providerName, providerStatusHint }: Props) {
+export function SportOddsValueCard({ input, matchId, providerOdds, providerName, providerStatusHint, variant = 'detail' }: Props) {
   const [manualDraft, setManualDraft] = useState('');
   const [savedQuote, setSavedQuote] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState<'saved' | 'removed' | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   // Persistierte manuelle Quote nur dann laden, wenn keine Provider-
   // Quote vorliegt — sonst hat der Provider Vorrang.
@@ -108,6 +112,32 @@ export function SportOddsValueCard({ input, matchId, providerOdds, providerName,
   const fmtEv = (ev: number | null) => ev === null ? '—' : `${ev >= 0 ? '+' : ''}${(ev * 100).toFixed(1)} %`;
   const tone = TONE_FOR_LABEL[result.valueLabel];
 
+  // Kompakte Listen-Variante: eine Zeile + Aufklappen.
+  if (variant === 'list' && !expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className={`flex w-full flex-wrap items-center gap-2 rounded-lg border px-2 py-1 text-left text-[10.5px] hover:border-current ${tone}`}
+        aria-label="Odds/Value-Check aufklappen"
+        aria-expanded={false}
+      >
+        <span className="rounded border border-current/40 bg-current/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">{LABEL_TEXT[result.valueLabel]}</span>
+        {effectiveOdds !== null ? (
+          <>
+            <span className="font-mono font-bold">Quote {effectiveOdds.toFixed(2)}</span>
+            {result.valueEdge !== null && (
+              <span className="font-mono">Edge {fmtEdge(result.valueEdge)}</span>
+            )}
+          </>
+        ) : (
+          <span className="opacity-80">Quote manuell eintragen fuer Value-Check</span>
+        )}
+        <span className="ml-auto text-[9.5px] opacity-70">Details ▾</span>
+      </button>
+    );
+  }
+
   return (
     <section className={`space-y-2 rounded-2xl border px-3 py-2 ${tone}`} aria-label="Odds/Value-Check">
       <div className="flex flex-wrap items-baseline gap-2">
@@ -117,6 +147,15 @@ export function SportOddsValueCard({ input, matchId, providerOdds, providerName,
         )}
         {manualQuote !== null && providerOdds === null && (
           <span className="text-[9.5px] uppercase tracking-wider opacity-80">Quote manuell eingetragen</span>
+        )}
+        {variant === 'list' && expanded && (
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="ml-auto rounded border border-current/40 bg-current/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider hover:border-current"
+            aria-label="Odds/Value-Check zuklappen"
+            aria-expanded={true}
+          >zuklappen ▴</button>
         )}
       </div>
 
