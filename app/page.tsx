@@ -646,12 +646,12 @@ export default async function HomePage() {
           <>
             <WmTabTitleUpdater picks={wmWinnerPicksHome} />
             <WmTurnierTippCard />
-            <WmSimplePicksCard />
             <details className="rounded-2xl border border-slate-700 bg-slate-950/30">
               <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 hover:text-slate-200">
                 ▸ Mehr Details (Banner, Picks-Filter, Bankroll, Quoten, Bilanz, Werkzeuge)
               </summary>
               <div className="space-y-2 border-t border-slate-800 p-3">
+            <WmSimplePicksCard />
             <WmOpeningBanner todayIso={todayIso} />
             <WmJetztCard todayIso={todayIso} plan={plan} />
             <WmSection title="Heute" hint="Was los ist + Tipps" defaultOpen>
