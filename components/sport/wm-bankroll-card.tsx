@@ -17,6 +17,7 @@ import {
 } from '@/lib/sport/wm-bankroll-ledger-store';
 import { evaluateWmValue } from '@/lib/sport/wm-value-check';
 import { bestOddsFromDrafts } from '@/lib/sport/wm-best-odds';
+import { evaluateStakeWindow } from '@/lib/sport/wm-stake-window';
 import {
   loadAllQuotes,
   WM_ODDS_COMPARE_CHANGED_EVENT
@@ -49,6 +50,8 @@ export function WmBankrollCard({ picks }: Props) {
   const [oddsDrafts, setOddsDrafts] = useState<Record<string, string>>({});
   // Tick fuer Re-Render nach Ledger-Schreiben (isStaked-Refresh).
   const [ledgerTick, setLedgerTick] = useState(0);
+  // Minuten-Tick fuer das Stake-Fenster (Anstoss-Sperre).
+  const [now, setNow] = useState<Date>(() => new Date());
 
   useEffect(() => {
     const initial = loadBankroll();
@@ -56,9 +59,11 @@ export function WmBankrollCard({ picks }: Props) {
     if (initial !== null) setDraft(String(initial));
     setMounted(true);
     const sync = () => setLedgerTick((t) => t + 1);
+    const minuteId = setInterval(() => setNow(new Date()), 60_000);
     window.addEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
     window.addEventListener(WM_ODDS_COMPARE_CHANGED_EVENT, sync);
     return () => {
+      clearInterval(minuteId);
       window.removeEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
       window.removeEventListener(WM_ODDS_COMPARE_CHANGED_EVENT, sync);
     };
@@ -126,7 +131,8 @@ export function WmBankrollCard({ picks }: Props) {
           const staked = mounted && isStaked(pickId);
           const oddsValue = oddsDrafts[pickId] ?? '2.00';
           const bestCompared = mounted ? bestOddsFromDrafts(loadAllQuotes()[pickId]?.drafts) : null;
-          const showBestButton = !staked && bestCompared !== null && Math.abs(bestCompared - oddsFor(pickId)) > 0.001;
+          const stakeWindow = evaluateStakeWindow(p.fixture.date, p.fixture.time, now);
+          const showBestButton = !staked && stakeWindow.open && bestCompared !== null && Math.abs(bestCompared - oddsFor(pickId)) > 0.001;
           const value = evaluateWmValue(p.modelProbabilityPct, oddsFor(pickId));
           const valueTone =
             value.verdict === 'value' ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200' :
@@ -171,6 +177,11 @@ export function WmBankrollCard({ picks }: Props) {
                 </span>
                 {staked ? (
                   <span className="rounded border border-emerald-400/50 bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200">im Ledger ✓</span>
+                ) : !stakeWindow.open ? (
+                  <span
+                    className="rounded border border-slate-700 bg-slate-900/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400"
+                    title={stakeWindow.reason ?? undefined}
+                  >gesperrt — Anstoss vorbei</span>
                 ) : (
                   <button
                     type="button"
@@ -178,6 +189,7 @@ export function WmBankrollCard({ picks }: Props) {
                     disabled={s.stakeEur === null || s.stakeEur <= 0}
                     onClick={() => {
                       if (s.stakeEur === null || s.stakeEur <= 0) return;
+                      if (!evaluateStakeWindow(p.fixture.date, p.fixture.time, new Date()).open) return;
                       recordStake({
                         id: pickId,
                         fixtureId: p.fixture.id,
