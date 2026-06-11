@@ -4,6 +4,7 @@
 // Wording ohne verbotene Begriffe.
 
 import type { DayPlanStatus, WmDayPlan } from '@/lib/sport/wm-day-plan';
+import { WmDayPlanLiveRow } from '@/components/sport/wm-day-plan-live-row';
 
 interface Props {
   plan: WmDayPlan;
@@ -51,6 +52,7 @@ export function WmDayPlanCard({ plan }: Props) {
               <span className="font-semibold text-slate-100">{r.fixture.homeTeam}</span>
               <span className="text-slate-500">–</span>
               <span className="font-semibold text-slate-100">{r.fixture.awayTeam}</span>
+              <WmDayPlanLiveRow fixtureId={r.fixture.id} dateIso={r.fixture.date} time={r.fixture.time} />
               <span className="text-[9px] uppercase tracking-wider text-slate-600">{r.fixture.phase}{r.fixture.group ? ` ${r.fixture.group}` : ''}</span>
               <span className={`ml-auto rounded border px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider ${STATUS_CLASS[r.status]}`}>
                 {STATUS_LABEL[r.status]}
