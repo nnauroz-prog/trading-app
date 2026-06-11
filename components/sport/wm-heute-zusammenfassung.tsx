@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { summarizeWmHeute, type HeuteZusammenfassungPick } from '@/lib/sport/wm-heute-zusammenfassung';
+import { formatWmPicksForClipboard } from '@/lib/sport/wm-picks-copy';
 import { computeWmPickStatus } from '@/lib/sport/wm-pick-status';
 import {
   isStaked,
@@ -40,6 +41,33 @@ export function WmHeuteZusammenfassung({ picks, todayIso }: Props) {
   const [now, setNow] = useState<Date>(() => new Date());
   const [tick, setTick] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    const text = formatWmPicksForClipboard(picks, todayIso);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Fallback: textarea + execCommand
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch {
+        // letzter Ausweg: nichts
+      } finally {
+        document.body.removeChild(ta);
+      }
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -96,6 +124,12 @@ export function WmHeuteZusammenfassung({ picks, todayIso }: Props) {
       {s.vorbei > 0 && (
         <span className="text-[10.5px] opacity-90">{s.vorbei} vorbei</span>
       )}
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="ml-auto rounded border border-current/40 bg-current/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider hover:border-current"
+        aria-label="Tipps als Text kopieren"
+      >{copied ? 'kopiert' : 'kopieren'}</button>
     </div>
   );
 }
