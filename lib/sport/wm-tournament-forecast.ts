@@ -16,6 +16,7 @@
 
 import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
 import { predictWmMatch } from '@/lib/sport/wm-match-engine';
+import { WM_2026_GROUP_DRAW, listAllGroupLetters } from '@/lib/sport/wm-group-draw';
 
 function isTbd(team: string): boolean {
   if (!team || team.includes('TBD')) return true;
@@ -59,11 +60,14 @@ export interface WmTournamentForecast {
   ko: KoPrediction[];
   championPick: string | null;       // Sieger des letzten resolvbaren Spiels (Finale)
   thirdPlacePick: string | null;     // wenn Spiel um Platz 3 resolvable
+  // Gruppen-Buchstaben fuer die keine vollstaendige Vier-Team-Liste
+  // verfuegbar ist (weder Auslosung-Lookup noch Spielplan reichen aus).
+  incompleteGroups: string[];
 }
 
 // --- Helpers ---
 
-function uniqueTeamsPerGroup(schedule: WmFixture[]): Map<string, string[]> {
+function uniqueTeamsPerGroupFromScheduleOnly(schedule: WmFixture[]): Map<string, string[]> {
   const byGroup = new Map<string, Set<string>>();
   for (const f of schedule) {
     if (f.phase !== 'Gruppe' || !f.group) continue;
@@ -74,7 +78,33 @@ function uniqueTeamsPerGroup(schedule: WmFixture[]): Map<string, string[]> {
   }
   const out = new Map<string, string[]>();
   for (const [g, set] of byGroup) {
-    out.set(g, Array.from(set).sort());
+    if (set.size === 4) out.set(g, Array.from(set).sort());
+  }
+  return out;
+}
+
+function uniqueTeamsPerGroup(schedule: WmFixture[]): Map<string, string[]> {
+  // 1. Bevorzugt: vollstaendige FIFA-Auslosung aus der Lookup.
+  // 2. Fallback: Teams die im Spielplan vorkommen (nicht-TBD).
+  const fromSchedule = new Map<string, Set<string>>();
+  for (const f of schedule) {
+    if (f.phase !== 'Gruppe' || !f.group) continue;
+    if (isTbd(f.homeTeam) || isTbd(f.awayTeam)) continue;
+    if (!fromSchedule.has(f.group)) fromSchedule.set(f.group, new Set());
+    fromSchedule.get(f.group)!.add(f.homeTeam);
+    fromSchedule.get(f.group)!.add(f.awayTeam);
+  }
+  const out = new Map<string, string[]>();
+  for (const g of listAllGroupLetters()) {
+    const known = WM_2026_GROUP_DRAW[g];
+    if (known && known.teams.length === 4) {
+      out.set(g, [...known.teams]);
+      continue;
+    }
+    const sched = fromSchedule.get(g);
+    if (sched && sched.size === 4) {
+      out.set(g, Array.from(sched).sort());
+    }
   }
   return out;
 }
@@ -202,11 +232,15 @@ function predictKoMatch(home: string, away: string, venue: string): { winner: st
 
 interface BuildOptions {
   schedule?: WmFixture[];
+  // Wenn false, wird die statische Auslosungs-Lookup ignoriert und nur
+  // der Schedule selbst durchsucht. Default true (Lookup bevorzugt).
+  useGroupDrawLookup?: boolean;
 }
 
 export function buildWmTournamentForecast(opts: BuildOptions = {}): WmTournamentForecast {
   const schedule = opts.schedule ?? WM_2026_FIXTURES;
-  const teamsPerGroup = uniqueTeamsPerGroup(schedule);
+  const useLookup = opts.useGroupDrawLookup ?? true;
+  const teamsPerGroup = useLookup ? uniqueTeamsPerGroup(schedule) : uniqueTeamsPerGroupFromScheduleOnly(schedule);
   const groups: GroupForecast[] = [];
   for (const [g, teams] of teamsPerGroup) {
     const fc = buildGroupForecast(g, teams);
@@ -259,10 +293,14 @@ export function buildWmTournamentForecast(opts: BuildOptions = {}): WmTournament
   const finale = koMatches.find((k) => k.phase === 'Finale');
   const thirdPlace = koMatches.find((k) => k.phase === 'Spiel um Platz 3');
 
+  const presentGroups = new Set(groups.map((g) => g.group));
+  const incompleteGroups = listAllGroupLetters().filter((g) => !presentGroups.has(g));
+
   return {
     groups,
     ko: koMatches,
     championPick: finale?.predictedWinner ?? null,
-    thirdPlacePick: thirdPlace?.predictedWinner ?? null
+    thirdPlacePick: thirdPlace?.predictedWinner ?? null,
+    incompleteGroups
   };
 }

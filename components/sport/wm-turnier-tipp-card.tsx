@@ -83,6 +83,13 @@ export function WmTurnierTippCard() {
             Spielplan enthaelt noch keine vollstaendigen Gruppen (4 Teams pro Gruppe noetig).
           </p>
         )}
+        {fc.incompleteGroups.length > 0 && (
+          <p className="text-[9.5px] leading-snug text-amber-300/80">
+            ⚠ Gruppen {fc.incompleteGroups.join(', ')}: Auslosung in der Codebase noch nicht
+            vollstaendig dokumentiert. Diese Gruppen werden uebersprungen, sobald die Auslosung
+            verifiziert ist, kommen sie automatisch dazu.
+          </p>
+        )}
       </section>
 
       {/* Turnierbaum */}

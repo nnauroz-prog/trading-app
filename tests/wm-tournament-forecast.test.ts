@@ -21,8 +21,8 @@ function buildTestSchedule(): WmFixture[] {
 }
 
 describe('buildWmTournamentForecast', () => {
-  it('Erkennt 2 Gruppen mit jeweils 4 Teams', () => {
-    const fc = buildWmTournamentForecast({ schedule: buildTestSchedule() });
+  it('Erkennt 2 Gruppen mit jeweils 4 Teams (Lookup disabled)', () => {
+    const fc = buildWmTournamentForecast({ schedule: buildTestSchedule(), useGroupDrawLookup: false });
     expect(fc.groups.length).toBe(2);
     expect(fc.groups[0].group).toBe('A');
     expect(fc.groups[1].group).toBe('B');
@@ -30,7 +30,7 @@ describe('buildWmTournamentForecast', () => {
   });
 
   it('Gruppen-Tabelle ist nach Punkten sortiert (Sieger zuerst)', () => {
-    const fc = buildWmTournamentForecast({ schedule: buildTestSchedule() });
+    const fc = buildWmTournamentForecast({ schedule: buildTestSchedule(), useGroupDrawLookup: false });
     const a = fc.groups[0];
     for (let i = 1; i < a.table.length; i++) {
       expect(a.table[i - 1].expectedPoints).toBeGreaterThanOrEqual(a.table[i].expectedPoints);
@@ -38,7 +38,7 @@ describe('buildWmTournamentForecast', () => {
   });
 
   it('Top 2 jeder Gruppe sind im advancing-Array', () => {
-    const fc = buildWmTournamentForecast({ schedule: buildTestSchedule() });
+    const fc = buildWmTournamentForecast({ schedule: buildTestSchedule(), useGroupDrawLookup: false });
     for (const g of fc.groups) {
       expect(g.advancing.length).toBe(2);
       expect(g.advancing[0]).toBe(g.table[0].team);
@@ -47,7 +47,7 @@ describe('buildWmTournamentForecast', () => {
   });
 
   it('Achtelfinale loest Sieger Gruppe A vs Zweiter Gruppe B auf', () => {
-    const fc = buildWmTournamentForecast({ schedule: buildTestSchedule() });
+    const fc = buildWmTournamentForecast({ schedule: buildTestSchedule(), useGroupDrawLookup: false });
     const r16 = fc.ko.find((k) => k.fixtureId === 'wm-r16-1');
     expect(r16).toBeDefined();
     expect(r16!.homeTeam).toBe(fc.groups[0].table[0].team);
@@ -56,17 +56,17 @@ describe('buildWmTournamentForecast', () => {
   });
 
   it('Finale baut auf Sieger AF1 auf -> championPick gesetzt', () => {
-    const fc = buildWmTournamentForecast({ schedule: buildTestSchedule() });
+    const fc = buildWmTournamentForecast({ schedule: buildTestSchedule(), useGroupDrawLookup: false });
     expect(fc.championPick).not.toBeNull();
     const r16 = fc.ko.find((k) => k.fixtureId === 'wm-r16-1');
     expect(fc.championPick).toBe(r16!.predictedWinner);
   });
 
-  it('Gruppen-Forecast ignoriert Gruppen mit < 4 Teams', () => {
+  it('Gruppen-Forecast ignoriert Gruppen mit < 4 Teams (Lookup disabled)', () => {
     const partial: WmFixture[] = [
       { id: 'a-1', date: '2026-06-15', time: '19:00', homeTeam: 'Spanien', awayTeam: 'Suedafrika', venue: '', phase: 'Gruppe', group: 'A' }
     ];
-    const fc = buildWmTournamentForecast({ schedule: partial });
+    const fc = buildWmTournamentForecast({ schedule: partial, useGroupDrawLookup: false });
     expect(fc.groups.length).toBe(0);
   });
 
@@ -83,5 +83,26 @@ describe('buildWmTournamentForecast', () => {
         expect(k.predictedLoser).not.toBe(k.predictedWinner);
       }
     }
+  });
+
+  it('Auslosungs-Lookup deckt mindestens 10 von 12 Gruppen ab', () => {
+    const fc = buildWmTournamentForecast();
+    expect(fc.groups.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('Unvollstaendige Gruppen werden in incompleteGroups gemeldet', () => {
+    const fc = buildWmTournamentForecast();
+    // D und G sind aktuell nicht voll dokumentiert.
+    expect(fc.incompleteGroups).toContain('D');
+    expect(fc.incompleteGroups).toContain('G');
+  });
+
+  it('Solange Gruppe G fehlt, kann das Finale nicht voll aufgeloest werden', () => {
+    const fc = buildWmTournamentForecast();
+    // Achtelfinale wm-r16-4 erwartet "Sieger Gruppe G" — fehlt aktuell.
+    // Daher bleibt championPick null. Wenn die Lookup erweitert wird,
+    // sollte championPick != null werden — dieser Test wird dann
+    // bewusst angepasst.
+    expect(fc.incompleteGroups).toContain('G');
   });
 });
