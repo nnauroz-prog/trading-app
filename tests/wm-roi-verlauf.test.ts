@@ -113,4 +113,30 @@ describe('buildWmRoiVerlauf', () => {
     const v = buildWmRoiVerlauf([entry({ id: 'a', outcome: 'win' })], [], '2026-06-11', 7);
     expect(v.totalPnl).toBe(0);
   });
+
+  it('Tier-Trennung: Hoechste Konfluenz separat', () => {
+    const v = buildWmRoiVerlauf([
+      entry({ id: 'a', dateIso: '2026-06-12', outcome: 'win', tier: 'hoechste-konfluenz' }),
+      entry({ id: 'b', dateIso: '2026-06-13', outcome: 'loss', tier: 'modell-favorit' })
+    ], [
+      stake({ id: 'a', dateIso: '2026-06-12', stakeEur: 20, decimalOdds: 2.0 }),
+      stake({ id: 'b', dateIso: '2026-06-13', stakeEur: 30 })
+    ], '2026-06-15', 7);
+    expect(v.totalHoechsteKonfluenz).toBe(20);
+    expect(v.totalModellFavorit).toBe(-30);
+    expect(v.totalPnl).toBe(-10);
+  });
+
+  it('Cumulative pro Tier wachsen unabhaengig', () => {
+    const v = buildWmRoiVerlauf([
+      entry({ id: 'a', dateIso: '2026-06-12', outcome: 'win', tier: 'hoechste-konfluenz' }),
+      entry({ id: 'b', dateIso: '2026-06-13', outcome: 'win', tier: 'hoechste-konfluenz' })
+    ], [
+      stake({ id: 'a', dateIso: '2026-06-12', stakeEur: 20, decimalOdds: 2.0 }),
+      stake({ id: 'b', dateIso: '2026-06-13', stakeEur: 10, decimalOdds: 2.0 })
+    ], '2026-06-15', 7);
+    const idx13 = v.dates.indexOf('2026-06-13');
+    expect(v.cumulativeHoechsteKonfluenz[idx13]).toBe(30);
+    expect(v.cumulativeModellFavorit[idx13]).toBe(0);
+  });
 });
