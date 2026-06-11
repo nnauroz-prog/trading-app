@@ -20,6 +20,13 @@ import { bestOddsFromDrafts } from '@/lib/sport/wm-best-odds';
 import { evaluateStakeWindow } from '@/lib/sport/wm-stake-window';
 import { adjustStake, labelForMode, STAKE_MODES, type WmStakeMode } from '@/lib/sport/wm-stake-adjust';
 import { computeWmDayCapStatus } from '@/lib/sport/wm-day-cap';
+import {
+  loadDayCapPct,
+  saveDayCapPct,
+  MIN_CAP_PCT,
+  MAX_CAP_PCT,
+  WM_DAY_CAP_CHANGED_EVENT
+} from '@/lib/sport/wm-day-cap-store';
 import { loadStakeRecords } from '@/lib/sport/wm-bankroll-ledger-store';
 import {
   loadAllQuotes,
@@ -53,6 +60,8 @@ export function WmBankrollCard({ picks }: Props) {
   const [oddsDrafts, setOddsDrafts] = useState<Record<string, string>>({});
   // Pro Pick: aktiver Stake-Mode (Default standard).
   const [stakeModes, setStakeModes] = useState<Record<string, WmStakeMode>>({});
+  // Tagesdeckel-Prozent (lokal gespeichert, Default 8).
+  const [dayCapPct, setDayCapPct] = useState<number>(8);
   // Tick fuer Re-Render nach Ledger-Schreiben (isStaked-Refresh).
   const [ledgerTick, setLedgerTick] = useState(0);
   // Minuten-Tick fuer das Stake-Fenster (Anstoss-Sperre).
@@ -64,13 +73,17 @@ export function WmBankrollCard({ picks }: Props) {
     if (initial !== null) setDraft(String(initial));
     setMounted(true);
     const sync = () => setLedgerTick((t) => t + 1);
+    const syncCap = () => setDayCapPct(loadDayCapPct());
+    setDayCapPct(loadDayCapPct());
     const minuteId = setInterval(() => setNow(new Date()), 60_000);
     window.addEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
     window.addEventListener(WM_ODDS_COMPARE_CHANGED_EVENT, sync);
+    window.addEventListener(WM_DAY_CAP_CHANGED_EVENT, syncCap);
     return () => {
       clearInterval(minuteId);
       window.removeEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
       window.removeEventListener(WM_ODDS_COMPARE_CHANGED_EVENT, sync);
+      window.removeEventListener(WM_DAY_CAP_CHANGED_EVENT, syncCap);
     };
   }, []);
 
@@ -104,7 +117,7 @@ export function WmBankrollCard({ picks }: Props) {
     return mounted ? loadStakeRecords() : [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted, ledgerTick]);
-  const dayCap = computeWmDayCapStatus(stakesSnapshot, todayIsoBerlin, bankroll);
+  const dayCap = computeWmDayCapStatus(stakesSnapshot, todayIsoBerlin, bankroll, 0, dayCapPct);
 
   if (!mounted || picks.length === 0) return null;
 
@@ -145,12 +158,30 @@ export function WmBankrollCard({ picks }: Props) {
       </div>
 
       {bankroll !== null && dayCap.capEur !== null && (
-        <div className={`flex flex-wrap items-baseline gap-2 rounded border px-2 py-1 text-[10.5px] ${dayCap.usedTodayEur > dayCap.capEur ? 'border-rose-500/60 bg-rose-950/30 text-rose-100' : dayCap.usedTodayEur > dayCap.capEur * 0.75 ? 'border-amber-500/40 bg-amber-950/20 text-amber-100' : 'border-slate-800 bg-slate-950/40 text-slate-300'}`}>
-          <span className="text-[9.5px] uppercase tracking-wider opacity-80">Tagesdeckel {dayCap.capPct} %</span>
-          <span className="font-mono">{dayCap.usedTodayEur.toFixed(2)} / {dayCap.capEur.toFixed(2)} EUR</span>
+        <div className={`flex flex-wrap items-center gap-2 rounded border px-2 py-1 text-[10.5px] ${dayCap.usedTodayEur > dayCap.capEur ? 'border-rose-500/60 bg-rose-950/30 text-rose-100' : dayCap.usedTodayEur > dayCap.capEur * 0.75 ? 'border-amber-500/40 bg-amber-950/20 text-amber-100' : 'border-slate-800 bg-slate-950/40 text-slate-300'}`}>
+          <span className="text-[9.5px] uppercase tracking-wider opacity-80">Tagesdeckel</span>
+          <input
+            type="range"
+            min={MIN_CAP_PCT}
+            max={MAX_CAP_PCT}
+            step={1}
+            value={dayCapPct}
+            onChange={(e) => {
+              const next = parseInt(e.target.value, 10);
+              if (Number.isFinite(next)) {
+                setDayCapPct(next);
+                saveDayCapPct(next);
+              }
+            }}
+            className="h-2 w-24 cursor-pointer accent-emerald-400"
+            aria-label="Tagesdeckel-Prozent"
+            title={`${MIN_CAP_PCT}–${MAX_CAP_PCT} % der Bankroll pro Tag`}
+          />
+          <span className="font-mono font-bold">{dayCapPct} %</span>
+          <span className="font-mono opacity-80">{dayCap.usedTodayEur.toFixed(2)} / {dayCap.capEur.toFixed(2)} EUR</span>
           <span className="font-mono opacity-80">noch frei: {dayCap.remainingEur !== null ? `${dayCap.remainingEur.toFixed(2)} EUR` : '—'}</span>
           {dayCap.usedTodayEur > dayCap.capEur && (
-            <span className="font-bold uppercase tracking-wider">Tagesdeckel ueberschritten</span>
+            <span className="font-bold uppercase tracking-wider">ueberschritten</span>
           )}
         </div>
       )}
@@ -166,7 +197,7 @@ export function WmBankrollCard({ picks }: Props) {
           const showBestButton = !staked && stakeWindow.open && bestCompared !== null && Math.abs(bestCompared - oddsFor(pickId)) > 0.001;
           const mode: WmStakeMode = stakeModes[pickId] ?? 'standard';
           const adjusted = adjustStake(s.stakePct, s.stakeEur, p.tier, mode);
-          const capCheck = computeWmDayCapStatus(stakesSnapshot, todayIsoBerlin, bankroll, adjusted.stakeEur ?? 0);
+          const capCheck = computeWmDayCapStatus(stakesSnapshot, todayIsoBerlin, bankroll, adjusted.stakeEur ?? 0, dayCapPct);
           const value = evaluateWmValue(p.modelProbabilityPct, oddsFor(pickId));
           const valueTone =
             value.verdict === 'value' ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200' :
@@ -232,7 +263,7 @@ export function WmBankrollCard({ picks }: Props) {
                     onClick={() => {
                       if (adjusted.stakeEur === null || adjusted.stakeEur <= 0) return;
                       if (!evaluateStakeWindow(p.fixture.date, p.fixture.time, new Date()).open) return;
-                      const liveCap = computeWmDayCapStatus(loadStakeRecords(), todayIsoBerlin, bankroll, adjusted.stakeEur);
+                      const liveCap = computeWmDayCapStatus(loadStakeRecords(), todayIsoBerlin, bankroll, adjusted.stakeEur, dayCapPct);
                       if (liveCap.wouldExceedCap) return;
                       recordStake({
                         id: pickId,
