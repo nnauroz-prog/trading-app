@@ -126,6 +126,7 @@ import { buildWmWeekPlan } from '@/lib/sport/wm-week-plan';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
 import { WmSection } from '@/components/sport/wm-section';
+import { WmHeuteZusammenfassung } from '@/components/sport/wm-heute-zusammenfassung';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
@@ -659,6 +660,7 @@ export default async function SportPage() {
             <WmOpeningBanner todayIso={buckets.todayIso} />
             <WmJetztCard todayIso={buckets.todayIso} plan={dayPlan} />
             <WmSection title="Heute" hint="Was los ist + Tipps" defaultOpen>
+              <WmHeuteZusammenfassung picks={winnerPicks} todayIso={buckets.todayIso} />
               <PlainHint id="day-plan" />
               <WmDayPlanCard plan={dayPlan} />
               <PlainHint id="winner-picks" />
