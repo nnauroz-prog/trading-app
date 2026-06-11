@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import { computeWmHeuteBilanz } from '@/lib/sport/wm-heute-bilanz';
+import { computeWmHeutePotenzial } from '@/lib/sport/wm-heute-potenzial';
 import {
   loadWmPickLog,
   WM_PICK_LEARNING_CHANGED_EVENT
@@ -40,8 +41,11 @@ export function WmHeuteBilanzStrip({ todayIso }: Props) {
   if (!mounted) return null;
   void tick;
 
-  const bilanz = computeWmHeuteBilanz(loadWmPickLog(), loadStakeRecords(), todayIso);
-  if (bilanz.pickCountHeute === 0) return null;
+  const pickLog = loadWmPickLog();
+  const stakes = loadStakeRecords();
+  const bilanz = computeWmHeuteBilanz(pickLog, stakes, todayIso);
+  const potenzial = computeWmHeutePotenzial(stakes, pickLog, todayIso);
+  if (bilanz.pickCountHeute === 0 && potenzial.offeneStakes === 0) return null;
 
   const tone = bilanz.hasResolved
     ? bilanz.netPnlEur > 0
@@ -60,6 +64,11 @@ export function WmHeuteBilanzStrip({ todayIso }: Props) {
       )}
       {bilanz.pushes > 0 && (
         <span className="text-[10.5px] opacity-90">· {bilanz.pushes} push</span>
+      )}
+      {potenzial.offeneStakes > 0 && (
+        <span className="text-[10.5px] opacity-90" title="Wenn alle offenen Tipps treffen (best case)">
+          · {potenzial.imRisikoEur.toFixed(2)} EUR im Risiko · moeglich: +{potenzial.moeglicherGewinnEur.toFixed(2)} EUR
+        </span>
       )}
     </div>
   );

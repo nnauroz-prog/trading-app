@@ -1,8 +1,8 @@
 import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
-// Last bumped: 2026-06-11 — Welle 28701-28800 (Beste-Quote-Uebernahme).
-const BUILD_MARKER = 'welle-28701-28800-beste-quote';
+// Last bumped: 2026-06-11 — Welle 28801-28900 (Heute-Potenzial).
+const BUILD_MARKER = 'welle-28801-28900-heute-potenzial';
 
 const nextConfig: NextConfig = {
   env: {
