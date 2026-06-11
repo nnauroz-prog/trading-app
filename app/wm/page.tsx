@@ -36,6 +36,7 @@ import { WmPickNotesCard } from '@/components/sport/wm-pick-notes-card';
 import { WmBackupCard } from '@/components/sport/wm-backup-card';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
+import { WmSection } from '@/components/sport/wm-section';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
@@ -182,41 +183,47 @@ export default async function WorldCupPage() {
         return (
           <>
             <WmOpeningBanner todayIso={todayIso} />
-            <WmErsteSchritte />
             <WmJetztCard todayIso={todayIso} plan={dayPlan} />
-            <PlainHint id="day-plan" />
-            <WmDayPlanCard plan={dayPlan} />
-            <WmTrefferquoteCard todayIso={todayIso} />
-            <WmTagesHeldCard todayIso={todayIso} />
-            <WmResultsBoardCard todayIso={todayIso} lookbackDays={7} />
-            <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso, horizonDays: 7, picks: winnerPicks })} />
-            <PlainHint id="reconciler" />
-            <WmReconcilerCard result={reconcile} />
-            <PlainHint id="winner-picks" />
-            <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={todayIso} horizonDays={horizonDays} />
-            <WmPickExplainCard picks={winnerPicks} />
-            <PlainHint id="bankroll" />
-            <WmBankrollCard picks={winnerPicks} />
-            <WmOddsCompareCard picks={winnerPicks} />
-            <WmPickNotesCard picks={winnerPicks} />
-            <WmBackupCard />
-            <PlainHint id="ledger" />
-            <WmBankrollLedgerCard />
-            <PlainHint id="combo" />
-            <WmComboPicksCard picks={winnerPicks} />
-            <WmPickResolver externalFinished={liveLast
-              .filter((f) => f.homeScore !== null && f.awayScore !== null)
-              .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date }))}
-            />
-            <PlainHint id="learning" />
-            <WmLearningStatusCard />
-            <PlainHint id="calibration" />
-            <WmCalibrationCard />
-            <PlainHint id="elo-drift" />
-            <WmEloDriftCard />
-            <PlainHint id="result-input" />
-            <WmResultInputCard />
-            <WmGlossarCard />
+            <WmSection title="Heute" hint="Was los ist + Tipps" defaultOpen>
+              <PlainHint id="day-plan" />
+              <WmDayPlanCard plan={dayPlan} />
+              <PlainHint id="winner-picks" />
+              <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={todayIso} horizonDays={horizonDays} />
+              <WmPickExplainCard picks={winnerPicks} />
+              <PlainHint id="bankroll" />
+              <WmBankrollCard picks={winnerPicks} />
+              <WmOddsCompareCard picks={winnerPicks} />
+            </WmSection>
+            <WmSection title="Bilanz & Verlauf" hint="wie laeuft es bisher">
+              <WmTrefferquoteCard todayIso={todayIso} />
+              <WmTagesHeldCard todayIso={todayIso} />
+              <WmResultsBoardCard todayIso={todayIso} lookbackDays={7} />
+              <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso, horizonDays: 7, picks: winnerPicks })} />
+              <PlainHint id="ledger" />
+              <WmBankrollLedgerCard />
+            </WmSection>
+            <WmSection title="Werkzeuge & Daten" hint="Notizen, Ergebnisse pflegen, Glossar">
+              <WmErsteSchritte />
+              <WmPickNotesCard picks={winnerPicks} />
+              <PlainHint id="reconciler" />
+              <WmReconcilerCard result={reconcile} />
+              <PlainHint id="combo" />
+              <WmComboPicksCard picks={winnerPicks} />
+              <WmPickResolver externalFinished={liveLast
+                .filter((f) => f.homeScore !== null && f.awayScore !== null)
+                .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date }))}
+              />
+              <PlainHint id="result-input" />
+              <WmResultInputCard />
+              <PlainHint id="learning" />
+              <WmLearningStatusCard />
+              <PlainHint id="calibration" />
+              <WmCalibrationCard />
+              <PlainHint id="elo-drift" />
+              <WmEloDriftCard />
+              <WmBackupCard />
+              <WmGlossarCard />
+            </WmSection>
           </>
         );
       })()}

@@ -86,6 +86,7 @@ import { WmPickNotesCard } from '@/components/sport/wm-pick-notes-card';
 import { WmBackupCard } from '@/components/sport/wm-backup-card';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
+import { WmSection } from '@/components/sport/wm-section';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
@@ -634,38 +635,47 @@ export default async function HomePage() {
         return (
           <>
             <WmOpeningBanner todayIso={todayIso} />
-            <WmErsteSchritte />
             <WmJetztCard todayIso={todayIso} plan={plan} />
-            <PlainHint id="day-plan" />
-            <WmDayPlanCard plan={plan} />
-            <WmTrefferquoteCard todayIso={todayIso} />
-            <WmTagesHeldCard todayIso={todayIso} />
-            <WmResultsBoardCard todayIso={todayIso} lookbackDays={7} />
-            <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso, horizonDays: 7, picks: wmWinnerPicksHome })} />
+            <WmSection title="Heute" hint="Was los ist + Tipps" defaultOpen>
+              <PlainHint id="day-plan" />
+              <WmDayPlanCard plan={plan} />
+              {wmWinnerPicksHome.length > 0 && (
+                <>
+                  <PlainHint id="winner-picks" />
+                  <WmWinnerPicksWithLearning serverPicks={wmWinnerPicksHome} todayIso={todayIso} horizonDays={wmWinnerHorizonDays} />
+                  <WmPickExplainCard picks={wmWinnerPicksHome} />
+                  <WmBankrollCard picks={wmWinnerPicksHome} />
+                  <WmOddsCompareCard picks={wmWinnerPicksHome} />
+                </>
+              )}
+            </WmSection>
+            <WmSection title="Bilanz & Verlauf" hint="wie laeuft es bisher">
+              <WmTrefferquoteCard todayIso={todayIso} />
+              <WmTagesHeldCard todayIso={todayIso} />
+              <WmResultsBoardCard todayIso={todayIso} lookbackDays={7} />
+              <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso, horizonDays: 7, picks: wmWinnerPicksHome })} />
+              {wmWinnerPicksHome.length > 0 && (
+                <>
+                  <PlainHint id="ledger" />
+                  <WmBankrollLedgerCard />
+                </>
+              )}
+            </WmSection>
+            <WmSection title="Werkzeuge & Daten" hint="Notizen, Combo, Glossar">
+              <WmErsteSchritte />
+              {wmWinnerPicksHome.length > 0 && (
+                <>
+                  <WmPickNotesCard picks={wmWinnerPicksHome} />
+                  <PlainHint id="combo" />
+                  <WmComboPicksCard picks={wmWinnerPicksHome} />
+                </>
+              )}
+              <WmBackupCard />
+              <WmGlossarCard />
+            </WmSection>
           </>
         );
       })()}
-
-      {/* WM Sieger-Picks: nur sichtbar wenn fuer die naechsten 7 Tage
-          mindestens ein Profi-Pick durch alle Filter kommt. WmWinner-
-          PicksWithLearning rechnet die Picks mit den gelernten Faktor-
-          Gewichten neu, sobald >=5 Picks resolved sind. */}
-      {wmWinnerPicksHome.length > 0 && (
-        <>
-          <WmWinnerPicksWithLearning serverPicks={wmWinnerPicksHome} todayIso={todayIso} horizonDays={wmWinnerHorizonDays} />
-          <WmPickExplainCard picks={wmWinnerPicksHome} />
-          <PlainHint id="winner-picks" />
-          <WmBankrollCard picks={wmWinnerPicksHome} />
-          <WmOddsCompareCard picks={wmWinnerPicksHome} />
-          <WmPickNotesCard picks={wmWinnerPicksHome} />
-          <WmBackupCard />
-          <PlainHint id="ledger" />
-          <WmBankrollLedgerCard />
-          <PlainHint id="combo" />
-          <WmComboPicksCard picks={wmWinnerPicksHome} />
-          <WmGlossarCard />
-        </>
-      )}
 
       {/* Headless Resolver: matcht WM-Final-Scores (extern + manuell) gegen
           pending Picks — auch fuer User die nur die Home oeffnen. */}
