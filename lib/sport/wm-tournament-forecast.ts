@@ -237,9 +237,35 @@ interface BuildOptions {
   useGroupDrawLookup?: boolean;
 }
 
+// Der offizielle Spielplan in wm-schedule-2026.ts enthaelt nur die
+// Achtelfinale AF1-AF4 (Gruppen A-H), die Viertelfinale referenzieren
+// aber AF1-AF8. Damit der Turnierbaum bis zum Finale durchrechenbar
+// ist, ergaenzen wir AF5-AF8 als MODELL-BRACKET aus den Gruppen
+// I/J/K/L (Sieger gegen Zweiten ueber Kreuz). Das ist KEIN offizielles
+// FIFA-Fixture — Datum/Venue bleiben leer, die IDs sind als
+// "virtual-" markiert. Sobald der echte R32/R16-Plan im Schedule
+// steht, fallen diese virtuellen Spiele automatisch weg.
+function buildVirtualR16(schedule: WmFixture[]): WmFixture[] {
+  const existingAf = new Set(
+    schedule.filter((f) => f.phase === 'Achtelfinale').map((f) => f.id)
+  );
+  const virtual: WmFixture[] = [
+    { id: 'wm-r16-5', date: '2026-07-02', time: null, homeTeam: 'Sieger Gruppe I', awayTeam: 'Zweiter Gruppe J', venue: '', phase: 'Achtelfinale' },
+    { id: 'wm-r16-6', date: '2026-07-02', time: null, homeTeam: 'Sieger Gruppe J', awayTeam: 'Zweiter Gruppe I', venue: '', phase: 'Achtelfinale' },
+    { id: 'wm-r16-7', date: '2026-07-03', time: null, homeTeam: 'Sieger Gruppe K', awayTeam: 'Zweiter Gruppe L', venue: '', phase: 'Achtelfinale' },
+    { id: 'wm-r16-8', date: '2026-07-03', time: null, homeTeam: 'Sieger Gruppe L', awayTeam: 'Zweiter Gruppe K', venue: '', phase: 'Achtelfinale' }
+  ];
+  return virtual.filter((v) => !existingAf.has(v.id));
+}
+
 export function buildWmTournamentForecast(opts: BuildOptions = {}): WmTournamentForecast {
-  const schedule = opts.schedule ?? WM_2026_FIXTURES;
+  const baseSchedule = opts.schedule ?? WM_2026_FIXTURES;
   const useLookup = opts.useGroupDrawLookup ?? true;
+  // Modell-Bracket nur ergaenzen wenn wir mit dem echten Default-
+  // Schedule arbeiten (Tests mit eigenem Schedule bleiben unberuehrt).
+  const schedule = opts.schedule
+    ? baseSchedule
+    : [...baseSchedule, ...buildVirtualR16(baseSchedule)];
   const teamsPerGroup = useLookup ? uniqueTeamsPerGroup(schedule) : uniqueTeamsPerGroupFromScheduleOnly(schedule);
   const groups: GroupForecast[] = [];
   for (const [g, teams] of teamsPerGroup) {

@@ -85,24 +85,17 @@ describe('buildWmTournamentForecast', () => {
     }
   });
 
-  it('Auslosungs-Lookup deckt mindestens 10 von 12 Gruppen ab', () => {
+  it('Auslosungs-Lookup deckt alle 12 Gruppen ab', () => {
     const fc = buildWmTournamentForecast();
-    expect(fc.groups.length).toBeGreaterThanOrEqual(10);
+    expect(fc.groups.length).toBe(12);
+    expect(fc.incompleteGroups.length).toBe(0);
   });
 
-  it('Unvollstaendige Gruppen werden in incompleteGroups gemeldet', () => {
+  it('championPick ist gesetzt — komplette Bracket-Kette resolvbar', () => {
     const fc = buildWmTournamentForecast();
-    // D und G sind aktuell nicht voll dokumentiert.
-    expect(fc.incompleteGroups).toContain('D');
-    expect(fc.incompleteGroups).toContain('G');
-  });
-
-  it('Solange Gruppe G fehlt, kann das Finale nicht voll aufgeloest werden', () => {
-    const fc = buildWmTournamentForecast();
-    // Achtelfinale wm-r16-4 erwartet "Sieger Gruppe G" — fehlt aktuell.
-    // Daher bleibt championPick null. Wenn die Lookup erweitert wird,
-    // sollte championPick != null werden — dieser Test wird dann
-    // bewusst angepasst.
-    expect(fc.incompleteGroups).toContain('G');
+    expect(fc.championPick).not.toBeNull();
+    // Finale-Sieger muss ein real existierendes Team sein.
+    expect(typeof fc.championPick).toBe('string');
+    expect(fc.championPick!.length).toBeGreaterThan(2);
   });
 });
