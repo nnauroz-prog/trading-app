@@ -17,7 +17,8 @@ const HEADERS = [
   'Quote',
   'Einsatz EUR',
   'Ergebnis',
-  'PnL EUR'
+  'PnL EUR',
+  'Notiz'
 ] as const;
 
 function escapeCell(value: string | number | null): string {
@@ -40,10 +41,11 @@ function tierLabel(t: LedgerRow['tier']): string {
   return t === 'hoechste-konfluenz' ? 'Hoechste Konfluenz' : 'Modell-Favorit';
 }
 
-export function rowsToCsv(rows: LedgerRow[]): string {
+export function rowsToCsv(rows: LedgerRow[], notesByPickId: Record<string, string> = {}): string {
   const lines = [HEADERS.join(',')];
   const sorted = [...rows].sort((a, b) => a.dateIso.localeCompare(b.dateIso) || a.recordedAt - b.recordedAt);
   for (const r of sorted) {
+    const note = notesByPickId[r.id] ?? '';
     const cells = [
       r.dateIso,
       `${r.winnerTeam} gegen ${r.opponentTeam}`,
@@ -53,7 +55,8 @@ export function rowsToCsv(rows: LedgerRow[]): string {
       r.decimalOdds.toFixed(2),
       r.stakeEur.toFixed(2),
       outcomeLabel(r.outcome),
-      r.pnlEur === null ? '' : r.pnlEur.toFixed(2)
+      r.pnlEur === null ? '' : r.pnlEur.toFixed(2),
+      note
     ].map(escapeCell);
     lines.push(cells.join(','));
   }

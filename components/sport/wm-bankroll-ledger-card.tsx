@@ -16,6 +16,7 @@ import {
   type LedgerRow
 } from '@/lib/sport/wm-bankroll-ledger';
 import { rowsToCsv, csvFilenameForToday } from '@/lib/sport/wm-ledger-csv';
+import { loadAllPickNotes } from '@/lib/sport/wm-pick-notes-store';
 import {
   loadWmPickLog,
   WM_PICK_LEARNING_CHANGED_EVENT
@@ -92,7 +93,7 @@ export function WmBankrollLedgerCard() {
           <button
             type="button"
             onClick={() => {
-              const csv = rowsToCsv(rows);
+              const csv = rowsToCsv(rows, loadAllPickNotes());
               const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
               const url = URL.createObjectURL(blob);
               const todayIso = new Date().toISOString().slice(0, 10);

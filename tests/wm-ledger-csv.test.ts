@@ -28,6 +28,7 @@ describe('rowsToCsv', () => {
     expect(csv).toContain('Datum,Spiel,Tipp auf,Tier');
     expect(csv).toContain('Modell-Wahrscheinlichkeit');
     expect(csv).toContain('PnL EUR');
+    expect(csv).toContain('Notiz');
   });
 
   it('Win-Zeile wird komplett formatiert', () => {
@@ -44,7 +45,8 @@ describe('rowsToCsv', () => {
     expect(csv).toContain('offen');
     const lines = csv.trim().split('\n');
     const dataLine = lines[1];
-    expect(dataLine.endsWith(',')).toBe(true);
+    // Sowohl PnL als auch Notiz leer → endet mit ",,"
+    expect(dataLine.endsWith(',,')).toBe(true);
   });
 
   it('Loss zeigt negative PnL', () => {
@@ -90,5 +92,21 @@ describe('rowsToCsv', () => {
 
   it('csvFilenameForToday liefert sinnvollen Namen', () => {
     expect(csvFilenameForToday('2026-06-15')).toBe('wm-ledger-2026-06-15.csv');
+  });
+
+  it('Notiz wird in der letzten Spalte ausgegeben', () => {
+    const csv = rowsToCsv([row()], { 'wm-x-home': 'Quote war besser bei Bet365' });
+    expect(csv).toContain('Quote war besser bei Bet365');
+  });
+
+  it('Notiz mit Komma wird escaped', () => {
+    const csv = rowsToCsv([row()], { 'wm-x-home': 'a, b, c' });
+    expect(csv).toContain('"a, b, c"');
+  });
+
+  it('Pick ohne Notiz hat leere letzte Spalte', () => {
+    const csv = rowsToCsv([row()], {});
+    const lines = csv.trim().split('\n');
+    expect(lines[1].endsWith(',')).toBe(true);
   });
 });
