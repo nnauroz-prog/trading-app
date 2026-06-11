@@ -83,6 +83,7 @@ import { WmTrefferquoteCard } from '@/components/sport/wm-trefferquote-card';
 import { WmTagesHeldCard } from '@/components/sport/wm-tagesheld-card';
 import { WmOddsCompareCard } from '@/components/sport/wm-odds-compare-card';
 import { WmPickNotesCard } from '@/components/sport/wm-pick-notes-card';
+import { WmBackupCard } from '@/components/sport/wm-backup-card';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
@@ -655,6 +656,7 @@ export default async function HomePage() {
           <WmBankrollCard picks={wmWinnerPicksHome} />
           <WmOddsCompareCard picks={wmWinnerPicksHome} />
           <WmPickNotesCard picks={wmWinnerPicksHome} />
+          <WmBackupCard />
           <PlainHint id="ledger" />
           <WmBankrollLedgerCard />
           <PlainHint id="combo" />
