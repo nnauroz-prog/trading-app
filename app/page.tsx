@@ -85,6 +85,7 @@ import { WmOddsCompareCard } from '@/components/sport/wm-odds-compare-card';
 import { WmPickNotesCard } from '@/components/sport/wm-pick-notes-card';
 import { WmBackupCard } from '@/components/sport/wm-backup-card';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
+import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
@@ -632,6 +633,7 @@ export default async function HomePage() {
         });
         return (
           <>
+            <WmOpeningBanner todayIso={todayIso} />
             <WmErsteSchritte />
             <WmJetztCard todayIso={todayIso} plan={plan} />
             <PlainHint id="day-plan" />

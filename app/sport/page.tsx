@@ -124,6 +124,7 @@ import { WmPickNotesCard } from '@/components/sport/wm-pick-notes-card';
 import { WmBackupCard } from '@/components/sport/wm-backup-card';
 import { buildWmWeekPlan } from '@/lib/sport/wm-week-plan';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
+import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
@@ -654,6 +655,7 @@ export default async function SportPage() {
         });
         return (
           <>
+            <WmOpeningBanner todayIso={buckets.todayIso} />
             <WmErsteSchritte />
             <WmJetztCard todayIso={buckets.todayIso} plan={dayPlan} />
             <PlainHint id="day-plan" />
