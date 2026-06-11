@@ -16,6 +16,11 @@ import {
   WM_BANKROLL_LEDGER_CHANGED_EVENT
 } from '@/lib/sport/wm-bankroll-ledger-store';
 import { evaluateWmValue } from '@/lib/sport/wm-value-check';
+import { bestOddsFromDrafts } from '@/lib/sport/wm-best-odds';
+import {
+  loadAllQuotes,
+  WM_ODDS_COMPARE_CHANGED_EVENT
+} from '@/lib/sport/wm-odds-compare-store';
 
 const STORAGE_KEY = 'trading-app.wm-bankroll-eur-v1';
 
@@ -52,7 +57,11 @@ export function WmBankrollCard({ picks }: Props) {
     setMounted(true);
     const sync = () => setLedgerTick((t) => t + 1);
     window.addEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
-    return () => window.removeEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
+    window.addEventListener(WM_ODDS_COMPARE_CHANGED_EVENT, sync);
+    return () => {
+      window.removeEventListener(WM_BANKROLL_LEDGER_CHANGED_EVENT, sync);
+      window.removeEventListener(WM_ODDS_COMPARE_CHANGED_EVENT, sync);
+    };
   }, []);
 
   const oddsFor = (pickId: string): number => {
@@ -116,6 +125,8 @@ export function WmBankrollCard({ picks }: Props) {
           const pickId = `${p.fixture.id}-${p.winnerSide}`;
           const staked = mounted && isStaked(pickId);
           const oddsValue = oddsDrafts[pickId] ?? '2.00';
+          const bestCompared = mounted ? bestOddsFromDrafts(loadAllQuotes()[pickId]?.drafts) : null;
+          const showBestButton = !staked && bestCompared !== null && Math.abs(bestCompared - oddsFor(pickId)) > 0.001;
           const value = evaluateWmValue(p.modelProbabilityPct, oddsFor(pickId));
           const valueTone =
             value.verdict === 'value' ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200' :
@@ -149,6 +160,14 @@ export function WmBankrollCard({ picks }: Props) {
                     aria-label={`Buchmacher-Quote fuer ${p.winnerTeam}`}
                     disabled={staked}
                   />
+                  {showBestButton && (
+                    <button
+                      type="button"
+                      onClick={() => setOddsDrafts((d) => ({ ...d, [pickId]: bestCompared!.toFixed(2) }))}
+                      className="rounded border border-emerald-500/40 bg-emerald-950/30 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-emerald-200 hover:border-emerald-400"
+                      title={`Beste Quote aus dem Quoten-Vergleich uebernehmen (${bestCompared!.toFixed(2)})`}
+                    >beste: {bestCompared!.toFixed(2)}</button>
+                  )}
                 </span>
                 {staked ? (
                   <span className="rounded border border-emerald-400/50 bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200">im Ledger ✓</span>
