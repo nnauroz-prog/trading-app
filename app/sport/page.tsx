@@ -125,6 +125,7 @@ import { WmBackupCard } from '@/components/sport/wm-backup-card';
 import { buildWmWeekPlan } from '@/lib/sport/wm-week-plan';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
+import { WmSection } from '@/components/sport/wm-section';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
@@ -656,30 +657,36 @@ export default async function SportPage() {
         return (
           <>
             <WmOpeningBanner todayIso={buckets.todayIso} />
-            <WmErsteSchritte />
             <WmJetztCard todayIso={buckets.todayIso} plan={dayPlan} />
-            <PlainHint id="day-plan" />
-            <WmDayPlanCard plan={dayPlan} />
-            <WmTrefferquoteCard todayIso={buckets.todayIso} />
-            <WmTagesHeldCard todayIso={buckets.todayIso} />
-            <WmResultsBoardCard todayIso={buckets.todayIso} lookbackDays={7} />
-            <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso: buckets.todayIso, horizonDays: 7, picks: winnerPicks })} />
-            <PlainHint id="reconciler" />
-            <WmReconcilerCard result={reconcile} />
-            <PlainHint id="winner-picks" />
-            <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />
-            <WmPickExplainCard picks={winnerPicks} />
-            <PlainHint id="bankroll" />
-            <WmBankrollCard picks={winnerPicks} />
-            <WmOddsCompareCard picks={winnerPicks} />
-            <WmPickNotesCard picks={winnerPicks} />
-            <WmBackupCard />
-            <PlainHint id="ledger" />
-            <WmBankrollLedgerCard />
-            <PlainHint id="combo" />
-            <WmComboPicksCard picks={winnerPicks} />
-            <PlainHint id="elo-drift" />
-            <WmEloDriftCard />
+            <WmSection title="Heute" hint="Was los ist + Tipps" defaultOpen>
+              <PlainHint id="day-plan" />
+              <WmDayPlanCard plan={dayPlan} />
+              <PlainHint id="winner-picks" />
+              <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={buckets.todayIso} horizonDays={horizonDays} />
+              <WmPickExplainCard picks={winnerPicks} />
+              <PlainHint id="bankroll" />
+              <WmBankrollCard picks={winnerPicks} />
+              <WmOddsCompareCard picks={winnerPicks} />
+            </WmSection>
+            <WmSection title="Bilanz & Verlauf" hint="wie laeuft es bisher">
+              <WmTrefferquoteCard todayIso={buckets.todayIso} />
+              <WmTagesHeldCard todayIso={buckets.todayIso} />
+              <WmResultsBoardCard todayIso={buckets.todayIso} lookbackDays={7} />
+              <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso: buckets.todayIso, horizonDays: 7, picks: winnerPicks })} />
+              <PlainHint id="ledger" />
+              <WmBankrollLedgerCard />
+            </WmSection>
+            <WmSection title="Werkzeuge & Daten" hint="Notizen, Reconciler, ELO-Drift">
+              <WmErsteSchritte />
+              <WmPickNotesCard picks={winnerPicks} />
+              <PlainHint id="reconciler" />
+              <WmReconcilerCard result={reconcile} />
+              <PlainHint id="combo" />
+              <WmComboPicksCard picks={winnerPicks} />
+              <PlainHint id="elo-drift" />
+              <WmEloDriftCard />
+              <WmBackupCard />
+            </WmSection>
           </>
         );
       })()}
