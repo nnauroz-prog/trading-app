@@ -89,6 +89,8 @@ import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
 import { WmSection } from '@/components/sport/wm-section';
 import { WmHeuteZusammenfassung } from '@/components/sport/wm-heute-zusammenfassung';
 import { WmAnstossWarnungCard } from '@/components/sport/wm-anstoss-warnung-card';
+import { WmErgebnisNachtragCard } from '@/components/sport/wm-ergebnis-nachtrag-card';
+import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { Tier90Resolver } from '@/components/tier-90-resolver';
@@ -640,6 +642,7 @@ export default async function HomePage() {
             <WmJetztCard todayIso={todayIso} plan={plan} />
             <WmSection title="Heute" hint="Was los ist + Tipps" defaultOpen>
               <WmAnstossWarnungCard picks={wmWinnerPicksHome} />
+              <WmErgebnisNachtragCard picks={wmWinnerPicksHome} />
               <WmHeuteZusammenfassung picks={wmWinnerPicksHome} todayIso={todayIso} />
               <PlainHint id="day-plan" />
               <WmDayPlanCard plan={plan} />
@@ -665,8 +668,9 @@ export default async function HomePage() {
                 </>
               )}
             </WmSection>
-            <WmSection title="Werkzeuge & Daten" hint="Notizen, Combo, Glossar">
+            <WmSection title="Werkzeuge & Daten" hint="Notizen, Combo, Ergebnisse">
               <WmErsteSchritte />
+              <WmResultInputCard />
               {wmWinnerPicksHome.length > 0 && (
                 <>
                   <WmPickNotesCard picks={wmWinnerPicksHome} />
