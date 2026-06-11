@@ -30,6 +30,7 @@ import { buildWmWeekPlan } from '@/lib/sport/wm-week-plan';
 import { WmPickExplainCard } from '@/components/sport/wm-pick-explain-card';
 import { WmResultsBoardCard } from '@/components/sport/wm-results-board-card';
 import { WmTrefferquoteCard } from '@/components/sport/wm-trefferquote-card';
+import { WmTagesHeldCard } from '@/components/sport/wm-tagesheld-card';
 import { WmOddsCompareCard } from '@/components/sport/wm-odds-compare-card';
 import { WmPickNotesCard } from '@/components/sport/wm-pick-notes-card';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
@@ -183,6 +184,7 @@ export default async function WorldCupPage() {
             <PlainHint id="day-plan" />
             <WmDayPlanCard plan={dayPlan} />
             <WmTrefferquoteCard todayIso={todayIso} />
+            <WmTagesHeldCard todayIso={todayIso} />
             <WmResultsBoardCard todayIso={todayIso} lookbackDays={7} />
             <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso, horizonDays: 7, picks: winnerPicks })} />
             <PlainHint id="reconciler" />
