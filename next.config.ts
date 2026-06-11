@@ -1,8 +1,8 @@
 import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
-// Last bumped: 2026-06-10 — Welle 27401-27500.
-const BUILD_MARKER = 'welle-27401-27500-backup-restore';
+// Last bumped: 2026-06-11 — Welle 27501-27600 (WM startet).
+const BUILD_MARKER = 'welle-27501-27600-kickoff-countdown';
 
 const nextConfig: NextConfig = {
   env: {
