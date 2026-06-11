@@ -131,6 +131,7 @@ import { WmAnstossWarnungCard } from '@/components/sport/wm-anstoss-warnung-card
 import { WmErgebnisNachtragCard } from '@/components/sport/wm-ergebnis-nachtrag-card';
 import { WmHeuteBilanzStrip } from '@/components/sport/wm-heute-bilanz-strip';
 import { WmTabTitleUpdater } from '@/components/sport/wm-tab-title-updater';
+import { WmMorgenVorschauStrip } from '@/components/sport/wm-morgen-vorschau-strip';
 import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
 import { PlainHint } from '@/components/sport/plain-hint';
 import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
@@ -677,6 +678,7 @@ export default async function SportPage() {
               <PlainHint id="bankroll" />
               <WmBankrollCard picks={winnerPicks} />
               <WmOddsCompareCard picks={winnerPicks} />
+              <WmMorgenVorschauStrip picks={winnerPicks} todayIso={buckets.todayIso} />
             </WmSection>
             <WmSection title="Bilanz & Verlauf" hint="wie laeuft es bisher">
               <WmTrefferquoteCard todayIso={buckets.todayIso} />
