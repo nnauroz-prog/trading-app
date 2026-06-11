@@ -86,6 +86,7 @@ import { WmPickNotesCard } from '@/components/sport/wm-pick-notes-card';
 import { WmBackupCard } from '@/components/sport/wm-backup-card';
 import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
+import { WmSimplePicksCard } from '@/components/sport/wm-simple-picks-card';
 import { WmSection } from '@/components/sport/wm-section';
 import { WmHeuteZusammenfassung } from '@/components/sport/wm-heute-zusammenfassung';
 import { WmAnstossWarnungCard } from '@/components/sport/wm-anstoss-warnung-card';
@@ -643,6 +644,12 @@ export default async function HomePage() {
         return (
           <>
             <WmTabTitleUpdater picks={wmWinnerPicksHome} />
+            <WmSimplePicksCard />
+            <details className="rounded-2xl border border-slate-700 bg-slate-950/30">
+              <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 hover:text-slate-200">
+                ▸ Mehr Details (Banner, Picks-Filter, Bankroll, Quoten, Bilanz, Werkzeuge)
+              </summary>
+              <div className="space-y-2 border-t border-slate-800 p-3">
             <WmOpeningBanner todayIso={todayIso} />
             <WmJetztCard todayIso={todayIso} plan={plan} />
             <WmSection title="Heute" hint="Was los ist + Tipps" defaultOpen>
@@ -689,6 +696,8 @@ export default async function HomePage() {
               <WmBackupCard />
               <WmGlossarCard />
             </WmSection>
+              </div>
+            </details>
           </>
         );
       })()}
