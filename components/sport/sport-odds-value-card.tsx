@@ -8,17 +8,25 @@
 // Quote eintragen. Wird NUR LOKAL berechnet, NICHT gespeichert
 // (Bestaetigungs-Button kann das spaeter erweitern).
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   applyOddsRiskAdjustment,
   type SportOddsValueInput,
   type SportOddsValueOutput,
   type ValueLabel
 } from '@/lib/sport/sport-odds-value';
+import {
+  loadManualOdds,
+  saveManualOdds,
+  removeManualOdds,
+  SPORT_MANUAL_ODDS_CHANGED_EVENT
+} from '@/lib/sport/manual-odds-store';
 
 interface Props {
   // Basis-Daten, die der Caller ohnehin kennt.
   input: Omit<SportOddsValueInput, 'decimalOdds'> & { decimalOdds: number | null };
+  // matchId/marketType werden fuer das manuelle Quoten-Merken benoetigt.
+  matchId?: string;
   // Wenn eine echte Provider-Quote vorhanden ist, ist sie hier gesetzt.
   providerOdds: number | null;
   providerName?: string;
@@ -46,10 +54,49 @@ const LABEL_TEXT: Record<ValueLabel, string> = {
   NO_QUOTE: 'KEINE QUOTE'
 };
 
-export function SportOddsValueCard({ input, providerOdds, providerName, providerStatusHint }: Props) {
+export function SportOddsValueCard({ input, matchId, providerOdds, providerName, providerStatusHint }: Props) {
   const [manualDraft, setManualDraft] = useState('');
-  const manualQuote = useMemo(() => parseQuote(manualDraft), [manualDraft]);
+  const [savedQuote, setSavedQuote] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [savedFeedback, setSavedFeedback] = useState<'saved' | 'removed' | null>(null);
+
+  // Persistierte manuelle Quote nur dann laden, wenn keine Provider-
+  // Quote vorliegt — sonst hat der Provider Vorrang.
+  useEffect(() => {
+    if (!matchId) return;
+    setMounted(true);
+    const load = () => {
+      const entry = loadManualOdds(matchId, input.marketType);
+      setSavedQuote(entry?.decimalOdds ?? null);
+    };
+    load();
+    window.addEventListener(SPORT_MANUAL_ODDS_CHANGED_EVENT, load);
+    return () => window.removeEventListener(SPORT_MANUAL_ODDS_CHANGED_EVENT, load);
+  }, [matchId, input.marketType]);
+
+  const manualDraftQuote = useMemo(() => parseQuote(manualDraft), [manualDraft]);
+  const manualQuote = manualDraftQuote ?? savedQuote;
   const effectiveOdds = providerOdds ?? manualQuote ?? input.decimalOdds ?? null;
+
+  const handleSaveManual = () => {
+    if (!matchId) return;
+    if (manualDraftQuote === null) return;
+    const entry = saveManualOdds(matchId, input.marketType, manualDraftQuote);
+    if (entry) {
+      setSavedQuote(entry.decimalOdds);
+      setManualDraft('');
+      setSavedFeedback('saved');
+      setTimeout(() => setSavedFeedback(null), 2500);
+    }
+  };
+
+  const handleRemoveSaved = () => {
+    if (!matchId) return;
+    removeManualOdds(matchId, input.marketType);
+    setSavedQuote(null);
+    setSavedFeedback('removed');
+    setTimeout(() => setSavedFeedback(null), 2500);
+  };
 
   const result: SportOddsValueOutput = useMemo(() => applyOddsRiskAdjustment({
     ...input,
@@ -110,8 +157,20 @@ export function SportOddsValueCard({ input, providerOdds, providerName, provider
           <div className="mb-1 text-[9.5px] uppercase tracking-wider text-slate-400">
             {input.decimalOdds === null
               ? 'Keine echte Quote verfuegbar. Du kannst eine Quote manuell eintragen, um den Value-Check zu berechnen.'
-              : 'Andere Quote testen (nur lokale Berechnung, nichts gespeichert).'}
+              : 'Andere Quote testen (nur lokale Berechnung).'}
           </div>
+          {mounted && savedQuote !== null && (
+            <div className="mb-1 flex flex-wrap items-baseline gap-2 text-[10px]">
+              <span className="rounded border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-emerald-200">
+                gemerkt: {savedQuote.toFixed(2)}
+              </span>
+              <button
+                type="button"
+                onClick={handleRemoveSaved}
+                className="rounded border border-slate-700 bg-slate-900/60 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-slate-400 hover:border-rose-400/50 hover:text-rose-300"
+              >loeschen</button>
+            </div>
+          )}
           <div className="flex flex-wrap items-baseline gap-2">
             <label className="text-[10px] text-slate-400">Quote manuell:</label>
             <input
@@ -119,14 +178,32 @@ export function SportOddsValueCard({ input, providerOdds, providerName, provider
               inputMode="decimal"
               value={manualDraft}
               onChange={(e) => setManualDraft(e.target.value)}
-              placeholder="z.B. 1.85"
+              placeholder={savedQuote !== null ? 'neue Quote' : 'z.B. 1.85'}
               className="w-20 rounded border border-slate-700 bg-slate-950/70 px-1.5 py-0.5 text-center font-mono text-[12px] text-slate-100"
               aria-label="Manuelle Quote eintragen"
             />
+            {matchId && (
+              <button
+                type="button"
+                onClick={handleSaveManual}
+                disabled={manualDraftQuote === null}
+                className="rounded border border-emerald-500/40 bg-emerald-950/30 px-2 py-0.5 text-[9.5px] uppercase tracking-wider text-emerald-200 hover:border-emerald-400 disabled:opacity-40"
+                title="Quote lokal speichern (kein Server, keine Wettabgabe)"
+              >merken</button>
+            )}
+            {savedFeedback === 'saved' && (
+              <span className="text-[9.5px] text-emerald-300">gespeichert</span>
+            )}
+            {savedFeedback === 'removed' && (
+              <span className="text-[9.5px] text-slate-400">geloescht</span>
+            )}
             {providerStatusHint && (
               <span className="text-[9.5px] text-slate-500">{providerStatusHint}</span>
             )}
           </div>
+          <p className="mt-1 text-[9.5px] leading-snug text-slate-500">
+            &quot;merken&quot; speichert die Quote nur lokal in diesem Browser. Kein Server, kein Wettkonto, keine Wettabgabe.
+          </p>
         </div>
       )}
 

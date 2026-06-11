@@ -123,6 +123,7 @@ export function SportPrecisionPickCard({ pick, hero = false, riskMode = 'PRECISI
       {pick.oddsContext && (
         <div className="mt-2">
           <SportOddsValueCard
+            matchId={pick.matchId}
             input={{
               modelProbability: pick.oddsContext.modelProbability,
               displayProbability: pick.displayProbability,

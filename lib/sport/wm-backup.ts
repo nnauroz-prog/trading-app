@@ -13,6 +13,8 @@
 export const WM_BACKUP_VERSION = 1;
 
 const WM_LOCAL_STORAGE_KEYS = [
+  'trading-app.sport-manual-odds-v1',
+  'trading-app.sport-signal-mode-v1',
   'trading-app.wm-bankroll-eur-v1',
   'trading-app.wm-bankroll-ledger-v1',
   'trading-app.wm-day-cap-pct-v1',
