@@ -13,6 +13,13 @@ import {
 } from '@/lib/sport/wm-results-store';
 import type { WmFixture } from '@/lib/sport/wm-schedule-2026';
 
+interface Props {
+  // Server-seitig gemergte Schedule (statisch + Live). Optional —
+  // wenn nicht uebergeben, faellt die Karte auf den statischen
+  // Default zurueck.
+  schedule?: WmFixture[];
+}
+
 function fmtDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(d.getTime())) return iso;
@@ -46,7 +53,7 @@ const OUTCOME_LABEL: Record<WmDailyOutcome, string> = {
 
 type Filter = 'ab-heute' | 'alle';
 
-export function WmTurnierTippCard() {
+export function WmTurnierTippCard({ schedule }: Props = {}) {
   const [tick, setTick] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [filter, setFilter] = useState<Filter>('ab-heute');
@@ -67,9 +74,9 @@ export function WmTurnierTippCard() {
 
   const { rows, championPick } = useMemo(() => {
     const finished = mounted ? mergeResults(loadManualWmResults(), []) : [];
-    return buildWmDailyWinners({ finished });
+    return buildWmDailyWinners({ finished, schedule });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, tick]);
+  }, [mounted, tick, schedule]);
 
   const stats = useMemo(() => {
     let hits = 0, miss = 0, push = 0;

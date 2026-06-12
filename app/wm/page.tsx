@@ -38,6 +38,8 @@ import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
 import { WmSimplePicksCard } from '@/components/sport/wm-simple-picks-card';
 import { WmTurnierTippCard } from '@/components/sport/wm-turnier-tipp-card';
+import { getCachedWmLiveSchedule } from '@/lib/sport/wm-live-schedule';
+import { mergeWmFixtures } from '@/lib/sport/wm-schedule-merge';
 import { WmSection } from '@/components/sport/wm-section';
 import { WmHeuteZusammenfassung } from '@/components/sport/wm-heute-zusammenfassung';
 import { WmAnstossWarnungCard } from '@/components/sport/wm-anstoss-warnung-card';
@@ -168,6 +170,8 @@ export default async function WorldCupPage() {
         const todayIso = new Date().toISOString().slice(0, 10);
         const horizonDays = 7;
         const weatherByFixtureId = await fetchWmWeatherByFixture({ todayIso, horizonDays });
+        const liveWmSchedule = await getCachedWmLiveSchedule();
+        const mergedWmSchedule = mergeWmFixtures(WM_2026_FIXTURES, liveWmSchedule);
         const wmExternalFixtures = [...liveNext, ...liveLast].map((f) => ({
           date: f.date, time: f.time ?? null, homeTeam: f.homeTeam, awayTeam: f.awayTeam
         }));
@@ -191,7 +195,7 @@ export default async function WorldCupPage() {
         return (
           <>
             <WmTabTitleUpdater picks={winnerPicks} />
-            <WmTurnierTippCard />
+            <WmTurnierTippCard schedule={mergedWmSchedule} />
             <details className="rounded-2xl border border-slate-700 bg-slate-950/30">
               <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 hover:text-slate-200">
                 ▸ Mehr Details (Tagesplan, Picks-Filter, Bankroll, Quoten, Bilanz, Werkzeuge)
