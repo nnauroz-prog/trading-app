@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildWmDailyWinners, type WmDailyOutcome } from '@/lib/sport/wm-daily-winners';
+import { computeKickoffCountdown } from '@/lib/sport/wm-kickoff-countdown';
 import { mergeResults } from '@/lib/sport/wm-results-matcher';
 import {
   loadManualWmResults,
@@ -55,6 +56,7 @@ type Filter = 'ab-heute' | 'alle';
 
 export function WmTurnierTippCard({ schedule }: Props = {}) {
   const [tick, setTick] = useState(0);
+  const [now, setNow] = useState<Date>(() => new Date());
   const [mounted, setMounted] = useState(false);
   const [filter, setFilter] = useState<Filter>('ab-heute');
   const todayRef = useRef<HTMLLIElement | null>(null);
@@ -63,7 +65,12 @@ export function WmTurnierTippCard({ schedule }: Props = {}) {
     setMounted(true);
     const refresh = () => setTick((t) => t + 1);
     window.addEventListener(WM_MANUAL_RESULTS_CHANGED_EVENT, refresh);
-    return () => window.removeEventListener(WM_MANUAL_RESULTS_CHANGED_EVENT, refresh);
+    // Minutentakt fuer Live-Indikator + Countdown.
+    const minuteId = setInterval(() => setNow(new Date()), 60_000);
+    return () => {
+      window.removeEventListener(WM_MANUAL_RESULTS_CHANGED_EVENT, refresh);
+      clearInterval(minuteId);
+    };
   }, []);
 
   const handleJumpToToday = () => {
@@ -179,17 +186,28 @@ export function WmTurnierTippCard({ schedule }: Props = {}) {
               </div>
               <ul className="space-y-0.5">
                 {items.map((r) => {
-                  const rowTone = isToday
-                    ? 'border-emerald-500/30 bg-emerald-950/20'
-                    : isPast
-                      ? 'border-slate-800 bg-slate-950/30'
-                      : 'border-slate-800 bg-slate-950/50';
+                  const live = mounted && !r.result
+                    ? computeKickoffCountdown(r.dateIso, r.time, now)
+                    : null;
+                  const isLive = live?.status === 'laeuft';
+                  const rowTone = isLive
+                    ? 'border-rose-400/60 bg-rose-950/20'
+                    : isToday
+                      ? 'border-emerald-500/30 bg-emerald-950/20'
+                      : isPast
+                        ? 'border-slate-800 bg-slate-950/30'
+                        : 'border-slate-800 bg-slate-950/50';
                   return (
                     <li
                       key={r.fixtureId}
                       className={`flex flex-wrap items-baseline gap-2 rounded border px-2 py-1 text-[12px] ${rowTone}`}
                     >
                       <span className="w-10 font-mono text-[10px] text-slate-500">{r.time ?? '--:--'}</span>
+                      {isLive && (
+                        <span className="animate-pulse rounded border border-rose-300/70 bg-rose-500/20 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider text-rose-100">
+                          ● LIVE
+                        </span>
+                      )}
                       {PHASE_TAG[r.phase] && (
                         <span className="rounded border border-amber-400/40 bg-amber-500/10 px-1 py-0.5 text-[8.5px] font-bold uppercase tracking-wider text-amber-200">{PHASE_TAG[r.phase]}</span>
                       )}
