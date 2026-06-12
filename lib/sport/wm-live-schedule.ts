@@ -10,6 +10,13 @@
 
 import { unstable_cache } from 'next/cache';
 import type { WmFixture } from '@/lib/sport/wm-schedule-2026';
+import { findTeamStrength } from '@/lib/sport/wm-team-strength';
+
+function canonicalTeam(name: string): string {
+  // Englische TheSportsDB-Namen auf deutsche ELO-DB-Namen mappen.
+  const t = findTeamStrength(name);
+  return t?.name ?? name.trim();
+}
 
 interface ApiEvent {
   idEvent?: string;
@@ -50,8 +57,8 @@ function normalize(ev: ApiEvent): WmFixture | null {
     id: `tsdb-${ev.idEvent}`,
     date: ev.dateEvent,
     time,
-    homeTeam: ev.strHomeTeam.trim(),
-    awayTeam: ev.strAwayTeam.trim(),
+    homeTeam: canonicalTeam(ev.strHomeTeam),
+    awayTeam: canonicalTeam(ev.strAwayTeam),
     venue: ev.strVenue?.trim() ?? '',
     phase: phaseInfo.phase,
     ...(phaseInfo.group ? { group: phaseInfo.group as WmFixture['group'] } : {}),

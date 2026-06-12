@@ -42,16 +42,14 @@ describe('mergeWmFixtures', () => {
     expect(merged.length).toBe(3);
   });
 
-  it('Umlaute / Diakritika werden beim Vergleich normalisiert', () => {
+  it('Englische Aliase werden ueber die ELO-Datenbank zur deutschen Namensform aufgeloest', () => {
     const live: WmFixture[] = [
       { id: 'tsdb-1', date: '2026-06-11', time: '21:00', homeTeam: 'Mexico', awayTeam: 'South Africa', venue: '', phase: 'Gruppe', group: 'A' }
     ];
-    // Mexico/Suedafrika != Mexiko/Suedafrika (verschiedene Schreibweisen)
-    // -> aktuell wird das als NEU erkannt, weil die Namen nicht uebereinstimmen.
-    // Der Test dokumentiert: Normalisierung greift nur fuer Diakritika,
-    // nicht fuer Sprach-Aliase. Aliase muessen vom Caller normalisiert werden.
+    // Mexico -> Mexiko, South Africa -> Suedafrika via aliases
+    // -> als Dublette zur statischen Paarung erkannt, NICHT mehr ergaenzt.
     const merged = mergeWmFixtures(staticSchedule, live);
-    expect(merged.length).toBe(4);
+    expect(merged.length).toBe(3);
   });
 
   it('TBD-Live-Eintraege werden komplett ignoriert', () => {

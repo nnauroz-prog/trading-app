@@ -9,6 +9,7 @@
 // Reine Funktion.
 
 import type { WmFixture } from '@/lib/sport/wm-schedule-2026';
+import { findTeamStrength } from '@/lib/sport/wm-team-strength';
 
 function isTbd(team: string): boolean {
   if (!team) return true;
@@ -17,6 +18,13 @@ function isTbd(team: string): boolean {
 }
 
 function normTeam(s: string): string {
+  // 1. Versuch ueber die ELO-DB: dort sind Aliases hinterlegt
+  //    ("Mexico" -> "Mexiko", "Germany" -> "Deutschland", ...).
+  const t = findTeamStrength(s);
+  if (t) {
+    return t.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+  }
+  // 2. Fallback: rohe Diakritik-Normalisierung.
   return s
     .toLowerCase()
     .normalize('NFD')
