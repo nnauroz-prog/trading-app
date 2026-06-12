@@ -1,8 +1,8 @@
 import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
-// Last bumped: 2026-06-11 — Welle 31101-31200 (Team-Aliase im Merge + canonicalTeam).
-const BUILD_MARKER = 'welle-31101-31200-team-aliase';
+// Last bumped: 2026-06-11 — Welle 31201-31300 (Live-Indikator pro Spiel).
+const BUILD_MARKER = 'welle-31201-31300-live-indikator';
 
 const nextConfig: NextConfig = {
   env: {
