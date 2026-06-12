@@ -2,9 +2,9 @@
 
 // WM-Gewinner: Weltmeister-Tipp oben, darunter Tag fuer Tag jedes Spiel
 // mit Modell-Gewinner. Heute hervorgehoben. Endstand + Treffer/Fehl
-// sobald nachgepflegt.
+// sobald nachgepflegt. Filter "ab heute" / "alle Tage".
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildWmDailyWinners, type WmDailyOutcome } from '@/lib/sport/wm-daily-winners';
 import { mergeResults } from '@/lib/sport/wm-results-matcher';
 import {
@@ -44,9 +44,13 @@ const OUTCOME_LABEL: Record<WmDailyOutcome, string> = {
   'remis-push': '= Remis'
 };
 
+type Filter = 'ab-heute' | 'alle';
+
 export function WmTurnierTippCard() {
   const [tick, setTick] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [filter, setFilter] = useState<Filter>('ab-heute');
+  const todayRef = useRef<HTMLLIElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -54,6 +58,10 @@ export function WmTurnierTippCard() {
     window.addEventListener(WM_MANUAL_RESULTS_CHANGED_EVENT, refresh);
     return () => window.removeEventListener(WM_MANUAL_RESULTS_CHANGED_EVENT, refresh);
   }, []);
+
+  const handleJumpToToday = () => {
+    todayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const today = useMemo(() => mounted ? todayIsoBerlin() : '', [mounted]);
 
@@ -74,15 +82,24 @@ export function WmTurnierTippCard() {
     return { hits, miss, push, decided: hits + miss };
   }, [rows]);
 
+  const visibleRows = useMemo(() => {
+    if (!mounted || filter === 'alle' || !today) return rows;
+    return rows.filter((r) => r.dateIso >= today);
+  }, [rows, filter, mounted, today]);
+
   const byDate = useMemo(() => {
     const m = new Map<string, typeof rows>();
-    for (const r of rows) {
+    for (const r of visibleRows) {
       if (!m.has(r.dateIso)) m.set(r.dateIso, []);
       m.get(r.dateIso)!.push(r);
     }
     return m;
-  }, [rows]);
+  }, [visibleRows]);
   const dates = Array.from(byDate.keys()).sort();
+
+  const totalDaysHidden = filter === 'ab-heute' && mounted
+    ? new Set(rows.filter((r) => r.dateIso < today).map((r) => r.dateIso)).size
+    : 0;
 
   return (
     <section className="space-y-3 rounded-2xl border border-emerald-400/30 bg-emerald-950/15 p-3" aria-label="WM Gewinner pro Tag">
@@ -102,6 +119,36 @@ export function WmTurnierTippCard() {
         </div>
       )}
 
+      <div className="flex flex-wrap items-baseline gap-1.5">
+        <span className="text-[9.5px] uppercase tracking-wider text-slate-500">Anzeigen:</span>
+        {(['ab-heute', 'alle'] as Filter[]).map((f) => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => setFilter(f)}
+            className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${filter === f ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-100' : 'border-slate-700 bg-slate-900/60 text-slate-400 hover:border-slate-500'}`}
+          >{f === 'ab-heute' ? 'ab heute' : 'alle Tage'}</button>
+        ))}
+        {filter === 'alle' && mounted && (
+          <button
+            type="button"
+            onClick={handleJumpToToday}
+            className="ml-auto rounded border border-emerald-400/60 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-100 hover:border-emerald-300"
+          >→ heute</button>
+        )}
+        {totalDaysHidden > 0 && filter === 'ab-heute' && (
+          <span className="text-[9.5px] text-slate-500">{totalDaysHidden} vergangene Tage ausgeblendet</span>
+        )}
+      </div>
+
+      {dates.length === 0 && (
+        <p className="text-[10.5px] text-slate-500">
+          {filter === 'ab-heute'
+            ? 'Keine kommenden Spiele — WM vorbei oder Spielpause.'
+            : 'Keine Spiele im Spielplan.'}
+        </p>
+      )}
+
       <ol className="space-y-2.5">
         {dates.map((date) => {
           const items = byDate.get(date)!;
@@ -114,7 +161,11 @@ export function WmTurnierTippCard() {
               ? 'text-slate-400'
               : 'text-slate-500';
           return (
-            <li key={date} className={isToday ? 'rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-1.5' : ''}>
+            <li
+              key={date}
+              ref={isToday ? todayRef : null}
+              className={isToday ? 'scroll-mt-4 rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-1.5' : ''}
+            >
               <div className={`mb-1 text-[10px] font-bold uppercase tracking-[0.18em] ${headTone}`}>
                 {fmtDate(date)}{isToday ? ' · HEUTE' : ''}
               </div>
