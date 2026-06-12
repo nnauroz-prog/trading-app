@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildWmDailyWinners, type WmDailyOutcome } from '@/lib/sport/wm-daily-winners';
 import { computeKickoffCountdown } from '@/lib/sport/wm-kickoff-countdown';
 import { mergeResults } from '@/lib/sport/wm-results-matcher';
+import { WmEndstandInputInline } from '@/components/sport/wm-endstand-input-inline';
 import {
   loadManualWmResults,
   WM_MANUAL_RESULTS_CHANGED_EVENT
@@ -245,6 +246,13 @@ export function WmTurnierTippCard({ schedule }: Props = {}) {
                             {OUTCOME_LABEL[r.result.outcome]}
                           </span>
                         </>
+                      )}
+                      {!r.result && live?.status === 'wahrscheinlich-vorbei' && !r.isProjectedPairing && (
+                        <WmEndstandInputInline
+                          fixtureId={r.fixtureId}
+                          homeTeam={r.homeTeam}
+                          awayTeam={r.awayTeam}
+                        />
                       )}
                     </li>
                   );
