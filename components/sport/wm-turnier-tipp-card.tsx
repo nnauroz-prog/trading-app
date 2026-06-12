@@ -115,6 +115,15 @@ export function WmTurnierTippCard({ schedule }: Props = {}) {
     ? new Set(rows.filter((r) => r.dateIso < today).map((r) => r.dateIso)).size
     : 0;
 
+  const liveRows = useMemo(() => {
+    if (!mounted) return [] as typeof rows;
+    return rows.filter((r) => {
+      if (r.result) return false;
+      const info = computeKickoffCountdown(r.dateIso, r.time, now);
+      return info.status === 'laeuft';
+    });
+  }, [rows, now, mounted]);
+
   return (
     <section className="space-y-3 rounded-2xl border border-emerald-400/30 bg-emerald-950/15 p-3" aria-label="WM Gewinner pro Tag">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -130,6 +139,20 @@ export function WmTurnierTippCard({ schedule }: Props = {}) {
         <div className="rounded border border-emerald-400/60 bg-emerald-500/15 px-3 py-2">
           <div className="text-[9.5px] uppercase tracking-[0.2em] text-emerald-200/80">Weltmeister</div>
           <div className="text-[20px] font-bold text-emerald-100">{championPick}</div>
+        </div>
+      )}
+
+      {liveRows.length > 0 && (
+        <div className="space-y-0.5 rounded border-2 border-rose-400/60 bg-rose-500/15 px-3 py-2 text-rose-100">
+          <div className="flex items-baseline gap-2">
+            <span className="animate-pulse text-[12px]">●</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em]">jetzt live</span>
+          </div>
+          {liveRows.map((r) => (
+            <div key={r.fixtureId} className="text-[12px]">
+              <span className="font-bold">{r.winner}</span> gegen {r.loser}
+            </div>
+          ))}
         </div>
       )}
 
@@ -182,7 +205,7 @@ export function WmTurnierTippCard({ schedule }: Props = {}) {
               className={isToday ? 'scroll-mt-4 rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-1.5' : ''}
             >
               <div className={`mb-1 text-[10px] font-bold uppercase tracking-[0.18em] ${headTone}`}>
-                {fmtDate(date)}{isToday ? ' · HEUTE' : ''}
+                {fmtDate(date)}{isToday ? ' · HEUTE' : ''} · {items.length} Spiel{items.length === 1 ? '' : 'e'}
               </div>
               <ul className="space-y-0.5">
                 {items.map((r) => {
