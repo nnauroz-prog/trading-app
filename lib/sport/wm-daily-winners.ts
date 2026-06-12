@@ -8,6 +8,7 @@
 import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
 import { buildWmSimplePicks } from '@/lib/sport/wm-simple-picks';
 import { buildWmTournamentForecast } from '@/lib/sport/wm-tournament-forecast';
+import { utcToBerlin } from '@/lib/sport/wm-utc-to-berlin';
 import type { FinishedFixtureLite } from '@/lib/sport/wm-pick-learning';
 
 export type WmDailyOutcome = 'treffer' | 'daneben' | 'remis-push';
@@ -119,10 +120,16 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
     });
   }
 
-  rows.sort((a, b) => {
+  // UTC -> Berlin pro Row. Das verschiebt einzelne Spiele eventuell auf
+  // den naechsten Berliner Tag (Spaet-UTC-Anstoesse) — danach neu sortieren.
+  const rowsBerlin = rows.map((r) => {
+    const { dateIso, time } = utcToBerlin(r.dateIso, r.time);
+    return { ...r, dateIso, time };
+  });
+  rowsBerlin.sort((a, b) => {
     if (a.dateIso !== b.dateIso) return a.dateIso.localeCompare(b.dateIso);
     return (a.time ?? '99:99').localeCompare(b.time ?? '99:99');
   });
 
-  return { rows, championPick: forecast.championPick };
+  return { rows: rowsBerlin, championPick: forecast.championPick };
 }

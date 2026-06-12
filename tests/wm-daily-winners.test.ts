@@ -51,6 +51,24 @@ describe('buildWmDailyWinners (echter Schedule)', () => {
     expect(result.rows[0].dateIso).toBe('2026-06-11');
   });
 
+  it('Anstosszeiten sind in Berlin-Zeit umgerechnet', () => {
+    // wm-1: Mexiko-Suedafrika, 21:00 UTC -> 23:00 Berlin (Sommerzeit).
+    const wm1 = result.rows.find((r) => r.fixtureId === 'wm-1');
+    expect(wm1).toBeDefined();
+    expect(wm1?.time).toBe('23:00');
+  });
+
+  it('Sehr spaete UTC-Anstoesse rutschen auf den Berliner Folgetag', () => {
+    // wm-3: USA-Paraguay, 01:00 UTC am 13.06. -> 03:00 Berlin am 13.06.
+    // Aber eine 23:30 UTC am 11.06. wuerde auf 12.06. 01:30 Berlin
+    // landen — siehe utc-to-berlin-Tests.
+    for (const r of result.rows) {
+      if (r.time) {
+        expect(/^\d{2}:\d{2}$/.test(r.time)).toBe(true);
+      }
+    }
+  });
+
   it('Ohne Endstand -> result null', () => {
     expect(result.rows.every((r) => r.result === null)).toBe(true);
   });

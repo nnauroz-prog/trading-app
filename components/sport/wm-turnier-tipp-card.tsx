@@ -128,6 +128,7 @@ export function WmTurnierTippCard({ schedule }: Props = {}) {
 
       <div className="flex flex-wrap items-baseline gap-1.5">
         <span className="text-[9.5px] uppercase tracking-wider text-slate-500">Anzeigen:</span>
+        <span className="text-[9.5px] uppercase tracking-wider text-slate-600">· Zeiten in Berlin</span>
         {(['ab-heute', 'alle'] as Filter[]).map((f) => (
           <button
             key={f}
