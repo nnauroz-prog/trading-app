@@ -63,11 +63,16 @@ const OUTCOME_LABEL: Record<WmDailyOutcome, string> = {
 
 type Filter = 'ab-heute' | 'alle';
 
+function normalize(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+}
+
 export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: Props = {}) {
   const [tick, setTick] = useState(0);
   const [now, setNow] = useState<Date>(() => new Date());
   const [mounted, setMounted] = useState(false);
   const [filter, setFilter] = useState<Filter>('ab-heute');
+  const [teamSearch, setTeamSearch] = useState('');
   const todayRef = useRef<HTMLLIElement | null>(null);
 
   useEffect(() => {
@@ -113,9 +118,21 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
   }, [rows]);
 
   const visibleRows = useMemo(() => {
-    if (!mounted || filter === 'alle' || !today) return rows;
-    return rows.filter((r) => r.dateIso >= today);
-  }, [rows, filter, mounted, today]);
+    let out = rows;
+    if (mounted && filter === 'ab-heute' && today) {
+      out = out.filter((r) => r.dateIso >= today);
+    }
+    const q = normalize(teamSearch);
+    if (q.length >= 2) {
+      out = out.filter((r) =>
+        normalize(r.homeTeam).includes(q) ||
+        normalize(r.awayTeam).includes(q) ||
+        normalize(r.winner).includes(q) ||
+        normalize(r.loser).includes(q)
+      );
+    }
+    return out;
+  }, [rows, filter, mounted, today, teamSearch]);
 
   const byDate = useMemo(() => {
     const m = new Map<string, typeof rows>();
@@ -175,6 +192,22 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
       <div className="flex flex-wrap items-baseline gap-1.5">
         <span className="text-[9.5px] uppercase tracking-wider text-slate-500">Anzeigen:</span>
         <span className="text-[9.5px] uppercase tracking-wider text-slate-600">· Zeiten in Berlin</span>
+        <input
+          type="search"
+          value={teamSearch}
+          onChange={(e) => setTeamSearch(e.target.value)}
+          placeholder="Team suchen…"
+          className="ml-auto w-28 rounded border border-slate-700 bg-slate-950/70 px-2 py-0.5 text-[10px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-400/60 focus:outline-none"
+          aria-label="Nach Team filtern"
+        />
+        {teamSearch && (
+          <button
+            type="button"
+            onClick={() => setTeamSearch('')}
+            className="rounded border border-slate-700 bg-slate-900/60 px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-slate-200"
+            aria-label="Team-Filter loeschen"
+          >×</button>
+        )}
         {(['ab-heute', 'alle'] as Filter[]).map((f) => (
           <button
             key={f}
@@ -197,9 +230,11 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
 
       {dates.length === 0 && (
         <p className="text-[10.5px] text-slate-500">
-          {filter === 'ab-heute'
-            ? 'Keine kommenden Spiele — WM vorbei oder Spielpause.'
-            : 'Keine Spiele im Spielplan.'}
+          {teamSearch
+            ? `Keine Spiele mit „${teamSearch}" im Filter. Filter mit ab heute / alle Tage anpassen oder Suche loeschen.`
+            : filter === 'ab-heute'
+              ? 'Keine kommenden Spiele — WM vorbei oder Spielpause.'
+              : 'Keine Spiele im Spielplan.'}
         </p>
       )}
 
