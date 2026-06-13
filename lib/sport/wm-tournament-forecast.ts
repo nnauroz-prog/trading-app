@@ -258,11 +258,15 @@ function buildVirtualR16(schedule: WmFixture[]): WmFixture[] {
   const existingAf = new Set(
     schedule.filter((f) => f.phase === 'Achtelfinale').map((f) => f.id)
   );
+  // Zeitanker analog zu wm-r16-1..4 (18:00 UTC, ~20:00 Berlin).
+  // Datum bleibt provisorisch — sobald die FIFA die echten Slots
+  // veroeffentlicht, fallen die virtuellen Spiele automatisch durch
+  // den existingAf-Filter raus.
   const virtual: WmFixture[] = [
-    { id: 'wm-r16-5', date: '2026-07-02', time: null, homeTeam: 'Sieger Gruppe I', awayTeam: 'Zweiter Gruppe J', venue: '', phase: 'Achtelfinale' },
-    { id: 'wm-r16-6', date: '2026-07-02', time: null, homeTeam: 'Sieger Gruppe J', awayTeam: 'Zweiter Gruppe I', venue: '', phase: 'Achtelfinale' },
-    { id: 'wm-r16-7', date: '2026-07-03', time: null, homeTeam: 'Sieger Gruppe K', awayTeam: 'Zweiter Gruppe L', venue: '', phase: 'Achtelfinale' },
-    { id: 'wm-r16-8', date: '2026-07-03', time: null, homeTeam: 'Sieger Gruppe L', awayTeam: 'Zweiter Gruppe K', venue: '', phase: 'Achtelfinale' }
+    { id: 'wm-r16-5', date: '2026-07-02', time: '18:00', homeTeam: 'Sieger Gruppe I', awayTeam: 'Zweiter Gruppe J', venue: '', phase: 'Achtelfinale' },
+    { id: 'wm-r16-6', date: '2026-07-02', time: '22:00', homeTeam: 'Sieger Gruppe J', awayTeam: 'Zweiter Gruppe I', venue: '', phase: 'Achtelfinale' },
+    { id: 'wm-r16-7', date: '2026-07-03', time: '18:00', homeTeam: 'Sieger Gruppe K', awayTeam: 'Zweiter Gruppe L', venue: '', phase: 'Achtelfinale' },
+    { id: 'wm-r16-8', date: '2026-07-03', time: '22:00', homeTeam: 'Sieger Gruppe L', awayTeam: 'Zweiter Gruppe K', venue: '', phase: 'Achtelfinale' }
   ];
   return virtual.filter((v) => !existingAf.has(v.id));
 }
