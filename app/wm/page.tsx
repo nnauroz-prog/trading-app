@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { WORLD_CUP_LEAGUE_IDS } from '@/lib/sport/leagues';
@@ -59,6 +60,11 @@ import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsi
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
+
+export const metadata: Metadata = {
+  title: 'WM 2026 — Gewinner-Vorhersage pro Spiel',
+  description: 'WM 2026 chronologisch: pro Spiel der Modell-Gewinner, Endstand sobald nachgepflegt, Weltmeister-Tipp und kompletter Turnierbaum. Modell-Tendenz, keine Garantie.'
+};
 
 function fmtDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00`);
