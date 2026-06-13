@@ -163,6 +163,12 @@ import { SignalSummary } from '@/lib/action-plan';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+import type { Metadata } from 'next';
+export const metadata: Metadata = {
+  title: 'Market Decision Support · WM 2026, Krypto, Aktien',
+  description: 'Tageswerte: WM-Gewinner-Vorhersage pro Spiel, Sport-Picks, Krypto-Signale und Aktien-Trends — transparent, ehrlich, ohne Garantie.'
+};
+
 export default async function HomePage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
   const [report, masterSignal, fearGreed, btcDominance, fundingBtc, fundingEth, backtestSummary, newsItems, lehrlingReport, exchangeSources, sportLeagues, basketballLeagues, tennisLeagues, hockeyLeagues, stockSafetyScan, commoditySafetyScan, sportEmployeeStats] = await Promise.all([

@@ -159,6 +159,12 @@ import { WmSystemGuide } from '@/components/sport/wm-system-guide';
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
 
+import type { Metadata } from 'next';
+export const metadata: Metadata = {
+  title: 'Sport-Tipps · WM 2026 + Top-Ligen',
+  description: 'Tagesplan, WM-Gewinner-Vorhersage pro Spiel und Profi-Tipper-Filter ueber die Top-Fussball-Ligen. Modell-Tendenz, keine Wett-Garantie.'
+};
+
 function fmtDate(iso: string): string {
   const d = new Date(iso + 'T00:00:00');
   if (Number.isNaN(d.getTime())) return iso;
