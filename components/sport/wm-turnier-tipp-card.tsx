@@ -7,8 +7,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildWmDailyWinners, type WmDailyOutcome } from '@/lib/sport/wm-daily-winners';
 import { computeKickoffCountdown } from '@/lib/sport/wm-kickoff-countdown';
-import { mergeResults } from '@/lib/sport/wm-results-matcher';
+import { matchExternalResults, mergeResults, type ExternalLastFixture } from '@/lib/sport/wm-results-matcher';
 import { WmEndstandInputInline } from '@/components/sport/wm-endstand-input-inline';
+import type { FinishedFixtureLite } from '@/lib/sport/wm-pick-learning';
 import {
   loadManualWmResults,
   WM_MANUAL_RESULTS_CHANGED_EVENT
@@ -20,6 +21,13 @@ interface Props {
   // wenn nicht uebergeben, faellt die Karte auf den statischen
   // Default zurueck.
   schedule?: WmFixture[];
+  // Externe Endstaende aus TheSportsDB (oder anderen Quellen), die
+  // pro Team-Paarung+Datum gegen den Schedule gematched werden. Die
+  // Karte merged sie mit den manuell eingetragenen — manuelle Eingabe
+  // hat Vorrang.
+  externalLast?: ExternalLastFixture[];
+  // Direkt schon vom Server gematchte Finished-Fixtures (per fixtureId).
+  externalFinished?: FinishedFixtureLite[];
 }
 
 function fmtDate(iso: string): string {
@@ -55,7 +63,7 @@ const OUTCOME_LABEL: Record<WmDailyOutcome, string> = {
 
 type Filter = 'ab-heute' | 'alle';
 
-export function WmTurnierTippCard({ schedule }: Props = {}) {
+export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: Props = {}) {
   const [tick, setTick] = useState(0);
   const [now, setNow] = useState<Date>(() => new Date());
   const [mounted, setMounted] = useState(false);
@@ -81,10 +89,17 @@ export function WmTurnierTippCard({ schedule }: Props = {}) {
   const today = useMemo(() => mounted ? todayIsoBerlin() : '', [mounted]);
 
   const { rows, championPick } = useMemo(() => {
-    const finished = mounted ? mergeResults(loadManualWmResults(), []) : [];
+    // Externe Endstaende: per-fixtureId-Liste vom Server hat Vorrang,
+    // sonst matchen wir die ExternalLastFixture-Liste gegen den
+    // gemergten Schedule.
+    const externalMatched: FinishedFixtureLite[] = externalFinished
+      ?? (externalLast && schedule ? matchExternalResults(externalLast, schedule) : []);
+    const finished = mounted
+      ? mergeResults(loadManualWmResults(), externalMatched)
+      : externalMatched;
     return buildWmDailyWinners({ finished, schedule });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, tick, schedule]);
+  }, [mounted, tick, schedule, externalLast, externalFinished]);
 
   const stats = useMemo(() => {
     let hits = 0, miss = 0, push = 0;

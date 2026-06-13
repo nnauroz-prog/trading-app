@@ -88,7 +88,7 @@ import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
 import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
 import { WmSimplePicksCard } from '@/components/sport/wm-simple-picks-card';
 import { WmTurnierTippCard } from '@/components/sport/wm-turnier-tipp-card';
-import { getCachedWmLiveSchedule } from '@/lib/sport/wm-live-schedule';
+import { getCachedWmLiveData } from '@/lib/sport/wm-live-schedule';
 import { mergeWmFixtures } from '@/lib/sport/wm-schedule-merge';
 import { WM_2026_FIXTURES } from '@/lib/sport/wm-schedule-2026';
 import { WmSection } from '@/components/sport/wm-section';
@@ -456,7 +456,8 @@ export default async function HomePage() {
   const opportunitySignals = detectOpportunitySignals(spaeherReport.perCoin, priceCtx);
   const upcomingMacro = upcomingMacroAll;
   const todayIso = todayIsoBerlin();
-  const mergedWmSchedule = mergeWmFixtures(WM_2026_FIXTURES, await getCachedWmLiveSchedule());
+  const wmLiveData = await getCachedWmLiveData();
+  const mergedWmSchedule = mergeWmFixtures(WM_2026_FIXTURES, wmLiveData.schedule);
 
   // Recherche-Firma: Chefredakteur-Lagebericht (für Strip + Confidence-Score)
   const intelCtx = buildIntelContext({
@@ -649,7 +650,7 @@ export default async function HomePage() {
         return (
           <>
             <WmTabTitleUpdater picks={wmWinnerPicksHome} />
-            <WmTurnierTippCard schedule={mergedWmSchedule} />
+            <WmTurnierTippCard schedule={mergedWmSchedule} externalLast={wmLiveData.externalLast} />
             <details className="rounded-2xl border border-slate-700 bg-slate-950/30">
               <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 hover:text-slate-200">
                 ▸ Mehr Details (Banner, Picks-Filter, Bankroll, Quoten, Bilanz, Werkzeuge)

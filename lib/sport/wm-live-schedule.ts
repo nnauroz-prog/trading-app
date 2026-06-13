@@ -1,8 +1,10 @@
 // Live-WM-Spielplan aus TheSportsDB (Liga-ID 4429).
 //
-// Holt aktuelle WM-2026-Fixtures von TheSportsDB und konvertiert sie
-// in das WmFixture-Format. Server-seitig gecacht, damit kein API-
-// Hammering passiert.
+// Holt aktuelle WM-2026-Fixtures von TheSportsDB:
+//   - Spielplan (alle Spiele der Saison) -> WmFixture[]
+//   - Bereits gespielte Begegnungen mit Endstand -> FinishedFixtureLite[]
+//
+// Server-seitig gecacht, damit kein API-Hammering passiert.
 //
 // Sicheres Default-Verhalten: bei Fehler oder leerer Antwort kommt
 // eine leere Liste zurueck — die statische Schedule bleibt
@@ -10,6 +12,8 @@
 
 import { unstable_cache } from 'next/cache';
 import type { WmFixture } from '@/lib/sport/wm-schedule-2026';
+import type { FinishedFixtureLite } from '@/lib/sport/wm-pick-learning';
+import type { ExternalLastFixture } from '@/lib/sport/wm-results-matcher';
 import { findTeamStrength } from '@/lib/sport/wm-team-strength';
 
 function canonicalTeam(name: string): string {
@@ -27,6 +31,10 @@ interface ApiEvent {
   strVenue?: string;
   strRound?: string;          // "Group A", "Round of 16", ...
   strLeague?: string;
+  // Score-Felder (TheSportsDB liefert sie als String, ggf. "" / null)
+  intHomeScore?: string | null;
+  intAwayScore?: string | null;
+  strStatus?: string | null;  // "Match Finished", "FT", ...
 }
 
 const WM_LEAGUE_ID = '4429';
@@ -66,21 +74,86 @@ function normalize(ev: ApiEvent): WmFixture | null {
   } as WmFixture;
 }
 
-async function rawFetch(season: string): Promise<WmFixture[]> {
+async function rawFetchEvents(season: string): Promise<ApiEvent[]> {
   const url = `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=${WM_LEAGUE_ID}&s=${season}`;
   try {
     const res = await fetch(url, { next: { revalidate: 1800 } });
     if (!res.ok) return [];
     const data = (await res.json()) as { events?: ApiEvent[] | null };
-    const events = data.events ?? [];
-    return events.map(normalize).filter((f): f is WmFixture => f !== null);
+    return data.events ?? [];
   } catch {
     return [];
   }
 }
 
-export const getCachedWmLiveSchedule = unstable_cache(
+function parseScore(raw: string | null | undefined): number | null {
+  if (raw === null || raw === undefined) return null;
+  const s = String(raw).trim();
+  if (s === '' || s === '-' || s === '?') return null;
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+function extractFinished(events: ApiEvent[]): FinishedFixtureLite[] {
+  const out: FinishedFixtureLite[] = [];
+  for (const ev of events) {
+    if (!ev.idEvent || !ev.strHomeTeam || !ev.strAwayTeam) continue;
+    const home = parseScore(ev.intHomeScore);
+    const away = parseScore(ev.intAwayScore);
+    if (home === null || away === null) continue;
+    out.push({
+      fixtureId: `tsdb-${ev.idEvent}`,
+      homeScore: home,
+      awayScore: away
+    });
+  }
+  return out;
+}
+
+// Wie extractFinished, aber im ExternalLastFixture-Format mit
+// Team-Namen (kanonisiert) und Datum — fuer matchExternalResults.
+function extractExternalLastFixtures(events: ApiEvent[]): ExternalLastFixture[] {
+  const out: ExternalLastFixture[] = [];
+  for (const ev of events) {
+    if (!ev.strHomeTeam || !ev.strAwayTeam || !ev.dateEvent) continue;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(ev.dateEvent)) continue;
+    const home = parseScore(ev.intHomeScore);
+    const away = parseScore(ev.intAwayScore);
+    if (home === null || away === null) continue;
+    out.push({
+      homeTeam: canonicalTeam(ev.strHomeTeam),
+      awayTeam: canonicalTeam(ev.strAwayTeam),
+      homeScore: home,
+      awayScore: away,
+      date: ev.dateEvent
+    });
+  }
+  return out;
+}
+
+export interface WmLiveData {
+  schedule: WmFixture[];
+  finished: FinishedFixtureLite[];
+  externalLast: ExternalLastFixture[];
+}
+
+async function rawFetch(season: string): Promise<WmLiveData> {
+  const events = await rawFetchEvents(season);
+  const schedule = events.map(normalize).filter((f): f is WmFixture => f !== null);
+  const finished = extractFinished(events);
+  const externalLast = extractExternalLastFixtures(events);
+  return { schedule, finished, externalLast };
+}
+
+export const getCachedWmLiveData = unstable_cache(
   async () => rawFetch('2026'),
+  ['wm-live-data-v3'],
+  { revalidate: 1800 }
+);
+
+// Backwards-Kompatibilitaet: bestehender Aufruf liefert nur Schedule.
+export const getCachedWmLiveSchedule = unstable_cache(
+  async () => (await rawFetch('2026')).schedule,
   ['wm-live-schedule-v1'],
   { revalidate: 1800 }
 );
