@@ -81,6 +81,10 @@ import { SportQuickFilter } from '@/components/sport-quick-filter';
 import { SummerModeBanner } from '@/components/summer-mode-banner';
 import { WmCountdownBanner } from '@/components/wm-countdown-banner';
 import { WmNextMatches } from '@/components/wm-next-matches';
+import { WmTurnierTippCard } from '@/components/sport/wm-turnier-tipp-card';
+import { getCachedWmLiveData } from '@/lib/sport/wm-live-schedule';
+import { mergeWmFixtures } from '@/lib/sport/wm-schedule-merge';
+import { WM_2026_FIXTURES } from '@/lib/sport/wm-schedule-2026';
 import { WmDayPicker } from '@/components/wm-day-picker';
 import { WmTopTips } from '@/components/wm-top-tips';
 import { WmSafeMarketTips } from '@/components/wm-safe-market-tips';
@@ -428,6 +432,9 @@ export default async function SportPage() {
   const leagues = await getFootballFixtures();
   const anyData = leagues.some((l) => l.next.length > 0 || l.last.length > 0);
 
+  const wmLiveData = await getCachedWmLiveData();
+  const mergedWmSchedule = mergeWmFixtures(WM_2026_FIXTURES, wmLiveData.schedule);
+
   const flatUpcoming: { fixture: UpcomingFixture; leagueName: string }[] = [];
   const leagueNameById = new Map<string, string>();
   for (const lf of leagues) {
@@ -555,6 +562,10 @@ export default async function SportPage() {
           Alle alten Bereiche sind darunter eingeklappt und tragen klar das
           Etikett „Rohdaten / Modell-Uebersicht", damit kein widersprueliches
           Wording uebrig bleibt. */}
+
+      {/* WM-Gewinner-Vorhersage ganz oben: pro Spiel chronologisch
+          Modell-Gewinner + Endstand + Live-Indikator. */}
+      <WmTurnierTippCard schedule={mergedWmSchedule} externalLast={wmLiveData.externalLast} />
 
       {/* WM-Countdown ganz oben, solange < 30 Tage bis Start oder waehrend
           der laufenden WM. Mountet vor den Picks, damit der User sofort
