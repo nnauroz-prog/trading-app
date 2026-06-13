@@ -210,23 +210,27 @@ function resolveLabel(
 
 function predictKoMatch(home: string, away: string, venue: string): { winner: string; loser: string; homePct: number; awayPct: number; drawPct: number } {
   const pred = predictWmMatch({ homeTeam: home, awayTeam: away, venue });
-  // KO-Modus: kein Remis im Ergebnis, also waehlen wir den Sieger anhand
-  // withExtraTime (Verlaengerung beruecksichtigt).
-  if (pred.withExtraTime.homePct >= pred.withExtraTime.awayPct) {
+  // KO-Modus: kein Remis im Ergebnis. Sieger und Confidence-Zahlen
+  // beziehen sich auf withExtraTime (Verlaengerungs-Logik), damit die
+  // Wahrscheinlichkeit zum getippten Sieger passt — nicht die rohe
+  // regular-Quote (in der Remis noch enthalten ist).
+  const homeWin = pred.withExtraTime.homePct;
+  const awayWin = pred.withExtraTime.awayPct;
+  if (homeWin >= awayWin) {
     return {
       winner: home,
       loser: away,
-      homePct: pred.regular.homePct,
-      awayPct: pred.regular.awayPct,
-      drawPct: pred.regular.drawPct
+      homePct: homeWin,
+      awayPct: awayWin,
+      drawPct: 0
     };
   }
   return {
     winner: away,
     loser: home,
-    homePct: pred.regular.homePct,
-    awayPct: pred.regular.awayPct,
-    drawPct: pred.regular.drawPct
+    homePct: homeWin,
+    awayPct: awayWin,
+    drawPct: 0
   };
 }
 
@@ -235,6 +239,11 @@ interface BuildOptions {
   // Wenn false, wird die statische Auslosungs-Lookup ignoriert und nur
   // der Schedule selbst durchsucht. Default true (Lookup bevorzugt).
   useGroupDrawLookup?: boolean;
+  // Wenn true, wird der Modell-Bracket fuer AF5-AF8 nicht ergaenzt.
+  // Tests koennen das setzen, wenn sie explizit nur den uebergebenen
+  // Schedule sehen wollen. Default false (Bracket wird ergaenzt, damit
+  // die Kette bis zum Finale durchrechenbar ist).
+  disableVirtualR16?: boolean;
 }
 
 // Der offizielle Spielplan in wm-schedule-2026.ts enthaelt nur die
@@ -261,9 +270,13 @@ function buildVirtualR16(schedule: WmFixture[]): WmFixture[] {
 export function buildWmTournamentForecast(opts: BuildOptions = {}): WmTournamentForecast {
   const baseSchedule = opts.schedule ?? WM_2026_FIXTURES;
   const useLookup = opts.useGroupDrawLookup ?? true;
-  // Modell-Bracket nur ergaenzen wenn wir mit dem echten Default-
-  // Schedule arbeiten (Tests mit eigenem Schedule bleiben unberuehrt).
-  const schedule = opts.schedule
+  // Modell-Bracket fuer AF5-AF8 immer ergaenzen, auch wenn ein
+  // expliziter Schedule uebergeben wurde (z. B. statisch + Live-Merge
+  // von TheSportsDB). Sonst bricht die KO-Kette unterhalb der ersten 4
+  // R16-Spiele ab und Finale + Spiel um Platz 3 fehlen.
+  // Tests koennen disableVirtualR16: true setzen, wenn sie explizit
+  // nur den uebergebenen Schedule sehen wollen.
+  const schedule = opts.disableVirtualR16
     ? baseSchedule
     : [...baseSchedule, ...buildVirtualR16(baseSchedule)];
   const teamsPerGroup = useLookup ? uniqueTeamsPerGroup(schedule) : uniqueTeamsPerGroupFromScheduleOnly(schedule);
