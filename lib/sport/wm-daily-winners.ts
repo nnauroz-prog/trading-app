@@ -21,8 +21,13 @@ export interface WmDailyResult {
 
 export interface WmDailyWinnerRow {
   fixtureId: string;
+  // Datum + Zeit in Europe/Berlin (fuer UI-Anzeige + Tagesgruppierung).
   dateIso: string;
   time: string | null;
+  // Datum + Zeit in UTC (fuer Kickoff-/Live-Berechnung — robust gegen
+  // Reisen / Browser in anderer Zeitzone).
+  utcDateIso: string;
+  utcTime: string | null;
   phase: WmFixture['phase'];
   group?: string;
   homeTeam: string;
@@ -83,6 +88,8 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
       fixtureId: p.fixtureId,
       dateIso: p.dateIso,
       time: p.time,
+      utcDateIso: p.dateIso,
+      utcTime: p.time,
       phase: 'Gruppe',
       group: fix.group,
       homeTeam: fix.homeTeam,
@@ -126,6 +133,8 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
       fixtureId: k.fixtureId,
       dateIso: k.dateIso,
       time: k.time,
+      utcDateIso: k.dateIso,
+      utcTime: k.time,
       phase: k.phase,
       homeTeam: k.homeTeam ?? k.homeLabel,
       awayTeam: k.awayTeam ?? k.awayLabel,
@@ -139,8 +148,9 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
 
   // UTC -> Berlin pro Row. Das verschiebt einzelne Spiele eventuell auf
   // den naechsten Berliner Tag (Spaet-UTC-Anstoesse) — danach neu sortieren.
+  // utcDateIso/utcTime bleiben unveraendert fuer Live-/Kickoff-Logik.
   const rowsBerlin = rows.map((r) => {
-    const { dateIso, time } = utcToBerlin(r.dateIso, r.time);
+    const { dateIso, time } = utcToBerlin(r.utcDateIso, r.utcTime);
     return { ...r, dateIso, time };
   });
   rowsBerlin.sort((a, b) => {

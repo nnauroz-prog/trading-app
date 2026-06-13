@@ -40,6 +40,16 @@ function parseKickoff(dateIso: string, time: string | null): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+// Variante: Datum + Zeit werden als UTC interpretiert. Robust gegen
+// Reisen / Browser in anderer Zeitzone. Gleiche Output-Semantik wie
+// computeKickoffCountdown.
+function parseKickoffUtc(dateIso: string, time: string | null): Date | null {
+  if (!time) return null;
+  if (!/^\d{2}:\d{2}$/.test(time)) return null;
+  const d = new Date(`${dateIso}T${time}:00Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function fmtLong(minutes: number): string {
   if (minutes >= 60 * 24) {
     const days = Math.floor(minutes / (60 * 24));
@@ -66,8 +76,7 @@ function fmtShort(minutes: number): string {
   return `${minutes}m`;
 }
 
-export function computeKickoffCountdown(dateIso: string, time: string | null, now: Date = new Date()): WmKickoffInfo {
-  const kickoff = parseKickoff(dateIso, time);
+function buildInfo(kickoff: Date | null, now: Date): WmKickoffInfo {
   if (!kickoff) {
     return {
       status: 'vor-anstoss',
@@ -105,4 +114,14 @@ export function computeKickoffCountdown(dateIso: string, time: string | null, no
     minutesUntilKickoff: null,
     minutesSinceKickoff: elapsed
   };
+}
+
+export function computeKickoffCountdown(dateIso: string, time: string | null, now: Date = new Date()): WmKickoffInfo {
+  return buildInfo(parseKickoff(dateIso, time), now);
+}
+
+// UTC-Variante: interpretiert Datum + Zeit als UTC. Wenn der Aufrufer
+// einen UTC-Timestamp aus dem Spielplan hat, ist das die robuste Wahl.
+export function computeKickoffCountdownUtc(dateIso: string, time: string | null, now: Date = new Date()): WmKickoffInfo {
+  return buildInfo(parseKickoffUtc(dateIso, time), now);
 }

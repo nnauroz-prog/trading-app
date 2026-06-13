@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildWmDailyWinners, type WmDailyOutcome } from '@/lib/sport/wm-daily-winners';
-import { computeKickoffCountdown } from '@/lib/sport/wm-kickoff-countdown';
+import { computeKickoffCountdownUtc } from '@/lib/sport/wm-kickoff-countdown';
 import { matchExternalResults, mergeResults, type ExternalLastFixture } from '@/lib/sport/wm-results-matcher';
 import { WmEndstandInputInline } from '@/components/sport/wm-endstand-input-inline';
 import type { FinishedFixtureLite } from '@/lib/sport/wm-pick-learning';
@@ -14,6 +14,7 @@ import {
   loadManualWmResults,
   WM_MANUAL_RESULTS_CHANGED_EVENT
 } from '@/lib/sport/wm-results-store';
+import { todayIsoBerlin } from '@/lib/agent-memory';
 import type { WmFixture } from '@/lib/sport/wm-schedule-2026';
 
 interface Props {
@@ -31,14 +32,12 @@ interface Props {
 }
 
 function fmtDate(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`);
+  const d = new Date(`${iso}T12:00:00Z`);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit' });
-}
-
-function todayIsoBerlin(): string {
-  const now = new Date();
-  return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  return d.toLocaleDateString('de-DE', {
+    timeZone: 'Europe/Berlin',
+    weekday: 'long', day: '2-digit', month: '2-digit'
+  });
 }
 
 const PHASE_TAG: Partial<Record<WmFixture['phase'], string>> = {
@@ -152,7 +151,7 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
     if (!mounted) return [] as typeof rows;
     return rows.filter((r) => {
       if (r.result) return false;
-      const info = computeKickoffCountdown(r.dateIso, r.time, now);
+      const info = computeKickoffCountdownUtc(r.utcDateIso, r.utcTime, now);
       return info.status === 'laeuft';
     });
   }, [rows, now, mounted]);
@@ -261,7 +260,7 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
               <ul className="space-y-0.5">
                 {items.map((r) => {
                   const live = mounted && !r.result
-                    ? computeKickoffCountdown(r.dateIso, r.time, now)
+                    ? computeKickoffCountdownUtc(r.utcDateIso, r.utcTime, now)
                     : null;
                   const isLive = live?.status === 'laeuft';
                   const rowTone = isLive
