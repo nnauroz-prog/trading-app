@@ -167,7 +167,51 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: '', phase: 'Gruppe', group: 'I',
     sourceConfidence: 'auslosung'
   },
-  // Gruppe C: Brasilien, Marokko, Haiti, Schottland — Brasilien-Auftakt
+  // Gruppe C: Brasilien, Marokko, Haiti, Schottland.
+  // Verifiziert am 13.06.2026 via ZDF / kicker / Tagesanzeiger / Blick.
+  // Brasilien-Auftakt vs Marokko, MetLife Stadium, 18:00 ET = 22:00 UTC
+  // am 13.06. (= 00:00 Berlin am 14.06.).
+  {
+    id: 'wm-c-md1-1', date: '2026-06-13', time: '22:00',
+    homeTeam: 'Brasilien', awayTeam: 'Marokko',
+    venue: 'MetLife Stadium, New York/New Jersey', phase: 'Gruppe', group: 'C',
+    sourceConfidence: 'official'
+  },
+  // Haiti-Schottland 14.06. 21:00 ET = 01:00 UTC am 14.06. Gillette
+  // Stadium Boston (per Web-Recherche bestaetigt).
+  {
+    id: 'wm-c-md1-2', date: '2026-06-14', time: '01:00',
+    homeTeam: 'Haiti', awayTeam: 'Schottland',
+    venue: 'Gillette Stadium, Boston', phase: 'Gruppe', group: 'C',
+    sourceConfidence: 'official'
+  },
+  // Gruppe B (Kanada, Bosnien, Katar, Schweiz) Matchday 2:
+  // Katar-Schweiz 13.06. 12:00 PT = 19:00 UTC Levi's Stadium Santa Clara,
+  // verifiziert via heidelberg24 / Tagesanzeiger / Blick.
+  {
+    id: 'wm-b-md1-3', date: '2026-06-13', time: '19:00',
+    homeTeam: 'Katar', awayTeam: 'Schweiz',
+    venue: "Levi's Stadium, Santa Clara", phase: 'Gruppe', group: 'B',
+    sourceConfidence: 'official'
+  },
+  // Gruppe D (USA, Paraguay, Australien, Tuerkei) — Australien vs
+  // Tuerkei am 14.06. 04:00 UTC Vancouver (= 06:00 Berlin), Auftakt fuer
+  // beide Teams.
+  {
+    id: 'wm-d-md1-2', date: '2026-06-14', time: '04:00',
+    homeTeam: 'Australien', awayTeam: 'Türkei',
+    venue: 'BC Place, Vancouver', phase: 'Gruppe', group: 'D',
+    sourceConfidence: 'official'
+  },
+  // Gruppe F (Niederlande, Japan, Tunesien, Schweden) Auftakt:
+  // Niederlande-Japan 14.06. 22:00 Berlin = 20:00 UTC, Dallas.
+  {
+    id: 'wm-f-md1-1', date: '2026-06-14', time: '20:00',
+    homeTeam: 'Niederlande', awayTeam: 'Japan',
+    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'F',
+    sourceConfidence: 'official'
+  },
+  // Gruppe-C Matchday 2 (Brasilien-Haiti laut FOX Sports):
   // 20.06. vs Haiti, Philadelphia, 21:00 ET = 01:00 UTC am 21.06.
   {
     id: 'wm-7', date: '2026-06-21', time: '01:00',
