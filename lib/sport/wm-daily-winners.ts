@@ -32,6 +32,9 @@ export interface WmDailyWinnerRow {
   // true wenn die Paarung selbst eine Modell-Projektion ist (KO-Spiele,
   // deren Teilnehmer aus dem prognostizierten Gruppen-Endstand kommen).
   isProjectedPairing: boolean;
+  // Modell-Wahrscheinlichkeit fuer die Pick-Seite in Prozent (0..100).
+  // null falls keine Engine-Ausgabe vorliegt.
+  confidencePct: number | null;
   // Endstand falls bereits eingetragen.
   result: WmDailyResult | null;
 }
@@ -87,6 +90,7 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
       winner: p.winnerTeam,
       loser: p.loserTeam,
       isProjectedPairing: false,
+      confidencePct: p.confidencePct,
       result
     });
   }
@@ -106,6 +110,18 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
         outcome: classifyOutcome(fin.homeScore, fin.awayScore, k.predictedWinner, k.homeTeam, k.awayTeam)
       };
     }
+    // KO-Sieg-Wahrscheinlichkeit: anteil der Heim- bzw. Auswaertsseite
+    // an der Pick-Seite. homeWinPct + awayWinPct + drawPct = 100; im
+    // KO zaehlt der Wert der Pick-Seite (Remis wird im KO durch
+    // Verlaengerungs-Logik aufgeloest).
+    let confidencePct: number | null = null;
+    if (k.predictedWinner && k.homeTeam && k.awayTeam) {
+      if (k.predictedWinner === k.homeTeam && k.homeWinPct !== null) {
+        confidencePct = Math.round(k.homeWinPct);
+      } else if (k.predictedWinner === k.awayTeam && k.awayWinPct !== null) {
+        confidencePct = Math.round(k.awayWinPct);
+      }
+    }
     rows.push({
       fixtureId: k.fixtureId,
       dateIso: k.dateIso,
@@ -116,6 +132,7 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
       winner: k.predictedWinner,
       loser: k.predictedLoser,
       isProjectedPairing: true,
+      confidencePct,
       result
     });
   }

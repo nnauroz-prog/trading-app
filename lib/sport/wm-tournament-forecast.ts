@@ -293,9 +293,10 @@ export function buildWmTournamentForecast(opts: BuildOptions = {}): WmTournament
         const r = predictKoMatch(homeTeam, awayTeam, fix.venue);
         predictedWinner = r.winner;
         predictedLoser = r.loser;
-        homePct = Math.round(r.homePct * 1000) / 10;
-        awayPct = Math.round(r.awayPct * 1000) / 10;
-        drawPct = Math.round(r.drawPct * 1000) / 10;
+        // pred.regular.* sind bereits Prozentwerte 0..100.
+        homePct = r.homePct;
+        awayPct = r.awayPct;
+        drawPct = r.drawPct;
         koResults.set(fix.id, { winner: r.winner, loser: r.loser });
       }
       koMatches.push({

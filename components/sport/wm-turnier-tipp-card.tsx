@@ -252,6 +252,11 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
                       )}
                       <span className="font-bold text-emerald-200">{r.winner}</span>
                       <span className="text-[10.5px] text-slate-500">gegen {r.loser}</span>
+                      {r.confidencePct !== null && (
+                        <span className={`font-mono text-[9.5px] ${r.confidencePct >= 75 ? 'text-emerald-300' : r.confidencePct >= 60 ? 'text-sky-300' : 'text-slate-400'}`}>
+                          · {r.confidencePct} %
+                        </span>
+                      )}
                       {r.result && (
                         <>
                           <span className="rounded border border-slate-600 bg-slate-900/60 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-100">

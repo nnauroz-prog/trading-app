@@ -99,4 +99,17 @@ describe('buildWmDailyWinners (echter Schedule)', () => {
     const row = r.rows.find((x) => x.fixtureId === 'wm-1')!;
     expect(row.result?.outcome).toBe('remis-push');
   });
+
+  it('Gruppenspiele liefern eine Confidence-Prozentzahl', () => {
+    const wm1 = result.rows.find((r) => r.fixtureId === 'wm-1')!;
+    expect(wm1.confidencePct).not.toBeNull();
+    expect(wm1.confidencePct!).toBeGreaterThanOrEqual(30);
+    expect(wm1.confidencePct!).toBeLessThanOrEqual(100);
+  });
+
+  it('KO-Spiele liefern eine Confidence (Sieger-Seite)', () => {
+    const ko = result.rows.find((r) => r.phase !== 'Gruppe');
+    expect(ko).toBeDefined();
+    expect(ko?.confidencePct).not.toBeNull();
+  });
 });

@@ -34,6 +34,9 @@ export interface WmSimplePick {
   status: WmSimpleStatus;
   // Klartext-Label fuer die Anzeige.
   label: string;
+  // Modell-Wahrscheinlichkeit fuer die Pick-Seite in Prozent (0..100).
+  // null bei TBD-Paarung.
+  confidencePct: number | null;
   // Endstand falls bereits gespielt + nachgepflegt.
   result: WmSimpleResult | null;
 }
@@ -43,9 +46,9 @@ function isTbd(team: string): boolean {
   return /^(Sieger|Verlierer|Zweiter|Erster|Gruppenerster|Gruppenzweiter|Bester|Gewinner|Drittplatzierter)\s/i.test(team.trim());
 }
 
-function decide(homeTeam: string, awayTeam: string, fixture: WmFixture): { winnerTeam: string | null; loserTeam: string | null; status: WmSimpleStatus; label: string } {
+function decide(homeTeam: string, awayTeam: string, fixture: WmFixture): { winnerTeam: string | null; loserTeam: string | null; status: WmSimpleStatus; label: string; confidencePct: number | null } {
   if (isTbd(homeTeam) || isTbd(awayTeam)) {
-    return { winnerTeam: null, loserTeam: null, status: 'tbd', label: 'Paarung noch offen' };
+    return { winnerTeam: null, loserTeam: null, status: 'tbd', label: 'Paarung noch offen', confidencePct: null };
   }
   const pred = predictWmMatch({
     homeTeam,
@@ -53,13 +56,18 @@ function decide(homeTeam: string, awayTeam: string, fixture: WmFixture): { winne
     venue: fixture.venue,
     phase: fixture.phase
   });
+  // regular.* sind bereits gerundete Prozentwerte (0..100).
+  const homePct = pred.regular.homePct;
+  const awayPct = pred.regular.awayPct;
+  const drawPct = pred.regular.drawPct;
   // Klarer Sieger: clarity strong oder leaning auf home/away.
   if (pred.pick.winner === 'home') {
     return {
       winnerTeam: homeTeam,
       loserTeam: awayTeam,
       status: pred.pick.clarity === 'strong' ? 'klar' : 'knapp',
-      label: `Sieger: ${homeTeam} · Verlierer: ${awayTeam}`
+      label: `Sieger: ${homeTeam} · Verlierer: ${awayTeam}`,
+      confidencePct: homePct
     };
   }
   if (pred.pick.winner === 'away') {
@@ -67,7 +75,8 @@ function decide(homeTeam: string, awayTeam: string, fixture: WmFixture): { winne
       winnerTeam: awayTeam,
       loserTeam: homeTeam,
       status: pred.pick.clarity === 'strong' ? 'klar' : 'knapp',
-      label: `Sieger: ${awayTeam} · Verlierer: ${homeTeam}`
+      label: `Sieger: ${awayTeam} · Verlierer: ${homeTeam}`,
+      confidencePct: awayPct
     };
   }
   if (pred.pick.winner === 'draw') {
@@ -75,7 +84,8 @@ function decide(homeTeam: string, awayTeam: string, fixture: WmFixture): { winne
       winnerTeam: null,
       loserTeam: null,
       status: 'remis',
-      label: `Remis-Tipp: ${homeTeam} – ${awayTeam}`
+      label: `Remis-Tipp: ${homeTeam} – ${awayTeam}`,
+      confidencePct: drawPct
     };
   }
   // undecided: knapper Tipp auf die Seite mit dem leichten Vorteil
@@ -84,14 +94,16 @@ function decide(homeTeam: string, awayTeam: string, fixture: WmFixture): { winne
       winnerTeam: homeTeam,
       loserTeam: awayTeam,
       status: 'knapp',
-      label: `Knapp: ${homeTeam} leicht vor ${awayTeam}`
+      label: `Knapp: ${homeTeam} leicht vor ${awayTeam}`,
+      confidencePct: homePct
     };
   }
   return {
     winnerTeam: awayTeam,
     loserTeam: homeTeam,
     status: 'knapp',
-    label: `Knapp: ${awayTeam} leicht vor ${homeTeam}`
+    label: `Knapp: ${awayTeam} leicht vor ${homeTeam}`,
+    confidencePct: awayPct
   };
 }
 
