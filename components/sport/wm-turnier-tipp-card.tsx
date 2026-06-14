@@ -359,6 +359,16 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
                           awayTeam={r.awayTeam}
                         />
                       )}
+                      <a
+                        href={`/wm/share/${r.fixtureId}`}
+                        target="_blank"
+                        rel="noopener"
+                        className="ml-auto min-h-[28px] rounded border border-slate-700 bg-slate-900/60 px-2 py-1 text-[9.5px] font-bold uppercase tracking-wider text-slate-300 hover:border-emerald-400/50 hover:text-emerald-200"
+                        aria-label={`Teilbare Vorhersage fuer ${r.homeTeam} gegen ${r.awayTeam} oeffnen`}
+                        title="Teilbare URL — kann per WhatsApp/Mail gesendet werden"
+                      >
+                        teilen ↗
+                      </a>
                     </li>
                   );
                 })}
