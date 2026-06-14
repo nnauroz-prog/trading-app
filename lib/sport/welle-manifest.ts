@@ -26,6 +26,12 @@ export interface WelleEntry {
 // Neueste Welle zuerst. Pro Welle EIN Eintrag.
 export const WELLEN: WelleEntry[] = [
   {
+    range: '17201-17300',
+    userImpact: 'Die WM-Seite hat ein neues Prognose-Dashboard — ganz oben siehst du Top-Favorit mit Wahrscheinlichkeit und Begruendung, darunter Top-8-Ranking, naechste Spiele mit Favorit + erwartetem Ergebnisbereich, der Turnierbaum ist sekundaer und einklappbar.',
+    buildMarker: 'welle-17201-17300-wm-prognose-dashboard',
+    date: '2026-06-14'
+  },
+  {
     range: '33101-33200',
     userImpact: 'Jede WM-Vorhersage hat jetzt eine eigene teilbare URL — du kannst genau ein Match-Tipp-Bild per WhatsApp/Mail an eine Person senden, ohne sie durch die ganze App zu fuehren.',
     buildMarker: 'welle-33101-33200-system-fix-bricht-loop',

@@ -57,6 +57,12 @@ import { WmEloDriftCard } from '@/components/sport/wm-elo-drift-card';
 import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
 import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
 import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsible-legacy-section';
+import { buildWorldCupDashboard } from '@/lib/sports/world-cup-prediction-engine';
+import { WmDashboardHero } from '@/components/sport/wm-dashboard-hero';
+import { WmDashboardTop8 } from '@/components/sport/wm-dashboard-top8';
+import { WmDashboardMatches } from '@/components/sport/wm-dashboard-matches';
+import { WmDashboardBracket } from '@/components/sport/wm-dashboard-bracket';
+import { WmDashboardStickySummary } from '@/components/sport/wm-dashboard-sticky-summary';
 
 // Nur 'revalidate' setzen — 'force-dynamic' wuerde die ISR-Cache deaktivieren
 // und 'revalidate' damit wirkungslos machen (Next.js-Widerspruch). Die Seite
@@ -158,6 +164,11 @@ export default async function WorldCupPage() {
   }
   const phaseOrder: WmFixture['phase'][] = ['Gruppe', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Spiel um Platz 3', 'Finale'];
 
+  // Neues Dashboard ganz oben — Hero, Top 8, naechste Spiele, Bracket.
+  const nowIso = new Date().toISOString();
+  const todayIso = nowIso.slice(0, 10);
+  const dashboard = buildWorldCupDashboard({ nowIso, upcomingLimit: 6 });
+
   return (
     <main className="mx-auto max-w-4xl space-y-5 p-4 md:p-6">
       <Link href="/sport" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
@@ -168,9 +179,26 @@ export default async function WorldCupPage() {
         <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">FIFA World Cup 2026</div>
         <h1 className="text-3xl font-bold tracking-tight text-white">WM-Gewinner-Vorhersage</h1>
         <p className="max-w-2xl text-sm text-slate-400">
-          11. Juni – 19. Juli 2026 in USA, Kanada, Mexiko. Pro Spiel die wahrscheinlichste Sieger-Seite. Wo Paarungen noch offen sind („Sieger Gruppe A“ usw.), wird das ehrlich markiert.
+          11. Juni – 19. Juli 2026 in USA, Kanada, Mexiko. Modell-Tendenz, keine Garantie. Keine Wett-Empfehlung.
         </p>
       </header>
+
+      {dashboard.globalWarnings.length > 0 && (
+        <div role="alert" className="rounded-xl border border-amber-400/40 bg-amber-500/5 p-3 text-[11.5px] text-amber-100/90">
+          {dashboard.globalWarnings.join(' · ')}
+        </div>
+      )}
+
+      <WmDashboardHero topFavorite={dashboard.topFavorite} lastUpdated={dashboard.lastUpdated} />
+      <WmDashboardTop8 ranking={dashboard.ranking} />
+      <WmDashboardMatches matches={dashboard.upcomingMatches} />
+      <WmDashboardBracket todayIso={todayIso} />
+
+      <details className="rounded-2xl border border-slate-700/60 bg-slate-950/30">
+        <summary className="cursor-pointer list-none px-4 py-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-300 hover:text-emerald-300">
+          ▸ Erweiterte Sicht (Tag-für-Tag-Liste, Bankroll, Backtest, Werkzeuge)
+        </summary>
+        <div className="space-y-5 border-t border-slate-700/60 p-3 sm:p-4">
 
       {/* Precision-Stack komplett zugeklappt — siehe "Mehr Details"
           unter der Turnier-Tipp-Karte. */}
@@ -344,6 +372,10 @@ export default async function WorldCupPage() {
       <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
         Spielplan-Daten manuell aus offiziellen FIFA-Quellen gepflegt (Stand: vor Turnier-Beginn). Sobald TheSportsDB die WM live führt, fließen deren Daten ergänzend mit ein. Modell: Poisson auf Nationalmannschafts-Form — Trefferquote dünner als bei Vereins-Ligen, weil Länderspiele seltener sind.
       </footer>
+        </div>
+      </details>
+
+      <WmDashboardStickySummary topFavorite={dashboard.topFavorite} lastUpdated={dashboard.lastUpdated} />
     </main>
   );
 }
