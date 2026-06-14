@@ -63,21 +63,24 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: 'Mercedes-Benz Stadium, Atlanta', phase: 'Gruppe', group: 'A',
     sourceConfidence: 'official'
   },
-  // MD2: Mexiko-Südkorea 9pm ET 18.06 = 01:00 UTC 19.06, Guadalajara
+  // MD2: Mexiko-Südkorea 9pm local Mexico / 11pm ET 18.06 = 03:00 UTC 19.06,
+  // Guadalajara (Estadio Akron). Quelle: ESPN Group-A-in-Focus.
   {
-    id: 'wm-a-md2-2', date: '2026-06-19', time: '01:00',
+    id: 'wm-a-md2-2', date: '2026-06-19', time: '03:00',
     homeTeam: 'Mexiko', awayTeam: 'Südkorea',
     venue: 'Estadio Akron, Guadalajara', phase: 'Gruppe', group: 'A',
     sourceConfidence: 'official'
   },
-  // MD3: Tschechien-Mexiko 9pm ET 24.06 = 01:00 UTC 25.06, Mexico City
+  // MD3: Tschechien-Mexiko 9pm ET 24.06 = 01:00 UTC 25.06, Mexico City.
+  // Quelle: ESPN, Sky Sports Group A Guide.
   {
     id: 'wm-a-md3', date: '2026-06-25', time: '01:00',
     homeTeam: 'Tschechien', awayTeam: 'Mexiko',
     venue: 'Estadio Azteca, Mexico City', phase: 'Gruppe', group: 'A',
     sourceConfidence: 'official'
   },
-  // MD3: Südafrika-Südkorea 9pm ET 24.06 = 01:00 UTC 25.06, Monterrey
+  // MD3: Südafrika-Südkorea 9pm ET 24.06 = 01:00 UTC 25.06, Estadio
+  // BBVA Monterrey/Guadalupe. Quelle: ESPN, Sky.
   {
     id: 'wm-a-md3-2', date: '2026-06-25', time: '01:00',
     homeTeam: 'Südafrika', awayTeam: 'Südkorea',
@@ -117,14 +120,16 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: 'BC Place, Vancouver', phase: 'Gruppe', group: 'B',
     sourceConfidence: 'official'
   },
-  // MD3: Kanada-Schweiz 3pm ET 24.06 = 19:00 UTC, BC Place Vancouver
+  // MD3: Kanada-Schweiz 3pm ET 24.06 = 19:00 UTC, BC Place Vancouver.
+  // Quelle: Sky Sports Group B Guide, theglobeandmail.
   {
     id: 'wm-b-md3', date: '2026-06-24', time: '19:00',
     homeTeam: 'Kanada', awayTeam: 'Schweiz',
     venue: 'BC Place, Vancouver', phase: 'Gruppe', group: 'B',
     sourceConfidence: 'official'
   },
-  // MD3: BIH-Katar 3pm ET 24.06 = 19:00 UTC, Lumen Seattle
+  // MD3: BIH-Katar 3pm ET 24.06 = 19:00 UTC, Lumen Seattle.
+  // Quelle: Sky Sports Group B Guide, ESPN, FIFA.
   {
     id: 'wm-b-md3-2', date: '2026-06-24', time: '19:00',
     homeTeam: 'Bosnien-Herzegowina', awayTeam: 'Katar',
@@ -198,29 +203,37 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: 'BC Place, Vancouver', phase: 'Gruppe', group: 'D',
     sourceConfidence: 'official'
   },
-  // MD2: Türkei-Paraguay 06:00 MESZ 19.06 = 04:00 UTC 19.06, Levi's SF Bay
+  // MD2: USA-Australien 12pm local PT 19.06 = 3pm ET = 19:00 UTC,
+  // Lumen Field Seattle. Quelle: ESPN, Sky Sports Group D Guide
+  // (revidiert von Welle 32701 — vorher faelschlich AT&T Dallas
+  // 20.06 01:00 UTC).
   {
-    id: 'wm-d-md2-2', date: '2026-06-19', time: '04:00',
+    id: 'wm-d-md2-1', date: '2026-06-19', time: '19:00',
+    homeTeam: 'USA', awayTeam: 'Australien',
+    venue: 'Lumen Field, Seattle', phase: 'Gruppe', group: 'D',
+    sourceConfidence: 'official'
+  },
+  // MD2: Türkei-Paraguay 9pm local PT 19.06 = 12am ET 20.06 = 04:00 UTC
+  // 20.06, Levi's Stadium Santa Clara. Quelle: ESPN, Sky (revidiert —
+  // war vorher faelschlich auf 19.06 04:00 UTC datiert, ein Tag zu
+  // frueh, weil Tier-2-Quelle "06:00 MESZ 19.06" nicht auf den lokalen
+  // Spieltag bezog).
+  {
+    id: 'wm-d-md2-2', date: '2026-06-20', time: '04:00',
     homeTeam: 'Türkei', awayTeam: 'Paraguay',
     venue: "Levi's Stadium, Santa Clara", phase: 'Gruppe', group: 'D',
     sourceConfidence: 'official'
   },
-  // MD2: USA-Australien — Datum 19.06 verifiziert, Anstoss/Stadion
-  // weniger sicher. Konservativ als 'auslosung' markiert.
-  {
-    id: 'wm-d-md2-1', date: '2026-06-20', time: '01:00',
-    homeTeam: 'USA', awayTeam: 'Australien',
-    venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'D',
-    sourceConfidence: 'auslosung'
-  },
-  // MD3: Türkei-USA 04:00 MESZ 26.06 = 02:00 UTC 26.06, LA SoFi
+  // MD3: Türkei-USA 7pm local PT 25.06 = 10pm ET = 02:00 UTC 26.06,
+  // SoFi Stadium LA. Quelle: ESPN, Sky.
   {
     id: 'wm-d-md3-1', date: '2026-06-26', time: '02:00',
     homeTeam: 'Türkei', awayTeam: 'USA',
     venue: 'SoFi Stadium, Los Angeles', phase: 'Gruppe', group: 'D',
     sourceConfidence: 'official'
   },
-  // MD3: Paraguay-Australien 04:00 MESZ 26.06 = 02:00 UTC 26.06, Levi's
+  // MD3: Paraguay-Australien 7pm local PT 25.06 = 10pm ET = 02:00 UTC
+  // 26.06, Levi's Stadium Santa Clara (parallel). Quelle: ESPN, Sky.
   {
     id: 'wm-d-md3-2', date: '2026-06-26', time: '02:00',
     homeTeam: 'Paraguay', awayTeam: 'Australien',
@@ -260,14 +273,16 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: 'GEHA Field at Arrowhead, Kansas City', phase: 'Gruppe', group: 'E',
     sourceConfidence: 'official'
   },
-  // MD3: Curaçao-Elfenbein 4pm ET 25.06 = 20:00 UTC, Lincoln Phila
+  // MD3: Curaçao-Elfenbein 4pm ET 25.06 = 20:00 UTC, Lincoln Phila.
+  // Quelle: ESPN, Sky Group E Guide.
   {
     id: 'wm-e-md3-2', date: '2026-06-25', time: '20:00',
     homeTeam: 'Curaçao', awayTeam: 'Elfenbeinküste',
     venue: 'Lincoln Financial Field, Philadelphia', phase: 'Gruppe', group: 'E',
     sourceConfidence: 'official'
   },
-  // MD3: Ecuador-Deutschland 4pm ET 25.06 = 20:00 UTC, MetLife
+  // MD3: Ecuador-Deutschland 4pm ET 25.06 = 20:00 UTC, MetLife.
+  // Quelle: ESPN, Sky, FIFA.
   {
     id: 'wm-e-md3', date: '2026-06-25', time: '20:00',
     homeTeam: 'Deutschland', awayTeam: 'Ecuador',
@@ -307,14 +322,16 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: 'Estadio BBVA, Monterrey', phase: 'Gruppe', group: 'F',
     sourceConfidence: 'official'
   },
-  // MD3: Japan-Schweden 7pm ET 25.06 = 23:00 UTC, AT&T Dallas
+  // MD3: Japan-Schweden 7pm ET 25.06 = 23:00 UTC, AT&T Dallas.
+  // Quelle: Sky Sports Group F Guide, ESPN.
   {
     id: 'wm-f-md3-1', date: '2026-06-25', time: '23:00',
     homeTeam: 'Japan', awayTeam: 'Schweden',
     venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'F',
     sourceConfidence: 'official'
   },
-  // MD3: Tunesien-NL 7pm ET 25.06 = 23:00 UTC, Arrowhead Kansas City
+  // MD3: Tunesien-NL 7pm ET 25.06 = 23:00 UTC, Arrowhead Kansas City.
+  // Quelle: Sky Sports Group F Guide, ESPN.
   {
     id: 'wm-f-md3-2', date: '2026-06-25', time: '23:00',
     homeTeam: 'Tunesien', awayTeam: 'Niederlande',
@@ -326,9 +343,12 @@ export const WM_2026_FIXTURES: WmFixture[] = [
   // GRUPPE G — Belgien, Ägypten, Iran, Neuseeland
   // Quelle: Sky, FIFA Group G in Focus, MLSSoccer
   // ============================================================
-  // MD1: Belgien-Ägypten 3pm ET 15.06 = 19:00 UTC, Lumen Seattle
+  // MD1: Belgien-Ägypten 3pm local PT Seattle / 6pm ET 15.06 = 22:00 UTC,
+  // Lumen Field Seattle. Quelle: ESPN Group G in Focus (revidiert von
+  // Welle 32701 — Tier-2-Yahoo hatte 3pm "ET" angegeben, korrekt
+  // sind 3pm local Pacific).
   {
-    id: 'wm-g-md1-1', date: '2026-06-15', time: '19:00',
+    id: 'wm-g-md1-1', date: '2026-06-15', time: '22:00',
     homeTeam: 'Belgien', awayTeam: 'Ägypten',
     venue: 'Lumen Field, Seattle', phase: 'Gruppe', group: 'G',
     sourceConfidence: 'official'
@@ -354,14 +374,16 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: 'BC Place, Vancouver', phase: 'Gruppe', group: 'G',
     sourceConfidence: 'official'
   },
-  // MD3: Ägypten-Iran 11pm ET 26.06 = 03:00 UTC 27.06, Lumen Seattle
+  // MD3: Ägypten-Iran 11pm ET 26.06 = 03:00 UTC 27.06, Lumen Seattle.
+  // Quelle: ESPN Group G in Focus, Sky.
   {
     id: 'wm-g-md3-1', date: '2026-06-27', time: '03:00',
     homeTeam: 'Ägypten', awayTeam: 'Iran',
     venue: 'Lumen Field, Seattle', phase: 'Gruppe', group: 'G',
     sourceConfidence: 'official'
   },
-  // MD3: NZ-Belgien 11pm ET 26.06 = 03:00 UTC 27.06, BC Place Vancouver
+  // MD3: NZ-Belgien 11pm ET 26.06 = 03:00 UTC 27.06, BC Place Vancouver.
+  // Quelle: ESPN Group G in Focus, Sky.
   {
     id: 'wm-g-md3-2', date: '2026-06-27', time: '03:00',
     homeTeam: 'Neuseeland', awayTeam: 'Belgien',
@@ -373,9 +395,11 @@ export const WM_2026_FIXTURES: WmFixture[] = [
   // GRUPPE H — Spanien, Kap Verde, Saudi-Arabien, Uruguay
   // Quelle: Yahoo, Sky, FIFA Group H in Focus
   // ============================================================
-  // MD1: Spanien-Kap Verde 12pm ET 15.06 = 16:00 UTC, Mercedes Atlanta
+  // MD1: Spanien-Kap Verde 1pm ET 15.06 = 17:00 UTC, Mercedes Atlanta.
+  // Quelle: ESPN Group H, Sky Sports (revidiert von Welle 32701 —
+  // Tier-2-Yahoo hatte 12pm ET, Tier-1 ESPN/Sky bestaetigen 1pm ET).
   {
-    id: 'wm-8', date: '2026-06-15', time: '16:00',
+    id: 'wm-8', date: '2026-06-15', time: '17:00',
     homeTeam: 'Spanien', awayTeam: 'Kap Verde',
     venue: 'Mercedes-Benz Stadium, Atlanta', phase: 'Gruppe', group: 'H',
     sourceConfidence: 'official'
@@ -448,14 +472,16 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: 'MetLife Stadium, New York/New Jersey', phase: 'Gruppe', group: 'I',
     sourceConfidence: 'official'
   },
-  // MD3: Norwegen-Frankreich 3pm ET 26.06 = 19:00 UTC, Gillette Boston
+  // MD3: Norwegen-Frankreich 3pm ET 26.06 = 19:00 UTC, Gillette Boston.
+  // Quelle: Sky Group I Guide, ESPN.
   {
     id: 'wm-6', date: '2026-06-26', time: '19:00',
     homeTeam: 'Norwegen', awayTeam: 'Frankreich',
     venue: 'Gillette Stadium, Boston', phase: 'Gruppe', group: 'I',
     sourceConfidence: 'official'
   },
-  // MD3: Senegal-Irak 3pm ET 26.06 = 19:00 UTC, BMO Toronto
+  // MD3: Senegal-Irak 3pm ET 26.06 = 19:00 UTC, BMO Toronto.
+  // Quelle: Sky Group I Guide, ESPN.
   {
     id: 'wm-i-md3', date: '2026-06-26', time: '19:00',
     homeTeam: 'Senegal', awayTeam: 'Irak',
@@ -495,14 +521,16 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: "Levi's Stadium, Santa Clara", phase: 'Gruppe', group: 'J',
     sourceConfidence: 'official'
   },
-  // MD3: Jordanien-Argentinien 10pm ET 27.06 = 02:00 UTC 28.06, AT&T Dallas
+  // MD3: Jordanien-Argentinien 10pm ET 27.06 = 02:00 UTC 28.06, AT&T Dallas.
+  // Quelle: ESPN, Sky Group J Guide.
   {
     id: 'wm-j-md3-1', date: '2026-06-28', time: '02:00',
     homeTeam: 'Jordanien', awayTeam: 'Argentinien',
     venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'J',
     sourceConfidence: 'official'
   },
-  // MD3: Algerien-Österreich 10pm ET 27.06 = 02:00 UTC 28.06, Arrowhead KC
+  // MD3: Algerien-Österreich 10pm ET 27.06 = 02:00 UTC 28.06, Arrowhead KC.
+  // Quelle: ESPN, Sky Group J Guide.
   {
     id: 'wm-j-md3-2', date: '2026-06-28', time: '02:00',
     homeTeam: 'Algerien', awayTeam: 'Österreich',
@@ -589,14 +617,16 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: 'BMO Field, Toronto', phase: 'Gruppe', group: 'L',
     sourceConfidence: 'official'
   },
-  // MD3: Panama-England 5pm ET 27.06 = 21:00 UTC, MetLife
+  // MD3: Panama-England 5pm ET 27.06 = 21:00 UTC, MetLife.
+  // Quelle: ESPN, Sky Group L Guide, FIFA.
   {
     id: 'wm-l-md1', date: '2026-06-27', time: '21:00',
     homeTeam: 'Panama', awayTeam: 'England',
     venue: 'MetLife Stadium, New York/New Jersey', phase: 'Gruppe', group: 'L',
     sourceConfidence: 'official'
   },
-  // MD3: Kroatien-Ghana 5pm ET 27.06 = 21:00 UTC, Lincoln Phila
+  // MD3: Kroatien-Ghana 5pm ET 27.06 = 21:00 UTC, Lincoln Phila.
+  // Quelle: ESPN, Sky Group L Guide, FIFA.
   {
     id: 'wm-l-md3', date: '2026-06-27', time: '21:00',
     homeTeam: 'Kroatien', awayTeam: 'Ghana',
