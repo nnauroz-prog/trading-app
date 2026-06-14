@@ -187,16 +187,18 @@ export const WM_2026_FIXTURES: WmFixture[] = [
 
   // ============================================================
   // GRUPPE D — USA, Paraguay, Australien, Türkei
-  // Quelle: fussballdaten, t-online, goal.com, SoFi/BC Place
+  // Quelle: ESPN Group D in Focus, Sky Sports Group D Guide, FIFA.
   // ============================================================
-  // MD1: USA-Paraguay 6pm PT 12.06 = 01:00 UTC 13.06, SoFi LA
+  // MD1: USA-Paraguay 6pm PT 12.06 = 01:00 UTC 13.06, SoFi LA.
+  // Quelle: ESPN, Sky.
   {
     id: 'wm-3', date: '2026-06-13', time: '01:00',
     homeTeam: 'USA', awayTeam: 'Paraguay',
     venue: 'SoFi Stadium, Los Angeles', phase: 'Gruppe', group: 'D',
     sourceConfidence: 'official'
   },
-  // MD1: Australien-Türkei 06:00 MESZ 13.06 = 04:00 UTC 13.06, BC Place
+  // MD1: Australien-Türkei 9pm local PT 12.06 / 12am ET 13.06 = 04:00 UTC
+  // 13.06, BC Place. Quelle: ESPN, Sky.
   {
     id: 'wm-d-md1-2', date: '2026-06-13', time: '04:00',
     homeTeam: 'Australien', awayTeam: 'Türkei',
@@ -620,7 +622,7 @@ export const WM_2026_FIXTURES: WmFixture[] = [
   // MD3: Panama-England 5pm ET 27.06 = 21:00 UTC, MetLife.
   // Quelle: ESPN, Sky Group L Guide, FIFA.
   {
-    id: 'wm-l-md1', date: '2026-06-27', time: '21:00',
+    id: 'wm-l-md3-1', date: '2026-06-27', time: '21:00',
     homeTeam: 'Panama', awayTeam: 'England',
     venue: 'MetLife Stadium, New York/New Jersey', phase: 'Gruppe', group: 'L',
     sourceConfidence: 'official'
@@ -628,7 +630,7 @@ export const WM_2026_FIXTURES: WmFixture[] = [
   // MD3: Kroatien-Ghana 5pm ET 27.06 = 21:00 UTC, Lincoln Phila.
   // Quelle: ESPN, Sky Group L Guide, FIFA.
   {
-    id: 'wm-l-md3', date: '2026-06-27', time: '21:00',
+    id: 'wm-l-md3-2', date: '2026-06-27', time: '21:00',
     homeTeam: 'Kroatien', awayTeam: 'Ghana',
     venue: 'Lincoln Financial Field, Philadelphia', phase: 'Gruppe', group: 'L',
     sourceConfidence: 'official'
@@ -651,7 +653,7 @@ export const WM_2026_FIXTURES: WmFixture[] = [
   {
     id: 'wm-r16-3', date: '2026-06-30', time: '18:00',
     homeTeam: 'Sieger Gruppe E', awayTeam: 'Zweiter Gruppe F',
-    venue: 'Levi’s Stadium, Santa Clara', phase: 'Achtelfinale'
+    venue: "Levi's Stadium, Santa Clara", phase: 'Achtelfinale'
   },
   {
     id: 'wm-r16-4', date: '2026-07-01', time: '18:00',
@@ -690,7 +692,7 @@ export const WM_2026_FIXTURES: WmFixture[] = [
   {
     id: 'wm-hf-2', date: '2026-07-15', time: '21:00',
     homeTeam: 'Sieger VF3', awayTeam: 'Sieger VF4',
-    venue: 'MetLife Stadium, East Rutherford', phase: 'Halbfinale'
+    venue: 'MetLife Stadium, New York/New Jersey', phase: 'Halbfinale'
   },
 
   // Spiel um Platz 3
@@ -704,6 +706,6 @@ export const WM_2026_FIXTURES: WmFixture[] = [
   {
     id: 'wm-final', date: '2026-07-19', time: '21:00',
     homeTeam: 'Sieger HF1', awayTeam: 'Sieger HF2',
-    venue: 'MetLife Stadium, East Rutherford', phase: 'Finale'
+    venue: 'MetLife Stadium, New York/New Jersey', phase: 'Finale'
   }
 ];

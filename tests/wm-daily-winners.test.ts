@@ -59,9 +59,13 @@ describe('buildWmDailyWinners (echter Schedule)', () => {
   });
 
   it('Sehr spaete UTC-Anstoesse rutschen auf den Berliner Folgetag', () => {
-    // wm-3: USA-Paraguay, 01:00 UTC am 13.06. -> 03:00 Berlin am 13.06.
-    // Aber eine 23:30 UTC am 11.06. wuerde auf 12.06. 01:30 Berlin
-    // landen — siehe utc-to-berlin-Tests.
+    // Konkrete Pruefung: wm-k-md3-1 ist 27.06. 23:30 UTC, das ergibt
+    // 01:30 Berlin am 28.06 (CEST = UTC+2).
+    const k = result.rows.find((r) => r.fixtureId === 'wm-k-md3-1');
+    expect(k).toBeDefined();
+    expect(k?.dateIso).toBe('2026-06-28');
+    expect(k?.time).toBe('01:30');
+    // Format-Sanity bleibt.
     for (const r of result.rows) {
       if (r.time) {
         expect(/^\d{2}:\d{2}$/.test(r.time)).toBe(true);

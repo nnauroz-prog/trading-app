@@ -23,11 +23,21 @@ export function utcToBerlin(dateIso: string, timeUtc: string | null): { dateIso:
   });
   const parts = fmt.formatToParts(utc);
   const pick = (t: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === t)?.value ?? '00';
-  const y = pick('year');
-  const m = pick('month');
-  const d = pick('day');
+  let y = pick('year');
+  let m = pick('month');
+  let d = pick('day');
   let h = pick('hour');
-  if (h === '24') h = '00';
   const mi = pick('minute');
+  // Einige Locales (z.B. en-CA) geben Mitternacht als "24:00" am
+  // selben Datum aus statt "00:00" am Folgetag. Wir muessen sowohl
+  // die Stunde auf "00" als auch den Tag um eins erhoehen.
+  if (h === '24') {
+    h = '00';
+    const next = new Date(`${y}-${m}-${d}T00:00:00Z`);
+    next.setUTCDate(next.getUTCDate() + 1);
+    y = String(next.getUTCFullYear());
+    m = String(next.getUTCMonth() + 1).padStart(2, '0');
+    d = String(next.getUTCDate()).padStart(2, '0');
+  }
   return { dateIso: `${y}-${m}-${d}`, time: `${h}:${mi}` };
 }

@@ -10,8 +10,11 @@ interface Props {
 }
 
 function daysBetween(todayIso: string, targetIso: string): number {
-  const t = new Date(`${todayIso}T00:00:00`).getTime();
-  const x = new Date(`${targetIso}T00:00:00`).getTime();
+  // Beide Daten als UTC-Mitternacht parsen, damit DST-Uebergaenge die
+  // Differenz nicht um eine Stunde verfaelschen. Sonst kann Math.round
+  // auf DST-Tagen den Tag falsch zaehlen.
+  const t = new Date(`${todayIso}T00:00:00Z`).getTime();
+  const x = new Date(`${targetIso}T00:00:00Z`).getTime();
   return Math.round((x - t) / (24 * 60 * 60 * 1000));
 }
 
@@ -26,7 +29,10 @@ export function WmCountdownBanner({ todayIso }: Props) {
   // Nur zeigen wenn WM-Start in 30 Tagen oder näher.
   if (daysUntil > 30) return null;
 
-  const isOpening = next.id === 'wm-1' || daysUntil === 0;
+  // Eroeffnung ist EXKLUSIV das wm-1 Mexiko-Suedafrika-Spiel. "Heute" (daysUntil=0)
+  // bedeutet nicht zwangslaeufig Eroeffnung — es kann auch ein spaeterer Tag mit
+  // Gruppenspielen sein.
+  const isOpening = next.id === 'wm-1';
 
   return (
     <section className="space-y-2 rounded-2xl border border-emerald-400/50 bg-gradient-to-br from-emerald-950/60 to-slate-900/40 p-4">
@@ -42,9 +48,11 @@ export function WmCountdownBanner({ todayIso }: Props) {
         </Link>
       </div>
       <h2 className="text-2xl font-bold tracking-tight text-emerald-50">
-        {daysUntil === 0 ? 'Heute Eröffnung!'
-          : daysUntil === 1 ? 'Morgen Eröffnung!'
-          : `noch ${daysUntil} Tage`}
+        {daysUntil === 0
+          ? (isOpening ? 'Heute Eröffnung!' : 'Heute WM-Spiel!')
+          : daysUntil === 1
+            ? (isOpening ? 'Morgen Eröffnung!' : 'Morgen geht es weiter')
+            : `noch ${daysUntil} Tage`}
       </h2>
       <p className="text-[11.5px] leading-snug text-emerald-100/80">
         {isOpening ? 'Eröffnungsspiel: ' : 'Nächstes Spiel: '}

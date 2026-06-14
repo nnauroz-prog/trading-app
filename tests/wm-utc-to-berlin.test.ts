@@ -45,4 +45,19 @@ describe('utcToBerlin', () => {
     expect(r.dateIso).toBe('2026-06-12');
     expect(r.time).toBe('02:00');
   });
+
+  // Regression: Wenn die Intl-Locale Mitternacht als "24:00" am
+  // selben Tag ausgibt, muss die Stunde auf 00 und das Datum auf
+  // den naechsten Tag wechseln.
+  it('Mitternachts-Edge: 23:30 UTC -> 01:30 naechster Tag Berlin (CEST)', () => {
+    const r = utcToBerlin('2026-06-27', '23:30');
+    expect(r.dateIso).toBe('2026-06-28');
+    expect(r.time).toBe('01:30');
+  });
+
+  it('Mitternachts-Edge Winter: 22:00 UTC -> 23:00 selber Tag (CET)', () => {
+    const r = utcToBerlin('2026-12-15', '22:00');
+    expect(r.dateIso).toBe('2026-12-15');
+    expect(r.time).toBe('23:00');
+  });
 });

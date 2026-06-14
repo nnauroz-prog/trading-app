@@ -14,23 +14,41 @@ import { commentCitesTier1 } from '@/lib/sport/wm-source-tiers';
 
 const SCHEDULE_PATH = join(process.cwd(), 'lib/sport/wm-schedule-2026.ts');
 
-// Den File-Content laden und in Abschnitte zerteilen, jeweils
-// "vorhergehende Zeilen vor dem Fixture-Beginn".
+// Den File-Content laden und pro Fixture-ID den lokalen Kontext bestimmen:
+// (a) die Kommentar-Zeilen direkt vor dem Fixture-Objekt, plus
+// (b) optional den letzten Gruppen-Header-Block (Kommentar mit "GRUPPE X").
+// Damit kann ein Header "Quelle: Sky" alle folgenden Fixtures in der Gruppe
+// belegen, aber NICHT alle Fixtures der ganzen Datei wie im urspruenglichen
+// kumulativen Buffer (das hat den Test trivial passen lassen).
 function fileSnippetsByFixtureId(): Map<string, string> {
   const text = readFileSync(SCHEDULE_PATH, 'utf-8');
   const lines = text.split('\n');
   const snippets = new Map<string, string>();
-  let buffer: string[] = [];
+  let groupHeader = '';
+  let localBuffer: string[] = [];
   for (const line of lines) {
-    buffer.push(line);
+    if (/^\s*\/\/.*GRUPPE\s+[A-L]\b/i.test(line)) {
+      // Neuer Gruppen-Header startet — nimm die folgenden Kommentar-Zeilen
+      // bis zum naechsten Code als Header-Beleg.
+      groupHeader = line + '\n';
+      localBuffer = [];
+      continue;
+    }
+    if (groupHeader && /^\s*\/\//.test(line) && !/^\s*\/\/\s*MD\d/i.test(line) && localBuffer.length === 0) {
+      groupHeader += line + '\n';
+      continue;
+    }
+    // Reset des lokalen Buffers, sobald ein neues Objekt beginnt.
+    if (/^\s*\{/.test(line)) {
+      localBuffer = [];
+    }
+    localBuffer.push(line);
     const m = line.match(/^\s*id:\s*'([^']+)'/);
     if (m) {
-      // Letzte ~30 Zeilen vor dem id zaehlen als Kontext-Kommentar.
-      const ctx = buffer.slice(Math.max(0, buffer.length - 30)).join('\n');
+      // Lokaler Kontext = letzte 12 Zeilen (Kommentare unmittelbar vor
+      // dem Objekt + die ersten Objekt-Felder) + Gruppen-Header.
+      const ctx = groupHeader + localBuffer.slice(-12).join('\n');
       snippets.set(m[1], ctx);
-      // Buffer behalten — nachfolgende Eintraege koennen denselben
-      // Gruppen-Kommentar weiter referenzieren (z.B. "Verifiziert via Sky"
-      // gilt fuer alle folgenden Eintraege bis zur naechsten Gruppe).
     }
   }
   return snippets;

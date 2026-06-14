@@ -111,8 +111,10 @@ function uniqueTeamsPerGroup(schedule: WmFixture[]): Map<string, string[]> {
 
 function simulateGroupPairing(home: string, away: string, venue: string): { homePts: number; awayPts: number; homeGd: number; awayGd: number; homeGf: number; awayGf: number; } {
   const pred = predictWmMatch({ homeTeam: home, awayTeam: away, venue });
-  const homePts = pred.regular.homePct * 3 + pred.regular.drawPct * 1;
-  const awayPts = pred.regular.awayPct * 3 + pred.regular.drawPct * 1;
+  // pred.regular.*Pct sind 0..100 Ganzzahlen, nicht 0..1. Punkte = 3*P(Sieg) + 1*P(Remis)
+  // also durch 100 dividieren, sonst landen wir bei 0..300 statt 0..3.
+  const homePts = (pred.regular.homePct * 3 + pred.regular.drawPct * 1) / 100;
+  const awayPts = (pred.regular.awayPct * 3 + pred.regular.drawPct * 1) / 100;
   const homeGd = pred.expectedGoals.home - pred.expectedGoals.away;
   const awayGd = -homeGd;
   return {

@@ -175,9 +175,15 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
       )}
 
       {liveRows.length > 0 && (
-        <div className="space-y-0.5 rounded border-2 border-rose-400/60 bg-rose-500/15 px-3 py-2 text-rose-100">
+        <div
+          className="space-y-0.5 rounded border-2 border-rose-400/60 bg-rose-500/15 px-3 py-2 text-rose-100"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <div className="flex items-baseline gap-2">
-            <span className="animate-pulse text-[12px]">●</span>
+            <span aria-hidden="true" className="animate-pulse text-[12px]">●</span>
+            <span className="sr-only">Live:</span>
             <span className="text-[10px] font-bold uppercase tracking-[0.2em]">jetzt live</span>
           </div>
           {liveRows.map((r) => (
@@ -204,14 +210,14 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
           value={teamSearch}
           onChange={(e) => setTeamSearch(e.target.value)}
           placeholder="Team suchen…"
-          className="ml-auto w-28 rounded border border-slate-700 bg-slate-950/70 px-2 py-0.5 text-[10px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-400/60 focus:outline-none"
+          className="ml-auto min-h-[32px] w-32 rounded border border-slate-700 bg-slate-950/70 px-2 py-1 text-[11px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-400/60 focus:outline-none sm:w-40"
           aria-label="Nach Team filtern"
         />
         {teamSearch && (
           <button
             type="button"
             onClick={() => setTeamSearch('')}
-            className="rounded border border-slate-700 bg-slate-900/60 px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-slate-200"
+            className="min-h-[32px] min-w-[32px] rounded border border-slate-700 bg-slate-900/60 px-2 py-1 text-[11px] text-slate-400 hover:text-slate-200"
             aria-label="Team-Filter loeschen"
           >×</button>
         )}
@@ -220,7 +226,7 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${filter === f ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-100' : 'border-slate-700 bg-slate-900/60 text-slate-400 hover:border-slate-500'}`}
+            className={`min-h-[32px] rounded border px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider ${filter === f ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-100' : 'border-slate-700 bg-slate-900/60 text-slate-400 hover:border-slate-500'}`}
           >{f === 'ab-heute' ? 'ab heute' : 'alle Tage'}</button>
         ))}
         {filter === 'alle' && mounted && (
@@ -236,13 +242,31 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
       </div>
 
       {dates.length === 0 && (
-        <p className="text-[10.5px] text-slate-500">
-          {teamSearch
-            ? `Keine Spiele mit „${teamSearch}" im Filter. Filter mit ab heute / alle Tage anpassen oder Suche loeschen.`
-            : filter === 'ab-heute'
-              ? 'Keine kommenden Spiele — WM vorbei oder Spielpause.'
-              : 'Keine Spiele im Spielplan.'}
-        </p>
+        <div className="space-y-2 rounded border border-slate-700/60 bg-slate-950/40 px-3 py-3">
+          <p className="text-[11px] text-slate-300">
+            {teamSearch
+              ? `Keine Spiele mit „${teamSearch}" im aktuellen Filter.`
+              : filter === 'ab-heute'
+                ? 'Keine kommenden Spiele — WM vorbei oder Spielpause.'
+                : 'Keine Spiele im Spielplan.'}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {teamSearch && (
+              <button
+                type="button"
+                onClick={() => setTeamSearch('')}
+                className="rounded border border-emerald-400/50 bg-emerald-500/10 px-2 py-1 text-[10.5px] font-bold uppercase tracking-wider text-emerald-100 hover:bg-emerald-500/20"
+              >Suche löschen</button>
+            )}
+            {filter === 'ab-heute' && (
+              <button
+                type="button"
+                onClick={() => setFilter('alle')}
+                className="rounded border border-emerald-400/50 bg-emerald-500/10 px-2 py-1 text-[10.5px] font-bold uppercase tracking-wider text-emerald-100 hover:bg-emerald-500/20"
+              >Alle Tage anzeigen</button>
+            )}
+          </div>
+        </div>
       )}
 
       <ol className="space-y-2.5">
@@ -285,8 +309,12 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
                     >
                       <span className="w-10 font-mono text-[10px] text-slate-500">{r.time ?? '--:--'}</span>
                       {isLive && (
-                        <span className="animate-pulse rounded border border-rose-300/70 bg-rose-500/20 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider text-rose-100">
-                          ● LIVE
+                        <span
+                          className="animate-pulse rounded border border-rose-300/70 bg-rose-500/20 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider text-rose-100"
+                          role="status"
+                          aria-label="Spiel laeuft jetzt live"
+                        >
+                          <span aria-hidden="true">● LIVE</span>
                         </span>
                       )}
                       {PHASE_TAG[r.phase] && (
@@ -303,11 +331,17 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
                           <span className="text-[10.5px] text-slate-500">gegen {r.loser}</span>
                         </>
                       )}
-                      {r.confidencePct !== null && (
-                        <span className={`font-mono text-[9.5px] ${r.confidencePct >= 75 ? 'text-emerald-300' : r.confidencePct >= 60 ? 'text-sky-300' : 'text-slate-400'}`}>
-                          · {r.confidencePct} %
-                        </span>
-                      )}
+                      {r.confidencePct !== null && (() => {
+                        const c = r.confidencePct;
+                        const tier = c >= 75 ? 'hoch' : c >= 65 ? 'mittel' : 'unsicher';
+                        const tone = c >= 75 ? 'text-emerald-300' : c >= 65 ? 'text-sky-300' : 'text-slate-400';
+                        return (
+                          <span className={`font-mono text-[9.5px] ${tone}`}
+                            aria-label={`Modell-Wahrscheinlichkeit ${c} Prozent, ${tier}`}>
+                            · {c}% <span className="not-sr-only">{tier}</span>
+                          </span>
+                        );
+                      })()}
                       {r.result && (
                         <>
                           <span className="rounded border border-slate-600 bg-slate-900/60 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-100">
