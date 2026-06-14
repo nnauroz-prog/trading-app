@@ -58,7 +58,9 @@ import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
 import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
 import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsible-legacy-section';
 
-export const dynamic = 'force-dynamic';
+// Nur 'revalidate' setzen — 'force-dynamic' wuerde die ISR-Cache deaktivieren
+// und 'revalidate' damit wirkungslos machen (Next.js-Widerspruch). Die Seite
+// hat keine User-spezifischen Server-Reads, ISR mit 10-Minuten-Refresh passt.
 export const revalidate = 600;
 
 export const metadata: Metadata = {

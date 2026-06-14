@@ -231,16 +231,21 @@ export function predictWmMatch(input: BuildInput): WmMatchPrediction {
     reasoning.push(`KO-Spiel (${input.phase}) — Wahrscheinlichkeiten beziehen sich auf reguläre Spielzeit, Verlängerungs-Box separat.`);
   }
 
-  // Helfer: in Prozent runden und Summe absichern.
+  // Helfer: in Prozent runden und Summe absichern. Hare/largest-remainder-Methode
+  // — die Rundungs-Korrektur geht an den Bucket mit dem groessten Rest-Fragment,
+  // nicht immer an den groessten Bucket. Das vermeidet einen systematischen Bias
+  // Richtung Favorit (vorher: round100 lief immer auf max(a,b,c) → ueber viele
+  // Spiele kumuliert ca. 0.33pp Favoriten-Bias).
   const round100 = (a: number, b: number, c: number) => {
-    const x = Math.round(a * 100);
-    const y = Math.round(b * 100);
-    const z = Math.round(c * 100);
-    const corr = 100 - (x + y + z);
-    const max = Math.max(x, y, z);
-    if (x === max) return { a: x + corr, b: y, c: z };
-    if (y === max) return { a: x, b: y + corr, c: z };
-    return { a: x, b: y, c: z + corr };
+    const raw = [a * 100, b * 100, c * 100];
+    const floor = raw.map((v) => Math.floor(v));
+    const rest = raw.map((v) => v - Math.floor(v));
+    const corr = 100 - (floor[0] + floor[1] + floor[2]);
+    // corr ist 0, 1 oder 2 — verteilen an die Buckets mit dem groessten Rest.
+    const order = [0, 1, 2].sort((i, j) => rest[j] - rest[i]);
+    const out = [...floor];
+    for (let k = 0; k < corr && k < 3; k++) out[order[k]] += 1;
+    return { a: out[0], b: out[1], c: out[2] };
   };
   const r = round100(pH, draw, pA);
 
@@ -251,10 +256,23 @@ export function predictWmMatch(input: BuildInput): WmMatchPrediction {
     awayElo: away.elo,
     eloDiff: Math.round(effectiveDiff),
     regular: { homePct: r.a, drawPct: r.b, awayPct: r.c },
-    withExtraTime: {
-      homePct: Math.round((otHome / otSum) * 100),
-      awayPct: 100 - Math.round((otHome / otSum) * 100)
-    },
+    withExtraTime: (() => {
+      // Symmetrische Rundung: beide Seiten separat runden, dann mit Hare
+      // auf 100 ausgleichen — vermeidet systematischen Away-Bias den die
+      // alte "100 - homePct"-Truncierung erzeugt hat.
+      const rawH = (otHome / otSum) * 100;
+      const rawA = (otAway / otSum) * 100;
+      const fH = Math.floor(rawH);
+      const fA = Math.floor(rawA);
+      const corr = 100 - (fH + fA);
+      const restH = rawH - fH;
+      const restA = rawA - fA;
+      return corr <= 0
+        ? { homePct: fH, awayPct: fA }
+        : restH >= restA
+          ? { homePct: fH + corr, awayPct: fA }
+          : { homePct: fH, awayPct: fA + corr };
+    })(),
     expectedGoals: {
       home: Math.round(xgHome * 100) / 100,
       away: Math.round(xgAway * 100) / 100,

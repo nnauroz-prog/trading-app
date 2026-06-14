@@ -14,6 +14,34 @@ export type WmFixtureConfidence =
   | 'placeholder' // best-guess aus aelteren Quellen, NICHT verifiziert
   | 'tbd';        // Sieger/Verlierer-Slot, Team nicht feststellbar
 
+// Zentrale Phasen-Liste — als Tuple exportiert, damit andere Module
+// (z.B. wm-backtest-runner, wm-live-schedule) keine eigenen Listen
+// inline hardcoden muessen.
+export const WM_PHASES = [
+  'Gruppe',
+  'Achtelfinale',
+  'Viertelfinale',
+  'Halbfinale',
+  'Spiel um Platz 3',
+  'Finale'
+] as const;
+export type WmPhase = (typeof WM_PHASES)[number];
+
+export const WM_GROUP_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'] as const;
+export type WmGroupLetter = (typeof WM_GROUP_LETTERS)[number];
+
+export function parseWmPhase(s: string | null | undefined): WmPhase | null {
+  if (!s) return null;
+  const phases: readonly string[] = WM_PHASES;
+  return phases.includes(s) ? (s as WmPhase) : null;
+}
+
+export function parseWmGroup(s: string | null | undefined): WmGroupLetter | null {
+  if (!s) return null;
+  const letters: readonly string[] = WM_GROUP_LETTERS;
+  return letters.includes(s.toUpperCase()) ? (s.toUpperCase() as WmGroupLetter) : null;
+}
+
 export interface WmFixture {
   id: string;
   date: string; // YYYY-MM-DD (UTC nominal — wir behandeln als Berlin-Datum für die Anzeige)
@@ -21,8 +49,8 @@ export interface WmFixture {
   homeTeam: string;
   awayTeam: string;
   venue: string;
-  phase: 'Gruppe' | 'Achtelfinale' | 'Viertelfinale' | 'Halbfinale' | 'Spiel um Platz 3' | 'Finale';
-  group?: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L';
+  phase: WmPhase;
+  group?: WmGroupLetter;
   // Vertrauensgrad der Schedule-Eintragung. Wenn nicht gesetzt, behandelt
   // das System es als 'auslosung' (Standard fuer Gruppenphase, Paarung
   // bekannt aber Detail nicht 100 % verifiziert).

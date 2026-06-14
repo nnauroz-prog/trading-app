@@ -1,8 +1,8 @@
 import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
-// Last bumped: 2026-06-14 — Welle 32901-33000 (Level-3-Audit: 16 Bugs + UX + Invariant-Tests).
-const BUILD_MARKER = 'welle-32901-33000-level3-audit';
+// Last bumped: 2026-06-14 — Welle 33001-33100 (Level-3+: Team-Dupes, Engine-Bias, Security, Perf).
+const BUILD_MARKER = 'welle-33001-33100-level3-plus';
 
 const nextConfig: NextConfig = {
   env: {

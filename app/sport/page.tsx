@@ -156,7 +156,8 @@ import { evaluateIntegrityAction } from '@/lib/sport/wm-data-integrity-action';
 import { WmDataIntegrityLive } from '@/components/sport/wm-data-integrity-live';
 import { WmSystemGuide } from '@/components/sport/wm-system-guide';
 
-export const dynamic = 'force-dynamic';
+// Nur 'revalidate' setzen — 'force-dynamic' wuerde die ISR-Cache deaktivieren
+// und 'revalidate' damit wirkungslos machen (Next.js-Widerspruch).
 export const revalidate = 600;
 
 import type { Metadata } from 'next';
