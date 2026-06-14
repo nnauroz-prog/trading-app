@@ -112,4 +112,38 @@ describe('buildWmDailyWinners (echter Schedule)', () => {
     expect(ko).toBeDefined();
     expect(ko?.confidencePct).not.toBeNull();
   });
+
+  it('KO-Zeilen sind nie als Remis-Tipp markiert', () => {
+    const ko = result.rows.filter((r) => r.phase !== 'Gruppe');
+    expect(ko.every((r) => r.isDrawPick === false)).toBe(true);
+  });
+
+  it('Remis-Tipp-Zeilen haben homeTeam und awayTeam belegt', () => {
+    const draws = result.rows.filter((r) => r.isDrawPick);
+    for (const r of draws) {
+      expect(r.homeTeam.length).toBeGreaterThan(1);
+      expect(r.awayTeam.length).toBeGreaterThan(1);
+      expect(r.homeTeam).not.toBe(r.awayTeam);
+    }
+  });
+
+  it('Remis-Tipp + tatsaechliches Remis = "treffer"', () => {
+    const drawRow = result.rows.find((r) => r.isDrawPick);
+    if (!drawRow) return;
+    const r = buildWmDailyWinners({
+      finished: [{ fixtureId: drawRow.fixtureId, homeScore: 1, awayScore: 1 }]
+    });
+    const row = r.rows.find((x) => x.fixtureId === drawRow.fixtureId)!;
+    expect(row.result?.outcome).toBe('treffer');
+  });
+
+  it('Remis-Tipp + tatsaechlicher Sieger = "daneben"', () => {
+    const drawRow = result.rows.find((r) => r.isDrawPick);
+    if (!drawRow) return;
+    const r = buildWmDailyWinners({
+      finished: [{ fixtureId: drawRow.fixtureId, homeScore: 2, awayScore: 0 }]
+    });
+    const row = r.rows.find((x) => x.fixtureId === drawRow.fixtureId)!;
+    expect(row.result?.outcome).toBe('daneben');
+  });
 });

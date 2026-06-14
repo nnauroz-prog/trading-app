@@ -182,7 +182,15 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
           </div>
           {liveRows.map((r) => (
             <div key={r.fixtureId} className="text-[12px]">
-              <span className="font-bold">{r.winner}</span> gegen {r.loser}
+              {r.isDrawPick ? (
+                <>
+                  <span className="font-bold">Remis-Tipp:</span> {r.homeTeam} – {r.awayTeam}
+                </>
+              ) : (
+                <>
+                  <span className="font-bold">{r.winner}</span> gegen {r.loser}
+                </>
+              )}
             </div>
           ))}
         </div>
@@ -284,8 +292,17 @@ export function WmTurnierTippCard({ schedule, externalLast, externalFinished }: 
                       {PHASE_TAG[r.phase] && (
                         <span className="rounded border border-amber-400/40 bg-amber-500/10 px-1 py-0.5 text-[8.5px] font-bold uppercase tracking-wider text-amber-200">{PHASE_TAG[r.phase]}</span>
                       )}
-                      <span className="font-bold text-emerald-200">{r.winner}</span>
-                      <span className="text-[10.5px] text-slate-500">gegen {r.loser}</span>
+                      {r.isDrawPick ? (
+                        <>
+                          <span className="rounded border border-amber-400/50 bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-100">Remis-Tipp</span>
+                          <span className="text-[11.5px] text-slate-200">{r.homeTeam} <span className="text-slate-500">–</span> {r.awayTeam}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-bold text-emerald-200">{r.winner}</span>
+                          <span className="text-[10.5px] text-slate-500">gegen {r.loser}</span>
+                        </>
+                      )}
                       {r.confidencePct !== null && (
                         <span className={`font-mono text-[9.5px] ${r.confidencePct >= 75 ? 'text-emerald-300' : r.confidencePct >= 60 ? 'text-sky-300' : 'text-slate-400'}`}>
                           · {r.confidencePct} %

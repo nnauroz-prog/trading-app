@@ -32,8 +32,14 @@ export interface WmDailyWinnerRow {
   group?: string;
   homeTeam: string;
   awayTeam: string;
+  // Bei isDrawPick=true ist winner/loser nicht aussagekraeftig — die
+  // Anzeige rendert dann "Remis-Tipp: home – away". winner/loser werden
+  // trotzdem mit homeTeam/awayTeam besetzt, damit Team-Suche und
+  // Konsumenten, die nur diese Felder lesen, weiter funktionieren.
   winner: string;
   loser: string;
+  // true wenn das Modell ein Remis (Unentschieden) tippt.
+  isDrawPick: boolean;
   // true wenn die Paarung selbst eine Modell-Projektion ist (KO-Spiele,
   // deren Teilnehmer aus dem prognostizierten Gruppen-Endstand kommen).
   isProjectedPairing: boolean;
@@ -54,8 +60,19 @@ interface BuildOptions {
   finished?: FinishedFixtureLite[];
 }
 
-function classifyOutcome(homeScore: number, awayScore: number, predictedWinner: string, homeTeam: string, awayTeam: string): WmDailyOutcome {
-  if (homeScore === awayScore) return 'remis-push';
+function classifyOutcome(
+  homeScore: number,
+  awayScore: number,
+  predictedWinner: string | null,
+  isDrawPick: boolean,
+  homeTeam: string,
+  awayTeam: string
+): WmDailyOutcome {
+  const actualDraw = homeScore === awayScore;
+  if (isDrawPick) {
+    return actualDraw ? 'treffer' : 'daneben';
+  }
+  if (actualDraw) return 'remis-push';
   const actualWinner = homeScore > awayScore ? homeTeam : awayTeam;
   return actualWinner === predictedWinner ? 'treffer' : 'daneben';
 }
@@ -72,16 +89,21 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
   const scheduleById = new Map(schedule.map((f) => [f.id, f] as const));
   for (const p of simple) {
     if (p.status === 'tbd') continue;
-    if (p.winnerTeam === null || p.loserTeam === null) continue;
     const fix = scheduleById.get(p.fixtureId);
     if (!fix || fix.phase !== 'Gruppe') continue;
+    // Remis-Tipps werden mitgefuehrt — winner/loser bleiben formal
+    // mit homeTeam/awayTeam besetzt (fuer Suche/Konsumenten), aber
+    // isDrawPick zeigt der UI, dass es ein Unentschieden-Tipp ist.
+    const isDrawPick = p.status === 'remis';
+    const winnerForRow = p.winnerTeam ?? fix.homeTeam;
+    const loserForRow = p.loserTeam ?? fix.awayTeam;
     const fin = finishedById.get(p.fixtureId);
     let result: WmDailyResult | null = null;
     if (fin) {
       result = {
         homeScore: fin.homeScore,
         awayScore: fin.awayScore,
-        outcome: classifyOutcome(fin.homeScore, fin.awayScore, p.winnerTeam, fix.homeTeam, fix.awayTeam)
+        outcome: classifyOutcome(fin.homeScore, fin.awayScore, p.winnerTeam, isDrawPick, fix.homeTeam, fix.awayTeam)
       };
     }
     rows.push({
@@ -94,8 +116,9 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
       group: fix.group,
       homeTeam: fix.homeTeam,
       awayTeam: fix.awayTeam,
-      winner: p.winnerTeam,
-      loser: p.loserTeam,
+      winner: winnerForRow,
+      loser: loserForRow,
+      isDrawPick,
       isProjectedPairing: false,
       confidencePct: p.confidencePct,
       result
@@ -114,7 +137,7 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
       result = {
         homeScore: fin.homeScore,
         awayScore: fin.awayScore,
-        outcome: classifyOutcome(fin.homeScore, fin.awayScore, k.predictedWinner, k.homeTeam, k.awayTeam)
+        outcome: classifyOutcome(fin.homeScore, fin.awayScore, k.predictedWinner, false, k.homeTeam, k.awayTeam)
       };
     }
     // KO-Sieg-Wahrscheinlichkeit: anteil der Heim- bzw. Auswaertsseite
@@ -140,6 +163,7 @@ export function buildWmDailyWinners(opts: BuildOptions = {}): WmDailyWinners {
       awayTeam: k.awayTeam ?? k.awayLabel,
       winner: k.predictedWinner,
       loser: k.predictedLoser,
+      isDrawPick: false,
       isProjectedPairing: true,
       confidencePct,
       result

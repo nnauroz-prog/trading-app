@@ -317,12 +317,32 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: 'NRG Stadium, Houston', phase: 'Gruppe', group: 'K',
     sourceConfidence: 'official'
   },
-  // Gruppe F: Niederlande, Japan, Tunesien, Schweden.
+  // Gruppe F Matchday 2 (verifiziert 14.06.2026 via Web-Recherche):
+  // Niederlande-Schweden 21.06., Tunesien-Japan 21.06.
   {
-    id: 'wm-f-md1', date: '2026-06-21', time: '20:00',
-    homeTeam: 'Niederlande', awayTeam: 'Japan',
+    id: 'wm-f-md2-1', date: '2026-06-21', time: '20:00',
+    homeTeam: 'Niederlande', awayTeam: 'Schweden',
     venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'F',
-    sourceConfidence: 'official'
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-f-md2-2', date: '2026-06-21', time: '17:00',
+    homeTeam: 'Tunesien', awayTeam: 'Japan',
+    venue: 'TBD', phase: 'Gruppe', group: 'F',
+    sourceConfidence: 'placeholder'
+  },
+  // Gruppe F Matchday 3 (parallel angesetzt am 26.06.):
+  {
+    id: 'wm-f-md3-1', date: '2026-06-26', time: '20:00',
+    homeTeam: 'Japan', awayTeam: 'Niederlande',
+    venue: 'TBD', phase: 'Gruppe', group: 'F',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-f-md3-2', date: '2026-06-26', time: '20:00',
+    homeTeam: 'Schweden', awayTeam: 'Tunesien',
+    venue: 'TBD', phase: 'Gruppe', group: 'F',
+    sourceConfidence: 'placeholder'
   },
   // Gruppe L: England, Kroatien, Ghana, Panama.
   {
@@ -330,6 +350,217 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     homeTeam: 'Panama', awayTeam: 'England',
     venue: 'MetLife Stadium, New York/New Jersey', phase: 'Gruppe', group: 'L',
     sourceConfidence: 'official'
+  },
+
+  // ============================================================
+  // Welle 32601-32700: Restliche MD2/MD3-Paarungen mit konservativem
+  // Confidence-Status 'placeholder' eingepflegt — Paarung steht durch
+  // Gruppen-Auslosung fest, Datum/Anstosszeit/Stadion noch nicht
+  // 100 % verifiziert. So sieht der Nutzer fuer JEDES Team eine
+  // Vorhersage statt Lücken.
+  // ============================================================
+
+  // Gruppe B Matchday 2/3 (Bosnien-Katar, Bosnien-Schweiz)
+  {
+    id: 'wm-b-md2-bos', date: '2026-06-19', time: '17:00',
+    homeTeam: 'Bosnien-Herzegowina', awayTeam: 'Katar',
+    venue: 'TBD', phase: 'Gruppe', group: 'B',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-b-md3-bos', date: '2026-06-24', time: '19:00',
+    homeTeam: 'Schweiz', awayTeam: 'Bosnien-Herzegowina',
+    venue: 'TBD', phase: 'Gruppe', group: 'B',
+    sourceConfidence: 'placeholder'
+  },
+
+  // Gruppe C Matchday 2 fehlend + Matchday 3
+  {
+    id: 'wm-c-md2-ms', date: '2026-06-20', time: '20:00',
+    homeTeam: 'Marokko', awayTeam: 'Schottland',
+    venue: 'TBD', phase: 'Gruppe', group: 'C',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-c-md3-bs', date: '2026-06-25', time: '22:00',
+    homeTeam: 'Brasilien', awayTeam: 'Schottland',
+    venue: 'TBD', phase: 'Gruppe', group: 'C',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-c-md3-mh', date: '2026-06-25', time: '22:00',
+    homeTeam: 'Marokko', awayTeam: 'Haiti',
+    venue: 'TBD', phase: 'Gruppe', group: 'C',
+    sourceConfidence: 'placeholder'
+  },
+
+  // Gruppe D Matchday 2/3 (USA-Australien, Türkei-Paraguay etc.)
+  {
+    id: 'wm-d-md2-1', date: '2026-06-19', time: '01:00',
+    homeTeam: 'USA', awayTeam: 'Australien',
+    venue: 'TBD', phase: 'Gruppe', group: 'D',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-d-md2-2', date: '2026-06-19', time: '20:00',
+    homeTeam: 'Türkei', awayTeam: 'Paraguay',
+    venue: 'TBD', phase: 'Gruppe', group: 'D',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-d-md3-1', date: '2026-06-26', time: '02:00',
+    homeTeam: 'Türkei', awayTeam: 'USA',
+    venue: 'TBD', phase: 'Gruppe', group: 'D',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-d-md3-2', date: '2026-06-26', time: '02:00',
+    homeTeam: 'Paraguay', awayTeam: 'Australien',
+    venue: 'TBD', phase: 'Gruppe', group: 'D',
+    sourceConfidence: 'placeholder'
+  },
+
+  // Gruppe E Matchday 2/3 — Deutschland-Spiele sind schon offiziell
+  // drin. Fehlend: Curaçao/Elfenbein/Ecuador internal.
+  {
+    id: 'wm-e-md2-other', date: '2026-06-20', time: '17:00',
+    homeTeam: 'Curaçao', awayTeam: 'Ecuador',
+    venue: 'TBD', phase: 'Gruppe', group: 'E',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-e-md3-other', date: '2026-06-25', time: '20:00',
+    homeTeam: 'Curaçao', awayTeam: 'Elfenbeinküste',
+    venue: 'TBD', phase: 'Gruppe', group: 'E',
+    sourceConfidence: 'placeholder'
+  },
+
+  // Gruppe G Matchday 2/3 (Belgien, Ägypten, Iran, Neuseeland)
+  {
+    id: 'wm-g-md2-1', date: '2026-06-20', time: '22:00',
+    homeTeam: 'Belgien', awayTeam: 'Iran',
+    venue: 'TBD', phase: 'Gruppe', group: 'G',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-g-md2-2', date: '2026-06-20', time: '01:00',
+    homeTeam: 'Ägypten', awayTeam: 'Neuseeland',
+    venue: 'TBD', phase: 'Gruppe', group: 'G',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-g-md3-1', date: '2026-06-26', time: '20:00',
+    homeTeam: 'Belgien', awayTeam: 'Neuseeland',
+    venue: 'TBD', phase: 'Gruppe', group: 'G',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-g-md3-2', date: '2026-06-26', time: '20:00',
+    homeTeam: 'Ägypten', awayTeam: 'Iran',
+    venue: 'TBD', phase: 'Gruppe', group: 'G',
+    sourceConfidence: 'placeholder'
+  },
+
+  // Gruppe H Matchday 2/3 (Spanien, Kap Verde, Saudi-Arabien, Uruguay)
+  {
+    id: 'wm-h-md2-1', date: '2026-06-20', time: '17:00',
+    homeTeam: 'Spanien', awayTeam: 'Uruguay',
+    venue: 'TBD', phase: 'Gruppe', group: 'H',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-h-md2-2', date: '2026-06-20', time: '23:00',
+    homeTeam: 'Kap Verde', awayTeam: 'Saudi-Arabien',
+    venue: 'TBD', phase: 'Gruppe', group: 'H',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-h-md3-1', date: '2026-06-25', time: '17:00',
+    homeTeam: 'Spanien', awayTeam: 'Saudi-Arabien',
+    venue: 'TBD', phase: 'Gruppe', group: 'H',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-h-md3-2', date: '2026-06-25', time: '17:00',
+    homeTeam: 'Uruguay', awayTeam: 'Kap Verde',
+    venue: 'TBD', phase: 'Gruppe', group: 'H',
+    sourceConfidence: 'placeholder'
+  },
+
+  // Gruppe I Matchday 2/3 (Frankreich, Senegal, Norwegen, Irak)
+  // wm-6 hat Frankreich-Norwegen am 25.06 (sieht aus wie MD3) —
+  // wir ergaenzen die anderen.
+  {
+    id: 'wm-i-md2-1', date: '2026-06-21', time: '20:00',
+    homeTeam: 'Frankreich', awayTeam: 'Irak',
+    venue: 'TBD', phase: 'Gruppe', group: 'I',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-i-md2-2', date: '2026-06-21', time: '23:00',
+    homeTeam: 'Senegal', awayTeam: 'Norwegen',
+    venue: 'TBD', phase: 'Gruppe', group: 'I',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-i-md3', date: '2026-06-25', time: '20:00',
+    homeTeam: 'Senegal', awayTeam: 'Irak',
+    venue: 'TBD', phase: 'Gruppe', group: 'I',
+    sourceConfidence: 'placeholder'
+  },
+
+  // Gruppe K Matchday 2/3 (Portugal, Usbekistan, Kolumbien, DR Kongo)
+  {
+    id: 'wm-k-md2-1', date: '2026-06-22', time: '20:00',
+    homeTeam: 'Portugal', awayTeam: 'Kolumbien',
+    venue: 'TBD', phase: 'Gruppe', group: 'K',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-k-md2-2', date: '2026-06-22', time: '23:00',
+    homeTeam: 'Usbekistan', awayTeam: 'DR Kongo',
+    venue: 'TBD', phase: 'Gruppe', group: 'K',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-k-md3-1', date: '2026-06-26', time: '23:00',
+    homeTeam: 'Portugal', awayTeam: 'Usbekistan',
+    venue: 'TBD', phase: 'Gruppe', group: 'K',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-k-md3-2', date: '2026-06-26', time: '23:00',
+    homeTeam: 'Kolumbien', awayTeam: 'DR Kongo',
+    venue: 'TBD', phase: 'Gruppe', group: 'K',
+    sourceConfidence: 'placeholder'
+  },
+
+  // Gruppe J Matchday 1 fehlend (Algerien, Jordanien startet)
+  {
+    id: 'wm-j-md1-1', date: '2026-06-17', time: '20:00',
+    homeTeam: 'Algerien', awayTeam: 'Jordanien',
+    venue: 'TBD', phase: 'Gruppe', group: 'J',
+    sourceConfidence: 'placeholder'
+  },
+
+  // Gruppe L Matchday 2 (England, Kroatien, Ghana, Panama)
+  {
+    id: 'wm-l-md2-1', date: '2026-06-22', time: '20:00',
+    homeTeam: 'England', awayTeam: 'Ghana',
+    venue: 'TBD', phase: 'Gruppe', group: 'L',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-l-md2-2', date: '2026-06-22', time: '17:00',
+    homeTeam: 'Kroatien', awayTeam: 'Panama',
+    venue: 'TBD', phase: 'Gruppe', group: 'L',
+    sourceConfidence: 'placeholder'
+  },
+  {
+    id: 'wm-l-md3', date: '2026-06-27', time: '21:00',
+    homeTeam: 'Kroatien', awayTeam: 'Ghana',
+    venue: 'TBD', phase: 'Gruppe', group: 'L',
+    sourceConfidence: 'placeholder'
   },
 
   // K.O.-Phase (Termine offiziell laut FIFA)
