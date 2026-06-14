@@ -87,6 +87,7 @@ export const WM_TEAM_ORIGINS: WmTeamOrigin[] = [
   { team: 'Curaçao', aliases: ['Curacao'], lat: 12.11, lon: -68.93, meanHighTempJunJulC: 31, climate: 'tropisch', altitudeM: 0, utcOffsetHrs: -4, confederation: 'CONCACAF' },
   { team: 'Haiti', lat: 18.54, lon: -72.34, meanHighTempJunJulC: 33, climate: 'tropisch', altitudeM: 41, utcOffsetHrs: -5, confederation: 'CONCACAF' },
   { team: 'Australien', aliases: ['Australia'], lat: -35.28, lon: 149.13, meanHighTempJunJulC: 12, climate: 'mild', altitudeM: 580, utcOffsetHrs: 10, confederation: 'AFC' },
+  { team: 'Neuseeland', aliases: ['New Zealand'], lat: -41.29, lon: 174.78, meanHighTempJunJulC: 12, climate: 'mild', altitudeM: 30, utcOffsetHrs: 12, confederation: 'OFC' },
   { team: 'Iran', lat: 35.69, lon: 51.39, meanHighTempJunJulC: 36, climate: 'heiss', altitudeM: 1200, utcOffsetHrs: 3.5, confederation: 'AFC' },
   { team: 'Saudi-Arabien', aliases: ['Saudi Arabia'], lat: 24.71, lon: 46.68, meanHighTempJunJulC: 43, climate: 'heiss', altitudeM: 612, utcOffsetHrs: 3, confederation: 'AFC' },
   { team: 'Katar', aliases: ['Qatar'], lat: 25.28, lon: 51.52, meanHighTempJunJulC: 41, climate: 'heiss', altitudeM: 10, utcOffsetHrs: 3, confederation: 'AFC' }

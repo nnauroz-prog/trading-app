@@ -1,8 +1,8 @@
 import type { NextConfig } from 'next';
 
 // Cache-bust marker: bump this when forcing Vercel to rebuild from scratch.
-// Last bumped: 2026-06-13 — Welle 32401-32500 (Akute Spiele nachgepflegt).
-const BUILD_MARKER = 'welle-32401-32500-akute-spiele';
+// Last bumped: 2026-06-14 — Welle 32501-32600 (Komplette MD1 + Neuseeland-Origin).
+const BUILD_MARKER = 'welle-32501-32600-md1-komplett';
 
 const nextConfig: NextConfig = {
   env: {

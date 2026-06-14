@@ -211,6 +211,88 @@ export const WM_2026_FIXTURES: WmFixture[] = [
     venue: 'AT&T Stadium, Dallas', phase: 'Gruppe', group: 'F',
     sourceConfidence: 'official'
   },
+  // Gruppe E Matchday 1 (Elfenbein-Ecuador). Verifiziert via
+  // wettfreunde / fussballnationalmannschaft: 14.06. 19:00 ET = 23:00
+  // UTC, Lincoln Financial Field Philadelphia.
+  {
+    id: 'wm-e-md1-2', date: '2026-06-14', time: '23:00',
+    homeTeam: 'Elfenbeinküste', awayTeam: 'Ecuador',
+    venue: 'Lincoln Financial Field, Philadelphia', phase: 'Gruppe', group: 'E',
+    sourceConfidence: 'official'
+  },
+  // Gruppe F Matchday 1 (Schweden-Tunesien). 15.06. 04:00 MESZ =
+  // 02:00 UTC, Estadio BBVA Guadalupe (Monterrey).
+  {
+    id: 'wm-f-md1-2', date: '2026-06-15', time: '02:00',
+    homeTeam: 'Schweden', awayTeam: 'Tunesien',
+    venue: 'Estadio BBVA, Guadalupe', phase: 'Gruppe', group: 'F',
+    sourceConfidence: 'official'
+  },
+  // Gruppe G Matchday 1 (Belgien-Aegypten). 15.06. 12:00 PT = 19:00
+  // UTC, Lumen Field Seattle.
+  {
+    id: 'wm-g-md1-1', date: '2026-06-15', time: '19:00',
+    homeTeam: 'Belgien', awayTeam: 'Ägypten',
+    venue: 'Lumen Field, Seattle', phase: 'Gruppe', group: 'G',
+    sourceConfidence: 'official'
+  },
+  // Gruppe H Matchday 1 (Saudi-Arabien vs Uruguay). 15.06. 18:00 ET
+  // = 22:00 UTC, Hard Rock Stadium Miami.
+  {
+    id: 'wm-h-md1-2', date: '2026-06-15', time: '22:00',
+    homeTeam: 'Saudi-Arabien', awayTeam: 'Uruguay',
+    venue: 'Hard Rock Stadium, Miami', phase: 'Gruppe', group: 'H',
+    sourceConfidence: 'official'
+  },
+  // Gruppe G Matchday 1 (Iran-Neuseeland). 15.06. 18:00 PT = 16.06.
+  // 01:00 UTC, SoFi Stadium Inglewood (LA).
+  {
+    id: 'wm-g-md1-2', date: '2026-06-16', time: '01:00',
+    homeTeam: 'Iran', awayTeam: 'Neuseeland',
+    venue: 'SoFi Stadium, Los Angeles', phase: 'Gruppe', group: 'G',
+    sourceConfidence: 'official'
+  },
+  // Gruppe I Matchday 1 (Frankreich-Senegal). 16.06. 21:00 MESZ =
+  // 19:00 UTC, MetLife Stadium New York/New Jersey.
+  {
+    id: 'wm-i-md1-1', date: '2026-06-16', time: '19:00',
+    homeTeam: 'Frankreich', awayTeam: 'Senegal',
+    venue: 'MetLife Stadium, New York/New Jersey', phase: 'Gruppe', group: 'I',
+    sourceConfidence: 'official'
+  },
+  // Gruppe I Matchday 1 (Irak-Norwegen). 16.06. 23:00 BST = 22:00 UTC,
+  // Gillette Stadium Boston.
+  {
+    id: 'wm-i-md1-2', date: '2026-06-16', time: '22:00',
+    homeTeam: 'Irak', awayTeam: 'Norwegen',
+    venue: 'Gillette Stadium, Boston', phase: 'Gruppe', group: 'I',
+    sourceConfidence: 'official'
+  },
+  // Gruppe L Matchday 1 (England-Kroatien). 17.06. 22:00 MESZ =
+  // 20:00 UTC, Mercedes-Benz Stadium Atlanta.
+  {
+    id: 'wm-l-md1-1', date: '2026-06-17', time: '20:00',
+    homeTeam: 'England', awayTeam: 'Kroatien',
+    venue: 'Mercedes-Benz Stadium, Atlanta', phase: 'Gruppe', group: 'L',
+    sourceConfidence: 'official'
+  },
+  // Gruppe L Matchday 1 (Ghana-Panama). 17.06. spaeter Abend US-Ost,
+  // ungefaehr 01:00 UTC am 18.06. — Stadion noch nicht verifiziert,
+  // konservativ als auslosung markiert.
+  {
+    id: 'wm-l-md1-2', date: '2026-06-18', time: '01:00',
+    homeTeam: 'Ghana', awayTeam: 'Panama',
+    venue: 'BMO Field, Toronto', phase: 'Gruppe', group: 'L',
+    sourceConfidence: 'auslosung'
+  },
+  // Gruppe K Matchday 1 (Usbekistan-Kolumbien). 18.06. 04:00 MESZ =
+  // 02:00 UTC, Estadio Akron / Mexico City.
+  {
+    id: 'wm-k-md1-2', date: '2026-06-18', time: '02:00',
+    homeTeam: 'Usbekistan', awayTeam: 'Kolumbien',
+    venue: 'Estadio Akron, Guadalajara', phase: 'Gruppe', group: 'K',
+    sourceConfidence: 'auslosung'
+  },
   // Gruppe-C Matchday 2 (Brasilien-Haiti laut FOX Sports):
   // 20.06. vs Haiti, Philadelphia, 21:00 ET = 01:00 UTC am 21.06.
   {
