@@ -65,7 +65,7 @@ export const WM_2026_TEAMS: TeamStrength[] = [
   { name: 'Österreich', aliases: ['Austria'], elo: 1840, offensive: 70, defensive: 67, formIndex: 2, confederation: 'UEFA' },
   { name: 'Ungarn', aliases: ['Hungary'], elo: 1830, offensive: 67, defensive: 65, formIndex: 0, confederation: 'UEFA' },
   { name: 'Algerien', aliases: ['Algeria'], elo: 1825, offensive: 69, defensive: 68, formIndex: 1, confederation: 'CAF' },
-  { name: 'Korea Republik', aliases: ['Südkorea', 'South Korea', 'Korea Republic'], elo: 1820, offensive: 68, defensive: 67, formIndex: 0, confederation: 'AFC' },
+  { name: 'Südkorea', aliases: ['Korea Republik', 'South Korea', 'Korea Republic', 'Suedkorea', 'Korea', 'Republic of Korea'], elo: 1820, offensive: 68, defensive: 67, formIndex: 0, confederation: 'AFC' },
   { name: 'Iran', elo: 1815, offensive: 65, defensive: 70, formIndex: 0, confederation: 'AFC' },
   { name: 'Tschechien', aliases: ['Czech Republic'], elo: 1810, offensive: 66, defensive: 66, formIndex: 0, confederation: 'UEFA' },
   { name: 'Ägypten', aliases: ['Egypt'], elo: 1810, offensive: 69, defensive: 67, formIndex: 1, confederation: 'CAF' },

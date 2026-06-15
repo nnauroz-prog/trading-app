@@ -19,9 +19,9 @@ describe('auditWmData', () => {
   });
 
   it('Alias-Ueberlappungen werden erkannt', () => {
-    // Suedkorea ist sowohl Alias von Korea Republik (strength) als auch
-    // Alias von Suedkorea (origins, via team-Name). Das ist ein bewusster
-    // Cross-File-Match — innerhalb DER GLEICHEN Datei aber kein Konflikt.
+    // Kanonischer Name ist Suedkorea (strength + origins). Korea Republik
+    // ist dabei Alias. Cross-File-Match akzeptabel; innerhalb einer Datei
+    // wuerden Ueberlappungen ein Konflikt sein.
     const overlaps = issues.filter((i) => i.kind === 'OVERLAPPING_ALIASES');
     // Mind. erlauben, aber keine ueberraschenden Massen.
     expect(overlaps.length).toBeLessThan(10);
