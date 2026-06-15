@@ -81,7 +81,7 @@ async function compute(): Promise<BasketballLeagueFixtures[]> {
       const [next, past] = await Promise.all([fetchEvents(league.id, 'next'), fetchEvents(league.id, 'past')]);
       const future = next.filter((f) => f.date >= todayIso);
       future.sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''));
-      return { league, next: future.slice(0, 30), last: past.slice(0, 30) };
+      return { league, next: future, last: past };
     })
   );
 }

@@ -1,9 +1,11 @@
 // Großes ehrliches Banner ganz oben am Sport-Reiter, wenn praktisch nichts
 // anliegt — typisch Anfang Juni, wenn Top-Ligen Sommerpause haben und die
 // Sommer-aktiven Ligen (MLS, Brasileirão, J1, A-League) bei TheSportsDB
-// nicht zuverlässig aktualisiert werden.
+// nicht zuverlässig aktualisiert werden. WM-Spiele zaehlen wir mit, damit
+// der Banner waehrend der WM nicht faelschlich "leer" suggeriert.
 
 import type { LeagueFixtures } from '@/lib/sport/fetcher';
+import { WM_2026_FIXTURES } from '@/lib/sport/wm-schedule-2026';
 
 interface Props {
   leagues: LeagueFixtures[];
@@ -26,6 +28,14 @@ export function SummerModeBanner({ leagues, todayIso }: Props) {
     }
     if (hasUpcoming) activeLeagues += 1;
   }
+
+  let wmCount = 0;
+  for (const f of WM_2026_FIXTURES) {
+    const t = new Date(`${f.date}T00:00:00`).getTime();
+    if (t >= today && t <= horizon) wmCount += 1;
+  }
+  upcomingCount += wmCount;
+  if (wmCount > 0) activeLeagues += 1;
 
   if (upcomingCount >= 15) return null;
 

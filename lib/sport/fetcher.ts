@@ -208,7 +208,7 @@ async function compute(): Promise<LeagueFixtures[]> {
       // 30 Minuten abgefragt (unstable_cache).
       const horizonMs = Date.now() + 7 * 24 * 60 * 60 * 1000;
       const weatherFor = new Map<string, ReturnType<typeof scoreWeatherImpact>>();
-      const inWindow = future.slice(0, 50).filter((f) => {
+      const inWindow = future.filter((f) => {
         if (!f.time) return false;
         const matchMs = new Date(`${f.date}T${f.time}:00Z`).getTime();
         return Number.isFinite(matchMs) && matchMs >= Date.now() && matchMs <= horizonMs;
@@ -227,7 +227,7 @@ async function compute(): Promise<LeagueFixtures[]> {
       const backtest = backtestModifiers(finishedPool);
       const trust = deriveModifierTrust(backtest);
 
-      const upcoming: UpcomingFixture[] = future.slice(0, 50).map((f) => {
+      const upcoming: UpcomingFixture[] = future.map((f) => {
         const weather = weatherFor.get(f.id);
         // H2H einmal berechnen, dann an predictor + probabilities BEIDE
         // weitergeben — damit sehen Tipp-Ranker und UI-Prognose dasselbe.
@@ -251,7 +251,7 @@ async function compute(): Promise<LeagueFixtures[]> {
       return {
         league,
         next: upcoming,
-        last: sortedPast.slice(0, 200)
+        last: sortedPast
       };
     })
   );
