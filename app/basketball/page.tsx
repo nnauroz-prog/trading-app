@@ -39,7 +39,7 @@ export default async function BasketballPage() {
 
       {leagues.map((lf) => {
         const today = lf.next.filter((f) => f.date === todayIso);
-        const rest = lf.next.filter((f) => f.date !== todayIso).slice(0, 10);
+        const rest = lf.next.filter((f) => f.date !== todayIso);
         if (lf.next.length === 0 && lf.last.length === 0) return null;
         return (
           <section key={lf.league.id} className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
@@ -91,10 +91,10 @@ export default async function BasketballPage() {
             {lf.last.length > 0 && (
               <details>
                 <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300">
-                  ▸ Letzte {Math.min(lf.last.length, 10)} Ergebnisse
+                  ▸ Letzte {lf.last.length} Ergebnisse
                 </summary>
                 <ul className="mt-2 space-y-1">
-                  {lf.last.slice(0, 10).map((f) => (
+                  {lf.last.map((f) => (
                     <li key={f.id} className="grid grid-cols-[auto_1fr_auto] gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
                       <span className="font-mono text-[10px] text-slate-500">{fmtDate(f.date)}</span>
                       <span className="text-slate-200">{f.homeTeam} {f.homeScore ?? '—'}:{f.awayScore ?? '—'} {f.awayTeam}</span>

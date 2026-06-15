@@ -44,7 +44,7 @@ export default async function HockeyPage() {
       {leagues.map((lf) => {
         if (lf.next.length === 0 && lf.last.length === 0) return null;
         const today = lf.next.filter((f) => f.date === todayIso);
-        const rest = lf.next.filter((f) => f.date !== todayIso).slice(0, 12);
+        const rest = lf.next.filter((f) => f.date !== todayIso);
         return (
           <section key={lf.league.id} className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
             <div className="flex items-baseline justify-between gap-2">

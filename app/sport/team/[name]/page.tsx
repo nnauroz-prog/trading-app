@@ -164,8 +164,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
               const h2hHistory = lf.last
                 .filter((x) => (x.homeTeam === team && x.awayTeam === opponent) || (x.homeTeam === opponent && x.awayTeam === team))
                 .filter((x) => x.homeScore !== null && x.awayScore !== null)
-                .sort((a, b) => b.date.localeCompare(a.date))
-                .slice(0, 6);
+                .sort((a, b) => b.date.localeCompare(a.date));
               return (
                 <li key={f.id} className="space-y-1.5 rounded-lg border border-slate-800 bg-slate-950/40 px-2.5 py-2 text-[11.5px] text-slate-100">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">

@@ -106,7 +106,7 @@ export function computeTipprundeStats(): TipprundeStats {
 
   const recent = [...resolved]
     .sort((a, b) => (b.resolvedAt ?? 0) - (a.resolvedAt ?? 0))
-    .slice(0, 5)
+    .slice(0, 30)
     .map((e) => ({
       id: e.id,
       date: e.date,

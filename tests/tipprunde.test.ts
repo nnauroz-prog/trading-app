@@ -101,7 +101,7 @@ describe('computeTipprundeStats', () => {
     expect(s.bestBand).toBe(null);
   });
 
-  it('letzte 5 Tipps neueste-zuerst', () => {
+  it('letzte Tipps neueste-zuerst, gecapt bei 30', () => {
     seed([
       entry({ id: '1', outcome: 'win', resolvedAt: 1 }),
       entry({ id: '2', outcome: 'win', resolvedAt: 2 }),
@@ -111,7 +111,7 @@ describe('computeTipprundeStats', () => {
       entry({ id: '6', outcome: 'win', resolvedAt: 6 })
     ]);
     const s = computeTipprundeStats();
-    expect(s.recent.length).toBe(5);
+    expect(s.recent.length).toBe(6);
     expect(s.recent[0].id).toBe('6');
   });
 });
