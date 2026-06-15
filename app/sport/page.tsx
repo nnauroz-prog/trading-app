@@ -775,7 +775,7 @@ export default async function SportPage() {
           <span className="text-[10px] uppercase tracking-wider text-slate-500">Top-Ranking-Filter:</span>
           <StableOnlyToggle />
         </div>
-        <TopPredictionsRanking ranked={rankedPredictions} limit={5} />
+        <TopPredictionsRanking ranked={rankedPredictions} limit={20} />
         <ScoreColorKey />
         <div id="verteilung" />
         <QualityBandDistribution ranked={rankedPredictions} todayIso={buckets.todayIso} />

@@ -57,13 +57,11 @@ export default async function EmployeeDetailPage({ params }: PageProps) {
   ]);
   const myStats = allStats.find((s) => s.employeeId === employee.id) ?? null;
 
-  // Heutige Stimmen des Mitarbeiters auf die 5 am höchsten gerankten Spielen
-  // mit Modell-Prediction. So sieht der User: was sagt diese Person aktuell?
   const candidates = leagues.flatMap((lf) =>
     lf.next.filter((f) => f.prediction !== null).map((f) => ({ league: lf, fixture: f }))
   );
   candidates.sort((a, b) => (b.fixture.prediction?.pickConfidence ?? 0) - (a.fixture.prediction?.pickConfidence ?? 0));
-  const topCandidates = candidates.slice(0, 5);
+  const topCandidates = candidates.slice(0, 20);
   const hitRateMap = new Map<string, number>();
   for (const stat of allStats) {
     if (stat.hitRatePct !== null) hitRateMap.set(stat.employeeId, stat.hitRatePct);
@@ -208,7 +206,7 @@ export default async function EmployeeDetailPage({ params }: PageProps) {
             </section>
           );
         }
-        const upcomingForLeague = match._lf.next.slice(0, 5);
+        const upcomingForLeague = match._lf.next.slice(0, 15);
         return (
           <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">

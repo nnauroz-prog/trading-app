@@ -25,10 +25,8 @@ const DEPARTMENT_SHORT: Record<string, string> = {
 export function EmployeeLeaderboard({ stats }: Props) {
   const eligible = stats.filter((s) => s.totalVotes >= 15 && s.hitRatePct !== null);
   const sorted = [...eligible].sort((a, b) => (b.hitRatePct ?? 0) - (a.hitRatePct ?? 0) || b.totalVotes - a.totalVotes);
-  const top10 = sorted.slice(0, 10);
-  const bottom5 = sorted.slice(-5).reverse();
 
-  if (top10.length === 0) {
+  if (sorted.length === 0) {
     return (
       <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Mitarbeiter-Erfolgsquoten</h2>
@@ -49,46 +47,49 @@ export function EmployeeLeaderboard({ stats }: Props) {
       </header>
 
       <div className="space-y-1.5">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">🏆 Top 10 — beste Trefferquoten</div>
+        <div className="flex items-baseline justify-between">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Gesamtes Ranking — {sorted.length} Mitarbeiter:innen</div>
+          <div className="text-[9.5px] text-slate-500">sortiert nach Trefferquote</div>
+        </div>
         <ul className="space-y-1">
-          {top10.map((s, i) => (
-            <li key={s.employeeId}>
-              <Link href={`/sport/firma/${s.employeeId}`} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px] hover:border-emerald-400/40">
-                <span className="font-mono text-[10px] text-emerald-300">#{i + 1}</span>
-                <div className="min-w-0">
-                  <div className="truncate font-semibold text-slate-100">{s.employeeName}</div>
-                  <div className="truncate text-[9.5px] text-slate-500">{DEPARTMENT_SHORT[s.department] ?? s.department} · {s.totalVotes} Stimmen</div>
-                </div>
-                <span className="font-mono text-[10px] text-slate-400">{s.rightVotes}/{s.totalVotes}</span>
-                <span className={`font-mono text-[11px] font-bold ${(s.hitRatePct ?? 0) >= 60 ? 'text-emerald-300' : (s.hitRatePct ?? 0) >= 50 ? 'text-amber-300' : 'text-slate-400'}`}>
-                  {s.hitRatePct?.toFixed(1)} %
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="space-y-1.5">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-rose-300">📉 5 schwächste Trefferquoten</div>
-        <ul className="space-y-1">
-          {bottom5.map((s) => (
-            <li key={s.employeeId}>
-              <Link href={`/sport/firma/${s.employeeId}`} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px] hover:border-rose-400/40">
-                <div className="min-w-0">
-                  <div className="truncate font-semibold text-slate-100">{s.employeeName}</div>
-                  <div className="truncate text-[9.5px] text-slate-500">{DEPARTMENT_SHORT[s.department] ?? s.department} · {s.totalVotes} Stimmen</div>
-                </div>
-                <span className="font-mono text-[10px] text-slate-400">{s.rightVotes}/{s.totalVotes}</span>
-                <span className="font-mono text-[11px] font-bold text-rose-300">{s.hitRatePct?.toFixed(1)} %</span>
-              </Link>
-            </li>
-          ))}
+          {sorted.map((s, i) => {
+            const rate = s.hitRatePct ?? 0;
+            const isTop10 = i < 10;
+            const isBottom5 = i >= sorted.length - 5 && sorted.length > 10;
+            const accent = isTop10
+              ? 'border-emerald-400/40 hover:border-emerald-400/70'
+              : isBottom5
+                ? 'border-rose-400/30 hover:border-rose-400/60'
+                : 'border-slate-800 hover:border-slate-600';
+            const rankColor = isTop10 ? 'text-emerald-300' : isBottom5 ? 'text-rose-300' : 'text-slate-500';
+            const rateColor = isTop10 && rate >= 60
+              ? 'text-emerald-300'
+              : isBottom5
+                ? 'text-rose-300'
+                : rate >= 50
+                  ? 'text-amber-300'
+                  : 'text-slate-400';
+            return (
+              <li key={s.employeeId}>
+                <Link href={`/sport/firma/${s.employeeId}`} className={`grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-md border bg-slate-950/40 px-2.5 py-1.5 text-[11px] ${accent}`}>
+                  <span className={`font-mono text-[10px] ${rankColor}`}>#{i + 1}</span>
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-slate-100">{s.employeeName}</div>
+                    <div className="truncate text-[9.5px] text-slate-500">{DEPARTMENT_SHORT[s.department] ?? s.department} · {s.totalVotes} Stimmen</div>
+                  </div>
+                  <span className="font-mono text-[10px] text-slate-400">{s.rightVotes}/{s.totalVotes}</span>
+                  <span className={`font-mono text-[11px] font-bold ${rateColor}`}>
+                    {s.hitRatePct?.toFixed(1)} %
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </div>
 
       <p className="text-[10px] leading-snug text-slate-500">
-        Sample-Quality: gut ≥50 Stimmen · mittel ≥15 · schwach &lt;15. Mitarbeiter unter 15 sind hier ausgeblendet.
+        Sample-Quality: gut ≥50 Stimmen · mittel ≥15 · schwach &lt;15. Mitarbeiter unter 15 sind hier ausgeblendet. Grün = Top 10, Rot = unteres Quintil.
       </p>
     </section>
   );
