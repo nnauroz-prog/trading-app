@@ -100,7 +100,7 @@ function blacklistedPhase(phase: WmFixture['phase']): boolean {
 export function rankWmWinnerPicks(opts: BuildOptions): WmWinnerPick[] {
   const {
     todayIso,
-    horizonDays = 7,
+    horizonDays = 40,
     minProbability = 0.60,
     minEloDiff = 80
   } = opts;

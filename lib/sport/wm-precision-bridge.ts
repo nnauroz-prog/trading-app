@@ -138,7 +138,7 @@ function strongestMarketFor(prediction: WmMatchPrediction): WmMarketRecommendati
 }
 
 export function buildWmPrecisionPicks(opts: BuildOptions): PrecisionPickWithAgents[] {
-  const { todayIso, horizonDays = 14 } = opts;
+  const { todayIso, horizonDays = 40 } = opts;
   const todayMs = new Date(`${todayIso}T00:00:00`).getTime();
   const horizonMs = todayMs + horizonDays * 24 * 60 * 60 * 1000;
   const out: PrecisionPickWithAgents[] = [];

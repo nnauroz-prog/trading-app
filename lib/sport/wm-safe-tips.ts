@@ -19,7 +19,7 @@ export interface RankSafeWmTipsOptions {
   maxDays?: number;       // Horizont in Tagen (Default 14)
   minProbability?: number; // Mindest-Wahrscheinlichkeit 0..1 (Default 0.70)
   minDataConfidence?: number; // Mindest-Datenbasis 0..100 (Default 70)
-  limit?: number;         // Maximale Anzahl Tipps (Default 15)
+  limit?: number;         // Optionaler Cap. Undefiniert = alle qualifizierten Tipps.
 }
 
 function tierFor(probability: number, dataConfidence: number): SafeWmTip['tier'] {
@@ -43,10 +43,10 @@ function marketCategory(label: string): string {
 export function rankSafeWmTips(opts: RankSafeWmTipsOptions): SafeWmTip[] {
   const {
     todayIso,
-    maxDays = 14,
+    maxDays = 40,
     minProbability = 0.70,
     minDataConfidence = 70,
-    limit = 15
+    limit
   } = opts;
 
   const today = new Date(`${todayIso}T00:00:00`).getTime();
@@ -87,5 +87,5 @@ export function rankSafeWmTips(opts: RankSafeWmTipsOptions): SafeWmTip[] {
     return a.fixture.date.localeCompare(b.fixture.date);
   });
 
-  return out.slice(0, limit);
+  return typeof limit === 'number' ? out.slice(0, limit) : out;
 }

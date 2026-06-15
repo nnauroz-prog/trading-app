@@ -9,7 +9,7 @@ export interface RankedWmTip {
   prediction: WmMatchPrediction;
 }
 
-export function rankWmTips(todayIso: string, maxDays = 14): RankedWmTip[] {
+export function rankWmTips(todayIso: string, maxDays = 40): RankedWmTip[] {
   const today = new Date(`${todayIso}T00:00:00`).getTime();
   const horizon = today + maxDays * 24 * 60 * 60 * 1000;
   const out: RankedWmTip[] = [];

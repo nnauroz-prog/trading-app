@@ -96,10 +96,8 @@ export function scoutFindings(forms: TeamForm[]): ScoutFinding[] {
   const eligible = forms.filter((f) => f.played >= 3);
   if (eligible.length === 0) return out;
 
-  // Top 5 most dangerous (highest points, broken by streak then goalDiff).
   const dangerous = [...eligible]
-    .sort((a, b) => b.points - a.points || b.streak - a.streak || b.goalDiff - a.goalDiff)
-    .slice(0, 5);
+    .sort((a, b) => b.points - a.points || b.streak - a.streak || b.goalDiff - a.goalDiff);
   for (const f of dangerous) {
     if (f.points < 6) continue; // mindestens 2 Siege im Fenster
     out.push({
@@ -111,10 +109,8 @@ export function scoutFindings(forms: TeamForm[]): ScoutFinding[] {
     });
   }
 
-  // Worst 3 by points (mind. 1 played).
   const fading = [...eligible]
-    .sort((a, b) => a.points - b.points || a.streak - b.streak || a.goalDiff - b.goalDiff)
-    .slice(0, 3);
+    .sort((a, b) => a.points - b.points || a.streak - b.streak || a.goalDiff - b.goalDiff);
   for (const f of fading) {
     if (f.points >= 4) continue;
     out.push({
@@ -126,8 +122,7 @@ export function scoutFindings(forms: TeamForm[]): ScoutFinding[] {
     });
   }
 
-  // Goal-Maschinen: ≥ 2.5 Tore/Spiel im Fenster.
-  const goalMachines = [...eligible].filter((f) => f.goalsFor / Math.max(1, f.played) >= 2.5).slice(0, 3);
+  const goalMachines = [...eligible].filter((f) => f.goalsFor / Math.max(1, f.played) >= 2.5);
   for (const f of goalMachines) {
     out.push({
       kind: 'goal_machine',
@@ -138,8 +133,7 @@ export function scoutFindings(forms: TeamForm[]): ScoutFinding[] {
     });
   }
 
-  // Defensiv-Probleme: ≥ 2.5 Gegentore/Spiel.
-  const leaky = [...eligible].filter((f) => f.goalsAgainst / Math.max(1, f.played) >= 2.5).slice(0, 3);
+  const leaky = [...eligible].filter((f) => f.goalsAgainst / Math.max(1, f.played) >= 2.5);
   for (const f of leaky) {
     out.push({
       kind: 'leaky_defence',
