@@ -204,7 +204,7 @@ export default async function WorldCupPage() {
           unter der Turnier-Tipp-Karte. */}
       {await (async () => {
         const todayIso = new Date().toISOString().slice(0, 10);
-        const horizonDays = 7;
+        const horizonDays = 40;
         const weatherByFixtureId = await fetchWmWeatherByFixture({ todayIso, horizonDays });
         const wmLiveData = await getCachedWmLiveData();
         const mergedWmSchedule = mergeWmFixtures(WM_2026_FIXTURES, wmLiveData.schedule);
@@ -213,7 +213,7 @@ export default async function WorldCupPage() {
         }));
         const horizonEndIso = (() => {
           const d = new Date(`${todayIso}T00:00:00`);
-          d.setUTCDate(d.getUTCDate() + 14);
+          d.setUTCDate(d.getUTCDate() + 40);
           return d.toISOString().slice(0, 10);
         })();
         const reconcile = reconcileWmSchedule({ external: wmExternalFixtures, fromIso: todayIso, toIso: horizonEndIso });

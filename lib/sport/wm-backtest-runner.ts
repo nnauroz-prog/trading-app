@@ -228,8 +228,7 @@ export function runWmBacktest(): BacktestReport {
   });
 
   const topResults = [...picks]
-    .sort((a, b) => (b.confidencePct ?? 0) - (a.confidencePct ?? 0))
-    .slice(0, 20);
+    .sort((a, b) => (b.confidencePct ?? 0) - (a.confidencePct ?? 0));
 
   return {
     generatedAt: new Date().toISOString(),

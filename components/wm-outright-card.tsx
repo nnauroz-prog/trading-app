@@ -24,20 +24,19 @@ function fmtPct(value: number): string {
   return '< 0,1 %';
 }
 
-export function WmOutrightCard({ todayIso, openingIso = '2026-06-11', limit = 10 }: Props) {
+export function WmOutrightCard({ todayIso, openingIso = '2026-06-11', limit }: Props) {
   const daysToOpen = daysBetween(todayIso, openingIso);
-  // Aktiv im Fenster -50 (Turnier-Ende +14 Tage) bis +60 vor Eröffnung.
   if (daysToOpen > 60 || daysToOpen < -50) return null;
 
   const outright = computeOutright();
-  const top: OutrightTeam[] = outright.slice(0, limit);
+  const top: OutrightTeam[] = typeof limit === 'number' ? outright.slice(0, limit) : outright;
   if (top.length === 0) return null;
 
   return (
     <section className="space-y-3 rounded-2xl border border-emerald-400/40 bg-emerald-950/15 p-4">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">🏆 Wer wird Weltmeister?</h2>
-        <span className="text-[10px] text-emerald-200/60">Top {limit} · 48 Teilnehmer</span>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">Wer wird Weltmeister?</h2>
+        <span className="text-[10px] text-emerald-200/60">{top.length} von 48 Teilnehmern</span>
       </div>
       <p className="text-[10.5px] leading-snug text-emerald-100/80">
         Profi-Engine-Schätzung aus ELO-Stand + Form-Index + Gruppen-Überlebens-Quote + 6 KO-Runden gegen den Median-ELO

@@ -26,11 +26,12 @@ const CLARITY_CHIP: Record<string, string> = {
   open: 'border-amber-500/40 bg-amber-500/10 text-amber-100'
 };
 
-export function WmTopTips({ todayIso, openingIso = '2026-06-11', limit = 12 }: Props) {
+export function WmTopTips({ todayIso, openingIso = '2026-06-11', limit }: Props) {
   const days = daysBetween(todayIso, openingIso);
   if (days > 30 || days < -50) return null;
 
-  const ranked = rankWmTips(todayIso, 14).slice(0, limit);
+  const allRanked = rankWmTips(todayIso, 40);
+  const ranked = typeof limit === 'number' ? allRanked.slice(0, limit) : allRanked;
   if (ranked.length === 0) return null;
 
   // Aufteilung: klare + leaning vs. offene Spiele
@@ -40,7 +41,7 @@ export function WmTopTips({ todayIso, openingIso = '2026-06-11', limit = 12 }: P
   return (
     <section className="space-y-3 rounded-2xl border border-emerald-400/40 bg-emerald-950/15 p-4">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">🎯 WM-Top-Tipps (nächste 14 Tage)</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">WM-Top-Tipps · gesamter Turnier-Horizont</h2>
         <span className="text-[10px] text-emerald-200/60">{ranked.length} Spiele</span>
       </div>
       <p className="text-[10.5px] leading-snug text-emerald-100/80">

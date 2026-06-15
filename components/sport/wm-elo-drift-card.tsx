@@ -70,7 +70,7 @@ export function WmEloDriftCard() {
         Nach jedem resolved Spiel ziehen wir die ELO-Werte mit echtem Ergebnis nach (K = 30 Gruppe, K = 50 KO). Damit lernen die Picks ohne dass Du etwas tun musst.
       </p>
       <ul className="space-y-0.5">
-        {deltas.slice(0, 12).map((d) => (
+        {deltas.map((d) => (
           <li key={d.team} className="grid grid-cols-[1fr_auto_auto_auto] items-baseline gap-2 rounded border border-slate-800 bg-slate-950/40 px-2 py-1 text-[10.5px]">
             <span className="truncate text-slate-100">{d.team}</span>
             <span className="font-mono text-[9.5px] text-slate-500">{d.basedOnGames} Spiele</span>

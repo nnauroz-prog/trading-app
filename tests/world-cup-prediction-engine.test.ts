@@ -190,8 +190,8 @@ describe('buildWorldCupDashboard', () => {
     expect(dashboard.topFavorite?.team).toBe(dashboard.ranking[0]?.team);
   });
 
-  it('Ranking hat hoechstens 8 Eintraege', () => {
-    expect(dashboard.ranking.length).toBeLessThanOrEqual(8);
+  it('Ranking deckt alle WM-Teams ab', () => {
+    expect(dashboard.ranking.length).toBeGreaterThan(8);
   });
 
   it('upcomingMatches respektiert das Limit', () => {

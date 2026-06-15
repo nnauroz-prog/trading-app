@@ -21,19 +21,18 @@ function fmtDate(iso: string): string {
   return d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' });
 }
 
-// Interaktiver WM-Tagesfilter: User wählt einen Spieltag, sieht alle Spiele
-// des Tages mit klarer Gewinner-Prognose. Bis 8 Tage in die Zukunft, sonst
-// wird die Liste unübersichtlich.
+// Interaktiver WM-Tagesfilter: User waehlt einen Spieltag, sieht alle Spiele
+// des Tages mit klarer Gewinner-Prognose. Alle Spieltage des Turniers
+// sichtbar — horizontal scrollbar.
 export function WmDayPicker({ todayIso }: Props) {
   const upcoming = useMemo(() => WM_2026_FIXTURES
-    .filter((f) => daysBetween(todayIso, f.date) >= 0 && daysBetween(todayIso, f.date) <= 60)
+    .filter((f) => daysBetween(todayIso, f.date) >= 0)
     .sort((a, b) => a.date.localeCompare(b.date)), [todayIso]);
 
-  // Verfügbare Tage extrahieren.
   const days = useMemo(() => {
     const set = new Set<string>();
     upcoming.forEach((f) => set.add(f.date));
-    return [...set].slice(0, 14);
+    return [...set];
   }, [upcoming]);
 
   const [selected, setSelected] = useState<string>('');

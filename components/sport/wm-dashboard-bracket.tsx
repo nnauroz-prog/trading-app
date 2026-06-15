@@ -105,7 +105,7 @@ export function WmDashboardBracket({ todayIso }: Props) {
                 <p className="mt-2 text-[10.5px] text-slate-500">Noch keine Spiele in dieser Runde im Spielplan.</p>
               ) : (
                 <ul className="mt-2 space-y-1">
-                  {fixtures.slice(0, phase === 'Gruppe' ? 12 : 16).map((f) => {
+                  {fixtures.map((f) => {
                     const berlin = utcToBerlin(f.date, f.time);
                     return (
                       <li
@@ -122,11 +122,6 @@ export function WmDashboardBracket({ todayIso }: Props) {
                       </li>
                     );
                   })}
-                  {phase === 'Gruppe' && fixtures.length > 12 && (
-                    <li className="text-[10px] text-slate-500">
-                      … {fixtures.length - 12} weitere Gruppenspiele im vollständigen Spielplan.
-                    </li>
-                  )}
                 </ul>
               )}
             </details>

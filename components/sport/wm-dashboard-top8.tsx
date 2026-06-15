@@ -1,5 +1,5 @@
-// Top-8-Ranking-Karte: kompaktes Ranking direkt unter dem Hero.
-// Server-Component, keine Interaktivitaet.
+// Sieger-Ranking-Karte: kompaktes Ranking aller WM-Teams direkt unter dem
+// Hero. Server-Component, keine Interaktivitaet.
 
 import type { TournamentWinnerPrediction } from '@/lib/sports/world-cup-prediction-engine';
 
@@ -37,11 +37,11 @@ export function WmDashboardTop8({ ranking }: Props) {
   if (ranking.length === 0) {
     return (
       <section
-        aria-label="Top 8 Sieger-Ranking"
+        aria-label="WM-Sieger-Ranking"
         className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-4"
       >
         <h3 className="text-[12px] font-bold uppercase tracking-wider text-slate-300">
-          Top 8 Sieger-Ranking
+          WM-Sieger-Ranking
         </h3>
         <p className="mt-2 text-[11px] text-slate-400">
           Keine echten WM-Team-Daten verfügbar — Ranking kann nicht berechnet werden.
@@ -52,12 +52,12 @@ export function WmDashboardTop8({ ranking }: Props) {
 
   return (
     <section
-      aria-label="Top 8 Sieger-Ranking"
+      aria-label="WM-Sieger-Ranking"
       className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-4 sm:p-5"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-[12px] font-bold uppercase tracking-[0.18em] text-slate-200">
-          Top 8 Sieger-Ranking
+          WM-Sieger-Ranking
         </h3>
         <span className="text-[10px] text-slate-500">{ranking.length} Teams</span>
       </div>

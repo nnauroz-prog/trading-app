@@ -343,7 +343,7 @@ export function buildWorldCupDashboard(input?: {
     globalWarnings.push('Kein Spielplan geladen — keine Vorhersagen möglich.');
   }
 
-  const ranking = rankWorldCupWinners(nowIso, 8);
+  const ranking = rankWorldCupWinners(nowIso, WM_2026_TEAMS.length);
   const topFavorite = ranking.length > 0 ? ranking[0] : null;
 
   // Heutiges Datum (UTC-Tag — fuer Filter "ab heute"); UI rechnet bei

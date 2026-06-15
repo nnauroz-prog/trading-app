@@ -46,12 +46,12 @@ export function WmComboPicksCard({ picks }: Props) {
   );
   const usedLedgerOdds = mounted && Object.keys(oddsByPickId).length > 0;
   if (combos.length === 0) return null;
-  const top = combos.slice(0, 5);
+  const top = combos;
 
   return (
     <section className="space-y-2 rounded-2xl border border-slate-700 bg-slate-900/40 p-3" aria-label="Combo-Picks">
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">Combo-Picks · Top 5 nach Erwartungswert</h3>
+        <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">Combo-Picks · {top.length} sortiert nach Erwartungswert</h3>
         <span className="text-[10px] text-slate-500">2er / 3er · {usedLedgerOdds ? 'Ledger-Quoten wo vorhanden' : 'Default-Quote 2.00'}</span>
       </div>
       <ul className="space-y-1.5">
