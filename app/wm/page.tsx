@@ -167,7 +167,7 @@ export default async function WorldCupPage() {
   // Neues Dashboard ganz oben — Hero, Top 8, naechste Spiele, Bracket.
   const nowIso = new Date().toISOString();
   const todayIso = nowIso.slice(0, 10);
-  const dashboard = buildWorldCupDashboard({ nowIso, upcomingLimit: 24 });
+  const dashboard = buildWorldCupDashboard({ nowIso, upcomingLimit: WM_2026_FIXTURES.length });
 
   return (
     <main className="mx-auto max-w-4xl space-y-5 p-4 md:p-6">
