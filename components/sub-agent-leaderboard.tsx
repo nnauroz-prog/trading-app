@@ -58,8 +58,6 @@ export function SubAgentLeaderboard() {
     );
   }
   const sorted = [...eligible].sort((a, b) => (b.hitRatePct ?? 0) - (a.hitRatePct ?? 0) || b.evaluated - a.evaluated);
-  const top5 = sorted.slice(0, 5);
-  const bottom3 = sorted.slice(-3).reverse();
 
   return (
     <section className="space-y-3 rounded-2xl border-2 border-sky-400/40 bg-slate-900/60 p-4">
@@ -71,41 +69,41 @@ export function SubAgentLeaderboard() {
       </header>
 
       <div className="space-y-1.5">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">🏆 Top 5</div>
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Gesamtes Ranking · {sorted.length} Sub-Agenten</div>
         <ul className="space-y-1">
-          {top5.map((r, i) => (
-            <li key={`${r.firma}-${r.role}`} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
-              <span className="font-mono text-[10px] text-emerald-300">#{i + 1}</span>
-              <div className="min-w-0">
-                <div className="truncate font-semibold text-slate-100">{ROLE_LABEL[r.role] ?? r.role}</div>
-                <div className="truncate text-[9.5px] text-slate-500">{FIRMA_LABEL[r.firma] ?? r.firma}</div>
-              </div>
-              <span className="font-mono text-[10px] text-slate-400">{r.rightCalls}/{r.evaluated}</span>
-              <span className={`font-mono text-[11px] font-bold ${(r.hitRatePct ?? 0) >= 60 ? 'text-emerald-300' : (r.hitRatePct ?? 0) >= 50 ? 'text-amber-300' : 'text-rose-300'}`}>
-                {r.hitRatePct} %
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {bottom3.length > 0 && (
-        <div className="space-y-1.5">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-rose-300">📉 Schwächste 3</div>
-          <ul className="space-y-1">
-            {bottom3.map((r) => (
-              <li key={`${r.firma}-${r.role}`} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
+          {sorted.map((r, i) => {
+            const rate = r.hitRatePct ?? 0;
+            const isTop5 = i < 5;
+            const isBottom3 = i >= sorted.length - 3 && sorted.length > 5;
+            const accent = isTop5
+              ? 'border-emerald-400/40'
+              : isBottom3
+                ? 'border-rose-400/30'
+                : 'border-slate-800';
+            const rankColor = isTop5 ? 'text-emerald-300' : isBottom3 ? 'text-rose-300' : 'text-slate-500';
+            const rateColor = isTop5 && rate >= 60
+              ? 'text-emerald-300'
+              : isBottom3
+                ? 'text-rose-300'
+                : rate >= 50
+                  ? 'text-amber-300'
+                  : 'text-slate-400';
+            return (
+              <li key={`${r.firma}-${r.role}`} className={`grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-md border bg-slate-950/40 px-2.5 py-1.5 text-[11px] ${accent}`}>
+                <span className={`font-mono text-[10px] ${rankColor}`}>#{i + 1}</span>
                 <div className="min-w-0">
                   <div className="truncate font-semibold text-slate-100">{ROLE_LABEL[r.role] ?? r.role}</div>
                   <div className="truncate text-[9.5px] text-slate-500">{FIRMA_LABEL[r.firma] ?? r.firma}</div>
                 </div>
                 <span className="font-mono text-[10px] text-slate-400">{r.rightCalls}/{r.evaluated}</span>
-                <span className="font-mono text-[11px] font-bold text-rose-300">{r.hitRatePct} %</span>
+                <span className={`font-mono text-[11px] font-bold ${rateColor}`}>
+                  {r.hitRatePct} %
+                </span>
               </li>
-            ))}
-          </ul>
-        </div>
-      )}
+            );
+          })}
+        </ul>
+      </div>
     </section>
   );
 }

@@ -55,10 +55,10 @@ export default async function HeuteSicherPage() {
     .sort((a, b) => b.assessment.score - a.assessment.score)
     .slice(0, 5);
 
-  const maxSafeFootball = safeFootball.filter((t) => t.tier === 'maximal').slice(0, 10);
-  const sehrSicherFootball = safeFootball.filter((t) => t.tier === 'sehr-sicher').slice(0, 10);
-  const maxSafeWm = safeWm.filter((t) => t.tier === 'maximal').slice(0, 10);
-  const sehrSicherWm = safeWm.filter((t) => t.tier === 'sehr-sicher').slice(0, 10);
+  const maxSafeFootball = safeFootball.filter((t) => t.tier === 'maximal');
+  const sehrSicherFootball = safeFootball.filter((t) => t.tier === 'sehr-sicher');
+  const maxSafeWm = safeWm.filter((t) => t.tier === 'maximal');
+  const sehrSicherWm = safeWm.filter((t) => t.tier === 'sehr-sicher');
 
   const totalCount = gradeACrypto.length + gradeAStocks.length + gradeACommodities.length + maxSafeFootball.length + maxSafeWm.length;
 

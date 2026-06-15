@@ -79,7 +79,7 @@ export function SportQuickFilter({ ranked, todayIso, tomorrowIso }: Props) {
         </p>
       ) : (
         <ul className="space-y-1">
-          {filtered.slice(0, 8).map((rp) => (
+          {filtered.map((rp) => (
             <li key={rp.fixture.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5">
               <span className="font-mono text-[10px] text-slate-500">{fmtDate(rp.fixture.date)} {fmtTime(rp.fixture.date, rp.fixture.time)}</span>
               <span className="min-w-0 truncate text-[11px] text-slate-100">

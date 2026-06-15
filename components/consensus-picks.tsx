@@ -27,7 +27,7 @@ const GRADE_STYLE: Record<ConsensusVerdict['grade'], string> = {
 export function ConsensusPicks({ picks }: { picks: EnrichedPick[] }) {
   const aPlus = picks.filter((p) => p.verdict.grade === 'A+');
   const a = picks.filter((p) => p.verdict.grade === 'A');
-  const topPicks = [...aPlus, ...a].slice(0, 10);
+  const topPicks = [...aPlus, ...a];
 
   return (
     <section className="space-y-3 rounded-2xl border-2 border-emerald-300/60 bg-slate-900/70 p-4">

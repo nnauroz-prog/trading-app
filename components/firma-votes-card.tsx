@@ -35,7 +35,7 @@ export function FirmaVotesCard({ fixture, voteResult }: Props) {
   const abstain = voteResult.votes.filter((v) => v.side === 'abstain');
   // Sortiert nach echtem Einfluss (Konfidenz × Skill-Multiplier), nicht nur
   // nach roher Konfidenz. Wer historisch besser ist UND klar votet, steht oben.
-  const topActive = [...active].sort((a, b) => influenceScore(b) - influenceScore(a)).slice(0, 15);
+  const topActive = [...active].sort((a, b) => influenceScore(b) - influenceScore(a));
 
   return (
     <section className="space-y-3 rounded-2xl border-2 border-sky-400/40 bg-slate-900/60 p-4">

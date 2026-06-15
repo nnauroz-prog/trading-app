@@ -1,4 +1,4 @@
-// Direkt unter dem WM-Countdown: die nächsten 5 WM-Spiele kompakt mit
+// Direkt unter dem WM-Countdown: alle anstehenden WM-Spiele kompakt mit
 // Datum, Anstoß-Zeit und Phase — Mannschaften können noch „TBD" sein.
 // Nur sichtbar, solange die WM 30 Tage oder weniger entfernt ist.
 
@@ -32,13 +32,13 @@ export function WmNextMatches({ todayIso }: Props) {
   const firstDays = daysBetween(todayIso, upcoming[0].date);
   if (firstDays > 30) return null;
 
-  const top5 = upcoming.slice(0, 5);
+  const top5 = upcoming;
 
   return (
     <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
-          Nächste WM-Spiele
+          Nächste WM-Spiele · {top5.length}
         </h2>
         <Link href="/wm" className="text-[10px] text-emerald-300 hover:text-emerald-200">→ ganzer Plan</Link>
       </div>

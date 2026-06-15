@@ -36,7 +36,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
   const leagueStats = computeLeagueSeasonStats([lf])[0] ?? null;
   const upcoming = lf.next.filter((f) => f.homeTeam === team || f.awayTeam === team);
   const allPast = lf.last.filter((f) => f.homeTeam === team || f.awayTeam === team);
-  const past = allPast.slice(0, 8);
+  const past = allPast;
 
   // Sichere Multi-Markt-Tipps für die kommenden Spiele dieses Teams.
   // Wir scannen ALLE Märkte (1X2, Doppelchance, Über/Unter, BTTS) der eigenen

@@ -17,7 +17,7 @@ export function StandingsTable({ standings }: { standings: TeamStanding[] }) {
           </tr>
         </thead>
         <tbody>
-          {standings.slice(0, 20).map((s, i) => (
+          {standings.map((s, i) => (
             <tr key={s.team} className="border-b border-slate-900 last:border-b-0">
               <td className="px-2 py-1 font-mono text-slate-500">{i + 1}</td>
               <td className="px-2 py-1 text-slate-200">{s.team}</td>

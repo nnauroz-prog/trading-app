@@ -14,8 +14,8 @@ function confidenceTone(conf: number): string {
   return 'border-slate-700 bg-slate-900/40 text-slate-200';
 }
 
-// Eine prominente Vorhersage-Karte für die Startseite: die nächsten 10
-// Spiele mit Score-Vorhersage, groß und scanbar. Verlinkt auf den vollen
+// Eine prominente Vorhersage-Karte für die Startseite: alle anstehenden
+// Spiele mit Score-Vorhersage, gross und scanbar. Verlinkt auf den vollen
 // Sport-Reiter.
 export function ScorePredictionsStrip({ synth }: { synth: FirmaSynthesis }) {
   const flat: { date: string; fixture: import('@/lib/sport/fetcher').UpcomingFixture; leagueName: string }[] = [];
@@ -26,7 +26,7 @@ export function ScorePredictionsStrip({ synth }: { synth: FirmaSynthesis }) {
   }
   // Sortierung: chronologisch, damit "was kommt zuerst" obenauf liegt.
   flat.sort((a, b) => a.date.localeCompare(b.date) || (a.fixture.time ?? '').localeCompare(b.fixture.time ?? ''));
-  const top = flat.slice(0, 10);
+  const top = flat;
 
   if (top.length === 0) {
     return (

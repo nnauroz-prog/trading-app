@@ -42,8 +42,7 @@ export function LigaSpotlight({ leagues }: Props) {
           quality: computePredictionQualityScore({ fixture: f, recommendation: rec, sampleSize: sample })
         };
       })
-      .sort((a, b) => b.quality.score - a.quality.score)
-      .slice(0, 3);
+      .sort((a, b) => b.quality.score - a.quality.score);
   }, [lf]);
 
   if (active.length === 0) return null;

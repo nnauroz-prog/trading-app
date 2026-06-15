@@ -11,7 +11,7 @@ function fmtTime(time: string | null, date: string): string {
   return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
 }
 
-// Schmaler Banner ganz oben mit den ersten 3 heutigen Spielen — schnell scannen
+// Schmaler Banner ganz oben mit allen heutigen Spielen — schnell scannen
 // statt durch den ganzen Sport-Reiter zu klicken.
 export function SportTodayBanner({ leagues }: { leagues: LeagueFixtures[] }) {
   const flat: UpcomingFixture[] = [];
@@ -30,7 +30,7 @@ export function SportTodayBanner({ leagues }: { leagues: LeagueFixtures[] }) {
       </Link>
     );
   }
-  const first3 = todayFixtures.slice(0, 3);
+  const first3 = todayFixtures;
   return (
     <Link
       href="/sport"
@@ -55,9 +55,6 @@ export function SportTodayBanner({ leagues }: { leagues: LeagueFixtures[] }) {
             )}
           </li>
         ))}
-        {todayFixtures.length > 3 && (
-          <li className="text-[9.5px] text-slate-500">… +{todayFixtures.length - 3} weitere</li>
-        )}
       </ul>
     </Link>
   );

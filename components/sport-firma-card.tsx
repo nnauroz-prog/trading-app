@@ -112,7 +112,7 @@ function FindingBlock({ title, findings }: { title: string; findings: { kind: st
     <div className="space-y-1.5">
       <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-300">{title}</div>
       <ul className="space-y-1">
-        {findings.slice(0, 5).map((f, i) => (
+        {findings.map((f, i) => (
           <li key={`${f.team}-${i}`} className={`border-l-2 ${FINDING_TONE[f.kind] ?? 'border-l-slate-500'} pl-2.5 text-[11.5px] leading-snug text-slate-200`}>
             <span className="font-semibold">{f.headline}</span>{' '}
             <span className="text-[10px] text-slate-500">· {f.league}</span>

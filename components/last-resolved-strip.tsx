@@ -14,8 +14,8 @@ interface Recent {
   resolvedAt: number;
 }
 
-// Streifen mit den letzten 3 ausgewerteten Tipps — beruhigender Beweis,
-// dass die App still arbeitet, auch ohne neue Tipps anzuklicken.
+// Streifen mit den letzten 10 ausgewerteten Tipps — Verlauf zur eigenen
+// Trefferquote, ohne durch das volle Tagebuch klicken zu muessen.
 export function LastResolvedStrip() {
   const [recent, setRecent] = useState<Recent[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -26,7 +26,7 @@ export function LastResolvedStrip() {
       const resolved = log
         .filter((e) => e.outcome !== 'pending')
         .sort((a, b) => (b.resolvedAt ?? 0) - (a.resolvedAt ?? 0))
-        .slice(0, 3)
+        .slice(0, 10)
         .map<Recent>((e) => ({
           id: e.id,
           homeTeam: e.homeTeam,

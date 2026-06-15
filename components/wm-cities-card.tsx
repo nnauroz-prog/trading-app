@@ -16,7 +16,7 @@ export function WmCitiesCard({ todayIso, openingIso = '2026-06-11' }: Props) {
   const daysToOpen = daysBetween(todayIso, openingIso);
   if (daysToOpen > 30 || daysToOpen < -50) return null;
 
-  const cities = fixturesByCity(todayIso).slice(0, 6);
+  const cities = fixturesByCity(todayIso);
   if (cities.length === 0) return null;
 
   return (

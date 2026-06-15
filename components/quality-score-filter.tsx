@@ -85,7 +85,7 @@ export function QualityScoreFilter({ ranked }: Props) {
         </p>
       ) : (
         <ul className="space-y-1">
-          {filtered.slice(0, 10).map((rp) => {
+          {filtered.map((rp) => {
             const { fixture, leagueName, quality } = rp;
             return (
               <li key={fixture.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5">
@@ -99,9 +99,6 @@ export function QualityScoreFilter({ ranked }: Props) {
             );
           })}
         </ul>
-      )}
-      {filtered.length > 10 && (
-        <p className="text-[10px] text-slate-500">Es gibt noch {filtered.length - 10} weitere ≥ {minScore} — feinere Schwelle setzen.</p>
       )}
     </section>
   );

@@ -7,11 +7,8 @@ function fmtDate(iso: string): string {
   return d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' });
 }
 
-// Highlights-Strip am Ende der Sport-Seite: die spannendsten 5 Spiele
-// der Woche aus dem Mix aus sicheren und Vielfalt-Picks.
+// Highlights-Strip am Ende der Sport-Seite: pro Spieltag das Spitzenspiel.
 export function WeekHighlights({ synth }: { synth: FirmaSynthesis }) {
-  // Top-5 nach Konfidenz, aber pro Tag maximal einmal — vermeidet, dass ein
-  // einziger Spieltag den Strip füllt.
   const flat = synth.weekAhead.flatMap((day) => day.fixtures.map((entry) => ({ day, entry })));
   const byDay = new Map<string, typeof flat[number]>();
   for (const x of flat) {
@@ -22,8 +19,7 @@ export function WeekHighlights({ synth }: { synth: FirmaSynthesis }) {
     }
   }
   const highlights = Array.from(byDay.values())
-    .sort((a, b) => (b.entry.fixture.prediction!.pickConfidence) - (a.entry.fixture.prediction!.pickConfidence))
-    .slice(0, 5);
+    .sort((a, b) => (b.entry.fixture.prediction!.pickConfidence) - (a.entry.fixture.prediction!.pickConfidence));
 
   if (highlights.length === 0) return null;
 

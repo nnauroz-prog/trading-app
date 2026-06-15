@@ -17,7 +17,7 @@ function fmtTime(date: string, time: string | null): string {
 // User wählt 2 Picks aus der Topliste und sieht sie nebeneinander.
 // Hilft die Entscheidung „welcher der beiden lohnt sich" sichtbar zu machen.
 export function QualityCompare({ ranked }: Props) {
-  const top = ranked.slice(0, 15);
+  const top = ranked;
   const [leftId, setLeftId] = useState<string>(top[0]?.fixture.id ?? '');
   const [rightId, setRightId] = useState<string>(top[1]?.fixture.id ?? '');
 
