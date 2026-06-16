@@ -50,16 +50,7 @@ export function BestPredictionCard({ ranked, todayIso }: Props) {
   // Bevorzugt das beste heute spielende Match, sonst das beste überhaupt.
   const todayPicks = ranked.filter((r) => r.fixture.date === todayIso);
   const top = todayPicks[0] ?? ranked[0] ?? null;
-  if (!top) {
-    return (
-      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Stärkste Modell-Tendenz</div>
-        <p className="mt-2 text-[12px] leading-snug text-slate-400">
-          Aktuell keine Prognose verfügbar — Spielplan-Daten oder Form-Pool sind leer.
-        </p>
-      </section>
-    );
-  }
+  if (!top) return null;
 
   const { fixture, leagueName, leagueCountry, quality } = top;
   const { recommendation, score, band, bandLabel, parts, warnings } = quality;

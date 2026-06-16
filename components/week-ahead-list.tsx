@@ -22,20 +22,13 @@ function pickToneClass(conf: number): string {
 }
 
 export function WeekAheadList({ days }: { days: WeekAheadDay[] }) {
-  if (days.length === 0) {
-    return (
-      <section className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Diese Woche</h2>
-        <p className="mt-1 text-[12px] leading-snug text-slate-400">Keine Spiele in den nächsten 7 Tagen in den beobachteten Ligen.</p>
-      </section>
-    );
-  }
+  if (days.length === 0) return null;
   const total = days.reduce((s, d) => s + d.fixtures.length, 0);
   return (
     <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Diese Woche · alle Spiele mit Tipp</h2>
-        <span className="text-[10px] text-slate-500">{total} Spiele in den nächsten 7 Tagen</span>
+        <span className="text-[10px] text-slate-500">{total} {total === 1 ? 'Spiel' : 'Spiele'} in den naechsten {days.length} {days.length === 1 ? 'Tag' : 'Tagen'} mit Liga-Spielen</span>
       </div>
       <p className="text-[10.5px] leading-snug text-slate-500">
         Vorhersage = Poisson-Modell auf der letzten Liga-Form. Tipps sind keine Wett-Empfehlung.

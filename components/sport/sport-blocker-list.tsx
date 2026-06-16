@@ -13,10 +13,10 @@ interface Props {
 
 export function SportBlockerList({ topBlockers, missingDataKinds, blockedMarkets, whatWouldUnblock }: Props) {
   return (
-    <section className="space-y-3 rounded-2xl border border-slate-700 bg-slate-900/40 p-4" aria-label="Heute keine Modell-Freigabe">
-      <h2 className="text-base font-bold text-slate-100">Heute keine Modell-Freigabe</h2>
+    <section className="space-y-3 rounded-2xl border border-slate-700 bg-slate-900/40 p-4" aria-label="Heute keine Top-Liga-Modellfreigabe">
+      <h2 className="text-base font-bold text-slate-100">Heute keine Top-Liga-Modellfreigabe</h2>
       <p className="text-[12px] leading-snug text-slate-300">
-        Die Pflichtkriterien wurden heute von keinem Pick erfuellt. Lieber kein Tipp als ein erzwungener.
+        Top-Ligen heute ohne freigegebenen Pick — Pflichtkriterien nicht erfuellt. WM-Tipps siehe oben.
       </p>
 
       {topBlockers.length > 0 && (
