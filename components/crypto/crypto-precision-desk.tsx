@@ -166,7 +166,7 @@ export function CryptoPrecisionDesk({ picks, cryptoStrongCount }: Props) {
 
       {!hero && (
         <section className="space-y-2 rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
-          <h3 className="text-base font-bold text-slate-100">Heute keine Modell-Freigabe</h3>
+          <h3 className="text-base font-bold text-slate-100">Heute keine Krypto-Modell-Freigabe</h3>
           <p className="text-[11.5px] text-slate-300">Pflicht-Kriterien wurden heute von keinem Coin erfuellt. Lieber kein Trade als ein erzwungener.</p>
           {blocker && <p className="text-[10.5px] text-slate-400">Top-Blocker: <span className="text-slate-200">{blocker}</span></p>}
           <p className="text-[10.5px] leading-snug text-slate-500">

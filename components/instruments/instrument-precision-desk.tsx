@@ -117,7 +117,7 @@ export function InstrumentPrecisionDesk({ title, hrefBase, picks }: Props) {
 
       {!hero && (
         <section className="space-y-1.5 rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
-          <h3 className="text-base font-bold text-slate-100">Heute keine Modell-Freigabe</h3>
+          <h3 className="text-base font-bold text-slate-100">Heute keine Aktien-/Rohstoff-Modell-Freigabe</h3>
           <p className="text-[11.5px] text-slate-300">Kein Wert erfuellt heute alle Pflicht-Kriterien — Cash bleibt eine Position.</p>
         </section>
       )}
