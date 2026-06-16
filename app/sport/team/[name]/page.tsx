@@ -8,6 +8,9 @@ import { collectFirmaVotes } from '@/lib/sport/firma/employee-votes';
 import { computeLeagueSeasonStats } from '@/lib/sport/firma/season-stats';
 import { FirmaVotesCard } from '@/components/firma-votes-card';
 import { rankSafeFootballTips } from '@/lib/sport/safe-football-tips';
+import { WM_2026_FIXTURES } from '@/lib/sport/wm-schedule-2026';
+import { predictWmMatch } from '@/lib/sport/wm-match-engine';
+import { WmProPredictionCard } from '@/components/wm-pro-prediction-card';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -29,7 +32,88 @@ export default async function TeamDetailPage({ params }: PageProps) {
 
   const lf = leagues.find((l) => l.last.some((f) => f.homeTeam === team || f.awayTeam === team)
     || l.next.some((f) => f.homeTeam === team || f.awayTeam === team));
-  if (!lf) return notFound();
+
+  if (!lf) {
+    // Liga-Daten fehlen, aber das Team kann eine WM-Mannschaft sein —
+    // zeige die kommenden WM-Spiele dieses Teams statt 404.
+    const wmMatches = WM_2026_FIXTURES
+      .filter((f) => f.homeTeam === team || f.awayTeam === team)
+      .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''));
+    if (wmMatches.length === 0) return notFound();
+    const today = new Date().toISOString().slice(0, 10);
+    const upcomingWm = wmMatches.filter((f) => f.date >= today);
+    const pastWm = wmMatches.filter((f) => f.date < today);
+    return (
+      <main className="mx-auto max-w-3xl space-y-5 p-4 md:p-6">
+        <Link href="/wm" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
+          ← zur WM-Uebersicht
+        </Link>
+        <header className="space-y-1">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">FIFA World Cup 2026</div>
+          <h1 className="text-3xl font-bold tracking-tight text-white">{team}</h1>
+          <p className="text-[11.5px] text-slate-400">
+            Liga-Daten für dieses Team werden aktuell nicht gepflegt (Top-5-Ligen in Sommerpause). Die WM-Termine kommen hier rein.
+          </p>
+        </header>
+        {upcomingWm.length > 0 && (
+          <section className="space-y-2 rounded-2xl border border-emerald-400/40 bg-emerald-950/10 p-4">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
+              Kommende WM-Spiele · {upcomingWm.length}
+            </h2>
+            <ul className="space-y-2">
+              {upcomingWm.map((f) => {
+                const hasTeams = !f.homeTeam.includes('TBD') && !f.awayTeam.includes('TBD');
+                return (
+                  <li key={f.id} className="space-y-1.5 rounded-lg border border-slate-800 bg-slate-950/40 p-2.5">
+                    <div className="grid grid-cols-[auto_1fr_auto] items-baseline gap-2 text-[11.5px]">
+                      <span className="font-mono text-[10px] text-slate-500">
+                        {fmtDate(f.date)}{f.time ? ` · ${f.time}` : ''}
+                      </span>
+                      <span className="text-slate-100">
+                        <span className="font-semibold">{f.homeTeam}</span>
+                        <span className="mx-1 text-slate-500">–</span>
+                        <span className="font-semibold">{f.awayTeam}</span>
+                      </span>
+                      <span className="rounded-md border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-slate-400">
+                        {f.phase}{f.group ? ` ${f.group}` : ''}
+                      </span>
+                    </div>
+                    {hasTeams && (
+                      <WmProPredictionCard
+                        prediction={predictWmMatch({
+                          homeTeam: f.homeTeam,
+                          awayTeam: f.awayTeam,
+                          venue: f.venue,
+                          phase: f.phase
+                        })}
+                        showExtraTime={f.phase !== 'Gruppe'}
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+        {pastWm.length > 0 && (
+          <section className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Vergangene WM-Spiele · {pastWm.length}
+            </h2>
+            <ul className="space-y-1">
+              {pastWm.map((f) => (
+                <li key={f.id} className="grid grid-cols-[auto_1fr_auto] items-baseline gap-2 rounded border border-slate-800 bg-slate-950/40 px-2 py-1.5 text-[11px]">
+                  <span className="font-mono text-[10px] text-slate-500">{fmtDate(f.date)}</span>
+                  <span className="text-slate-200">{f.homeTeam} – {f.awayTeam}</span>
+                  <span className="text-[9.5px] uppercase tracking-wider text-slate-500">{f.phase}{f.group ? ` ${f.group}` : ''}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </main>
+    );
+  }
 
   const form = computeTeamForms([lf]).find((f) => f.team === team) ?? null;
   const allForms = computeTeamForms([lf]);
