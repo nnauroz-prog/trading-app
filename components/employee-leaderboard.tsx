@@ -26,16 +26,7 @@ export function EmployeeLeaderboard({ stats }: Props) {
   const eligible = stats.filter((s) => s.totalVotes >= 15 && s.hitRatePct !== null);
   const sorted = [...eligible].sort((a, b) => (b.hitRatePct ?? 0) - (a.hitRatePct ?? 0) || b.totalVotes - a.totalVotes);
 
-  if (sorted.length === 0) {
-    return (
-      <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Mitarbeiter-Erfolgsquoten</h2>
-        <p className="mt-1 text-[11px] text-slate-400">
-          Noch zu wenig historische Spiele für einen sinnvollen Backtest. Sobald die Saison-Endpoints mehr Daten liefern, erscheinen hier die echten Hit-Rates pro Mitarbeiter:in.
-        </p>
-      </section>
-    );
-  }
+  if (sorted.length === 0) return null;
 
   return (
     <section className="space-y-3 rounded-2xl border-2 border-sky-400/40 bg-slate-900/60 p-4">
