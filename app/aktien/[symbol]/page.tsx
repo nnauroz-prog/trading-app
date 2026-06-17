@@ -21,6 +21,7 @@ import { evaluateStockPersonas } from '@/lib/agents/stock-personas';
 import { PersonaPickStrip } from '@/components/persona-pick-strip';
 import { SuggestedLevelsCard } from '@/components/suggested-levels-card';
 import { PositionSizer } from '@/components/position-sizer';
+import { OptionsscheineBridgeCard } from '@/components/optionsscheine-bridge-card';
 import { computeSafetyScoreHistory } from '@/lib/market/safety-score-history';
 import { SafetyScoreTrend } from '@/components/safety-score-trend';
 import { TradePlanCopy } from '@/components/trade-plan-copy';
@@ -113,6 +114,12 @@ export default async function AktienDetailPage({ params }: PageProps) {
       </header>
 
       <MarketStatusBadges states={[stock.symbol.endsWith('.DE') ? xetraMarketState() : usMarketState()]} />
+
+      <OptionsscheineBridgeCard
+        underlyingName={stock.name}
+        underlyingPrice={quote?.last ?? null}
+        assetClass="aktie"
+      />
 
       {!history ? (
         <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5 text-sm text-slate-400">

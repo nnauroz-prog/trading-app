@@ -1,0 +1,69 @@
+// Optionsscheine-Analyse: ein Wrapper um die existierende
+// analyzeOptionsschein-Logik aus lib/derivatives, der direkt mit den
+// Form-Inputs der /optionsscheine-Page arbeitet — ohne den
+// ParsedInstrument-Umweg aus dem Telegram-Ideen-Pfad.
+
+import { analyzeOptionsschein } from '@/lib/derivatives/optionsschein-risk';
+import type { DerivativeAnalysis, ParsedInstrument } from '@/lib/types/ideas';
+
+export interface OptionsscheinInput {
+  // Pflichtfelder
+  underlyingName: string;        // z. B. "SAP", "Dax", "Apple"
+  underlyingPrice: number;       // aktueller Kurs des Basiswerts
+  strike: number;                // Basispreis
+  direction: 'call' | 'put';
+  // Optional
+  wkn?: string;
+  isin?: string;
+  expiryIso?: string;            // "YYYY-MM-DD" oder "YYYY-MM"
+  knockOut?: boolean;
+  // Marktdaten falls bekannt — werden angezeigt, fliessen aber nicht in
+  // die Risiko-Approximation ein (die nutzt das gleiche Modell wie der
+  // Telegram-Pfad, damit alles konsistent ist).
+  premiumQuoted?: number;        // tatsaechlich am Markt notierter Schein-Preis
+  ratio?: number;                // Bezugsverhaeltnis, default 1
+}
+
+export interface OptionsscheinAnalysis extends DerivativeAnalysis {
+  underlyingName: string;
+  ratio: number;
+  premiumQuoted: number | null;
+  // Tatsaechlicher Hebel aus Marktpreis (wenn vorhanden) — anders als
+  // der Modell-Hebel im DerivativeAnalysis-Block.
+  effectiveLeverage: number | null;
+}
+
+export function analyzeOptionsscheinInput(input: OptionsscheinInput): OptionsscheinAnalysis | null {
+  if (!Number.isFinite(input.underlyingPrice) || input.underlyingPrice <= 0) return null;
+  if (!Number.isFinite(input.strike) || input.strike <= 0) return null;
+  if (!input.underlyingName.trim()) return null;
+
+  const ratio = input.ratio && input.ratio > 0 ? input.ratio : 1;
+  const instrument: ParsedInstrument = {
+    broker: 'Unknown',
+    wkn: input.wkn,
+    isin: input.isin,
+    instrumentType: input.knockOut ? 'knockout' : 'optionsschein',
+    strike: input.strike,
+    expiry: input.expiryIso,
+    direction: input.direction,
+    userIntent: 'considering'
+  };
+
+  const base = analyzeOptionsschein(instrument, input.underlyingPrice);
+  if (!base) return null;
+
+  const premiumQuoted = input.premiumQuoted && input.premiumQuoted > 0 ? input.premiumQuoted : null;
+  const effectiveLeverage =
+    premiumQuoted !== null && base.estimatedDelta !== null
+      ? (base.estimatedDelta * input.underlyingPrice) / (premiumQuoted * ratio)
+      : null;
+
+  return {
+    ...base,
+    underlyingName: input.underlyingName.trim(),
+    ratio,
+    premiumQuoted,
+    effectiveLeverage
+  };
+}

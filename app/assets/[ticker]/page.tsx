@@ -22,6 +22,7 @@ import { InteractiveChart } from '@/components/interactive-chart';
 import { WatchlistToggle } from '@/components/watchlist-toggle';
 import { DataQualityBadge } from '@/components/data-quality-badge';
 import { QuickPositionButton } from '@/components/quick-position-button';
+import { OptionsscheineBridgeCard } from '@/components/optionsscheine-bridge-card';
 import { CoinAlertForm } from '@/components/coin-alert-form';
 import { AssetSafetyCard } from '@/components/asset-safety-card';
 import { AssetTier90Status } from '@/components/asset-tier-90-status';
@@ -301,6 +302,12 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
       {snapshot && (
         <CoinAlertForm coinId={asset.id} symbol={asset.ticker} currentPrice={snapshot.price} />
       )}
+
+      <OptionsscheineBridgeCard
+        underlyingName={asset.name}
+        underlyingPrice={snapshot?.price ?? null}
+        assetClass="krypto"
+      />
 
       {chaseStatus.kind === 'chase' && (
         <section className="rounded-2xl border-2 border-amber-400/50 bg-amber-950/20 p-4">
