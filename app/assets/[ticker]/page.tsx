@@ -23,6 +23,7 @@ import { WatchlistToggle } from '@/components/watchlist-toggle';
 import { DataQualityBadge } from '@/components/data-quality-badge';
 import { QuickPositionButton } from '@/components/quick-position-button';
 import { OptionsscheineBridgeCard } from '@/components/optionsscheine-bridge-card';
+import { OptionsscheineSuggestions } from '@/components/optionsscheine-suggestions';
 import { CoinAlertForm } from '@/components/coin-alert-form';
 import { AssetSafetyCard } from '@/components/asset-safety-card';
 import { AssetTier90Status } from '@/components/asset-tier-90-status';
@@ -287,10 +288,19 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
 
       {candidate && masterSignal && backtestSummary && (() => {
         const safety = scoreCandidateSafety(candidate, masterSignal, backtestSummary);
+        const buyQualified = safety.grade === 'A' || safety.grade === 'B';
         return (
           <>
             <AssetSafetyCard symbol={asset.ticker} safety={safety} />
             <CoinOverridePanel coinId={asset.id} symbol={asset.ticker} baseSafetyScore={safety.score} currentPrice={snapshot?.price ?? null} />
+            {buyQualified && snapshot && (
+              <OptionsscheineSuggestions
+                underlyingName={asset.name}
+                underlyingPrice={snapshot.price}
+                direction="call"
+                assetClass="krypto"
+              />
+            )}
           </>
         );
       })()}

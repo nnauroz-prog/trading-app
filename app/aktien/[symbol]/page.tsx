@@ -22,6 +22,7 @@ import { PersonaPickStrip } from '@/components/persona-pick-strip';
 import { SuggestedLevelsCard } from '@/components/suggested-levels-card';
 import { PositionSizer } from '@/components/position-sizer';
 import { OptionsscheineBridgeCard } from '@/components/optionsscheine-bridge-card';
+import { OptionsscheineSuggestions } from '@/components/optionsscheine-suggestions';
 import { computeSafetyScoreHistory } from '@/lib/market/safety-score-history';
 import { SafetyScoreTrend } from '@/components/safety-score-trend';
 import { TradePlanCopy } from '@/components/trade-plan-copy';
@@ -132,6 +133,15 @@ export default async function AktienDetailPage({ params }: PageProps) {
           )}
 
           {safety && <InstrumentSafetyCard assessment={safety} name={stock.name} />}
+
+          {safety && quote && (safety.grade === 'A' || safety.grade === 'B') && (
+            <OptionsscheineSuggestions
+              underlyingName={stock.name}
+              underlyingPrice={quote.last}
+              direction="call"
+              assetClass="aktie"
+            />
+          )}
 
           {safety && quote && atr14 !== null && (
             <SuggestedLevelsCard

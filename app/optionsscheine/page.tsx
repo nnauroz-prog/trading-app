@@ -9,11 +9,19 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  searchParams: Promise<{ asset?: string; price?: string; klasse?: string }>;
+  searchParams: Promise<{
+    asset?: string;
+    price?: string;
+    klasse?: string;
+    strike?: string;
+    expiry?: string;
+    direction?: string;
+  }>;
 }
 
 export default async function OptionsscheinePage({ searchParams }: PageProps) {
-  const { asset, price, klasse } = await searchParams;
+  const { asset, price, klasse, strike, expiry, direction } = await searchParams;
+  const initialDirection: 'call' | 'put' = direction === 'put' ? 'put' : 'call';
   const klasseBadge = klasse === 'krypto' ? 'Krypto' : klasse === 'aktie' ? 'Aktie' : null;
 
   return (
@@ -29,11 +37,14 @@ export default async function OptionsscheinePage({ searchParams }: PageProps) {
           Eingabe-basiertes Analyse-Tool fuer Hebelprodukte auf Krypto und Aktien: Strike, Verfall, Basiswert — und die App berechnet Moneyness, Delta-Schaetzung, Theta-Druck, Hebel und Break-even. Markt-Premium und Bezugsverhaeltnis sind optional und schaerfen die Hebel-Anzeige. Keine Kauf-Empfehlung, kein Anlageratschlag.
         </p>
         {asset && (
-          <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-[10.5px] text-emerald-100">
-            <span className="font-semibold">Basiswert vorgefuellt:</span>
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-[10.5px] text-emerald-100">
+            <span className="font-semibold">Vorgefuellt:</span>
             <span className="font-mono">{asset}</span>
             {klasseBadge && <span className="rounded border border-emerald-400/30 px-1.5 py-0.5 text-[9px] uppercase tracking-wider">{klasseBadge}</span>}
             {price && <span className="font-mono text-emerald-200/80">@ {price}</span>}
+            {strike && <span className="font-mono text-emerald-200/80">· Strike {strike}</span>}
+            {expiry && <span className="font-mono text-emerald-200/80">· Verfall {expiry}</span>}
+            {direction && <span className="rounded border border-emerald-400/30 px-1.5 py-0.5 text-[9px] uppercase tracking-wider">{initialDirection}</span>}
           </div>
         )}
       </header>
@@ -42,7 +53,13 @@ export default async function OptionsscheinePage({ searchParams }: PageProps) {
         <span className="font-semibold text-amber-300">Wichtig:</span> Optionsscheine koennen ihren gesamten Wert verlieren. Knock-Out-Zertifikate verlieren bei Erreichen der Knock-Out-Schwelle sofort den vollen Einsatz, auch unter Tag. Diese Seite ersetzt keine Wertpapier-Beratung. Krypto-Hebelprodukte sind in Deutschland besonders restriktiv reguliert.
       </section>
 
-      <OptionsscheineAnalyzer defaultUnderlyingName={asset ?? ''} defaultUnderlyingPrice={price ?? ''} />
+      <OptionsscheineAnalyzer
+        defaultUnderlyingName={asset ?? ''}
+        defaultUnderlyingPrice={price ?? ''}
+        defaultStrike={strike ?? ''}
+        defaultExpiryIso={expiry ?? ''}
+        defaultDirection={initialDirection}
+      />
       <OptionsscheineWatchlistList />
     </main>
   );

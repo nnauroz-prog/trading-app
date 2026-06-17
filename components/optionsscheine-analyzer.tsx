@@ -43,14 +43,23 @@ function fmtPct(n: number | null | undefined, withSign = true): string {
 interface OptionsscheineAnalyzerProps {
   defaultUnderlyingName?: string;
   defaultUnderlyingPrice?: string;
+  defaultStrike?: string;
+  defaultExpiryIso?: string;
+  defaultDirection?: 'call' | 'put';
 }
 
-export function OptionsscheineAnalyzer({ defaultUnderlyingName = '', defaultUnderlyingPrice = '' }: OptionsscheineAnalyzerProps = {}) {
+export function OptionsscheineAnalyzer({
+  defaultUnderlyingName = '',
+  defaultUnderlyingPrice = '',
+  defaultStrike = '',
+  defaultExpiryIso = '',
+  defaultDirection = 'call'
+}: OptionsscheineAnalyzerProps = {}) {
   const [underlyingName, setUnderlyingName] = useState(defaultUnderlyingName);
   const [underlyingPrice, setUnderlyingPrice] = useState(defaultUnderlyingPrice);
-  const [strike, setStrike] = useState('');
-  const [direction, setDirection] = useState<'call' | 'put'>('call');
-  const [expiryIso, setExpiryIso] = useState('');
+  const [strike, setStrike] = useState(defaultStrike);
+  const [direction, setDirection] = useState<'call' | 'put'>(defaultDirection);
+  const [expiryIso, setExpiryIso] = useState(defaultExpiryIso);
   const [knockOut, setKnockOut] = useState(false);
   const [wkn, setWkn] = useState('');
   const [premiumQuoted, setPremiumQuoted] = useState('');
