@@ -171,8 +171,9 @@ export default async function HeuteSicherPage() {
 }
 
 function CryptoRow({ entry }: { entry: { symbol: string; safety: SafetyAssessment } }) {
+  const osParams = new URLSearchParams({ asset: entry.symbol, klasse: 'krypto', direction: 'call' });
   return (
-    <li>
+    <li className="space-y-1">
       <Link href={`/assets/${entry.symbol.toLowerCase()}`} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-3 py-1.5 text-[11.5px] transition hover:brightness-110">
         <span className="min-w-0">
           <span className="block truncate font-semibold text-slate-100">{entry.symbol}</span>
@@ -186,13 +187,19 @@ function CryptoRow({ entry }: { entry: { symbol: string; safety: SafetyAssessmen
           {entry.safety.grade} · {entry.safety.score}
         </span>
       </Link>
+      <div className="ml-3 flex items-center gap-2 text-[9.5px]">
+        <Link href={`/optionsscheine?${osParams.toString()}`} className="text-emerald-300/80 hover:text-emerald-200">
+          → Optionsschein analysieren
+        </Link>
+      </div>
     </li>
   );
 }
 
 function StockRow({ entry }: { entry: { symbol: string; name: string; group: string; assessment: { grade: string; score: number; passedHard: number; totalHard: number } } }) {
+  const osParams = new URLSearchParams({ asset: entry.name, klasse: 'aktie', direction: 'call' });
   return (
-    <li>
+    <li className="space-y-1">
       <Link href={`/aktien/${encodeURIComponent(entry.symbol)}`} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-3 py-1.5 text-[11.5px] transition hover:brightness-110">
         <span className="min-w-0">
           <span className="block truncate font-semibold text-slate-100">{entry.name}</span>
@@ -206,6 +213,11 @@ function StockRow({ entry }: { entry: { symbol: string; name: string; group: str
           {entry.assessment.grade} · {entry.assessment.score}
         </span>
       </Link>
+      <div className="ml-3 flex items-center gap-2 text-[9.5px]">
+        <Link href={`/optionsscheine?${osParams.toString()}`} className="text-emerald-300/80 hover:text-emerald-200">
+          → Optionsschein analysieren
+        </Link>
+      </div>
     </li>
   );
 }

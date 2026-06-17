@@ -6,6 +6,8 @@
 
 import Link from 'next/link';
 import { suggestOptionsscheine } from '@/lib/optionsscheine/suggest';
+import { OptionsscheineDeepAnalysis } from '@/components/optionsscheine-deep-analysis';
+import { OptionsscheineKnockOutSuggestions } from '@/components/optionsscheine-knockout-suggestions';
 
 interface Props {
   underlyingName: string;
@@ -134,6 +136,21 @@ export function OptionsscheineSuggestions({ underlyingName, underlyingPrice, dir
       <p className="text-[9.5px] leading-snug text-slate-500">
         Modell-Schaetzung mit Standard-Vola 30 %, Bezugsverhaeltnis {assetClass === 'krypto' ? '100' : '10'}:1. Echter Schein-Hebel beim Emittenten kann abweichen. Optionsscheine koennen total verlieren — Position max. 1-3 % des Kapitals.
       </p>
+
+      <OptionsscheineDeepAnalysis
+        underlyingName={underlyingName}
+        underlyingPrice={underlyingPrice}
+        suggestions={suggestions}
+        assetClass={assetClass}
+        currency={assetClass === 'krypto' ? 'USD' : 'EUR'}
+      />
+
+      <OptionsscheineKnockOutSuggestions
+        underlyingName={underlyingName}
+        underlyingPrice={underlyingPrice}
+        direction={direction}
+        assetClass={assetClass}
+      />
     </section>
   );
 }
