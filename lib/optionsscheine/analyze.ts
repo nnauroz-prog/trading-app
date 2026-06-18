@@ -22,6 +22,10 @@ export interface OptionsscheinInput {
   // Telegram-Pfad, damit alles konsistent ist).
   premiumQuoted?: number;        // tatsaechlich am Markt notierter Schein-Preis
   ratio?: number;                // Bezugsverhaeltnis, default 1
+  // Annualisierte Volatilitaet als Dezimalwert (z.B. 0.28). Wenn nicht
+  // gesetzt: Default 0.30 (Standard-Annahme). Wenn aus historischen
+  // Daten berechnet, wird die Modell-Schaetzung deutlich praeziser.
+  sigma?: number;
 }
 
 export interface OptionsscheinAnalysis extends DerivativeAnalysis {
@@ -31,6 +35,9 @@ export interface OptionsscheinAnalysis extends DerivativeAnalysis {
   // Tatsaechlicher Hebel aus Marktpreis (wenn vorhanden) — anders als
   // der Modell-Hebel im DerivativeAnalysis-Block.
   effectiveLeverage: number | null;
+  // Die Vola, die ins Premium-Modell eingeflossen ist. Macht in der UI
+  // sichtbar, ob historische oder Default-Vola benutzt wurde.
+  sigmaUsed: number;
 }
 
 export function analyzeOptionsscheinInput(input: OptionsscheinInput): OptionsscheinAnalysis | null {
@@ -39,6 +46,9 @@ export function analyzeOptionsscheinInput(input: OptionsscheinInput): Optionssch
   if (!input.underlyingName.trim()) return null;
 
   const ratio = input.ratio && input.ratio > 0 ? input.ratio : 1;
+  const sigmaUsed = Number.isFinite(input.sigma) && (input.sigma ?? 0) > 0 && (input.sigma ?? 0) <= 2
+    ? (input.sigma as number)
+    : 0.30;
   const instrument: ParsedInstrument = {
     broker: 'Unknown',
     wkn: input.wkn,
@@ -50,7 +60,7 @@ export function analyzeOptionsscheinInput(input: OptionsscheinInput): Optionssch
     userIntent: 'considering'
   };
 
-  const base = analyzeOptionsschein(instrument, input.underlyingPrice);
+  const base = analyzeOptionsschein(instrument, input.underlyingPrice, sigmaUsed);
   if (!base) return null;
 
   const premiumQuoted = input.premiumQuoted && input.premiumQuoted > 0 ? input.premiumQuoted : null;
@@ -64,6 +74,7 @@ export function analyzeOptionsscheinInput(input: OptionsscheinInput): Optionssch
     underlyingName: input.underlyingName.trim(),
     ratio,
     premiumQuoted,
-    effectiveLeverage
+    effectiveLeverage,
+    sigmaUsed
   };
 }

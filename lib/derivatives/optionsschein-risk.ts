@@ -26,14 +26,17 @@ function estimateDelta(distancePct: number, daysToExpiry: number | null, directi
   return 0.05 + 0.05 * ttmFactor;
 }
 
-function approximatePremium(underlyingPrice: number, strike: number, daysToExpiry: number | null, direction: 'call' | 'put' = 'call'): number {
+function approximatePremium(underlyingPrice: number, strike: number, daysToExpiry: number | null, direction: 'call' | 'put' = 'call', sigma: number = 0.30): number {
   const intrinsic = Math.max(0, direction === 'call' ? underlyingPrice - strike : strike - underlyingPrice);
   if (daysToExpiry === null || daysToExpiry <= 0) return Math.max(0.01, intrinsic);
   const ttmYears = daysToExpiry / 365;
   const distPct = Math.abs((underlyingPrice - strike) / underlyingPrice);
-  const sigma = 0.30;
   const timeValue = underlyingPrice * sigma * Math.sqrt(ttmYears) * Math.exp(-2 * distPct);
   return Math.max(0.01, intrinsic + timeValue);
+}
+
+export function approximatePremiumPublic(underlyingPrice: number, strike: number, daysToExpiry: number | null, direction: 'call' | 'put' = 'call', sigma: number = 0.30): number {
+  return approximatePremium(underlyingPrice, strike, daysToExpiry, direction, sigma);
 }
 
 function calculateBreakeven(underlyingPrice: number, strike: number, premium: number, direction: 'call' | 'put' = 'call'): number {
@@ -70,7 +73,8 @@ function beginnerSuitable(risk: RiskLevel): boolean {
 
 export function analyzeOptionsschein(
   instrument: ParsedInstrument,
-  underlyingPrice: number
+  underlyingPrice: number,
+  sigma: number = 0.30
 ): DerivativeAnalysis | null {
   if (instrument.instrumentType !== 'optionsschein' && instrument.instrumentType !== 'knockout') {
     return null;
@@ -84,7 +88,7 @@ export function analyzeOptionsschein(
   const riskClass = classifyRisk(daysToExpiry, moneyness.distancePct, direction);
 
   const estimatedDelta = estimateDelta(moneyness.distancePct, daysToExpiry, direction);
-  const approxPremium = approximatePremium(underlyingPrice, instrument.strike, daysToExpiry, direction);
+  const approxPremium = approximatePremium(underlyingPrice, instrument.strike, daysToExpiry, direction, sigma);
   const approxBreakeven = calculateBreakeven(underlyingPrice, instrument.strike, approxPremium, direction);
   const breakevenMovePct = ((approxBreakeven - underlyingPrice) / underlyingPrice) * 100;
   const estimatedLeverage = approxPremium > 0 ? (estimatedDelta * underlyingPrice) / approxPremium : null;

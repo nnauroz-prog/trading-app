@@ -131,6 +131,46 @@ describe('suggestOptionsscheine', () => {
     expect(['Hohes Risiko', 'Sehr hohes Risiko']).toContain(high);
   });
 
+  it('sigma fliesst in die Analyse ein und wird in sigmaUsed zurueckgegeben', () => {
+    const sLow = suggestOptionsscheine({
+      underlyingName: 'AAPL', underlyingPrice: 200, direction: 'call', assetClass: 'aktie', sigma: 0.15
+    });
+    const sHigh = suggestOptionsscheine({
+      underlyingName: 'AAPL', underlyingPrice: 200, direction: 'call', assetClass: 'aktie', sigma: 0.55
+    });
+    expect(sLow[0].analysis.sigmaUsed).toBeCloseTo(0.15, 5);
+    expect(sHigh[0].analysis.sigmaUsed).toBeCloseTo(0.55, 5);
+  });
+
+  it('hoehere sigma fuehrt zu hoeherem Modell-Premium (Break-even-Move groesser)', () => {
+    const sLow = suggestOptionsscheine({
+      underlyingName: 'AAPL', underlyingPrice: 200, direction: 'call', assetClass: 'aktie', sigma: 0.15
+    }).find((x) => x.risk === 'mittel')!;
+    const sHigh = suggestOptionsscheine({
+      underlyingName: 'AAPL', underlyingPrice: 200, direction: 'call', assetClass: 'aktie', sigma: 0.55
+    }).find((x) => x.risk === 'mittel')!;
+    // Hoehere Vola -> teurerer ATM-Schein -> Break-even-Move groesser
+    expect(Math.abs(sHigh.analysis.breakevenMovePct ?? 0)).toBeGreaterThan(Math.abs(sLow.analysis.breakevenMovePct ?? 0));
+  });
+
+  it('Default ist 0.30, wenn keine sigma uebergeben wird', () => {
+    const s = suggestOptionsscheine({
+      underlyingName: 'AAPL', underlyingPrice: 200, direction: 'call', assetClass: 'aktie'
+    });
+    expect(s[0].analysis.sigmaUsed).toBeCloseTo(0.30, 5);
+  });
+
+  it('ungueltige sigma (NaN, negativ, sehr gross) faellt auf Default zurueck', () => {
+    const sNeg = suggestOptionsscheine({
+      underlyingName: 'AAPL', underlyingPrice: 200, direction: 'call', assetClass: 'aktie', sigma: -0.2
+    });
+    const sLarge = suggestOptionsscheine({
+      underlyingName: 'AAPL', underlyingPrice: 200, direction: 'call', assetClass: 'aktie', sigma: 5
+    });
+    expect(sNeg[0].analysis.sigmaUsed).toBeCloseTo(0.30, 5);
+    expect(sLarge[0].analysis.sigmaUsed).toBeCloseTo(0.30, 5);
+  });
+
   it('Hoch-Risiko hat den kuerzesten Kapitaleinsatz (niedrigster Break-even-Move-Betrag)', () => {
     const s = suggestOptionsscheine({
       underlyingName: 'AAPL',

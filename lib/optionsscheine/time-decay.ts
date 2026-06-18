@@ -24,12 +24,11 @@ function daysBetween(now: Date, futureIso: string): number | null {
   return Math.round(diffMs / (1000 * 60 * 60 * 24));
 }
 
-function approxPremium(underlyingPrice: number, strike: number, daysToExpiry: number | null, direction: 'call' | 'put'): number {
+function approxPremium(underlyingPrice: number, strike: number, daysToExpiry: number | null, direction: 'call' | 'put', sigma: number = 0.30): number {
   const intrinsic = Math.max(0, direction === 'call' ? underlyingPrice - strike : strike - underlyingPrice);
   if (daysToExpiry === null || daysToExpiry <= 0) return Math.max(0.01, intrinsic);
   const ttmYears = daysToExpiry / 365;
   const distPct = Math.abs((underlyingPrice - strike) / underlyingPrice);
-  const sigma = 0.30;
   const timeValue = underlyingPrice * sigma * Math.sqrt(ttmYears) * Math.exp(-2 * distPct);
   return Math.max(0.01, intrinsic + timeValue);
 }
@@ -38,13 +37,14 @@ export function buildTimeDecay(s: OptionsscheinSuggestion, today: Date = new Dat
   const totalDays = daysBetween(today, s.expiryIso);
   if (totalDays === null || totalDays <= 0) return [];
   const ratio = s.analysis.ratio > 0 ? s.analysis.ratio : 1;
-  const todayPremium = approxPremium(s.analysis.underlyingPrice, s.strike, totalDays, s.direction) / ratio;
+  const sigma = s.analysis.sigmaUsed;
+  const todayPremium = approxPremium(s.analysis.underlyingPrice, s.strike, totalDays, s.direction, sigma) / ratio;
 
   return STEPS
     .filter((d) => d < totalDays)   // keine Simulation ueber den Verfall hinaus
     .map<TimeDecayRow>((d) => {
       const remaining = totalDays - d;
-      const premium = approxPremium(s.analysis.underlyingPrice, s.strike, remaining, s.direction) / ratio;
+      const premium = approxPremium(s.analysis.underlyingPrice, s.strike, remaining, s.direction, sigma) / ratio;
       const premiumDeltaPct = todayPremium > 0 ? ((premium - todayPremium) / todayPremium) * 100 : 0;
       return { days: d, premium, premiumDeltaPct };
     });

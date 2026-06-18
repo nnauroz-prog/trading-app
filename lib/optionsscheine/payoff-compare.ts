@@ -33,12 +33,11 @@ function daysBetween(now: Date, futureIso: string): number | null {
   return Math.round(diffMs / (1000 * 60 * 60 * 24));
 }
 
-function approxPremium(underlyingPrice: number, strike: number, daysToExpiry: number | null, direction: 'call' | 'put'): number {
+function approxPremium(underlyingPrice: number, strike: number, daysToExpiry: number | null, direction: 'call' | 'put', sigma: number = 0.30): number {
   const intrinsic = Math.max(0, direction === 'call' ? underlyingPrice - strike : strike - underlyingPrice);
   if (daysToExpiry === null || daysToExpiry <= 0) return Math.max(0.01, intrinsic);
   const ttmYears = daysToExpiry / 365;
   const distPct = Math.abs((underlyingPrice - strike) / underlyingPrice);
-  const sigma = 0.30;
   const timeValue = underlyingPrice * sigma * Math.sqrt(ttmYears) * Math.exp(-2 * distPct);
   return Math.max(0.01, intrinsic + timeValue);
 }
@@ -47,10 +46,12 @@ export function buildPayoffCompare({ underlyingPrice, suggestions, today = new D
   if (!Number.isFinite(underlyingPrice) || underlyingPrice <= 0 || suggestions.length === 0) return [];
 
   // Heutiges Premium pro Schein (vor ratio-Teilung) als Baseline.
+  // Pro Vorschlag wird sigmaUsed aus der Analyse uebernommen — damit ist
+  // das Compare konsistent zur Analyzer-Anzeige.
   const baseline: Record<string, number> = {};
   for (const s of suggestions) {
     const days = daysBetween(today, s.expiryIso);
-    baseline[s.risk] = approxPremium(underlyingPrice, s.strike, days, s.direction);
+    baseline[s.risk] = approxPremium(underlyingPrice, s.strike, days, s.direction, s.analysis.sigmaUsed);
   }
 
   return STEPS.map<PayoffRow>((step) => {
@@ -59,7 +60,7 @@ export function buildPayoffCompare({ underlyingPrice, suggestions, today = new D
     const schein: Record<string, number> = {};
     for (const s of suggestions) {
       const days = daysBetween(today, s.expiryIso);
-      const scenarioPremium = approxPremium(underlyingScenario, s.strike, days, s.direction);
+      const scenarioPremium = approxPremium(underlyingScenario, s.strike, days, s.direction, s.analysis.sigmaUsed);
       const base = baseline[s.risk];
       schein[s.risk] = base > 0 ? ((scenarioPremium - base) / base) * 100 : 0;
     }

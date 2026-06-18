@@ -29,6 +29,9 @@ interface SuggestInput {
   // numbers" der Groesse des Kurses.
   assetClass?: 'aktie' | 'krypto';
   today?: Date;
+  // Annualisierte Vola als Dezimalwert. Default 0.30. Sollte aus
+  // historischen Daten kommen, damit der Modell-Hebel realistisch ist.
+  sigma?: number;
 }
 
 const PROFILES: Array<{
@@ -117,7 +120,8 @@ export function suggestOptionsscheine(input: SuggestInput): OptionsscheinSuggest
       strike,
       direction,
       expiryIso,
-      ratio: assetClass === 'krypto' ? 100 : 10
+      ratio: assetClass === 'krypto' ? 100 : 10,
+      sigma: input.sigma
     });
 
     if (!analysis) return null;

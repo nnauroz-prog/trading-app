@@ -14,6 +14,8 @@ export interface ScenarioInput {
   // Szenario-Veraenderung als prozentualen Schein-Hebel zeigen, sonst
   // nur als geschaetzter Schein-Wert.
   premiumQuoted: number | null;
+  // Annualisierte Vola, Default 0.30.
+  sigma?: number;
 }
 
 export interface Scenario {
@@ -36,14 +38,13 @@ function daysBetween(now: Date, futureIso: string): number | null {
   return Math.round(diffMs / (1000 * 60 * 60 * 24));
 }
 
-function approxPremiumAt(underlyingPrice: number, strike: number, daysToExpiry: number | null, direction: 'call' | 'put'): { premium: number; intrinsic: number } {
+function approxPremiumAt(underlyingPrice: number, strike: number, daysToExpiry: number | null, direction: 'call' | 'put', sigma: number = 0.30): { premium: number; intrinsic: number } {
   const intrinsic = Math.max(0, direction === 'call' ? underlyingPrice - strike : strike - underlyingPrice);
   if (daysToExpiry === null || daysToExpiry <= 0) {
     return { premium: Math.max(0.01, intrinsic), intrinsic };
   }
   const ttmYears = daysToExpiry / 365;
   const distPct = Math.abs((underlyingPrice - strike) / underlyingPrice);
-  const sigma = 0.30;
   const timeValue = underlyingPrice * sigma * Math.sqrt(ttmYears) * Math.exp(-2 * distPct);
   return { premium: Math.max(0.01, intrinsic + timeValue), intrinsic };
 }
@@ -53,15 +54,16 @@ export function buildScenarios(input: ScenarioInput, now: Date = new Date()): Sc
   if (!Number.isFinite(input.strike) || input.strike <= 0) return [];
   const daysToExpiry = input.expiryIso ? daysBetween(now, input.expiryIso) : null;
   const ratio = input.ratio > 0 ? input.ratio : 1;
+  const sigma = input.sigma && input.sigma > 0 && input.sigma <= 2 ? input.sigma : 0.30;
 
   // Heutiger Premium-Wert (pro Schein, also bereits durch ratio geteilt).
-  const today = approxPremiumAt(input.underlyingPrice, input.strike, daysToExpiry, input.direction);
+  const today = approxPremiumAt(input.underlyingPrice, input.strike, daysToExpiry, input.direction, sigma);
   const todayPremiumPerScheine = today.premium / ratio;
 
   return STEPS.map<Scenario>((step) => {
     const factor = 1 + step / 100;
     const underlyingPriceScenario = input.underlyingPrice * factor;
-    const scenario = approxPremiumAt(underlyingPriceScenario, input.strike, daysToExpiry, input.direction);
+    const scenario = approxPremiumAt(underlyingPriceScenario, input.strike, daysToExpiry, input.direction, sigma);
     const premiumPerScheine = scenario.premium / ratio;
 
     // Wenn der User einen Markt-Premium angegeben hat, verschieben wir

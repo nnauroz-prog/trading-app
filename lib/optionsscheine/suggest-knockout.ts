@@ -28,6 +28,8 @@ interface SuggestKnockOutInput {
   underlyingPrice: number;
   direction?: 'call' | 'put';
   assetClass?: 'aktie' | 'krypto';
+  // Annualisierte Vola als Dezimalwert. Default 0.30.
+  sigma?: number;
 }
 
 const KO_PROFILES: Array<{
@@ -91,7 +93,8 @@ export function suggestKnockOuts(input: SuggestKnockOutInput): KnockOutSuggestio
       strike,
       direction,
       knockOut: true,
-      ratio: assetClass === 'krypto' ? 100 : 10
+      ratio: assetClass === 'krypto' ? 100 : 10,
+      sigma: input.sigma
     });
 
     if (!analysis) return null;

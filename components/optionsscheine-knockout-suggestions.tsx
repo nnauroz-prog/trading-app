@@ -12,6 +12,7 @@ interface Props {
   underlyingPrice: number;
   direction?: 'call' | 'put';
   assetClass: 'aktie' | 'krypto';
+  sigma?: number;
 }
 
 const RISK_TONE = {
@@ -47,8 +48,8 @@ function fmtPrice(n: number, assetClass: 'aktie' | 'krypto'): string {
   return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export function OptionsscheineKnockOutSuggestions({ underlyingName, underlyingPrice, direction = 'call', assetClass }: Props) {
-  const suggestions = suggestKnockOuts({ underlyingName, underlyingPrice, direction, assetClass });
+export function OptionsscheineKnockOutSuggestions({ underlyingName, underlyingPrice, direction = 'call', assetClass, sigma }: Props) {
+  const suggestions = suggestKnockOuts({ underlyingName, underlyingPrice, direction, assetClass, sigma });
   if (suggestions.length === 0) return null;
 
   const directionLabel = direction === 'call' ? 'Long' : 'Short';

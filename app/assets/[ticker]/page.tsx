@@ -24,6 +24,7 @@ import { DataQualityBadge } from '@/components/data-quality-badge';
 import { QuickPositionButton } from '@/components/quick-position-button';
 import { OptionsscheineBridgeCard } from '@/components/optionsscheine-bridge-card';
 import { OptionsscheineSuggestions } from '@/components/optionsscheine-suggestions';
+import { realizedVolCrypto } from '@/lib/optionsscheine/volatility';
 import { CoinAlertForm } from '@/components/coin-alert-form';
 import { AssetSafetyCard } from '@/components/asset-safety-card';
 import { AssetTier90Status } from '@/components/asset-tier-90-status';
@@ -299,6 +300,7 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
                 underlyingPrice={snapshot.price}
                 direction="call"
                 assetClass="krypto"
+                sigma={dailyCandles ? (realizedVolCrypto(dailyCandles.map((c) => c.close)) ?? undefined) : undefined}
               />
             )}
           </>

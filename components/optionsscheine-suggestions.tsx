@@ -8,12 +8,16 @@ import Link from 'next/link';
 import { suggestOptionsscheine } from '@/lib/optionsscheine/suggest';
 import { OptionsscheineDeepAnalysis } from '@/components/optionsscheine-deep-analysis';
 import { OptionsscheineKnockOutSuggestions } from '@/components/optionsscheine-knockout-suggestions';
+import { OptionsscheineTradePlanCopy } from '@/components/optionsscheine-trade-plan-copy';
 
 interface Props {
   underlyingName: string;
   underlyingPrice: number;
   direction?: 'call' | 'put';   // Default: 'call' (App hat zum KAUFEN empfohlen)
   assetClass: 'aktie' | 'krypto';
+  // Annualisierte Vola aus historischen Daten. Wenn vorhanden, ersetzt
+  // sie den 30 %-Default im Modell und wird im UI ausgewiesen.
+  sigma?: number;
 }
 
 const RISK_TONE = {
@@ -60,23 +64,32 @@ function fmtPct(n: number | null | undefined): string {
   return `${n >= 0 ? '+' : ''}${n.toFixed(1)} %`;
 }
 
-export function OptionsscheineSuggestions({ underlyingName, underlyingPrice, direction = 'call', assetClass }: Props) {
-  const suggestions = suggestOptionsscheine({ underlyingName, underlyingPrice, direction, assetClass });
+export function OptionsscheineSuggestions({ underlyingName, underlyingPrice, direction = 'call', assetClass, sigma }: Props) {
+  const suggestions = suggestOptionsscheine({ underlyingName, underlyingPrice, direction, assetClass, sigma });
   if (suggestions.length === 0) return null;
 
   const directionLabel = direction === 'call' ? 'Call' : 'Put';
+  const sigmaPct = sigma ? Math.round(sigma * 100) : null;
 
   return (
     <section className="space-y-3 rounded-2xl border-2 border-emerald-400/40 bg-slate-900/60 p-4">
       <header className="space-y-1">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300">
-          Optionsschein-Vorschlaege ({directionLabel} auf {underlyingName})
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300">
+            Optionsschein-Vorschlaege ({directionLabel} auf {underlyingName})
+          </div>
+          {sigmaPct !== null && (
+            <span className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-[9.5px] font-mono text-emerald-200">
+              σ {sigmaPct} % p.a.
+            </span>
+          )}
         </div>
         <h3 className="text-[13.5px] font-bold tracking-tight text-white">
           Drei konkrete Setups — niedrig / mittel / hoch Risiko
         </h3>
         <p className="text-[10.5px] leading-snug text-slate-400">
           App hat <span className="font-semibold text-emerald-200">{underlyingName}</span> zum Kauf qualifiziert. Wer statt der Aktie selbst mit Hebel arbeiten will, findet hier drei vorgerechnete Setups mit Strike und Verfall. Bei deinem Broker (Trade Republic, Scalable, …) den WKN mit diesen Parametern suchen — den exakten Schein listet die App nicht, weil keine Live-Daten der Emittenten verfuegbar sind.
+          {sigmaPct !== null && <> Modell-Vola: <span className="font-semibold text-emerald-200">{sigmaPct} % p.a.</span> aus den letzten Handelstagen — nicht der Standard-30-%-Default.</>}
         </p>
       </header>
 
@@ -133,8 +146,15 @@ export function OptionsscheineSuggestions({ underlyingName, underlyingPrice, dir
         })}
       </div>
 
+      <OptionsscheineTradePlanCopy
+        underlyingName={underlyingName}
+        underlyingPrice={underlyingPrice}
+        suggestions={suggestions}
+        assetClass={assetClass}
+      />
+
       <p className="text-[9.5px] leading-snug text-slate-500">
-        Modell-Schaetzung mit Standard-Vola 30 %, Bezugsverhaeltnis {assetClass === 'krypto' ? '100' : '10'}:1. Echter Schein-Hebel beim Emittenten kann abweichen. Optionsscheine koennen total verlieren — Position max. 1-3 % des Kapitals.
+        Bezugsverhaeltnis {assetClass === 'krypto' ? '100' : '10'}:1. Echter Schein-Hebel beim Emittenten kann abweichen. Optionsscheine koennen total verlieren — Position max. 1-3 % des Kapitals.
       </p>
 
       <OptionsscheineDeepAnalysis
@@ -150,6 +170,7 @@ export function OptionsscheineSuggestions({ underlyingName, underlyingPrice, dir
         underlyingPrice={underlyingPrice}
         direction={direction}
         assetClass={assetClass}
+        sigma={sigma}
       />
     </section>
   );
