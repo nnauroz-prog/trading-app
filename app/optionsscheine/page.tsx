@@ -16,12 +16,14 @@ interface PageProps {
     strike?: string;
     expiry?: string;
     direction?: string;
+    sigma?: string;
   }>;
 }
 
 export default async function OptionsscheinePage({ searchParams }: PageProps) {
-  const { asset, price, klasse, strike, expiry, direction } = await searchParams;
+  const { asset, price, klasse, strike, expiry, direction, sigma } = await searchParams;
   const initialDirection: 'call' | 'put' = direction === 'put' ? 'put' : 'call';
+  const sigmaPct = sigma ? Math.round(parseFloat(sigma) * 100) : null;
   const klasseBadge = klasse === 'krypto' ? 'Krypto' : klasse === 'aktie' ? 'Aktie' : null;
 
   return (
@@ -45,6 +47,7 @@ export default async function OptionsscheinePage({ searchParams }: PageProps) {
             {strike && <span className="font-mono text-emerald-200/80">· Strike {strike}</span>}
             {expiry && <span className="font-mono text-emerald-200/80">· Verfall {expiry}</span>}
             {direction && <span className="rounded border border-emerald-400/30 px-1.5 py-0.5 text-[9px] uppercase tracking-wider">{initialDirection}</span>}
+            {sigmaPct !== null && <span className="font-mono text-emerald-200/80">· σ {sigmaPct} %</span>}
           </div>
         )}
       </header>
@@ -59,6 +62,7 @@ export default async function OptionsscheinePage({ searchParams }: PageProps) {
         defaultStrike={strike ?? ''}
         defaultExpiryIso={expiry ?? ''}
         defaultDirection={initialDirection}
+        defaultSigma={sigma ?? ''}
       />
       <OptionsscheineWatchlistList />
     </main>

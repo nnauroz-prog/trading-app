@@ -121,6 +121,7 @@ export default async function AktienDetailPage({ params }: PageProps) {
         underlyingName={stock.name}
         underlyingPrice={quote?.last ?? null}
         assetClass="aktie"
+        sigma={realizedVolStock(closes) ?? undefined}
       />
 
       {!history ? (

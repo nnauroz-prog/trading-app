@@ -319,6 +319,7 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
         underlyingName={asset.name}
         underlyingPrice={snapshot?.price ?? null}
         assetClass="krypto"
+        sigma={dailyCandles ? (realizedVolCrypto(dailyCandles.map((c) => c.close)) ?? undefined) : undefined}
       />
 
       {chaseStatus.kind === 'chase' && (

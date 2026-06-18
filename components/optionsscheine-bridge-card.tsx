@@ -9,6 +9,7 @@ interface Props {
   underlyingName: string;
   underlyingPrice: number | null;
   assetClass: 'krypto' | 'aktie';
+  sigma?: number;
 }
 
 function fmtPrice(price: number, assetClass: 'krypto' | 'aktie'): string {
@@ -20,13 +21,14 @@ function fmtPrice(price: number, assetClass: 'krypto' | 'aktie'): string {
   return price.toFixed(2);
 }
 
-export function OptionsscheineBridgeCard({ underlyingName, underlyingPrice, assetClass }: Props) {
+export function OptionsscheineBridgeCard({ underlyingName, underlyingPrice, assetClass, sigma }: Props) {
   const params = new URLSearchParams();
   params.set('asset', underlyingName);
   if (underlyingPrice !== null && Number.isFinite(underlyingPrice)) {
     params.set('price', fmtPrice(underlyingPrice, assetClass));
   }
   params.set('klasse', assetClass);
+  if (sigma && sigma > 0) params.set('sigma', sigma.toFixed(3));
 
   return (
     <Link

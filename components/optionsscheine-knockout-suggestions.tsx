@@ -78,6 +78,7 @@ export function OptionsscheineKnockOutSuggestions({ underlyingName, underlyingPr
           params.set('strike', String(s.strike));
           params.set('direction', s.direction);
           params.set('klasse', assetClass);
+          if (sigma) params.set('sigma', sigma.toFixed(3));
           const href = `/optionsscheine?${params.toString()}`;
           return (
             <div key={s.risk} className={`flex flex-col gap-2 rounded-xl border-2 ${tone.border} ${tone.bg} p-3`}>

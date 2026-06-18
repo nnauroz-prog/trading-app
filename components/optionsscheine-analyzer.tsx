@@ -46,6 +46,7 @@ interface OptionsscheineAnalyzerProps {
   defaultStrike?: string;
   defaultExpiryIso?: string;
   defaultDirection?: 'call' | 'put';
+  defaultSigma?: string;
 }
 
 export function OptionsscheineAnalyzer({
@@ -53,7 +54,8 @@ export function OptionsscheineAnalyzer({
   defaultUnderlyingPrice = '',
   defaultStrike = '',
   defaultExpiryIso = '',
-  defaultDirection = 'call'
+  defaultDirection = 'call',
+  defaultSigma = ''
 }: OptionsscheineAnalyzerProps = {}) {
   const [underlyingName, setUnderlyingName] = useState(defaultUnderlyingName);
   const [underlyingPrice, setUnderlyingPrice] = useState(defaultUnderlyingPrice);
@@ -64,20 +66,28 @@ export function OptionsscheineAnalyzer({
   const [wkn, setWkn] = useState('');
   const [premiumQuoted, setPremiumQuoted] = useState('');
   const [ratio, setRatio] = useState('');
+  const [sigmaInput, setSigmaInput] = useState(defaultSigma);
   const [note, setNote] = useState('');
   const [savedFlash, setSavedFlash] = useState(false);
 
-  const input = useMemo(() => ({
-    underlyingName,
-    underlyingPrice: parseFloat(underlyingPrice.replace(',', '.')),
-    strike: parseFloat(strike.replace(',', '.')),
-    direction,
-    expiryIso: expiryIso || undefined,
-    knockOut,
-    wkn: wkn.trim() || undefined,
-    premiumQuoted: premiumQuoted ? parseFloat(premiumQuoted.replace(',', '.')) : undefined,
-    ratio: ratio ? parseFloat(ratio.replace(',', '.')) : undefined
-  }), [underlyingName, underlyingPrice, strike, direction, expiryIso, knockOut, wkn, premiumQuoted, ratio]);
+  const input = useMemo(() => {
+    const sigmaRaw = sigmaInput ? parseFloat(sigmaInput.replace(',', '.')) : NaN;
+    // Sigma kann als 0.30 (Dezimalwert) oder 30 (Prozent) eingegeben werden.
+    // > 2 ist faktisch immer Prozent — wir teilen durch 100.
+    const sigma = Number.isFinite(sigmaRaw) ? (sigmaRaw > 2 ? sigmaRaw / 100 : sigmaRaw) : undefined;
+    return {
+      underlyingName,
+      underlyingPrice: parseFloat(underlyingPrice.replace(',', '.')),
+      strike: parseFloat(strike.replace(',', '.')),
+      direction,
+      expiryIso: expiryIso || undefined,
+      knockOut,
+      wkn: wkn.trim() || undefined,
+      premiumQuoted: premiumQuoted ? parseFloat(premiumQuoted.replace(',', '.')) : undefined,
+      ratio: ratio ? parseFloat(ratio.replace(',', '.')) : undefined,
+      sigma
+    };
+  }, [underlyingName, underlyingPrice, strike, direction, expiryIso, knockOut, wkn, premiumQuoted, ratio, sigmaInput]);
 
   const analysis = useMemo(() => analyzeOptionsscheinInput(input), [input]);
   const scenarios = useMemo(() => {
@@ -88,7 +98,8 @@ export function OptionsscheineAnalyzer({
       direction,
       expiryIso: input.expiryIso,
       ratio: analysis.ratio,
-      premiumQuoted: analysis.premiumQuoted
+      premiumQuoted: analysis.premiumQuoted,
+      sigma: analysis.sigmaUsed
     });
   }, [analysis, input.strike, direction, input.expiryIso]);
 
@@ -206,6 +217,16 @@ export function OptionsscheineAnalyzer({
             className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-right font-mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-400/60 focus:outline-none"
           />
         </Field>
+        <Field label="Annualisierte Vola (optional, Default 30 %)">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={sigmaInput}
+            onChange={(e) => setSigmaInput(e.target.value)}
+            placeholder="0.30 oder 30"
+            className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-right font-mono text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-emerald-400/60 focus:outline-none"
+          />
+        </Field>
         <div className="sm:col-span-2 flex items-center gap-2">
           <input
             id="knockout"
@@ -245,6 +266,7 @@ export function OptionsscheineAnalyzer({
             <Stat label="Break-even-Move" value={fmtPct(analysis.breakevenMovePct)} />
             <Stat label="Theta-Druck" value={analysis.thetaUrgency} tone={THETA_TONE[analysis.thetaUrgency] ? 'theta' : 'neutral'} thetaToneClass={THETA_TONE[analysis.thetaUrgency]} />
             <Stat label="Bezugsverhaeltnis" value={`${analysis.ratio}:1`} />
+            <Stat label="Modell-Vola" value={`${Math.round(analysis.sigmaUsed * 100)} % p.a.`} />
           </div>
 
           {analysis.warnings.length > 0 && (

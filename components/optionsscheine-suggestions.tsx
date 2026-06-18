@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { suggestOptionsscheine } from '@/lib/optionsscheine/suggest';
 import { OptionsscheineDeepAnalysis } from '@/components/optionsscheine-deep-analysis';
 import { OptionsscheineKnockOutSuggestions } from '@/components/optionsscheine-knockout-suggestions';
+import { OptionsscheineHedgeSuggestion } from '@/components/optionsscheine-hedge-suggestion';
 import { OptionsscheineTradePlanCopy } from '@/components/optionsscheine-trade-plan-copy';
 
 interface Props {
@@ -103,6 +104,7 @@ export function OptionsscheineSuggestions({ underlyingName, underlyingPrice, dir
           params.set('expiry', s.expiryIso);
           params.set('direction', s.direction);
           params.set('klasse', assetClass);
+          if (sigma) params.set('sigma', sigma.toFixed(3));
           const href = `/optionsscheine?${params.toString()}`;
           return (
             <div key={s.risk} className={`flex flex-col gap-2 rounded-xl border-2 ${tone.border} ${tone.bg} p-3`}>
@@ -164,6 +166,15 @@ export function OptionsscheineSuggestions({ underlyingName, underlyingPrice, dir
         assetClass={assetClass}
         currency={assetClass === 'krypto' ? 'USD' : 'EUR'}
       />
+
+      {direction === 'call' && (
+        <OptionsscheineHedgeSuggestion
+          underlyingName={underlyingName}
+          underlyingPrice={underlyingPrice}
+          assetClass={assetClass}
+          sigma={sigma}
+        />
+      )}
 
       <OptionsscheineKnockOutSuggestions
         underlyingName={underlyingName}
