@@ -10,6 +10,7 @@ import { OptionsscheineDeepAnalysis } from '@/components/optionsscheine-deep-ana
 import { OptionsscheineKnockOutSuggestions } from '@/components/optionsscheine-knockout-suggestions';
 import { OptionsscheineHedgeSuggestion } from '@/components/optionsscheine-hedge-suggestion';
 import { OptionsscheineTradePlanCopy } from '@/components/optionsscheine-trade-plan-copy';
+import { OptionsscheineBacktestCard } from '@/components/optionsscheine-backtest-card';
 
 interface Props {
   underlyingName: string;
@@ -19,6 +20,9 @@ interface Props {
   // Annualisierte Vola aus historischen Daten. Wenn vorhanden, ersetzt
   // sie den 30 %-Default im Modell und wird im UI ausgewiesen.
   sigma?: number;
+  // Historische Closes des Underlyings — fuer Backtest-Card. Optional.
+  historicalCloses?: number[];
+  historicalDates?: string[];
 }
 
 const RISK_TONE = {
@@ -65,7 +69,7 @@ function fmtPct(n: number | null | undefined): string {
   return `${n >= 0 ? '+' : ''}${n.toFixed(1)} %`;
 }
 
-export function OptionsscheineSuggestions({ underlyingName, underlyingPrice, direction = 'call', assetClass, sigma }: Props) {
+export function OptionsscheineSuggestions({ underlyingName, underlyingPrice, direction = 'call', assetClass, sigma, historicalCloses, historicalDates }: Props) {
   const suggestions = suggestOptionsscheine({ underlyingName, underlyingPrice, direction, assetClass, sigma });
   if (suggestions.length === 0) return null;
 
@@ -166,6 +170,17 @@ export function OptionsscheineSuggestions({ underlyingName, underlyingPrice, dir
         assetClass={assetClass}
         currency={assetClass === 'krypto' ? 'USD' : 'EUR'}
       />
+
+      {historicalCloses && historicalCloses.length >= 200 && (
+        <OptionsscheineBacktestCard
+          underlyingName={underlyingName}
+          closes={historicalCloses}
+          dates={historicalDates}
+          sigma={sigma}
+          assetClass={assetClass}
+          direction={direction}
+        />
+      )}
 
       {direction === 'call' && (
         <OptionsscheineHedgeSuggestion

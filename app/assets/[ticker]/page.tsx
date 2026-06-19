@@ -301,6 +301,8 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
                 direction="call"
                 assetClass="krypto"
                 sigma={dailyCandles ? (realizedVolCrypto(dailyCandles.map((c) => c.close)) ?? undefined) : undefined}
+                historicalCloses={dailyCandles?.map((c) => c.close)}
+                historicalDates={dailyCandles?.map((c) => new Date(c.openTime).toISOString().slice(0, 10))}
               />
             )}
           </>

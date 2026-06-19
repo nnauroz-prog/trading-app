@@ -143,6 +143,8 @@ export default async function AktienDetailPage({ params }: PageProps) {
               direction="call"
               assetClass="aktie"
               sigma={realizedVolStock(closes) ?? undefined}
+              historicalCloses={closes}
+              historicalDates={history.candles.map((c) => new Date(c.time).toISOString().slice(0, 10))}
             />
           )}
 

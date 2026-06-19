@@ -1,7 +1,11 @@
-// Schutz-Put-Vorschlag als kompakte Karte unter den offensiven
-// Call-Vorschlaegen. Antwort auf "wenn ich KAUFE, wie schuetze ich
-// mich gegen einen Crash?"
+'use client';
 
+// Konfigurierbarer Schutz-Put-Vorschlag. User kann Schutz-Tiefe und
+// Laufzeit per Range-Slider variieren — die Karte rechnet sofort neu.
+// Antwort auf "wenn ich KAUFE, wie schuetze ich mich gegen einen Crash
+// und wie sieht die Versicherung bei anderen Parametern aus?"
+
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { suggestHedge } from '@/lib/optionsscheine/suggest-hedge';
 
@@ -27,7 +31,13 @@ function fmtDate(iso: string): string {
 }
 
 export function OptionsscheineHedgeSuggestion({ underlyingName, underlyingPrice, assetClass, sigma }: Props) {
-  const hedge = suggestHedge({ underlyingName, underlyingPrice, assetClass, sigma });
+  const [stopLossPct, setStopLossPct] = useState(-10);
+  const [monthsToExpiry, setMonthsToExpiry] = useState(6);
+
+  const hedge = useMemo(
+    () => suggestHedge({ underlyingName, underlyingPrice, assetClass, sigma, stopLossPct, monthsToExpiry }),
+    [underlyingName, underlyingPrice, assetClass, sigma, stopLossPct, monthsToExpiry]
+  );
   if (!hedge) return null;
 
   const currency = assetClass === 'krypto' ? 'USD' : 'EUR';
@@ -48,7 +58,7 @@ export function OptionsscheineHedgeSuggestion({ underlyingName, underlyingPrice,
   const href = `/optionsscheine?${params.toString()}`;
 
   return (
-    <section className="space-y-2 rounded-2xl border border-sky-400/40 bg-sky-950/15 p-4">
+    <section className="space-y-3 rounded-2xl border border-sky-400/40 bg-sky-950/15 p-4">
       <header className="space-y-1">
         <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-sky-300">
           Hedge-Vorschlag (Put auf {underlyingName})
@@ -57,9 +67,50 @@ export function OptionsscheineHedgeSuggestion({ underlyingName, underlyingPrice,
           Versicherung gegen einen Crash deiner Long-Position
         </h3>
         <p className="text-[10.5px] leading-snug text-slate-400">
-          Falls du die Aktie kaufst und Schutz gegen ein groesseres Minus willst: ein OTM-Put deckt Verluste ab {Math.abs(hedge.protectionStartPct).toFixed(0)} % Underlying-Bewegung. Kosten = Versicherungspraemie, verfaellt wertlos wenn die Aktie ueber dem Strike bleibt — das ist der gewuenschte Normalfall.
+          Schutz-Put deckt Verluste ab einer Underlying-Bewegung von <span className="font-mono text-sky-200">{stopLossPct.toFixed(0)} %</span>. Variiere unten Schutz-Tiefe und Laufzeit — die Praemie passt sich sofort an. Verfaellt wertlos wenn die Aktie ueber dem Strike bleibt (gewuenschter Normalfall).
         </p>
       </header>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="block space-y-1">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[9.5px] font-semibold uppercase tracking-wider text-sky-200">Schutz-Tiefe</span>
+            <span className="font-mono text-[11px] text-sky-100">{stopLossPct.toFixed(0)} %</span>
+          </div>
+          <input
+            type="range"
+            min={-25}
+            max={-2}
+            step={1}
+            value={stopLossPct}
+            onChange={(e) => setStopLossPct(parseInt(e.target.value, 10))}
+            className="w-full accent-sky-400"
+            aria-label="Schutz-Tiefe in Prozent"
+          />
+          <div className="flex justify-between text-[9px] text-slate-500">
+            <span>-25 %</span><span>-15 %</span><span>-10 %</span><span>-5 %</span><span>-2 %</span>
+          </div>
+        </label>
+        <label className="block space-y-1">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[9.5px] font-semibold uppercase tracking-wider text-sky-200">Laufzeit</span>
+            <span className="font-mono text-[11px] text-sky-100">{monthsToExpiry} Monate</span>
+          </div>
+          <input
+            type="range"
+            min={1}
+            max={18}
+            step={1}
+            value={monthsToExpiry}
+            onChange={(e) => setMonthsToExpiry(parseInt(e.target.value, 10))}
+            className="w-full accent-sky-400"
+            aria-label="Laufzeit in Monaten"
+          />
+          <div className="flex justify-between text-[9px] text-slate-500">
+            <span>1 M</span><span>3 M</span><span>6 M</span><span>12 M</span><span>18 M</span>
+          </div>
+        </label>
+      </div>
 
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
         <HedgeStat label="Put-Strike" value={fmtPrice(hedge.strike, assetClass)} emphasis />
@@ -85,7 +136,7 @@ export function OptionsscheineHedgeSuggestion({ underlyingName, underlyingPrice,
         </div>
         <div>
           <span className="font-semibold text-sky-200">Was kostet sie?</span><br />
-          <span className="font-mono">{fmtPrice(hedge.premiumPerAktienAequivalent, assetClass)} {currency}</span> pro Aktien-Aequivalent. Versicherung verfaellt wertlos, wenn die Aktie ueber dem Strike bleibt.
+          <span className="font-mono">{fmtPrice(hedge.premiumPerAktienAequivalent, assetClass)} {currency}</span> pro Aktien-Aequivalent. Verfaellt wertlos wenn die Aktie ueber dem Strike bleibt.
         </div>
       </div>
 
@@ -97,7 +148,7 @@ export function OptionsscheineHedgeSuggestion({ underlyingName, underlyingPrice,
       </Link>
 
       <div className="border-t border-slate-800 pt-2 text-[9.5px] leading-snug text-slate-500">
-        Standard-Konfiguration: 10 % Schutz, 6 Monate Laufzeit. Im Analyzer kannst du Strike und Verfall anpassen. Bezugsverhaeltnis {assetClass === 'krypto' ? '100' : '10'}:1 — bei einer Aktie musst du also {assetClass === 'krypto' ? '100' : '10'} Scheine kaufen, um ein voll-versichertes Aktien-Aequivalent zu haben.
+        Slider-Werte werden ueber den Analyzer-Link mitgegeben. Bezugsverhaeltnis {assetClass === 'krypto' ? '100' : '10'}:1 — bei einer Aktie musst du also {assetClass === 'krypto' ? '100' : '10'} Scheine kaufen, um ein voll-versichertes Aktien-Aequivalent zu haben.
       </div>
     </section>
   );
