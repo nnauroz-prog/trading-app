@@ -2,10 +2,14 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { BottomNav } from '@/components/bottom-nav';
 import { TopNav } from '@/components/top-nav';
+import { SiteFooter } from '@/components/site-footer';
 
 export const metadata: Metadata = {
-  title: 'Market Decision Support',
-  description: 'Transparent crypto and stock decision support system (no financial advice).',
+  title: {
+    default: 'Trading Desk · Krypto, Aktien, Rohstoffe, Sport',
+    template: '%s · Trading Desk'
+  },
+  description: 'Modell-basierte Tageshinweise fuer Krypto, Aktien, Rohstoffe und Sport — transparent mit offener Datenherkunft. Kein Anlageratschlag.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
@@ -30,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen pb-14 md:pb-0">
         <TopNav />
         {children}
+        <SiteFooter />
         <BottomNav />
       </body>
     </html>

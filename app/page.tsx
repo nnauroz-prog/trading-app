@@ -158,6 +158,7 @@ import { CyclesTile } from '@/components/cycles-tile';
 import { DailyActionPlan } from '@/components/daily-action-plan';
 import { OnboardingGuide } from '@/components/onboarding-guide';
 import { AutoRefresh } from '@/components/auto-refresh';
+import { HomeHero } from '@/components/home-hero';
 import { SignalSummary } from '@/lib/action-plan';
 
 export const dynamic = 'force-dynamic';
@@ -611,8 +612,12 @@ export default async function HomePage() {
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:space-y-6 md:p-6">
       <OnboardingGuide />
       <AutoRefresh intervalMs={20000} />
-      <header className="space-y-3">
-        <nav className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <HomeHero todayIso={todayIso} />
+      <details className="rounded-md border border-slate-800 bg-slate-900/30">
+        <summary className="cursor-pointer list-none px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
+          ▸ Alle Bereiche &amp; Werkzeuge
+        </summary>
+        <nav aria-label="Alle Bereiche" className="flex flex-wrap items-center gap-1.5 p-3 text-xs">
           <Link href="/chancen" className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 transition hover:border-emerald-400/50">Chancen</Link>
           <Link href="/compare" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Vergleich</Link>
           <Link href="/insights" className="shrink-0 rounded-md border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-sky-300 transition hover:border-sky-400/50">Insights</Link>
@@ -634,7 +639,7 @@ export default async function HomePage() {
           <Link href="/hilfe" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Hilfe</Link>
           <Link href="/settings" className="shrink-0 rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-300 transition hover:border-slate-700">Mehr</Link>
         </nav>
-      </header>
+      </details>
 
       {/* WM-Countdown ganz oben — solange <30 Tage bis Start oder waehrend
           der laufenden WM. Versteckt sich automatisch danach. */}

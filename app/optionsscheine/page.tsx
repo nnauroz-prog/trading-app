@@ -4,8 +4,8 @@ import { OptionsscheineAnalyzer } from '@/components/optionsscheine-analyzer';
 import { OptionsscheineWatchlistList } from '@/components/optionsscheine-watchlist-list';
 
 export const metadata: Metadata = {
-  title: 'Optionsscheine — Trading App',
-  description: 'Risiko-Analyse, Hebel-Schaetzung und Szenarien fuer Optionsscheine und Knock-Outs auf Krypto und Aktien.'
+  title: 'Optionsscheine · Risiko, Hebel, Szenarien',
+  description: 'Risiko-Analyse, Hebel-Schaetzung, Szenarien und Backtest fuer Optionsscheine und Knock-Outs auf Krypto und Aktien.'
 };
 
 interface PageProps {

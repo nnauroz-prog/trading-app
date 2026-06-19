@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
+
+export const metadata: Metadata = {
+  title: 'Gold · Trend, Halten-Rechner, Portfolio',
+  description: 'Gold-Tageswerte: Trend-Indikatoren, Halten-Rechner fuer Bestaende, Portfolio-Auswertung. Modell-Hinweise, kein Anlageratschlag.'
+};
 import { ema, rsi as rsiSeries, atr as atrSeries, sma } from '@/lib/analysis/indicators';
 import { fetchYahooQuote } from '@/lib/market/yahoo-quote';
 import { GoldHoldingCalculator } from '@/components/gold/gold-holding-calculator';

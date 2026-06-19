@@ -1,7 +1,13 @@
 // Rohstoff-Hauptseite. Live-Futures-Quotes via Yahoo Finance Chart API.
 // Edelmetalle (Gold, Silber, Platin, Palladium), Energie, Industriemetalle, Agrar.
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Rohstoffe · Edelmetalle, Energie, Agrar',
+  description: 'Rohstoff-Tageswerte: Live-Futures-Quotes, Sektor-Heatmap fuer Edelmetalle, Energie und Agrar. Modell-Hinweise, kein Anlageratschlag.'
+};
 import { QuoteRow } from '@/components/quote-row';
 import { SectorHeatmap, aggregateBuckets } from '@/components/sector-heatmap';
 import { commoditiesByGroup, COMMODITY_UNIVERSE, type CommoditySymbol } from '@/lib/market/commodities';
@@ -71,7 +77,12 @@ export default async function RohstoffePage() {
       </Link>
 
       <header className="space-y-1.5">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">🛢️ Rohstoffe</div>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">🛢️ Rohstoffe</div>
+          <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-amber-200">
+            Kein Anlageratschlag
+          </span>
+        </div>
         <h1 className="text-3xl font-bold tracking-tight text-white">Rohstoff-Übersicht</h1>
         <p className="text-sm text-slate-400">
           Continuous-Front-Month-Futures für Edelmetalle, Energie, Industriemetalle und Agrar.

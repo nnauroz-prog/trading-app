@@ -1,8 +1,14 @@
 // Konsolidiertes Cross-Asset-Daily-Dashboard. Alle Grade-A-Setups quer
 // durch Aktien, Rohstoffe und Fußball-Tipps auf einer Seite. Power-User-Hub.
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
+
+export const metadata: Metadata = {
+  title: 'Heute besonders sicher · Cross-Asset Picks',
+  description: 'Cross-Asset-Schnellblick: Grade-A-Picks fuer Krypto, Aktien, Rohstoffe und WM-Tipps fuer heute. Strenge Kriterien, ehrliche Empty-States.'
+};
 import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
 import { getFootballFixtures } from '@/lib/sport/fetcher';
 import { rankSafeFootballTips } from '@/lib/sport/safe-football-tips';

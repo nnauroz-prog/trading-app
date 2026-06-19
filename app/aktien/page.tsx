@@ -1,7 +1,13 @@
 // Aktien-Hauptseite. Live-Quotes via Yahoo Finance v8 Chart API,
 // 5 Min Cache. Bei API-Ausfall ehrlicher Empty-State pro Zeile.
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Aktien · 8-Kriterien-Sicherheits-Check',
+  description: 'Tageswerte zu Top-Aktien: Sicherheits-Check ueber 8 Kriterien, Sektor-Heatmap, Modell-Tendenz. Transparent, kein Anlageratschlag.'
+};
 import { QuoteRow } from '@/components/quote-row';
 import { SectorHeatmap, aggregateBuckets } from '@/components/sector-heatmap';
 import { STOCK_INDEX_SYMBOLS, STOCK_UNIVERSE, type StockSymbol } from '@/lib/market/stocks';
@@ -81,12 +87,28 @@ export default async function AktienPage() {
       </Link>
 
       <header className="space-y-1.5">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">📈 Aktien</div>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">📈 Aktien</div>
+          <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-amber-200">
+            Kein Anlageratschlag
+          </span>
+        </div>
         <h1 className="text-3xl font-bold tracking-tight text-white">Aktien-Übersicht</h1>
         <p className="text-sm text-slate-400">
           Live-Quotes für Top-Indizes und 29 ausgewählte Mega-Caps + DAX-Top. Daten von Yahoo Finance, 5 Min Cache.
           {liveCount > 0 && <span> · <span className="text-emerald-300">{liveCount + indexLiveCount} Live-Quotes</span></span>}
         </p>
+        <div className="flex flex-wrap items-center gap-2 pt-1 text-[10.5px]">
+          <Link href="/watchlist" className="rounded-md border border-slate-700 bg-slate-900/60 px-2 py-0.5 text-slate-300 transition hover:border-emerald-400/40 hover:text-emerald-200">
+            ★ Watchlist
+          </Link>
+          <Link href="/heute-sicher" className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-300 transition hover:border-emerald-400/60">
+            🛡️ Heute sicher
+          </Link>
+          <Link href="/optionsscheine" className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-300 transition hover:border-emerald-400/60">
+            ⚖️ Optionsscheine
+          </Link>
+        </div>
       </header>
 
       <MarketStatusBadges states={[usMarketState(), xetraMarketState()]} />
