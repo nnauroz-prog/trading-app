@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getCryptoNews } from '@/lib/news/news-agent';
 import { runSpaeher, ScoredNews } from '@/lib/akademie/spaeher';
+
+export const metadata: Metadata = {
+  title: 'Krypto-News mit Impact-Bewertung',
+  description: 'Alle Krypto-Schlagzeilen, bewertet vom Spaeher-Agenten. Bullisch, baerisch, neutral — auf einen Blick.'
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

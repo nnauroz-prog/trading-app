@@ -2,7 +2,13 @@
 // ehrlichen Tagesentscheidung. Keine Garantien, kein Marketing, keine
 // Sportwetten-Sprache. Wenn Daten fehlen: ehrlicher Empty-State.
 
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
+
+export const metadata: Metadata = {
+  title: 'Daily Decision Center',
+  description: 'Ehrliche Tagesentscheidung aus allen Systemen aggregiert. Wo lohnt sich heute der Klick, was ist Cash-Tag.'
+};
 import Link from 'next/link';
 import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';

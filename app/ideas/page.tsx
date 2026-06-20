@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { IdeaInbox } from '@/components/idea-inbox';
+
+export const metadata: Metadata = {
+  title: 'Trading-Ideen-Inbox',
+  description: 'Trade-Idee einfuegen — Score, Risiken, Sizing-Vorschlag. Ideen aus Telegram, Notizen oder Brokern bewerten.'
+};
 
 export const dynamic = 'force-dynamic';
 

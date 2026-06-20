@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Calculators } from '@/components/calculators';
+
+export const metadata: Metadata = {
+  title: 'Werkzeuge · Sizing, R/R, Kelly',
+  description: 'Position-Groesse, Reward-Risk-Rechner und Kelly-Kriterium — die einfachen Werkzeuge fuer Disziplin im Setup.'
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

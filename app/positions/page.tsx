@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PositionsPanel } from '@/components/positions-panel';
+
+export const metadata: Metadata = {
+  title: 'Positionen verwalten',
+  description: 'Offene Positionen verwalten, Stop/TP setzen, Live-P/L pruefen. Lokal im Browser.'
+};
 import { PositionHealthStrip, type CoinHealth } from '@/components/position-health-strip';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
 import { getMasterSignal } from '@/lib/analysis/master-signal-engine';

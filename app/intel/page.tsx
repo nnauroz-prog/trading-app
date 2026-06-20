@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
+
+export const metadata: Metadata = {
+  title: 'Recherche · 12 Spezialisten',
+  description: 'Zwoelf Spezialisten + ein Chefredakteur — taegliche Vertiefung quer durch Markt-Mechanik, On-Chain und Sentiment.'
+};
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { fetchFearGreed, fetchBtcDominance } from '@/lib/providers/sentiment-indicators';
 import { fetchFundingRate } from '@/lib/providers/funding-rates';

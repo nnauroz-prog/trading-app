@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { DcaPanel } from '@/components/dca-panel';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
+
+export const metadata: Metadata = {
+  title: 'DCA · systematisch akkumulieren',
+  description: 'Dollar-Cost-Averaging-Pruefung: bei welchen Levels und Intervallen ist Akkumulation jetzt sinnvoll.'
+};
 
 export const dynamic = 'force-dynamic';
 

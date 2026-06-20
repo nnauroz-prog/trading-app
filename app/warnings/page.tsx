@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { WarningMatcher } from '@/components/warning-matcher';
+
+export const metadata: Metadata = {
+  title: 'Verlustwarnungen pruefen',
+  description: 'Wenn ein Broker oder Telegram-Channel eine Verlustwarnung schickt — hier pruefst du, ob deine Positionen betroffen sind.'
+};
 
 export const dynamic = 'force-dynamic';
 

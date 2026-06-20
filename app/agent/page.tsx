@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
+
+export const metadata: Metadata = {
+  title: 'Drei Firmen, eine Entscheidung',
+  description: 'Drei Firmen, drei Teams, eine Entscheidung pro Tag — der Vorstand-Konsens als Klartext-Verdict.'
+};
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { SubAgentReport, VoteTone } from '@/lib/agents/sub-agents';

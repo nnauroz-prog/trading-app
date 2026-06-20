@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PersonalInsights } from '@/components/personal-insights';
 import { DataExport } from '@/components/data-export';
+
+export const metadata: Metadata = {
+  title: 'Persoenliche Insights',
+  description: 'Dein persoenlicher Track-Record aus dem Journal — Wachstum, Verhaltensmuster, Datenexport.'
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getHistory, HistoryFilters } from '@/lib/server/history';
 import { HistoryTable } from '@/components/history-table';
+
+export const metadata: Metadata = {
+  title: 'Verlauf · alle Snapshots',
+  description: 'Verlauf aller Tages-Snapshots durchsuchen und filtern — nachvollziehbar, was das System wann gesagt hat.'
+};
 import { mockAssets } from '@/lib/data/mock';
 import { RecommendationAction } from '@/lib/types/domain';
 

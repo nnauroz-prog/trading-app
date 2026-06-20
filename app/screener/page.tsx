@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { runScreener } from '@/lib/analysis/screener';
 import { ScreenerView } from '@/components/screener-view';
+
+export const metadata: Metadata = {
+  title: 'Markt-Screener',
+  description: 'Markt-Scan: alle Coins nach Setup-Qualitaet gerankt. Filter nach Konfidenz, Volumen und Trend.'
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

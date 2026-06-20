@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PerformanceDashboard } from '@/components/performance-dashboard';
 import { AppPerformancePanel } from '@/components/app-performance-panel';
+
+export const metadata: Metadata = {
+  title: 'Trading-Statistik',
+  description: 'Deine Trading-Statistik aus dem Positionen-Journal — Win-Rate, R-Multipler, Drawdown, Top-/Flop-Setups.'
+};
 
 export const dynamic = 'force-dynamic';
 

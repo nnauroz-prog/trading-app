@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Heatmap } from '@/components/heatmap';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
+
+export const metadata: Metadata = {
+  title: 'Markt-Heatmap',
+  description: 'Markt auf einen Blick — alle Top-Coins farbcodiert nach 24h-Bewegung. Sentiment in einer Visualisierung.'
+};
 
 export const dynamic = 'force-dynamic';
 

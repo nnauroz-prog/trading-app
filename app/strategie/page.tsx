@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getBacktestSummary, SafeTradeRecord } from '@/lib/analysis/backtest-summary';
+
+export const metadata: Metadata = {
+  title: 'Strategie · sichere Trades',
+  description: 'Alle sicheren Trades aus dem Backtest mit Konfidenz, R-Multipler und Setup-Eigenschaften — die Strategie hinter den Picks.'
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 1800;

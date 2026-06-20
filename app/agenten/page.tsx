@@ -2,7 +2,13 @@
 // Krypto, Aktien, Rohstoffe und WM. Schnellblick: wo ist heute Konsens, wo
 // gehen die Vorstände auseinander.
 
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
+
+export const metadata: Metadata = {
+  title: 'Vorstände & Agenten',
+  description: 'Alle Vorstaende quer durch Krypto, Aktien, Rohstoffe und WM auf einen Blick — wo ist heute Konsens, wo gehen die Stimmen auseinander.'
+};
 import Link from 'next/link';
 import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';

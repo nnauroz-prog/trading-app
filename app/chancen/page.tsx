@@ -1,7 +1,13 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
 import { scoreCryptoCandidate } from '@/lib/opportunity-score';
+
+export const metadata: Metadata = {
+  title: 'Chancen heute',
+  description: 'Top-Chancen mit kontrolliertem Risiko — alle Setups quer durch Krypto sortiert nach Opportunity-Score.'
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

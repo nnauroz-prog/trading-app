@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { runStrategyBacktest } from '@/lib/analysis/strategy-backtest';
 import { StrategyBacktestView } from '@/components/strategy-backtest-view';
+
+export const metadata: Metadata = {
+  title: 'Strategie-Backtest',
+  description: 'Haette die App-Logik historisch Geld verdient — Backtest gegen reale Kursdaten mit Equity-Kurve und R-Histogramm.'
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

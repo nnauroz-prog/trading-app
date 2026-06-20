@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
+
+export const metadata: Metadata = {
+  title: 'Risk-Guardian',
+  description: 'Was an deinem Portfolio gerade gefaehrlich werden kann — Live-Pruefung mit Klartext-Verdict.'
+};
 import { fetchBothTickerSources } from '@/lib/providers/binance-tickers';
 import { checkCrossExchangePrices } from '@/lib/analysis/cross-exchange-check';
 import { runSpaeher } from '@/lib/akademie/spaeher';

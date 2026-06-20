@@ -1,7 +1,13 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
 import { scoreCryptoCandidate } from '@/lib/opportunity-score';
+
+export const metadata: Metadata = {
+  title: 'Setups vergleichen',
+  description: 'Zwei Setups Seite an Seite — Kriterien, Konfidenz, R/R direkt vergleichen.'
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

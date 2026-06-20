@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getCryptoNews } from '@/lib/news/news-agent';
 import { runSpaeher, ScoredNews } from '@/lib/akademie/spaeher';
+
+export const metadata: Metadata = {
+  title: 'Akademie · Hilfs-Agenten',
+  description: 'Zwei Hilfs-Agenten, die im Hintergrund Nachrichten lesen und bewerten — fuer eine bessere Tageseinschaetzung.'
+};
 import { getLehrlingReport, VariantResult } from '@/lib/akademie/lehrling';
 import { AkademieRecorder } from '@/components/akademie-recorder';
 import { AkademieLog } from '@/components/akademie-log';

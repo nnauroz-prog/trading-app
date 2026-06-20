@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getMasterSignal, TradeMode } from '@/lib/analysis/master-signal-engine';
+
+export const metadata: Metadata = {
+  title: 'Firmen-Vergleich',
+  description: 'Drei Firmen-Profile (konservativ, balanciert, aggressiv) Seite an Seite — wer sagt heute was und warum.'
+};
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
 import { evaluatePersonas } from '@/lib/agents/personas';
 import { runSpaeher } from '@/lib/akademie/spaeher';

@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { JournalPanel } from '@/components/journal-panel';
+
+export const metadata: Metadata = {
+  title: 'Trading-Journal',
+  description: 'Lernen aus jedem Trade — Lessons, Praeventions-Regeln und persoenliches Tipp-Tagebuch. Lokal im Browser.'
+};
 
 export const dynamic = 'force-dynamic';
 
