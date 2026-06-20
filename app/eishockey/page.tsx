@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getHockeyFixtures } from '@/lib/sport/multi-sport-fetcher';
+
+export const metadata: Metadata = {
+  title: 'Eishockey · NHL, DEL, KHL, SHL',
+  description: 'Eishockey-Tageswerte fuer NHL, DEL, KHL und SHL. Modell-Tendenz pro Spiel, keine Wettempfehlung.'
+};
 import { predictWinner } from '@/lib/sport/winner-verdict';
 import { WinnerVerdictCard } from '@/components/winner-verdict-card';
 

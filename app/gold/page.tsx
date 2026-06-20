@@ -219,7 +219,12 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
       </Link>
 
       <header className="space-y-2">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">Gold-Rechner</div>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">Gold-Rechner</div>
+          <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-amber-200">
+            Kein Anlageratschlag
+          </span>
+        </div>
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Wann verkaufen?</h1>
         <p className="text-sm text-slate-400">
           Gib dein Kaufdatum ein (optional Kaufpreis pro Unze in $). Der Rechner zeigt deinen Stand und ob jetzt ein guter Verkaufszeitpunkt ist. Quelle: PAXG (1:1 mit physischem Gold gedeckt) — Tagesdaten der letzten 12 Monate.

@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getBasketballFixtures } from '@/lib/sport/basketball-fetcher';
+
+export const metadata: Metadata = {
+  title: 'Basketball · NBA, EuroLeague, BBL, NCAA',
+  description: 'Basketball-Tageswerte fuer NBA, EuroLeague, BBL und NCAA. Modell-Tendenz pro Spiel, keine Wettempfehlung.'
+};
 import { predictWinner } from '@/lib/sport/winner-verdict';
 import { WinnerVerdictCard } from '@/components/winner-verdict-card';
 

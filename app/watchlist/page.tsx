@@ -1,8 +1,14 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { WatchlistPanel } from '@/components/watchlist-panel';
 import { PriceAlertsPanel } from '@/components/price-alerts-panel';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
 import { TOP_50 } from '@/lib/coin-universe';
+
+export const metadata: Metadata = {
+  title: 'Krypto-Watchlist & Preisalarme',
+  description: 'Persoenliche Krypto-Watchlist mit Live-Quotes und Preisalarmen — alle Daten bleiben lokal im Browser.'
+};
 
 export const dynamic = 'force-dynamic';
 

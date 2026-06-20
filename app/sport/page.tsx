@@ -552,9 +552,14 @@ export default async function SportPage() {
       </Link>
 
       <header className="space-y-2">
-        <div className="flex items-baseline justify-between gap-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Sport · Fußball-Prognosen</div>
-          <RefreshSportButton />
+          <div className="flex items-center gap-2">
+            <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-amber-200">
+              Keine Wettempfehlung
+            </span>
+            <RefreshSportButton />
+          </div>
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Fußball-Prognosen für Tipprunden</h1>
         <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>

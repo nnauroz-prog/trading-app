@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { DataBackupPanel } from '@/components/data-backup-panel';
 import { RiskLimitsPanel } from '@/components/risk-limits-panel';
 import { OnboardingReplay } from '@/components/onboarding-replay';
 import { IntegrationsStatusPanel } from '@/components/integrations-status-panel';
 import { getIntegrationsStatus } from '@/lib/integrations';
+
+export const metadata: Metadata = {
+  title: 'Einstellungen · Risiko, Backup, Onboarding',
+  description: 'Risiko-Schwellen, Daten-Backup, Onboarding wiederholen, Integrationen-Status — alles zentral.'
+};
 
 export const dynamic = 'force-dynamic';
 

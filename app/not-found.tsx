@@ -3,15 +3,16 @@ import Link from 'next/link';
 const QUICK_LINKS = [
   { href: '/', label: 'Krypto', emoji: '₿' },
   { href: '/aktien', label: 'Aktien', emoji: '📈' },
-  { href: '/aktien/watchlist', label: 'Aktien-Watchlist', emoji: '⭐' },
+  { href: '/optionsscheine', label: 'Optionsscheine', emoji: '⚖️' },
   { href: '/rohstoffe', label: 'Rohstoffe', emoji: '🛢️' },
-  { href: '/rohstoffe/watchlist', label: 'Rohstoff-Watchlist', emoji: '⭐' },
   { href: '/gold', label: 'Gold', emoji: '🥇' },
   { href: '/sport', label: 'Sport', emoji: '⚽' },
   { href: '/wm', label: 'WM 2026', emoji: '🏆' },
   { href: '/heute-sicher', label: 'Heute besonders sicher', emoji: '🛡️' },
+  { href: '/watchlist', label: 'Krypto-Watchlist', emoji: '⭐' },
   { href: '/agenten', label: 'Vorstände & Agenten', emoji: '👥' },
-  { href: '/daily', label: 'Daily Decision Center', emoji: '🌅' }
+  { href: '/daily', label: 'Daily Decision Center', emoji: '🌅' },
+  { href: '/hilfe', label: 'Hilfe & FAQ', emoji: '❓' }
 ];
 
 export default function NotFound() {

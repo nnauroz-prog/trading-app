@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getHandballFixtures } from '@/lib/sport/multi-sport-fetcher';
+
+export const metadata: Metadata = {
+  title: 'Handball · HBL, EHF Champions League, ASOBAL, LNH',
+  description: 'Handball-Tageswerte fuer Bundesliga, EHF Champions League, ASOBAL und LNH. Modell-Tendenz pro Spiel, keine Wettempfehlung.'
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;

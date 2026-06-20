@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTennisFixtures } from '@/lib/sport/tennis-fetcher';
+
+export const metadata: Metadata = {
+  title: 'Tennis · ATP, WTA, Grand Slams',
+  description: 'Tennis-Tageswerte fuer ATP, WTA und Grand-Slam-Turniere. Modell-Tendenz pro Match, keine Wettempfehlung.'
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;

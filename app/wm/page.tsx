@@ -176,10 +176,15 @@ export default async function WorldCupPage() {
       </Link>
 
       <header className="space-y-1">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">FIFA World Cup 2026</div>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">FIFA World Cup 2026</div>
+          <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-amber-200">
+            Keine Wettempfehlung
+          </span>
+        </div>
         <h1 className="text-3xl font-bold tracking-tight text-white">WM-Gewinner-Vorhersage</h1>
         <p className="max-w-2xl text-sm text-slate-400">
-          11. Juni – 19. Juli 2026 in USA, Kanada, Mexiko. Modell-Tendenz, keine Garantie. Keine Wett-Empfehlung.
+          11. Juni – 19. Juli 2026 in USA, Kanada, Mexiko. Modell-Tendenz, keine Garantie.
         </p>
       </header>
 

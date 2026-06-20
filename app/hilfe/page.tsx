@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Hilfe & FAQ',
+  description: 'Wie liest man den Sicherheits-Check, die Optionsschein-Vorschlaege und das WM-Modell richtig — kompakt erklaert.'
+};
 
 export const dynamic = 'force-static';
 
