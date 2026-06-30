@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache';
+import { thesportsdbBase } from '@/lib/sport/sportsdb-config';
 import { BASKETBALL_LEAGUES, League } from '@/lib/sport/leagues';
 
 // Schlankerer Basketball-Fetcher: nur kommende Spiele, kein Poisson-Modell
@@ -60,7 +61,7 @@ function normalize(e: ApiEvent, status: 'upcoming' | 'finished'): BasketballFixt
 }
 
 async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<BasketballFixture[]> {
-  const url = `https://www.thesportsdb.com/api/v1/json/3/events${kind}league.php?id=${leagueId}`;
+  const url = `${thesportsdbBase()}/events${kind}league.php?id=${leagueId}`;
   try {
     const res = await fetch(url, { next: { revalidate: 600 } });
     if (!res.ok) return [];

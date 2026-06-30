@@ -6,6 +6,7 @@ import type { UpcomingFixture, Fixture } from '@/lib/sport/fetcher';
 import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
 import { predictWmMatch } from '@/lib/sport/wm-match-engine';
 import { WmOutrightCard } from '@/components/wm-outright-card';
+import { SportDataSourceBanner } from '@/components/sport-data-source-banner';
 import { WmSafeMarketTips } from '@/components/wm-safe-market-tips';
 import { evaluateWmPersonas } from '@/lib/agents/wm-personas';
 import { WmPersonaPanel } from '@/components/wm-persona-panel';
@@ -187,6 +188,8 @@ export default async function WorldCupPage() {
           11. Juni – 19. Juli 2026 in USA, Kanada, Mexiko. Modell-Tendenz, keine Garantie.
         </p>
       </header>
+
+      <SportDataSourceBanner />
 
       {dashboard.globalWarnings.length > 0 && (
         <div role="alert" className="rounded-xl border border-amber-400/40 bg-amber-500/5 p-3 text-[11.5px] text-amber-100/90">

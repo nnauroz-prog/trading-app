@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache';
+import { thesportsdbBase } from '@/lib/sport/sportsdb-config';
 import { FOOTBALL_LEAGUES, League } from '@/lib/sport/leagues';
 import { MatchPrediction, predictMatch } from '@/lib/sport/predictor';
 import { lookupStadium } from '@/lib/sport/stadium-coords';
@@ -124,7 +125,7 @@ function normalize(e: ApiEvent, status: 'upcoming' | 'finished'): Fixture | null
 }
 
 async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<Fixture[]> {
-  const url = `https://www.thesportsdb.com/api/v1/json/3/events${kind}league.php?id=${leagueId}`;
+  const url = `${thesportsdbBase()}/events${kind}league.php?id=${leagueId}`;
   try {
     const res = await fetch(url, { next: { revalidate: 600 } });
     if (!res.ok) return [];
@@ -142,7 +143,7 @@ async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<Fix
 // Spielzeit. Cache 24 h, weil Vergangenheits-Daten sich nicht ändern. So füttern
 // wir das Modell mit hunderten statt nur den letzten 15 Spielen.
 async function fetchSeasonEvents(leagueId: string, season: string): Promise<Fixture[]> {
-  const url = `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=${leagueId}&s=${season}`;
+  const url = `${thesportsdbBase()}/eventsseason.php?id=${leagueId}&s=${season}`;
   try {
     const res = await fetch(url, { next: { revalidate: 86400 } });
     if (!res.ok) return [];

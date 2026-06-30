@@ -102,6 +102,7 @@ import { WmPhasesTimeline } from '@/components/wm-phases-timeline';
 import { SportDataReset } from '@/components/sport-data-reset';
 import { SportFaq } from '@/components/sport-faq';
 import { SportTabTitle } from '@/components/sport-tab-title';
+import { SportDataSourceBanner } from '@/components/sport-data-source-banner';
 import { SportTabsDock } from '@/components/sport-tabs-dock';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 import { SeasonStartsCard } from '@/components/season-starts-card';
@@ -565,6 +566,7 @@ export default async function SportPage() {
         <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>
       </header>
 
+      <SportDataSourceBanner />
       <SportTabTitle />
       <SportTopNav todayIso={buckets.todayIso} />
       <SportTabsDock />

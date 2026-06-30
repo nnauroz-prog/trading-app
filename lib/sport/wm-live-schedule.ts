@@ -11,6 +11,7 @@
 // authoritativ. Niemals erfundene Daten.
 
 import { unstable_cache } from 'next/cache';
+import { thesportsdbBase } from '@/lib/sport/sportsdb-config';
 import type { WmFixture } from '@/lib/sport/wm-schedule-2026';
 import type { FinishedFixtureLite } from '@/lib/sport/wm-pick-learning';
 import type { ExternalLastFixture } from '@/lib/sport/wm-results-matcher';
@@ -75,7 +76,7 @@ function normalize(ev: ApiEvent): WmFixture | null {
 }
 
 async function rawFetchEvents(season: string): Promise<ApiEvent[]> {
-  const url = `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=${WM_LEAGUE_ID}&s=${season}`;
+  const url = `${thesportsdbBase()}/eventsseason.php?id=${WM_LEAGUE_ID}&s=${season}`;
   try {
     const res = await fetch(url, { next: { revalidate: 1800 } });
     if (!res.ok) return [];

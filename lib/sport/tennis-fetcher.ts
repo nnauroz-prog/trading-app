@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache';
+import { thesportsdbBase } from '@/lib/sport/sportsdb-config';
 import { TENNIS_LEAGUES, League } from '@/lib/sport/leagues';
 
 export interface TennisFixture {
@@ -48,7 +49,7 @@ function normalize(e: ApiEvent, status: 'upcoming' | 'finished'): TennisFixture 
 }
 
 async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<TennisFixture[]> {
-  const url = `https://www.thesportsdb.com/api/v1/json/3/events${kind}league.php?id=${leagueId}`;
+  const url = `${thesportsdbBase()}/events${kind}league.php?id=${leagueId}`;
   try {
     const res = await fetch(url, { next: { revalidate: 600 } });
     if (!res.ok) return [];
