@@ -161,6 +161,8 @@ import { AutoRefresh } from '@/components/auto-refresh';
 import { HomeHero } from '@/components/home-hero';
 import { ChefVerdictCard } from '@/components/chef-verdict-card';
 import { buildChefVerdict } from '@/lib/analysis/chef-verdict';
+import { AdvisoryCouncilCard } from '@/components/advisory-council-card';
+import { conveneCouncil } from '@/lib/analysis/advisory-council';
 import { SignalSummary } from '@/lib/action-plan';
 
 export const dynamic = 'force-dynamic';
@@ -640,12 +642,28 @@ export default async function HomePage() {
     }
   });
 
+  // Analysten-Rat: mehrere Stimmen (inkl. Markt-Emotion + Disziplin-Coach)
+  // zu einer Direktive. Fuettert aus denselben Signalen wie das Verdict.
+  const council = conveneCouncil({
+    dataAvailable: chefVerdict.stance !== 'no_data',
+    hasOpportunity: chefVerdict.primary !== null,
+    primaryLabel: chefVerdict.primary?.label ?? null,
+    primaryAssetClass: chefVerdict.primary?.assetClass ?? null,
+    confidencePct: masterSignal.kind === 'trade' ? masterSignal.confidence : null,
+    marketMood: masterSignal.marketMood,
+    fearGreedValue: fearGreed?.value ?? null,
+    crowdState: masterSignal.crowd.state,
+    crowdCautious: masterSignal.crowd.cautious,
+    recentChangePct: masterSignal.kind === 'trade' ? masterSignal.ticker.priceChangePct : null
+  });
+
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:space-y-6 md:p-6">
       <OnboardingGuide />
       <AutoRefresh intervalMs={20000} />
       <HomeHero todayIso={todayIso} />
       <ChefVerdictCard verdict={chefVerdict} />
+      <AdvisoryCouncilCard council={council} />
       <details className="rounded-md border border-slate-800 bg-slate-900/30">
         <summary className="cursor-pointer list-none px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
           ▸ Alle Bereiche &amp; Werkzeuge
