@@ -10,6 +10,7 @@ import { Structure, StructureAssessment, assessMarketStructure } from '@/lib/ana
 import { CrowdAssessment, assessCrowd } from '@/lib/analysis/crowd';
 import { fetchFearGreed } from '@/lib/providers/sentiment-indicators';
 import { fetchFundingRate } from '@/lib/providers/funding-rates';
+import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 
 export interface ConfluenceCheck {
   id: string;
@@ -528,6 +529,28 @@ function toRankedCandidate(a: AnalyzedCoin, btcPct: number): RankedCandidate {
   };
 }
 
+// Qualitaets-Opportunity-Score (0-100) fuer einen analysierten Coin.
+// Nutzt den gemeinsamen scoreCryptoCandidate — belohnt Uptrend, gutes
+// Reward/Risk, Naehe zur Unterstuetzung und Liquiditaet, bestraft
+// Chasing nach einem Pump. Ersetzt das reine "groesste Tagesbewegung"-
+// Kriterium, das Pumps und Crashes gleich "interessant" machte.
+function opportunityScoreOf(a: AnalyzedCoin, marketMood: 'risk-on' | 'risk-off' | 'neutral'): number {
+  const risk = a.entry - a.stopLoss;
+  const rrTp1 = risk > 0 ? (a.takeProfit1 - a.entry) / risk : 0;
+  return scoreCryptoCandidate({
+    passedCount: a.passedCount,
+    totalCount: a.totalCount,
+    structure: a.structure.structure,
+    nearSupport: a.structure.nearSupport,
+    rrTp1,
+    quoteVolume: a.ticker.quoteVolume,
+    priceChangePct24h: a.ticker.priceChangePct,
+    marketMood,
+    userBrokerAvailable: brokersFor(a.coin.symbol).length > 0,
+    isOnWatchlist: false
+  }).score;
+}
+
 export async function buildMasterSignal(mode: TradeMode = 'swing', deepAnalyzeCount = 12): Promise<MasterSignalReport> {
   const tf = MODE_CONFIG[mode];
   const [tickerMap, fearGreed, fundingBtc] = await Promise.all([
@@ -561,11 +584,23 @@ export async function buildMasterSignal(mode: TradeMode = 'swing', deepAnalyzeCo
     .map((c) => ({ coin: c, ticker: tickerMap.get(c.binanceSymbol) }))
     .filter((x): x is { coin: UniverseCoin; ticker: TickerSnapshot } => !!x.ticker);
 
+  // Vorauswahl, welche Coins ueberhaupt tief analysiert werden. Frueher:
+  // |Tagesbewegung| + Volumen — das machte einen -20%-Crash genauso
+  // "interessant" wie einen gesunden Aufwaertstrend und liess ruhige
+  // Qualitaets-Setups aussen vor. Jetzt: Liquiditaet (Volumen) ist der
+  // Haupttreiber, moderate positive Bewegung gibt einen kleinen Bonus,
+  // Crashs und ueberhitzte Pumps werden abgewertet. Die eigentliche
+  // Qualitaetsbewertung passiert danach ueber opportunityScoreOf.
   const scored = withTickers
-    .map((x) => ({
-      ...x,
-      interestScore: Math.abs(x.ticker.priceChangePct) + Math.log10(Math.max(x.ticker.quoteVolume, 1)) * 0.8
-    }))
+    .map((x) => {
+      const chg = x.ticker.priceChangePct;
+      const liquidity = Math.log10(Math.max(x.ticker.quoteVolume, 1));
+      const momentumBias =
+        chg > 12 ? -2 :          // ueberhitzt / Chasing
+        chg >= 0 ? Math.min(chg, 8) * 0.15 : // gesunder Anstieg bis +8%
+        Math.max(chg, -20) * 0.12;           // Abwaertsbewegung bestrafen
+      return { ...x, interestScore: liquidity + momentumBias };
+    })
     .sort((a, b) => b.interestScore - a.interestScore);
 
   const top = scored.slice(0, deepAnalyzeCount);
@@ -574,9 +609,16 @@ export async function buildMasterSignal(mode: TradeMode = 'swing', deepAnalyzeCo
   const forced = scored.filter((x) => (x.coin.category === 'commodity' || x.coin.id === 'btc') && !top.includes(x));
   const candidates = [...top, ...forced];
 
+  // Finales Ranking NICHT mehr nur nach bestandenen Checks (passedWeight),
+  // sondern nach dem ganzheitlichen Qualitaets-Score: Trend, Reward/Risk,
+  // Timing (kein Chasing), Liquiditaet, Marktumfeld. Das ist der Kern des
+  // "schlauen Beraters" — der Top-Vorschlag ist das beste Setup, nicht der
+  // groesste Tagesgewinner. Bei Gleichstand entscheidet passedWeight.
   const analyzed = (await Promise.all(candidates.map((x) => analyzeCoin(x.coin, x.ticker, tf))))
     .filter((a): a is AnalyzedCoin => a !== null)
-    .sort((a, b) => b.passedWeight - a.passedWeight);
+    .map((a) => ({ a, opp: opportunityScoreOf(a, marketMood) }))
+    .sort((x, y) => (y.opp - x.opp) || (y.a.passedWeight - x.a.passedWeight))
+    .map((x) => x.a);
 
   const btc = analyzed.find((a) => a.coin.id === 'btc');
   const btcRegime: 'bull' | 'bear' | 'sideways' = btc?.marketRegime ?? 'sideways';
