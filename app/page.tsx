@@ -159,6 +159,8 @@ import { DailyActionPlan } from '@/components/daily-action-plan';
 import { OnboardingGuide } from '@/components/onboarding-guide';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { HomeHero } from '@/components/home-hero';
+import { ChefVerdictCard } from '@/components/chef-verdict-card';
+import { buildChefVerdict } from '@/lib/analysis/chef-verdict';
 import { SignalSummary } from '@/lib/action-plan';
 
 export const dynamic = 'force-dynamic';
@@ -608,11 +610,42 @@ export default async function HomePage() {
   // Identische Logik wie moodForPlan — eine Berechnung reicht.
   const marketMood = moodForPlan;
 
+  // Chef-Verdict: die eine klare Tagesempfehlung aus Krypto + Aktien +
+  // Rohstoffen. Honest-by-design — sagt auch "heute kein Setup".
+  const stockGradeA = stockSafetyScan.filter((e) => e.assessment.verdict === 'KAUFEN');
+  const stockTop = [...stockGradeA].sort((a, b) => b.assessment.score - a.assessment.score)[0] ?? null;
+  const commodityGradeA = commoditySafetyScan.filter((e) => e.assessment.verdict === 'KAUFEN');
+  const commodityTop = [...commodityGradeA].sort((a, b) => b.assessment.score - a.assessment.score)[0] ?? null;
+  const chefVerdict = buildChefVerdict({
+    crypto: {
+      dataAvailable: masterSignal.kind === 'trade' || masterSignal.bestCandidate !== null || masterSignal.candidates.length > 0,
+      kind: masterSignal.kind,
+      symbol: masterSignal.kind === 'trade' ? masterSignal.coin.symbol : (masterSignal.bestCandidate?.coin.symbol ?? null),
+      confidencePct: masterSignal.kind === 'trade' ? masterSignal.confidence : null,
+      reason: masterSignal.kind === 'trade' ? masterSignal.oneLineReason : (masterSignal.reasons?.[0] ?? null),
+      marketMood: masterSignal.marketMood,
+      crowdCautious: masterSignal.crowd.cautious
+    },
+    stocks: {
+      dataAvailable: stockSafetyScan.length > 0,
+      topSymbol: stockTop?.symbol ?? null,
+      topName: stockTop?.name ?? null,
+      gradeACount: stockGradeA.length
+    },
+    commodities: {
+      dataAvailable: commoditySafetyScan.length > 0,
+      topSymbol: commodityTop?.symbol ?? null,
+      topName: commodityTop?.name ?? null,
+      gradeACount: commodityGradeA.length
+    }
+  });
+
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:space-y-6 md:p-6">
       <OnboardingGuide />
       <AutoRefresh intervalMs={20000} />
       <HomeHero todayIso={todayIso} />
+      <ChefVerdictCard verdict={chefVerdict} />
       <details className="rounded-md border border-slate-800 bg-slate-900/30">
         <summary className="cursor-pointer list-none px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200">
           ▸ Alle Bereiche &amp; Werkzeuge
