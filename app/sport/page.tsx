@@ -103,6 +103,8 @@ import { SportDataReset } from '@/components/sport-data-reset';
 import { SportFaq } from '@/components/sport-faq';
 import { SportTabTitle } from '@/components/sport-tab-title';
 import { SportDataSourceBanner } from '@/components/sport-data-source-banner';
+import { isWmOver } from '@/lib/sport/wm-tournament-phase';
+import { PostWmFootballFocus } from '@/components/sport/post-wm-football-focus';
 import { SportTabsDock } from '@/components/sport-tabs-dock';
 import { OtherSportsShortcut } from '@/components/other-sports-shortcut';
 import { SeasonStartsCard } from '@/components/season-starts-card';
@@ -450,6 +452,9 @@ export default async function SportPage() {
     for (const f of lf.next) flatUpcoming.push({ fixture: f, leagueName: lf.league.name });
   }
   const buckets = bucketByDay(flatUpcoming.map((x) => x.fixture));
+  // Nach dem WM-Finale (19.07.2026) nicht mehr WM-zentriert fuehren —
+  // der laufende Vereinsfussball (Champions League, Top-Ligen) uebernimmt.
+  const wmOver = isWmOver(buckets.todayIso);
   const wrap = (fxs: UpcomingFixture[]) =>
     fxs.map((f) => {
       const entry = flatUpcoming.find((x) => x.fixture.id === f.id);
@@ -572,11 +577,20 @@ export default async function SportPage() {
       <SportTabsDock />
       <SportOnboardingHint />
 
+      {/* Nach dem WM-Finale fuehrt der Vereinsfussball — Fokus-Banner ganz
+          oben, der komplette WM-Gewinner-Cluster darunter wird ausgeblendet. */}
+      {wmOver && <PostWmFootballFocus />}
+
       {/* SPORT PRECISION DESK — fuehrender Entscheidungs-Filter ganz oben.
           Alle alten Bereiche sind darunter eingeklappt und tragen klar das
           Etikett „Rohdaten / Modell-Uebersicht", damit kein widersprueliches
           Wording uebrig bleibt. */}
 
+      {/* WM-Gewinner-Cluster: nur solange das Turnier NICHT vorbei ist.
+          Nach dem Finale waere eine "aktuelle" WM-Vorhersage sachlich
+          falsch — dann uebernimmt unten das Liga Precision Desk. */}
+      {!wmOver && (
+      <>
       {/* WM-Gewinner-Vorhersage ganz oben: pro Spiel chronologisch
           Modell-Gewinner + Endstand + Live-Indikator. */}
       <WmTurnierTippCard schedule={mergedWmSchedule} externalLast={wmLiveData.externalLast} />
@@ -732,6 +746,8 @@ export default async function SportPage() {
 
       {/* Klartext-Glossar ganz unten: jeder Begriff in einem Satz. */}
       <WmGlossarCard />
+      </>
+      )}
 
       {(() => {
         const precisionPicks = buildLeaguePrecisionPicks(leagues, { todayIso: buckets.todayIso });
