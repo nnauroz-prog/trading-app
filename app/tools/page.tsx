@@ -19,9 +19,9 @@ export default function ToolsPage() {
 
       <header className="space-y-2">
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-400">Werkzeuge</div>
-        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Position-Größe · Reward/Risk · Kelly</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Wie viel soll ich kaufen?</h1>
         <p className="text-sm text-slate-400">
-          Drei Rechner, die jeder disziplinierte Trader im Kopf haben sollte. Werte werden nicht gespeichert — nur Rechenhilfen.
+          Sag mir dein Konto und deinen Stop — ich rechne dir die Positionsgröße aus. Dein Konto wird gemerkt, Profi-Rechner sind unten eingeklappt.
         </p>
       </header>
 

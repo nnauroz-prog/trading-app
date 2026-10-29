@@ -19,24 +19,27 @@ function fmtDay(iso: string): string {
 
 export function HomeHero({ todayIso }: Props) {
   return (
-    <header className="space-y-3 rounded-2xl border border-slate-800/80 bg-gradient-to-br from-slate-900/60 to-slate-950/40 p-5 md:p-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300">
-          Decision Support · {fmtDay(todayIso)}
+    <header className="relative space-y-3 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/70 via-slate-950/50 to-slate-950/70 p-5 shadow-[0_20px_60px_-24px_rgba(56,189,248,0.4)] md:p-7">
+      <div className="aurora" aria-hidden />
+      <div className="relative z-10 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300">
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
+          Trading Desk · {fmtDay(todayIso)}
         </div>
-        <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-200">
+        <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-200">
           Kein Anlageratschlag
         </span>
       </div>
 
-      <h1 className="text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl">
-        Tagesentscheidungen fuer Krypto, Aktien, Rohstoffe und Sport — transparent gerechnet.
+      <h1 className="text-[26px] font-bold leading-[1.1] tracking-tight sm:text-4xl">
+        <span className="text-gradient">Dein Trading-Desk</span>
+        <span className="text-white"> für Krypto, Aktien &amp; Rohstoffe.</span>
       </h1>
 
-      <p className="max-w-2xl text-[13px] leading-relaxed text-slate-300 sm:text-sm">
-        Modell-basierte Hinweise mit offengelegter Datenherkunft und ehrlichen Konfidenzwerten.
-        Keine versteckten Versprechen, keine erfundenen Erfolgsquoten. Du entscheidest selbst,
-        die App liefert die Grundlage.
+      <p className="max-w-2xl text-[13px] leading-relaxed text-slate-300/90 sm:text-sm">
+        Klare Signale, ehrliche Konfidenz, offengelegte Datenherkunft — keine versteckten Versprechen,
+        keine erfundenen Erfolgsquoten. Du entscheidest, der Desk liefert die Grundlage.
       </p>
 
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -51,6 +54,7 @@ export function HomeHero({ todayIso }: Props) {
         <HeroBullet emoji="📈" label="Aktien-Check" desc="8-Kriterien-Sicherheit" href="/aktien" />
         <HeroBullet emoji="⚖️" label="Optionsscheine" desc="3 Risiko-Setups bei Kauf" href="/optionsscheine" />
       </ul>
+      </div>
     </header>
   );
 }
@@ -59,11 +63,11 @@ function HeroBullet({ emoji, label, desc, href }: { emoji: string; label: string
   return (
     <a
       href={href}
-      className="group rounded-xl border border-slate-800 bg-slate-950/50 p-2.5 transition hover:border-emerald-400/40 hover:bg-slate-900/60"
+      className="group rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-400/50 hover:bg-emerald-500/[0.07] hover:shadow-[0_10px_30px_-12px_rgba(52,211,153,0.5)]"
     >
       <div className="flex items-center gap-2">
-        <span aria-hidden className="text-lg leading-none">{emoji}</span>
-        <span className="text-[11px] font-semibold text-slate-100 group-hover:text-emerald-200">{label}</span>
+        <span aria-hidden className="text-xl leading-none transition-transform duration-200 group-hover:scale-110">{emoji}</span>
+        <span className="text-[11.5px] font-semibold text-slate-100 group-hover:text-emerald-200">{label}</span>
       </div>
       <p className="mt-1 text-[10px] leading-snug text-slate-400">{desc}</p>
     </a>

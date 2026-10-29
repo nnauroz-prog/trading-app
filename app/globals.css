@@ -2,7 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+  /* Display-Schrift (via Google-Fonts-Link im <head>) mit robustem Fallback. */
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Marken-Akzente */
+  --accent: 52 211 153;        /* emerald — positiv/kaufen */
+  --accent-2: 56 189 248;      /* cyan — interaktiv/info */
+  --accent-3: 167 139 250;     /* violet — Berater/premium */
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -16,22 +25,89 @@
 }
 
 :focus-visible {
-  outline: 2px solid rgba(52, 211, 153, 0.9);
+  outline: 2px solid rgb(var(--accent-2) / 0.9);
   outline-offset: 2px;
 }
 
 /*
- * Body-Background: einfacher dunkler Solid-Color statt radial-gradient.
- * iOS-Safari rendert radial-gradient mit position:fixed konsequent als
- * sichtbare „Beulen"-Overlays, egal wie dezent die Opacity ist.
- * Drei vorherige Fix-Versuche (fixed, scroll, pseudo-element) haben
- * das Symptom nicht eliminiert — also Gradient ganz raus.
+ * Body-Background: dunkler Vertikal-Verlauf mit kuehlem Indigo/Violett-
+ * Hauch. BEWUSST ein linear-gradient OHNE position:fixed — der frueher
+ * dokumentierte iOS-Safari-Bug betraf radial-gradient auf fixed-Elementen
+ * ("Beulen"). Ein linearer Body-Verlauf scrollt mit und ist safe.
  */
 body {
-  @apply bg-slate-950 text-slate-100 antialiased;
+  font-family: var(--font-sans);
+  color: rgb(226 232 240);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
   overflow-x: hidden;
+  background-color: #06060d;
+  background-image: linear-gradient(
+    180deg,
+    #0b1022 0%,
+    #090a16 32%,
+    #07070f 64%,
+    #050509 100%
+  );
 }
+
+/* Display-Schrift fuer Ueberschriften — gibt der Seite sofort Charakter. */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Verlaufs-Text fuer Hero-Headlines & Akzent-Titel. */
+.text-gradient {
+  background-image: linear-gradient(
+    100deg,
+    rgb(var(--accent)) 0%,
+    rgb(var(--accent-2)) 55%,
+    rgb(var(--accent-3)) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Glas-Oberflaeche fuer hervorgehobene Karten. */
+.glass {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.04), rgb(255 255 255 / 0.015));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgb(255 255 255 / 0.08);
+}
+
+/* Weicher farbiger Schein unter wichtigen Karten. */
+.glow-emerald { box-shadow: 0 0 0 1px rgb(var(--accent) / 0.15), 0 12px 40px -12px rgb(var(--accent) / 0.35); }
+.glow-cyan    { box-shadow: 0 0 0 1px rgb(var(--accent-2) / 0.15), 0 12px 40px -12px rgb(var(--accent-2) / 0.35); }
+.glow-violet  { box-shadow: 0 0 0 1px rgb(var(--accent-3) / 0.15), 0 12px 40px -12px rgb(var(--accent-3) / 0.35); }
+
+/* Aurora-Glow (z.B. im Hero): absolut positioniert, scrollt mit — kein
+   fixed, also kein iOS-Bump-Bug. */
+.aurora {
+  position: absolute;
+  inset: -40% -20% auto -20%;
+  height: 420px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(40% 60% at 20% 30%, rgb(var(--accent) / 0.22), transparent 70%),
+    radial-gradient(40% 60% at 80% 20%, rgb(var(--accent-3) / 0.20), transparent 70%),
+    radial-gradient(50% 70% at 55% 60%, rgb(var(--accent-2) / 0.16), transparent 70%);
+  filter: blur(36px);
+}
+
+/* Dezente, moderne Scrollbar (Desktop). */
+@media (pointer: fine) {
+  * { scrollbar-width: thin; scrollbar-color: rgb(71 85 105 / 0.6) transparent; }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-thumb { background: rgb(71 85 105 / 0.6); border-radius: 9999px; }
+  *::-webkit-scrollbar-thumb:hover { background: rgb(100 116 139 / 0.8); }
+}
+
+::selection { background: rgb(var(--accent-2) / 0.3); color: #fff; }
 
 /* Druck-Ansicht: weiß auf weiß, ohne Sticky-Bars, ohne Bottom-Nav. */
 @media print {

@@ -46,7 +46,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Hauptnavigation"
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 bg-slate-950/95 backdrop-blur md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-slate-950/80 backdrop-blur-xl md:hidden"
     >
       <ul className="mx-auto grid max-w-5xl grid-cols-5 text-[10px]">
         {ITEMS.map((item) => {
@@ -66,7 +66,7 @@ export function BottomNav() {
                 </span>
                 <span>{item.label}</span>
                 {active && (
-                  <span className="absolute -top-px left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-emerald-400" />
+                  <span className="absolute -top-px left-1/2 h-0.5 w-7 -translate-x-1/2 rounded-full bg-emerald-400 shadow-[0_0_10px_2px_rgba(52,211,153,0.8)]" />
                 )}
               </Link>
             </li>

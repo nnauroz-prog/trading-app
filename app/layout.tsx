@@ -50,12 +50,23 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#020617'
+  themeColor: '#0b1022'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
+      <head>
+        {/* Display-Schrift fuer Ueberschriften. Browser-Link (nicht next/font),
+            damit der Build ohne externen Font-Download funktioniert; faellt
+            sauber auf System-Schrift zurueck, falls blockiert. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        />
+      </head>
       <body className="min-h-screen pb-14 md:pb-0">
         <SkipToContent />
         <TopNav />
