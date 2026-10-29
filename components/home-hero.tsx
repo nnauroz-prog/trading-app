@@ -3,6 +3,8 @@
 // scanbar — User soll in 3 Sekunden verstehen, was die App leistet
 // und was sie NICHT ist (kein Anlageratschlag).
 
+import { isWmOver } from '@/lib/sport/wm-tournament-phase';
+
 interface Props {
   todayIso: string;
 }
@@ -39,7 +41,13 @@ export function HomeHero({ todayIso }: Props) {
 
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <HeroBullet emoji="🛡️" label="Heute sicher" desc="Grade-A-Picks ueber alle Asset-Klassen" href="/heute-sicher" />
-        <HeroBullet emoji="🏆" label="WM 2026" desc="Pro Spiel Sieger-Vorhersage" href="/wm" />
+        {/* Nach dem WM-Finale verschwindet die WM-Kachel — stattdessen Sport
+            allgemein, damit der Hero kein totes Turnier bewirbt. */}
+        {isWmOver(todayIso) ? (
+          <HeroBullet emoji="⚽" label="Sport" desc="Prognosen für laufende Ligen" href="/sport" />
+        ) : (
+          <HeroBullet emoji="🏆" label="WM 2026" desc="Pro Spiel Sieger-Vorhersage" href="/wm" />
+        )}
         <HeroBullet emoji="📈" label="Aktien-Check" desc="8-Kriterien-Sicherheit" href="/aktien" />
         <HeroBullet emoji="⚖️" label="Optionsscheine" desc="3 Risiko-Setups bei Kauf" href="/optionsscheine" />
       </ul>

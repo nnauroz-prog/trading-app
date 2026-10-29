@@ -7,6 +7,8 @@ import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
 import { predictWmMatch } from '@/lib/sport/wm-match-engine';
 import { WmOutrightCard } from '@/components/wm-outright-card';
 import { SportDataSourceBanner } from '@/components/sport-data-source-banner';
+import { WmTournamentOverBanner } from '@/components/wm-tournament-over-banner';
+import { isWmOver } from '@/lib/sport/wm-tournament-phase';
 import { WmSafeMarketTips } from '@/components/wm-safe-market-tips';
 import { evaluateWmPersonas } from '@/lib/agents/wm-personas';
 import { WmPersonaPanel } from '@/components/wm-persona-panel';
@@ -169,6 +171,9 @@ export default async function WorldCupPage() {
   const nowIso = new Date().toISOString();
   const todayIso = nowIso.slice(0, 10);
   const dashboard = buildWorldCupDashboard({ nowIso, upcomingLimit: WM_2026_FIXTURES.length });
+  // Zeitstatus: nach dem Finale darf die Sieger-Vorhersage nicht mehr wie
+  // eine aktuelle Prognose wirken.
+  const wmOver = isWmOver(todayIso);
 
   return (
     <main className="mx-auto max-w-4xl space-y-5 p-4 md:p-6">
@@ -183,11 +188,15 @@ export default async function WorldCupPage() {
             Keine Wettempfehlung
           </span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">WM-Gewinner-Vorhersage</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-white">
+          {wmOver ? 'WM 2026 — Rückblick' : 'WM-Gewinner-Vorhersage'}
+        </h1>
         <p className="max-w-2xl text-sm text-slate-400">
           11. Juni – 19. Juli 2026 in USA, Kanada, Mexiko. Modell-Tendenz, keine Garantie.
         </p>
       </header>
+
+      {wmOver && <WmTournamentOverBanner todayIso={todayIso} />}
 
       <SportDataSourceBanner />
 
@@ -197,10 +206,13 @@ export default async function WorldCupPage() {
         </div>
       )}
 
-      <WmDashboardHero topFavorite={dashboard.topFavorite} lastUpdated={dashboard.lastUpdated} />
+      {/* Nach dem Finale: kein "aktueller" Top-Favorit und keine
+          "naechsten Spiele" mehr — das waere sachlich falsch. Das
+          Ranking bleibt als Archiv-Stand (per Banner klar markiert). */}
+      {!wmOver && <WmDashboardHero topFavorite={dashboard.topFavorite} lastUpdated={dashboard.lastUpdated} />}
       <WmDashboardTop8 ranking={dashboard.ranking} />
-      <WmDashboardMatches matches={dashboard.upcomingMatches} />
-      <WmDashboardBracket todayIso={todayIso} />
+      {!wmOver && <WmDashboardMatches matches={dashboard.upcomingMatches} />}
+      {!wmOver && <WmDashboardBracket todayIso={todayIso} />}
 
       <details className="rounded-2xl border border-slate-700/60 bg-slate-950/30">
         <summary className="cursor-pointer list-none px-4 py-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-300 hover:text-emerald-300">

@@ -166,8 +166,8 @@ export const revalidate = 0;
 
 import type { Metadata } from 'next';
 export const metadata: Metadata = {
-  title: 'Market Decision Support · WM 2026, Krypto, Aktien',
-  description: 'Tageswerte: WM-Gewinner-Vorhersage pro Spiel, Sport-Picks, Krypto-Signale und Aktien-Trends — transparent, ehrlich, ohne Garantie.'
+  title: 'Market Decision Support · Krypto, Aktien, Rohstoffe, Sport',
+  description: 'Tageswerte: Krypto-Signale, Aktien-Sicherheits-Checks, Rohstoff-Trends und Sport-Picks — transparent, ehrlich, ohne Garantie.'
 };
 
 export default async function HomePage() {
