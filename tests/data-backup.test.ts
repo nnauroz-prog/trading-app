@@ -126,3 +126,59 @@ it('preserves the raw sport signal mode through the general backup', () => {
   expect(importData(backup).ok).toBe(true);
   expect(store.get('trading-app.sport-signal-mode-v1')).toBe('PRECISION');
 });
+
+describe('safe backup validation and map merging', () => {
+  beforeEach(() => store.clear());
+
+  it('rejects primitive, null and array envelopes without touching saved data', () => {
+    store.set('trading-app.positions', '[{"id":"keep"}]');
+    for (const value of [null, false, 3, 'backup', [], { app: 'trading-app', data: null }, { app: 'trading-app', data: [] }]) {
+      expect(() => importData(JSON.stringify(value))).not.toThrow();
+      expect(importData(JSON.stringify(value)).ok).toBe(false);
+    }
+    expect(store.get('trading-app.positions')).toBe('[{"id":"keep"}]');
+  });
+
+  it.each([
+    'trading-app.sport-manual-odds-v1',
+    'trading-app.wm-odds-compare-quotes-v1',
+    'trading-app.squad-overrides-v1'
+  ])('merges %s without deleting local matches or overwriting a conflict', key => {
+    const incoming = { overlap: { value: 'imported' }, importedMatch: { value: 'new' } };
+    const local = { overlap: { value: 'local' }, localMatch: { value: 'keep' } };
+    store.set(key, JSON.stringify(local));
+    const backup = JSON.stringify({ app: 'trading-app', version: 1, data: { [key]: incoming } });
+    expect(importData(backup, 'merge').ok).toBe(true);
+    expect(JSON.parse(store.get(key)!)).toEqual({ ...incoming, ...local });
+  });
+
+  it('still replaces an object map when replace is explicitly selected', () => {
+    const key = 'trading-app.sport-manual-odds-v1';
+    store.set(key, JSON.stringify({ oldMatch: { home: 2 } }));
+    const incoming = { newMatch: { home: 3 } };
+    expect(importData(JSON.stringify({ app: 'trading-app', data: { [key]: incoming } }), 'replace').ok).toBe(true);
+    expect(JSON.parse(store.get(key)!)).toEqual(incoming);
+  });
+
+  it('deduplicates manual results by fixtureId and retains the local result', () => {
+    const key = 'trading-app.wm-manual-results-v1';
+    const local = { fixtureId: 'match-1', home: 2, away: 1 };
+    store.set(key, JSON.stringify([local]));
+    const incoming = [{ fixtureId: 'match-1', home: 3, away: 1 }, { fixtureId: 'match-2', home: 0, away: 0 }];
+    expect(importData(JSON.stringify({ app: 'trading-app', data: { [key]: incoming } }), 'merge').ok).toBe(true);
+    expect(JSON.parse(store.get(key)!)).toEqual([local, incoming[1]]);
+  });
+
+  it('backs up personal money-plan inputs and notifies the plan after restore', () => {
+    const key = 'trading-app.money-plan-v1';
+    const plan = { amount: 1200, horizonYears: 5, riskLevel: 'balanced', reserveReady: true, debtFree: true };
+    store.set(key, JSON.stringify(plan));
+    const backup = exportToString();
+    store.clear();
+    const dispatch = vi.spyOn(window, 'dispatchEvent');
+    expect(importData(backup, 'replace').restoredKeys).toContain(key);
+    expect(JSON.parse(store.get(key)!)).toEqual(plan);
+    expect(dispatch.mock.calls.some(([event]) => event.type === 'trading-app:money-plan-changed')).toBe(true);
+    dispatch.mockRestore();
+  });
+});

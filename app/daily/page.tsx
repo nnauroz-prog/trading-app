@@ -1,3 +1,7 @@
+import { getCryptoNews } from '@/lib/news/news-agent';
+import { runSpaeher } from '@/lib/akademie/spaeher';
+import { computeEventWindow } from '@/lib/calendar/event-window';
+import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 // Daily Decision Center. Aggregiert alle bestehenden Systeme zu einer
 // ehrlichen Tagesentscheidung. Keine Garantien, kein Marketing, keine
 // Sportwetten-Sprache. Wenn Daten fehlen: ehrlicher Empty-State.
@@ -48,12 +52,13 @@ export default async function DailyPage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
   const todayIso = new Date().toISOString().slice(0, 10);
 
-  const [masterSignal, backtest, stockScan, commodityScan, leagues] = await Promise.all([
+  const [masterSignal, backtest, stockScan, commodityScan, leagues, newsItems] = await Promise.all([
     getMasterSignal(tradeMode),
     getBacktestSummary(),
     getStockSafetyScan(),
     getCommoditySafetyScan(),
-    getFootballFixtures()
+    getFootballFixtures(),
+    getCryptoNews()
   ]);
 
   // Krypto-Top: bester Kandidat aus dem Master-Signal nach Safety-Score.
@@ -88,7 +93,7 @@ export default async function DailyPage() {
   ];
 
   // Persona-Verdicts aller 5 Vorstände in eine einheitliche Liste.
-  const cryptoVerdicts = evaluatePersonas(masterSignal, backtest);
+  const cryptoVerdicts = evaluatePersonas(masterSignal, backtest, runSpaeher(newsItems), computeEventWindow(listMacroEventsThisWeek()));
   const stockVerdicts = evaluateStockPersonas(stockScan);
   const commodityVerdicts = evaluateCommodityPersonas(commodityScan);
   const wmVerdicts = evaluateWmPersonas(todayIso);

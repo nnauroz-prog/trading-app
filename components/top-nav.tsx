@@ -1,70 +1,52 @@
 'use client';
 
-// Globale Top-Nav. Spiegelt die 5 Hauptbereiche der Bottom-Nav, ist aber
-// auf Desktop (md+) sichtbar, während die Bottom-Nav nur mobil zählt.
-// Bewusst keine Sub-Bar oben — alle Sub-Pages erreichbar über die
-// jeweilige Bereichs-Hauptseite.
-
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowUpRight, ChevronRight, Command, Menu, Settings2, Sparkles, X } from 'lucide-react';
+import { MARKET_NAV, WORKSPACE_NAV, isNavActive, workspaceTitle } from '@/components/navigation-items';
 
-const ITEMS = [
-  { href: '/', label: 'Krypto', emoji: '₿' },
-  { href: '/aktien', label: 'Aktien', emoji: '📈' },
-  { href: '/gold', label: 'Gold', emoji: '🥇' },
-  { href: '/rohstoffe', label: 'Rohstoffe', emoji: '🛢️' },
-  { href: '/sport', label: 'Sport', emoji: '⚽' }
-] as const;
+function Brand() {
+  return <Link href="/" className="terminal-brand" aria-label="Trading Desk Startseite"><span className="terminal-brand-symbol"><ArrowUpRight size={23} strokeWidth={2.4} /></span><span>TRADING<span className="block font-normal tracking-[.32em] text-slate-400">DESK<span className="ml-1 text-[#d8ff62]">_</span></span></span></Link>;
+}
 
-// Sub-Pfade, die zu „Sport" gehören, auch wenn sie nicht unter /sport/* liegen.
-const SPORT_SUB_PATHS = ['/basketball', '/tennis', '/eishockey', '/handball', '/wm'];
-// Alle Top-Bereich-Roots (außer „/" Krypto) — Krypto matched alles, was nicht
-// zu einem der anderen Bereiche gehört.
-const NON_KRYPTO_ROOTS = ['/aktien', '/gold', '/rohstoffe', '/sport', ...SPORT_SUB_PATHS];
-
-function isActive(pathname: string | null, href: string): boolean {
-  if (!pathname) return false;
-  if (href === '/') {
-    // Krypto-Tab ist aktiv für alle Sub-Pages (Positionen, Risiko, Journal …),
-    // die nicht zu einem anderen Top-Bereich gehören.
-    return !NON_KRYPTO_ROOTS.some((root) => pathname === root || pathname.startsWith(`${root}/`));
-  }
-  if (href === '/sport') {
-    // Sport-Tab matched auch die Sub-Sport-Reiter.
-    if (pathname === '/sport' || pathname.startsWith('/sport/')) return true;
-    return SPORT_SUB_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-  }
-  return pathname === href || pathname.startsWith(`${href}/`);
+function NavigationLinks({ pathname, close }: { pathname: string; close?: () => void }) {
+  return <>
+    <p className="nav-group-label">ENTDECKEN</p>
+    <ul className="space-y-1.5">{MARKET_NAV.map(item => {
+      const active = isNavActive(pathname, item.href);
+      return <li key={item.href}><Link onClick={close} href={item.href} aria-current={active ? 'page' : undefined} className={`terminal-nav-link ${active ? 'is-active' : ''}`}><item.icon size={19} strokeWidth={1.6} /><span>{item.label}</span><span className="ml-auto font-mono text-[10px] opacity-40">{item.number}</span></Link></li>;
+    })}</ul>
+    <p className="nav-group-label mt-9">DEIN WORKSPACE</p>
+    <ul className="space-y-1">{WORKSPACE_NAV.map(item => <li key={item.href}><Link onClick={close} href={item.href} aria-current={isNavActive(pathname, item.href) ? 'page' : undefined} className={`terminal-nav-link terminal-nav-secondary ${isNavActive(pathname, item.href) ? 'is-active' : ''}`}><item.icon size={17} strokeWidth={1.6} /><span>{item.label}</span>{item.href === '/geldplan' && <span className="ml-auto text-[#d8ff62]"><ArrowUpRight size={15} /></span>}</Link></li>)}</ul>
+  </>;
 }
 
 export function TopNav() {
-  const pathname = usePathname();
-  return (
-    <nav
-      aria-label="Hauptnavigation Desktop"
-      className="hidden border-b border-slate-800 bg-slate-950/95 backdrop-blur md:block"
-    >
-      <ul className="mx-auto flex max-w-5xl items-center gap-1 px-6 py-2 text-[12px]">
-        {ITEMS.map((it) => {
-          const active = isActive(pathname, it.href);
-          return (
-            <li key={it.href}>
-              <Link
-                href={it.href}
-                aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 transition ${
-                  active
-                    ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200'
-                    : 'border-transparent text-slate-300 hover:border-slate-700 hover:text-emerald-200'
-                }`}
-              >
-                <span aria-hidden>{it.emoji}</span>
-                <span>{it.label}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
+  const pathname = usePathname() ?? '/';
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [open, setOpen] = useState(false);
+  const close = () => { dialog.current?.close(); setOpen(false); };
+  useEffect(() => { dialog.current?.close(); setOpen(false); }, [pathname]);
+  const show = () => { dialog.current?.showModal(); setOpen(true); };
+  return <>
+    <aside className="terminal-sidebar">
+      <Brand />
+      <nav aria-label="Hauptnavigation Desktop" className="mt-12"><NavigationLinks pathname={pathname} /></nav>
+      <div className="sidebar-note"><Command size={17} className="text-[#65e6ff]" /><p>Dein Geld.<br /><strong>Dein nächster guter Schritt.</strong></p></div>
+    </aside>
+    <header className="terminal-topbar">
+      <div className="mobile-brand"><Brand /></div>
+      <div className="desktop-breadcrumb"><span className="section-kicker">WORKSPACE</span><ChevronRight size={14} className="text-slate-600" /><span>{workspaceTitle(pathname)}</span></div>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <Link href="/geldplan" aria-label="Mein Geldplan" className="topbar-money-link"><Sparkles size={15} /><span>Geldplan</span><ArrowUpRight size={14} /></Link>
+        <Link href="/settings" className="topbar-settings" aria-label="Einstellungen"><Settings2 size={18} /></Link>
+        <button type="button" className="mobile-menu-button" onClick={open ? close : show} aria-label={open ? 'Menü schließen' : 'Menü öffnen'} aria-expanded={open} aria-controls="workspace-menu">{open ? <X size={21} /> : <Menu size={21} />}</button>
+      </div>
+    </header>
+    <dialog ref={dialog} id="workspace-menu" aria-label="Navigation" className="terminal-mobile-dialog" onClose={() => setOpen(false)} onClick={e => { if (e.target === e.currentTarget) close(); }}>
+      <div className="flex items-center justify-between border-b border-slate-800 pb-6"><Brand /><button type="button" className="terminal-icon-button" onClick={close} aria-label="Menü schließen"><X size={21} /></button></div>
+      <nav aria-label="Alle Bereiche" className="mt-5"><NavigationLinks pathname={pathname} close={close} /></nav>
+    </dialog>
+  </>;
 }

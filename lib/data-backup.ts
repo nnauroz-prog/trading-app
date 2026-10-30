@@ -8,6 +8,7 @@ const BACKUP_KEYS = [
   // Konfiguration + Profil
   'trading-app.account-config',
   'trading-app.user-profile',
+  'trading-app.money-plan-v1',
   // Positionen, Tagebuch, Paper-Trades
   'trading-app.positions',
   'trading-app.journal',
@@ -58,7 +59,8 @@ const CHANGE_EVENTS = [
   'trading-app:profile-changed',
   'trading-app:drawings-changed',
   'trading-app:wm-pick-notes-changed',
-  'trading-app:wm-bankroll-ledger-changed'
+  'trading-app:wm-bankroll-ledger-changed',
+  'trading-app:money-plan-changed'
 ];
 
 export interface BackupEnvelope {
@@ -95,9 +97,10 @@ export interface ImportResult {
 }
 
 // Identity for merge-dedup. Most stores key on `id`; the watchlist keys on
-// `coinId`. `id` is checked first so e.g. two alerts on the same coin stay
+// `coinId`; manual match results use `fixtureId`. `id` is checked first
+// so e.g. two alerts on the same coin stay
 // distinct. Anything without a known key falls back to deep-equality via JSON.
-const IDENTITY_KEYS = ['id', 'coinId'] as const;
+const IDENTITY_KEYS = ['id', 'fixtureId', 'coinId'] as const;
 
 function identityOf(item: unknown): string {
   if (typeof item === 'object' && item !== null) {
@@ -109,15 +112,19 @@ function identityOf(item: unknown): string {
   return JSON.stringify(item);
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 export function importData(json: string, mode: 'replace' | 'merge' = 'replace'): ImportResult {
   if (typeof window === 'undefined') return { ok: false, restoredKeys: [], error: 'no_window' };
-  let parsed: BackupEnvelope;
+  let parsed: unknown;
   try {
     parsed = JSON.parse(json);
   } catch {
     return { ok: false, restoredKeys: [], error: 'invalid_json' };
   }
-  if (parsed.app !== 'trading-app' || typeof parsed.data !== 'object' || parsed.data === null) {
+  if (!isRecord(parsed) || parsed.app !== 'trading-app' || !isRecord(parsed.data)) {
     return { ok: false, restoredKeys: [], error: 'not_a_trading_app_backup' };
   }
 
@@ -146,13 +153,13 @@ export function importData(json: string, mode: 'replace' | 'merge' = 'replace'):
         }
       }
       window.localStorage.setItem(key, JSON.stringify(merged));
-    } else if (mode === 'merge' && key === 'trading-app.wm-pick-notes-v1' && incoming && typeof incoming === 'object' && !Array.isArray(incoming)) {
+    } else if (mode === 'merge' && isRecord(incoming)) {
       let existing: Record<string, unknown> = {};
       try {
         const value: unknown = JSON.parse(window.localStorage.getItem(key) ?? '{}');
-        if (value && typeof value === 'object' && !Array.isArray(value)) existing = value as Record<string, unknown>;
-      } catch { /* Restore incoming notes when the local store is invalid. */ }
-      // Keep existing notes on conflict, as with array merge above.
+        if (isRecord(value)) existing = value;
+      } catch { /* Restore incoming entries when the local store is invalid. */ }
+      // Keep local map entries on conflict, as with array merge above.
       window.localStorage.setItem(key, JSON.stringify({ ...incoming, ...existing }));
     } else {
       // Signal mode is stored as a raw string by its existing store.

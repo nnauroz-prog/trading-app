@@ -1,55 +1,13 @@
-// Globaler Footer. Bewusst knapp: Datenquellen, Disclaimer,
-// Versions-Hinweis. Auf jeder Seite sichtbar — macht klar, dass die
-// Empfehlungen Modell-Hinweise sind, keine Wertpapier-Beratung.
-
 import Link from 'next/link';
+import { ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 export function SiteFooter() {
-  return (
-    <footer className="mx-auto mt-8 mb-20 max-w-5xl space-y-3 px-4 pt-6 text-[10.5px] leading-snug text-slate-500 md:mb-6 md:px-6">
-      <div className="rounded-lg border border-slate-800/80 bg-slate-900/30 p-3">
-        <div className="font-semibold uppercase tracking-[0.2em] text-slate-400">Wichtig</div>
-        <p className="mt-1 text-slate-400">
-          Dieses Tool liefert <span className="font-semibold text-slate-300">Modell-basierte Hinweise</span> auf Basis offener
-          Markt-Daten. Es ist <span className="font-semibold text-amber-300">keine Wertpapier-Beratung</span>, keine
-          Anlageempfehlung und keine Garantie auf zukuenftige Kursverlaeufe. Verluste sind moeglich, bei Hebelprodukten
-          (Optionsscheine, Knock-Outs) bis zum Totalverlust. Eigene Recherche und Risiko-Pruefung ersetzt das Tool nicht.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <div>
-          <div className="font-semibold uppercase tracking-wider text-slate-400">Datenquellen</div>
-          <ul className="mt-1 space-y-0.5">
-            <li>Krypto: Binance, Bybit, Kraken, CoinGecko</li>
-            <li>Aktien/Rohstoffe: Yahoo Finance</li>
-            <li>Sport-Live: ESPN · Prognosen: TheSportsDB und FIFA-Spielplan</li>
-            <li>Sentiment: Alternative.me, Finnhub</li>
-          </ul>
-        </div>
-        <div>
-          <div className="font-semibold uppercase tracking-wider text-slate-400">Methodik</div>
-          <ul className="mt-1 space-y-0.5">
-            <li>Aktien-Sicherheits-Check: 8 harte Kriterien</li>
-            <li>Optionsscheine: vereinfachte Black-Scholes-Approximation</li>
-            <li>Volatilitaet: 60/90-Tage realisiert, annualisiert</li>
-            <li>Sport: Elo-Modell + Form-Index</li>
-          </ul>
-        </div>
-        <div>
-          <div className="font-semibold uppercase tracking-wider text-slate-400">Schnellzugriff</div>
-          <ul className="mt-1 space-y-0.5">
-            <li><Link href="/hilfe" className="hover:text-emerald-300">Hilfe &amp; FAQ</Link></li>
-            <li><Link href="/settings" className="hover:text-emerald-300">Einstellungen</Link></li>
-            <li><Link href="/watchlist" className="hover:text-emerald-300">Watchlist</Link></li>
-            <li><Link href="/heute-sicher" className="hover:text-emerald-300">Heute besonders sicher</Link></li>
-          </ul>
-        </div>
-      </div>
-
-      <p className="text-center text-[9.5px] text-slate-600">
-        Privates Decision-Support-Tool · alle gespeicherten Daten (Watchlists, Notizen, Tipp-Tagebuch) bleiben lokal im Browser.
-      </p>
-    </footer>
-  );
+  return <footer className="mx-auto mt-12 max-w-5xl border-t border-slate-800 px-4 pb-6 pt-7 md:px-6">
+    <div className="flex flex-wrap items-center justify-between gap-5">
+      <div><p className="section-kicker text-cyan-300">KLARER BLICK. EIGENE ENTSCHEIDUNG.</p><p className="mt-2 text-xs text-slate-500">Trading Desk · Dein persönlicher Markt-Workspace</p></div>
+      <nav aria-label="Service" className="flex flex-wrap gap-4 text-xs text-slate-300">{[['/geldplan','Mein Geldplan'],['/hilfe','Hilfe'],['/settings','Einstellungen']].map(([href,label]) => <Link key={href} href={href} className="inline-flex items-center gap-1 hover:text-cyan-200">{label}<ArrowUpRight size={12} /></Link>)}</nav>
+    </div>
+    <div className="mt-6 flex items-start gap-2 text-xs leading-relaxed text-slate-400"><ShieldCheck size={15} className="mt-0.5 shrink-0 text-slate-500" /><p>Modellbasierte Orientierung, keine persönliche Anlageberatung. Kurse können verzögert sein. Gewinne sind nicht garantiert; Verluste sind möglich.</p></div>
+    <details className="mt-4 text-xs text-slate-500"><summary className="cursor-pointer py-3 hover:text-slate-300">Daten, Methodik &amp; deine Privatsphäre</summary><div className="grid gap-5 pb-4 pt-2 leading-relaxed sm:grid-cols-3"><div><h3 className="mb-2 font-semibold text-slate-300">Unsere Datenquellen</h3><p>Krypto: Binance, Bybit, Kraken, CoinGecko.<br />Aktien &amp; Rohstoffe: Yahoo Finance.<br />Sport-Live: ESPN. Prognosen: TheSportsDB und FIFA-Spielplan.<br />Sentiment: Alternative.me und Finnhub.</p></div><div><h3 className="mb-2 font-semibold text-slate-300">Nachvollziehbare Modelle</h3><p>Marktsignale, historische Tests und regelbasierte Prüfer unterstützen deine Entscheidung. Mehrere Rollen können dieselben Daten verwenden und sind keine unabhängigen Prognosen.</p><Link href="/hilfe" className="mt-2 inline-block text-cyan-300">Methodik nachlesen →</Link></div><div><h3 className="mb-2 font-semibold text-slate-300">Dein Geld bleibt deine Sache</h3><p>Die App führt keine Käufe aus. Dein Geldplan, Listen und persönliche Notizen werden lokal in deinem Browser gespeichert. Sichere sie bei Bedarf unter Einstellungen.</p></div></div></details>
+  </footer>;
 }

@@ -113,7 +113,7 @@ export function HeuteEntscheidung({ personas, perCoinSentiment, setupSimilarity,
           {eventWindow.nextHighImpact.title} in ca. {eventWindow.hoursUntilNextHighImpact} Stunden ({eventWindow.nextHighImpact.region}, {eventWindow.nextHighImpact.time} Uhr). {eventWindow.veryImminent ? 'Konservativ und Balanciert warten — Volatilität nach Release kann jeden Stop überspringen.' : 'Konservativ wartet bis nach dem Termin. Andere Firmen schauen noch normal aufs Setup.'}
         </div>
       )}
-      <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{headline}</h1>
+      <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{headline}</h2>
       {target && (verdict === 'STRONG_BUY' || verdict === 'BUY' || verdict === 'CAREFUL_BUY') && (
         <div className="grid grid-cols-3 gap-2 rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-center">
           <div>

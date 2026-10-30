@@ -67,13 +67,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
         />
       </head>
-      <body className="min-h-screen pb-14 md:pb-0">
+      <body>
         <SkipToContent />
         <TopNav />
-        <div id="main-content">
-          {children}
+        <div className="app-workspace">
+          <div id="main-content" tabIndex={-1}>{children}</div>
+          <SiteFooter />
         </div>
-        <SiteFooter />
         <BottomNav />
       </body>
     </html>

@@ -61,3 +61,47 @@ describe('computeEventWindow', () => {
     expect(w.nextHighImpact).toBeNull();
   });
 });
+
+describe('Berlin time-zone and exact caution boundaries', () => {
+  it('keeps an October 30 afternoon event upcoming after Berlin returned to winter time', () => {
+    const event = fomc('2026-10-30', '15:30'); // 14:30 UTC, not 13:30 UTC
+    const window = computeEventWindow([event], new Date('2026-10-30T13:45:00Z'));
+    expect(window.nextHighImpact?.id).toBe(event.id);
+    expect(window.hoursUntilNextHighImpact).toBe(1);
+    expect(window.veryImminent).toBe(true);
+  });
+
+  it.each([
+    ['2026-03-28', '2026-03-28T13:30:00Z'],
+    ['2026-03-29', '2026-03-29T12:30:00Z'],
+    ['2026-10-24', '2026-10-24T12:30:00Z'],
+    ['2026-10-25', '2026-10-25T13:30:00Z']
+  ])('uses the actual Berlin offset on %s', (date, now) => {
+    expect(computeEventWindow([fomc(date, '15:30')], new Date(now)).hoursUntilNextHighImpact).toBe(1);
+  });
+
+  it('does not round an event just beyond 24 hours into the blocking window', () => {
+    const window = computeEventWindow([fomc('2026-10-30', '15:30')], new Date('2026-10-29T14:29:00Z'));
+    expect(window.hoursUntilNextHighImpact).toBe(24);
+    expect(window.imminent).toBe(false);
+    expect(window.veryImminent).toBe(false);
+  });
+
+  it('does not round an event just beyond 12 hours into the inner blocking window', () => {
+    const window = computeEventWindow([fomc('2026-10-30', '15:30')], new Date('2026-10-30T02:29:00Z'));
+    expect(window.hoursUntilNextHighImpact).toBe(12);
+    expect(window.imminent).toBe(true);
+    expect(window.veryImminent).toBe(false);
+  });
+
+  it('includes events exactly at the caution boundaries', () => {
+    const event = fomc('2026-10-30', '15:30');
+    expect(computeEventWindow([event], new Date('2026-10-29T14:30:00Z')).imminent).toBe(true);
+    expect(computeEventWindow([event], new Date('2026-10-30T02:30:00Z')).veryImminent).toBe(true);
+  });
+
+  it('does not silently shift an event in the nonexistent spring-forward hour', () => {
+    const window = computeEventWindow([fomc('2026-03-29', '02:30')], new Date('2026-03-28T00:00:00Z'));
+    expect(window.nextHighImpact).toBeNull();
+  });
+});

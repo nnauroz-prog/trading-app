@@ -1,8 +1,5 @@
-// Startseiten-Hero: klares Wertversprechen + sichtbarer Disclaimer.
-// Ersetzt den früheren Tag-Wand-Erstkontakt. Bewusst knapp und
-// scanbar — User soll in 3 Sekunden verstehen, was die App leistet
-// und was sie NICHT ist (kein Anlageratschlag).
-
+import Link from 'next/link';
+import { ArrowRight, ArrowUpRight, ChartNoAxesCombined, ChevronDown, Crosshair, Radar, ShieldCheck, SlidersHorizontal, Trophy, type LucideIcon } from 'lucide-react';
 import { isWmOver } from '@/lib/sport/wm-tournament-phase';
 
 interface Props {
@@ -19,71 +16,46 @@ function fmtDay(iso: string): string {
 
 export function HomeHero({ todayIso }: Props) {
   return (
-    <header className="relative space-y-3 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/70 via-slate-950/50 to-slate-950/70 p-5 shadow-[0_20px_60px_-24px_rgba(56,189,248,0.4)] md:p-7">
-      <div className="aurora" aria-hidden />
-      <div className="relative z-10 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300">
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
-          Trading Desk · {fmtDay(todayIso)}
+    <header className="terminal-custom-header relative overflow-hidden border border-[#253340] bg-[#0c131c]">
+      <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-36 w-64 opacity-30" style={{ backgroundImage: 'linear-gradient(90deg, transparent 23px, #2b4755 24px), linear-gradient(transparent 23px, #2b4755 24px)', backgroundSize: '24px 24px', maskImage: 'linear-gradient(270deg, #000, transparent)' }} />
+      <div className="relative p-5 sm:p-7">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 font-mono text-[10px] uppercase tracking-[0.15em] text-[#95a6b8]">
+          <span className="flex items-center gap-2"><span aria-hidden className="h-1.5 w-1.5 bg-[#65e6ff]" />Markt / Übersicht</span>
+          <time dateTime={todayIso}>{fmtDay(todayIso)}</time>
         </div>
-        <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-200">
-          Kein Anlageratschlag
-        </span>
+        <div className="mt-6 flex items-end justify-between gap-5">
+          <div>
+            <h1 className="terminal-heading text-[30px] font-semibold leading-[1.1] tracking-[-0.055em] text-white sm:text-[42px]">Dein Marktüberblick<span className="text-[#d8ff62]">.</span></h1>
+            <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-[#a5b4c5] sm:text-sm">Kurse einordnen. Setups prüfen. Mit Plan entscheiden.</p>
+          </div>
+          <span className="hidden shrink-0 items-center gap-2 border-l border-[#2a3947] pl-5 text-[11px] text-[#a5b4c5] sm:flex"><ShieldCheck aria-hidden className="h-4 w-4 text-[#65e6ff]" />Kein Anlageratschlag</span>
+        </div>
+        <p className="mt-3 flex items-center gap-1.5 text-[10px] text-[#8b9bad] sm:hidden"><ShieldCheck aria-hidden className="h-3 w-3" />Kein Anlageratschlag</p>
       </div>
 
-      <h1 className="text-[26px] font-bold leading-[1.1] tracking-tight sm:text-4xl">
-        <span className="text-gradient">Dein Trading-Desk</span>
-        <span className="text-white"> für Krypto, Aktien &amp; Rohstoffe.</span>
-      </h1>
-
-      <p className="max-w-2xl text-[13px] leading-relaxed text-slate-300/90 sm:text-sm">
-        Klare Signale, ehrliche Konfidenz, offengelegte Datenherkunft — keine versteckten Versprechen,
-        keine erfundenen Erfolgsquoten. Du entscheidest, der Desk liefert die Grundlage.
-      </p>
-
-      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <HeroBullet emoji="🛡️" label="Heute sicher" desc="Grade-A-Picks ueber alle Asset-Klassen" href="/heute-sicher" />
-        {/* Nach dem WM-Finale verschwindet die WM-Kachel — stattdessen Sport
-            allgemein, damit der Hero kein totes Turnier bewirbt. */}
-        {isWmOver(todayIso) ? (
-          <HeroBullet emoji="⚽" label="Sport" desc="Prognosen für laufende Ligen" href="/sport" />
-        ) : (
-          <HeroBullet emoji="🏆" label="WM 2026" desc="Pro Spiel Sieger-Vorhersage" href="/wm" />
-        )}
-        <HeroBullet emoji="📈" label="Aktien-Check" desc="8-Kriterien-Sicherheit" href="/aktien" />
-        <HeroBullet emoji="⚖️" label="Optionsscheine" desc="3 Risiko-Setups bei Kauf" href="/optionsscheine" />
+      <details className="group border-t border-[#253340]"><summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-5 py-3 text-xs text-[#a5b4c5] sm:px-7"><span>Märkte &amp; Werkzeuge entdecken</span><ChevronDown size={15} className="text-[#65e6ff] transition-transform group-open:rotate-180" /></summary><ul className="grid grid-cols-2 gap-px border-t border-[#253340] bg-[#253340] sm:grid-cols-4">
+        <HeroLink icon={ShieldCheck} label="Heute sicher" desc="Grade-A-Picks prüfen" href="/heute-sicher" />
+        {isWmOver(todayIso)
+          ? <HeroLink icon={Crosshair} label="Sport" desc="Ligen & Prognosen" href="/sport" />
+          : <HeroLink icon={Trophy} label="WM 2026" desc="Spielplan & Prognosen" href="/wm" />}
+        <HeroLink icon={ChartNoAxesCombined} label="Aktien-Check" desc="Acht Kriterien im Blick" href="/aktien" />
+        <HeroLink icon={SlidersHorizontal} label="Optionsscheine" desc="Setups & Risiko prüfen" href="/optionsscheine" />
       </ul>
-
-      <a
-        href="/radar"
-        className="group flex items-center justify-between gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-500/[0.07] p-3 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-400/60 hover:shadow-[0_12px_34px_-14px_rgba(56,189,248,0.6)]"
-      >
-        <span className="flex items-center gap-2.5">
-          <span aria-hidden className="text-xl">🛰️</span>
-          <span>
-            <span className="block text-[12.5px] font-semibold text-white">Geld-Radar — womit andere gerade Geld machen</span>
-            <span className="block text-[10px] text-slate-400">Weltweite Finanz-News, auf Deutsch nach Geld-Relevanz sortiert</span>
-          </span>
-        </span>
-        <span className="shrink-0 text-[11px] font-semibold text-cyan-300 transition group-hover:translate-x-0.5">öffnen →</span>
-      </a>
-      </div>
+      <Link href="/radar" className="group flex items-center justify-between gap-4 border-t border-[#253340] bg-[#65e6ff]/[0.035] px-5 py-3.5 transition-colors hover:bg-[#65e6ff]/[0.08] sm:px-7">
+        <span className="flex min-w-0 items-center gap-3"><Radar aria-hidden className="h-[18px] w-[18px] shrink-0 text-[#65e6ff]" /><span><span className="block text-xs font-semibold text-[#e8f0f6]">Finanz-Radar</span><span className="mt-0.5 block text-[10px] text-[#93a5b7]">Weltweite Finanz-News, nach Relevanz sortiert</span></span></span>
+        <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-[#65e6ff] transition-transform group-hover:translate-x-1" />
+      </Link></details>
     </header>
   );
 }
 
-function HeroBullet({ emoji, label, desc, href }: { emoji: string; label: string; desc: string; href: string }) {
+function HeroLink({ icon: Icon, label, desc, href }: { icon: LucideIcon; label: string; desc: string; href: string }) {
   return (
-    <a
-      href={href}
-      className="group rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-400/50 hover:bg-emerald-500/[0.07] hover:shadow-[0_10px_30px_-12px_rgba(52,211,153,0.5)]"
-    >
-      <div className="flex items-center gap-2">
-        <span aria-hidden className="text-xl leading-none transition-transform duration-200 group-hover:scale-110">{emoji}</span>
-        <span className="text-[11.5px] font-semibold text-slate-100 group-hover:text-emerald-200">{label}</span>
-      </div>
-      <p className="mt-1 text-[10px] leading-snug text-slate-400">{desc}</p>
-    </a>
+    <li className="min-w-0 bg-[#0c131c]">
+      <Link href={href} className="group flex h-full items-start gap-2.5 px-4 py-4 transition-colors hover:bg-[#d8ff62]/[0.045] sm:px-5">
+        <Icon aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-[#8da1b2] transition-colors group-hover:text-[#d8ff62]" />
+        <span className="min-w-0"><span className="flex items-center gap-2 text-[12px] font-semibold text-[#edf4fa]">{label}<ArrowUpRight aria-hidden className="h-3 w-3 text-[#667c90] transition-colors group-hover:text-[#d8ff62]" /></span><span className="mt-1 block text-[10px] leading-relaxed text-[#8fa2b4]">{desc}</span></span>
+      </Link>
+    </li>
   );
 }

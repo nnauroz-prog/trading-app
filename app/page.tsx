@@ -1,3 +1,4 @@
+import { MoneyPlanEntry } from '@/components/finance/money-plan-entry';
 import Link from 'next/link';
 import { buildTopPlayReport } from '@/lib/analysis/top-play-engine';
 import { buildEventFeed } from '@/lib/analysis/event-feed';
@@ -694,6 +695,7 @@ export default async function HomePage() {
       <OnboardingGuide />
       <AutoRefresh intervalMs={20000} />
       <HomeHero todayIso={todayIso} />
+      <MoneyPlanEntry />
       <CryptoBuySignals picks={cryptoPrecisionPicks} candidates={masterSignal.candidates} generatedAt={masterSignal.generatedAt} mode={tradeMode} />
       <ChefVerdictCard verdict={chefVerdict} />
       <AdvisoryCouncilCard council={council} />

@@ -24,7 +24,7 @@ export function OnboardingGuide() {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isOnboardingDone()) {
+    if (!isOnboardingDone() && new URLSearchParams(window.location.search).get('setup') === '1') {
       setProfile(loadUserProfile());
       const c = loadConfig();
       setCurrency(c.currency);
