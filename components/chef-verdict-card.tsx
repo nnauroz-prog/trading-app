@@ -1,4 +1,4 @@
-// Render-Komponente fuer das Chef-Verdict. Der eine klare Berater-Block
+// Render-Komponente für das Chef-Verdict. Der eine klare Berater-Block
 // ganz oben auf der Startseite. Server-Component.
 
 import Link from 'next/link';

@@ -42,7 +42,7 @@ export function Calculators() {
 }
 
 // Einfacher Positionsrechner — der eine, den fast jeder braucht.
-// Konto-Groesse wird gemerkt (einmal eintippen, nie wieder), Risiko per
+// Konto-Größe wird gemerkt (einmal eintippen, nie wieder), Risiko per
 // Tipp-Chip, Ergebnis in Klartext statt Zahlenkolonne.
 function SimplePositionSizer() {
   const [acc, setAcc] = useState('');
@@ -52,7 +52,7 @@ function SimplePositionSizer() {
   const [currency, setCurrency] = useState<'EUR' | 'USD'>('EUR');
   const [loaded, setLoaded] = useState(false);
 
-  // Gespeicherte Konto-Groesse laden (einmal eintippen reicht).
+  // Gespeicherte Konto-Größe laden (einmal eintippen reicht).
   useEffect(() => {
     try {
       const c = loadConfig();
@@ -63,7 +63,7 @@ function SimplePositionSizer() {
     setLoaded(true);
   }, []);
 
-  // Konto-Groesse + Risiko merken, sobald geaendert.
+  // Konto-Größe + Risiko merken, sobald geaendert.
   useEffect(() => {
     if (!loaded) return;
     const size = parseFloat(acc);

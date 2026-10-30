@@ -4,7 +4,7 @@ import { Calculators } from '@/components/calculators';
 
 export const metadata: Metadata = {
   title: 'Werkzeuge · Sizing, R/R, Kelly',
-  description: 'Position-Groesse, Reward-Risk-Rechner und Kelly-Kriterium — die einfachen Werkzeuge fuer Disziplin im Setup.'
+  description: 'Position-Größe, Reward-Risk-Rechner und Kelly-Kriterium — die einfachen Werkzeuge für Disziplin im Setup.'
 };
 
 export const dynamic = 'force-dynamic';

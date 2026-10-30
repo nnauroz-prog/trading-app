@@ -1,5 +1,5 @@
 // Startseiten-Hero: klares Wertversprechen + sichtbarer Disclaimer.
-// Ersetzt den frueheren Tag-Wand-Erstkontakt. Bewusst knapp und
+// Ersetzt den früheren Tag-Wand-Erstkontakt. Bewusst knapp und
 // scanbar — User soll in 3 Sekunden verstehen, was die App leistet
 // und was sie NICHT ist (kein Anlageratschlag).
 

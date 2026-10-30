@@ -40,38 +40,37 @@ export function AdvisoryCouncilCard({ council }: { council: CouncilResult }) {
         <p className="mt-1 text-[13px] font-semibold leading-snug text-white">{council.chiefDirective}</p>
       </div>
 
-      {/* Einzelne Stimmen */}
-      <ul className="space-y-1.5">
-        {council.voices.map((v, idx) => {
-          const st = STANCE_STYLE[v.stance];
-          return (
-            <li key={idx} className="rounded-lg border border-slate-800 bg-slate-900/40 p-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-100">
-                  <span aria-hidden>{AGENT_EMOJI[v.name] ?? '•'}</span>
-                  {v.name}
-                  <span className="text-[9.5px] font-normal text-slate-500">· {v.role}</span>
-                </span>
-                <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[8.5px] font-semibold uppercase tracking-wider ${st.chip}`}>
-                  {st.label}
-                </span>
-              </div>
-              <p className="mt-1 text-[11.5px] leading-snug text-slate-300">{v.say}</p>
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-2.5">
-          <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">🎭 Markt-Emotion</div>
-          <p className="mt-0.5 text-[11px] leading-snug text-slate-300">{council.emotionRead}</p>
-        </div>
-        <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-2.5">
-          <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">🧠 Deine Psychologie</div>
-          <p className="mt-0.5 text-[11px] leading-snug text-slate-300">{council.disciplineReminder}</p>
-        </div>
-      </div>
+      {/* Einzelne Stimmen — standardmaessig eingeklappt, damit die Karte
+          übersichtlich bleibt. Markt-Emotion & Psychologie stecken schon
+          als Stimmen drin (Sentiment-Analyst / Disziplin-Coach). */}
+      {council.voices.length > 1 && (
+        <details className="group rounded-xl border border-slate-800 bg-slate-900/30">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[11px] font-semibold text-slate-300 hover:text-white">
+            <span>Die {council.voices.length} Analysten im Detail</span>
+            <span aria-hidden className="text-slate-500 transition group-open:rotate-90">▸</span>
+          </summary>
+          <ul className="space-y-1.5 border-t border-slate-800 p-2.5">
+            {council.voices.map((v, idx) => {
+              const st = STANCE_STYLE[v.stance];
+              return (
+                <li key={idx} className="rounded-lg border border-slate-800 bg-slate-900/40 p-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-100">
+                      <span aria-hidden>{AGENT_EMOJI[v.name] ?? '•'}</span>
+                      {v.name}
+                      <span className="text-[9.5px] font-normal text-slate-500">· {v.role}</span>
+                    </span>
+                    <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[8.5px] font-semibold uppercase tracking-wider ${st.chip}`}>
+                      {st.label}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11.5px] leading-snug text-slate-300">{v.say}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </details>
+      )}
     </section>
   );
 }

@@ -14,7 +14,7 @@ export type ChefStance = 'opportunity' | 'selective' | 'patience' | 'no_data';
 export type ChefConfidence = 'niedrig' | 'mittel' | 'hoch';
 
 export interface ChefAssetSignal {
-  // Hat der Provider ueberhaupt Daten geliefert?
+  // Hat der Provider überhaupt Daten geliefert?
   dataAvailable: boolean;
 }
 
@@ -78,13 +78,13 @@ export function buildChefVerdict(input: ChefVerdictInput): ChefVerdict {
       ? null
       : missing.length === 3
         ? 'Aktuell liefert kein Daten-Provider verwertbare Kurse — die Empfehlung ist ausgesetzt, bis die Datenlage wieder steht.'
-        : `Eingeschraenkte Datenlage: ${missing.join(' & ')} gerade nicht erreichbar. Nur die verfuegbaren Quellen flossen ein.`;
+        : `Eingeschraenkte Datenlage: ${missing.join(' & ')} gerade nicht erreichbar. Nur die verfügbaren Quellen flossen ein.`;
 
   // Gar keine Daten → ehrlich aussetzen.
   if (!anyData) {
     return {
       stance: 'no_data',
-      headline: 'Heute keine belastbare Empfehlung — Datenlage zu duenn.',
+      headline: 'Heute keine belastbare Empfehlung — Datenlage zu dünn.',
       primary: null,
       reasoning: ['Kein Daten-Provider lieferte verwertbare Kurse.'],
       risks: ['Ohne verlaessliche Daten keine Entscheidung — das ist die ehrliche Antwort, kein Rat ins Blaue.'],
@@ -94,15 +94,15 @@ export function buildChefVerdict(input: ChefVerdictInput): ChefVerdict {
   }
 
   const reasoning: string[] = [];
-  const risks: string[] = ['Kein Signal ist eine Garantie — Positionsgroesse begrenzen, Stop respektieren.'];
+  const risks: string[] = ['Kein Signal ist eine Garantie — Positionsgröße begrenzen, Stop respektieren.'];
 
   // Marktumfeld als erster Kontext.
   if (crypto.dataAvailable) {
     if (crypto.marketMood === 'risk-off') {
-      reasoning.push('Gesamtmarkt ist Risk-off (>60 % der Coins im Minus) — selbst gute Setups laufen dann oefter schief.');
+      reasoning.push('Gesamtmarkt ist Risk-off (>60 % der Coins im Minus) — selbst gute Setups laufen dann öfter schief.');
       risks.push('Risk-off-Umfeld: defensiv bleiben, lieber kleiner oder gar nicht.');
     } else if (crypto.marketMood === 'risk-on') {
-      reasoning.push('Gesamtmarkt ist Risk-on — Rueckenwind fuer Long-Setups.');
+      reasoning.push('Gesamtmarkt ist Risk-on — Rueckenwind für Long-Setups.');
     } else {
       reasoning.push('Gesamtmarkt neutral — keine klare Richtung vom Umfeld.');
     }
@@ -123,7 +123,7 @@ export function buildChefVerdict(input: ChefVerdictInput): ChefVerdict {
     primary = {
       assetClass: 'Krypto',
       label: `${crypto.symbol} — Long-Setup`,
-      detail: crypto.reason ?? 'Konfluenz der Kriterien erfuellt.',
+      detail: crypto.reason ?? 'Konfluenz der Kriterien erfüllt.',
       href: `/assets/${crypto.symbol.toLowerCase()}`
     };
     confidence = confidenceWord(crypto.confidencePct);
@@ -133,7 +133,7 @@ export function buildChefVerdict(input: ChefVerdictInput): ChefVerdict {
     primary = {
       assetClass: 'Aktien',
       label: `${stocks.topName ?? stocks.topSymbol} — Grade A`,
-      detail: `Erfuellt alle 8 Sicherheits-Kriterien. ${stocks.gradeACount} Grade-A-Wert${stocks.gradeACount === 1 ? '' : 'e'} heute.`,
+      detail: `Erfüllt alle 8 Sicherheits-Kriterien. ${stocks.gradeACount} Grade-A-Wert${stocks.gradeACount === 1 ? '' : 'e'} heute.`,
       href: `/aktien/${stocks.topSymbol}`
     };
     confidence = stocks.gradeACount >= 3 ? 'mittel' : 'niedrig';
@@ -143,7 +143,7 @@ export function buildChefVerdict(input: ChefVerdictInput): ChefVerdict {
     primary = {
       assetClass: 'Rohstoffe',
       label: `${commodities.topName ?? commodities.topSymbol} — Grade A`,
-      detail: `Erfuellt alle Sicherheits-Kriterien. ${commodities.gradeACount} Grade-A-Wert${commodities.gradeACount === 1 ? '' : 'e'} heute.`,
+      detail: `Erfüllt alle Sicherheits-Kriterien. ${commodities.gradeACount} Grade-A-Wert${commodities.gradeACount === 1 ? '' : 'e'} heute.`,
       href: `/rohstoffe/${commodities.topSymbol}`
     };
     confidence = 'niedrig';
@@ -154,10 +154,10 @@ export function buildChefVerdict(input: ChefVerdictInput): ChefVerdict {
     stance = 'patience';
     confidence = 'niedrig';
     if (crypto.dataAvailable && crypto.kind === 'no_trade') {
-      reasoning.push(`Krypto: kein Setup ueber der Schwelle${crypto.reason ? ` — ${crypto.reason}` : ''}.`);
+      reasoning.push(`Krypto: kein Setup über der Schwelle${crypto.reason ? ` — ${crypto.reason}` : ''}.`);
     }
     if (stocks.dataAvailable && stocks.gradeACount === 0) {
-      reasoning.push('Aktien: heute kein Wert, der alle Sicherheits-Kriterien erfuellt.');
+      reasoning.push('Aktien: heute kein Wert, der alle Sicherheits-Kriterien erfüllt.');
     }
   }
 
@@ -165,7 +165,7 @@ export function buildChefVerdict(input: ChefVerdictInput): ChefVerdict {
   if (stance === 'opportunity' && primary) {
     headline = `Heute ein klares Setup: ${primary.label} (${primary.assetClass}).`;
   } else if (stance === 'selective' && primary) {
-    headline = `Zurueckhaltung — ein einzelnes Setup wert anzusehen: ${primary.label}.`;
+    headline = `Zurückhaltung — ein einzelnes Setup wert anzusehen: ${primary.label}.`;
   } else {
     headline = 'Heute kein belastbares Setup — Cash ist auch eine Position.';
   }

@@ -7,7 +7,7 @@
 //   - Sentiment-/Emotions-Analyst: liest die MARKT-Emotion (Angst/Gier)
 //     antizyklisch.
 //   - Disziplin-Coach: adressiert die EIGENE Psychologie des Nutzers
-//     (FOMO, Chasing, Rache-Trades, Positionsgroesse).
+//     (FOMO, Chasing, Rache-Trades, Positionsgröße).
 //
 // Reine, deterministische Logik — keine Blackbox, keine erfundene KI.
 // Voll testbar.
@@ -52,26 +52,26 @@ function trendAnalyst(i: CouncilInput): AgentVoice {
     return { ...base, stance: 'neutral', say: 'Kein belastbarer Trend mit sauberer Struktur — es gibt keinen Zwang, heute zu handeln.' };
   }
   if (i.marketMood === 'risk-on') {
-    return { ...base, stance: 'bullish', say: `Trend und Gesamtmarkt ziehen gleich — Rueckenwind fuer ${i.primaryLabel}.` };
+    return { ...base, stance: 'bullish', say: `Trend und Gesamtmarkt ziehen gleich — Rueckenwind für ${i.primaryLabel}.` };
   }
   if (i.marketMood === 'risk-off') {
-    return { ...base, stance: 'caution', say: `Setup bei ${i.primaryLabel} vorhanden, aber der Markt traegt nicht — gegen das Umfeld gewinnt selten jemand.` };
+    return { ...base, stance: 'caution', say: `Setup bei ${i.primaryLabel} vorhanden, aber der Markt trägt nicht — gegen das Umfeld gewinnt selten jemand.` };
   }
-  return { ...base, stance: 'constructive', say: `${i.primaryLabel} zeigt Struktur; das Umfeld ist neutral, also auf Bestaetigung achten.` };
+  return { ...base, stance: 'constructive', say: `${i.primaryLabel} zeigt Struktur; das Umfeld ist neutral, also auf Bestätigung achten.` };
 }
 
 function riskManager(i: CouncilInput): AgentVoice {
   const base = { name: 'Risk-Manager', role: 'Kapitalschutz & R/R' };
   if (i.marketMood === 'risk-off') {
-    return { ...base, stance: 'caution', say: 'Kapitalschutz zuerst — im Risk-off lieber kleiner oder gar nicht. Verluste vermeiden schlaegt Gewinne jagen.' };
+    return { ...base, stance: 'caution', say: 'Kapitalschutz zuerst — im Risk-off lieber kleiner oder gar nicht. Verluste vermeiden schlägt Gewinne jagen.' };
   }
   if (i.hasOpportunity && (i.confidencePct ?? 0) >= 70) {
     return { ...base, stance: 'constructive', say: 'Reward/Risk ist vertretbar — aber nur mit definiertem Stop, sonst gilt der Trade nicht.' };
   }
   if (i.hasOpportunity && (i.confidencePct ?? 100) < 55) {
-    return { ...base, stance: 'caution', say: 'Duenne Konfidenz — wenn ueberhaupt, dann Mini-Position mit engem Stop.' };
+    return { ...base, stance: 'caution', say: 'Dünne Konfidenz — wenn überhaupt, dann Mini-Position mit engem Stop.' };
   }
-  return { ...base, stance: 'neutral', say: 'Kein Setup ueber der Schwelle — kein Risiko ist auch ein Ergebnis.' };
+  return { ...base, stance: 'neutral', say: 'Kein Setup über der Schwelle — kein Risiko ist auch ein Ergebnis.' };
 }
 
 function sentimentAnalyst(i: CouncilInput): AgentVoice {
@@ -97,9 +97,9 @@ function disciplineCoach(i: CouncilInput): AgentVoice {
     return { ...base, stance: 'caution', say: 'Kein Rache-Trade, keine Position aus Langeweile. Wenn es unklar ist, ist Cash halten eine Entscheidung — keine Niederlage.' };
   }
   if (i.hasOpportunity) {
-    return { ...base, stance: 'constructive', say: 'Plan vor dem Einstieg: Einstieg, Stop und Ziel festlegen. Positionsgroesse so klein, dass ein Fehlschlag nicht wehtut.' };
+    return { ...base, stance: 'constructive', say: 'Plan vor dem Einstieg: Einstieg, Stop und Ziel festlegen. Positionsgröße so klein, dass ein Fehlschlag nicht wehtut.' };
   }
-  return { ...base, stance: 'neutral', say: 'Geduld schlaegt Aktionismus — ein verpasster Trade kostet nichts, ein schlechter kostet Geld.' };
+  return { ...base, stance: 'neutral', say: 'Geduld schlägt Aktionismus — ein verpasster Trade kostet nichts, ein schlechter kostet Geld.' };
 }
 
 const STANCE_WEIGHT: Record<AgentStance, number> = {
@@ -111,10 +111,10 @@ export function conveneCouncil(i: CouncilInput): CouncilResult {
     return {
       voices: [{
         name: 'Chef-Analyst', role: 'JARVIS', stance: 'neutral',
-        say: 'Datenlage zu duenn — ich halte dich bewusst zurueck, bis ich belastbar bin. Kein Raten.'
+        say: 'Datenlage zu dünn — ich halte dich bewusst zurück, bis ich belastbar bin. Kein Raten.'
       }],
-      emotionRead: 'Keine Sentiment-Daten verfuegbar.',
-      disciplineReminder: 'Ohne Daten keine Entscheidung — das ist Disziplin, nicht Zoegern.',
+      emotionRead: 'Keine Sentiment-Daten verfügbar.',
+      disciplineReminder: 'Ohne Daten keine Entscheidung — das ist Disziplin, nicht Zögern.',
       chiefDirective: 'Heute keine Empfehlung: Datenlage unzureichend.',
       netStance: 'neutral'
     };
@@ -137,8 +137,8 @@ export function conveneCouncil(i: CouncilInput): CouncilResult {
   let chiefDirective: string;
   if (netStance === 'caution' || netStance === 'bearish') {
     chiefDirective = i.hasOpportunity && i.primaryLabel
-      ? `Zurueckhaltung: ${i.primaryLabel} nur klein und mit Stop — der Rat ueberwiegt vorsichtig.`
-      : 'Zurueckhaltung: heute kein Einstieg, Kapital schonen.';
+      ? `Zurückhaltung: ${i.primaryLabel} nur klein und mit Stop — der Rat überwiegt vorsichtig.`
+      : 'Zurückhaltung: heute kein Einstieg, Kapital schonen.';
   } else if ((netStance === 'bullish' || netStance === 'constructive') && i.hasOpportunity && i.primaryLabel) {
     chiefDirective = `${i.primaryLabel} ist das sauberste Setup — mit Plan, Stop und kleiner Position angehen.`;
   } else {
