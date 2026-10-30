@@ -27,17 +27,17 @@ export function MoneyPlanTerminal() {
     const sync = () => {
       try {
         const raw = window.localStorage.getItem(MONEY_PLAN_STORAGE_KEY);
-        if (!raw) return;
+        if (!raw) { setAmount(''); setHorizon(3); setRisk('balanced'); setSafe(false); setPlan(null); return; }
         const saved: unknown = JSON.parse(raw);
-        if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return;
+        if (!saved || typeof saved !== 'object' || Array.isArray(saved)) { setAmount(''); setHorizon(3); setRisk('balanced'); setSafe(false); setPlan(null); return; }
         const input = saved as QuickMoneyPlanInput;
-        if (typeof input.amount === 'number' && Number.isFinite(input.amount)) setAmount(String(input.amount));
-        if (HORIZONS.some(h => h.years === input.horizonYears)) setHorizon(input.horizonYears!);
-        if (PROFILES.some(p => p.id === input.riskLevel)) setRisk(input.riskLevel!);
+        setAmount(typeof input.amount === 'number' && Number.isFinite(input.amount) ? String(input.amount) : '');
+        setHorizon(HORIZONS.some(h => h.years === input.horizonYears) ? input.horizonYears! : 3);
+        setRisk(PROFILES.some(p => p.id === input.riskLevel) ? input.riskLevel! : 'balanced');
         setSafe(input.reserveReady === true && input.debtFree === true);
         const result = evaluateQuickMoneyPlan(input);
-        if (result.status !== 'missing') setPlan(result);
-      } catch { setStorageNote('Lokales Speichern ist in diesem Browser nicht verfügbar.'); }
+        setPlan(result.status !== 'missing' ? result : null);
+      } catch { setPlan(null); setSafe(false); setStorageNote('Gespeicherte Angaben konnten nicht gelesen werden. Du kannst deinen Plan neu eingeben.'); }
     };
     sync();
     window.addEventListener(MONEY_PLAN_CHANGED_EVENT, sync);
@@ -53,7 +53,7 @@ export function MoneyPlanTerminal() {
       try { window.localStorage.setItem(MONEY_PLAN_STORAGE_KEY, JSON.stringify(input)); window.dispatchEvent(new CustomEvent(MONEY_PLAN_CHANGED_EVENT)); setStorageNote('Dein Plan ist auf diesem Gerät gespeichert.'); }
       catch { setStorageNote('Der Plan funktioniert, konnte aber nicht lokal gespeichert werden.'); }
     }
-    window.requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }));
+    window.requestAnimationFrame(() => { resultRef.current?.focus({ preventScroll: true }); resultRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); });
   };
   const reset = () => {
     setAmount(''); setHorizon(3); setRisk('balanced'); setSafe(false); setPlan(null);
