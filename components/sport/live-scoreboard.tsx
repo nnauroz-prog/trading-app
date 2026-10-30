@@ -53,7 +53,7 @@ export function LiveScoreboard({ initialSport = 'football' }: { initialSport?: L
         {!loading && !error && data?.games.length === 0 && <p className="text-slate-300">Heute keine Spiele in den abgedeckten Wettbewerben gemeldet.</p>}
       </div>
       {data && <>
-        {data.failedFeeds > 0 && <p className="text-xs text-amber-200">{data.failedFeeds} von {data.totalFeeds} Datenquellen nicht erreichbar — die Liste ist unvollständig.</p>}
+        {data.failedFeeds > 0 && <p className="text-xs text-amber-200">{data.failedFeeds} von {data.totalFeeds} Datenabrufe fehlgeschlagen — die Liste ist unvollständig.</p>}
         <ul className="max-h-[32rem] space-y-2 overflow-y-auto">
           {data.games.map(game => <li key={game.id} className="rounded-lg border border-slate-700 bg-slate-950/50 p-3">
             <div className="flex flex-wrap justify-between gap-2 text-xs text-slate-400"><span>{game.league}</span><span className={!error && game.state === 'in' ? 'font-semibold text-emerald-300' : ''}>{error ? 'Stand veraltet' : game.state === 'in' ? 'LIVE' : game.state === 'post' ? 'Beendet' : new Date(game.startsAt).toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' }) + ' Uhr'}</span></div>

@@ -63,5 +63,7 @@ it('filters whole-tournament history and includes US-night games on the Berlin d
   vi.stubGlobal('fetch', fetchMock);
   const result = await getLiveScoreboard('basketball', new Date('2026-10-30T12:00Z'));
   expect(result.games.map(g => g.id)).toEqual(['basketball/nba:night']);
-  expect(fetchMock.mock.calls[0][0]).toContain('dates=20261029-20261030');
+  expect(fetchMock.mock.calls[0][0]).toContain('dates=20261029&');
+  expect(fetchMock.mock.calls[1][0]).toContain('dates=20261030&');
+  expect(fetchMock.mock.calls.every(([url]) => !url.includes('20261029-20261030'))).toBe(true);
 });

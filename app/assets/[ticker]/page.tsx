@@ -110,7 +110,7 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
     : undefined;
 
   let snapshot: PriceSnapshot | undefined = snapshots[asset.id];
-  if (!snapshot && tickers && binanceSymbol) {
+  if ((!snapshot || snapshot.source === 'mock') && tickers && binanceSymbol) {
     const tk = tickers.get(binanceSymbol);
     if (tk) {
       // Compute real 7d / 30d returns from daily candles.

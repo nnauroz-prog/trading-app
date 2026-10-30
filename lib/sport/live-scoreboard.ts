@@ -82,8 +82,11 @@ export async function getLiveScoreboard(sport: LiveSport, now = new Date()): Pro
   // include a whole tournament instead of a single day.
   const previousDate = berlinDate(new Date(now.getTime() - 24 * 60 * 60_000));
   const feeds = LIVE_SPORTS[sport].feeds;
-  const results = await Promise.allSettled(feeds.map(async feed => {
-    const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${feed}/scoreboard?dates=${previousDate}-${date}&limit=100`, {
+  // ESPN scoreboards do not consistently support date ranges: request days
+  // separately. Tennis already includes all matches of the active tournament.
+  const requests = feeds.flatMap(feed => (sport === 'tennis' ? [date] : [previousDate, date]).map(day => ({ feed, day })));
+  const results = await Promise.allSettled(requests.map(async ({ feed, day }) => {
+    const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${feed}/scoreboard?dates=${day}&limit=100`, {
       cache: 'no-store', signal: AbortSignal.timeout(8000)
     });
     if (!response.ok) throw new Error('provider_unavailable');
@@ -96,5 +99,5 @@ export async function getLiveScoreboard(sport: LiveSport, now = new Date()): Pro
   const failedFeeds = results.filter(r => r.status === 'rejected').length;
   const order = { in: 0, pre: 1, post: 2 };
   return { sport, date, games: [...games.values()].sort((a, b) => order[a.state] - order[b.state] || a.startsAt.localeCompare(b.startsAt)),
-    fetchedAt: failedFeeds < feeds.length ? new Date().toISOString() : null, failedFeeds, totalFeeds: feeds.length };
+    fetchedAt: failedFeeds < requests.length ? new Date().toISOString() : null, failedFeeds, totalFeeds: requests.length };
 }
