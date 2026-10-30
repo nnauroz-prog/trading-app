@@ -5,7 +5,7 @@ import { resetOnboarding } from '@/lib/onboarding';
 export function OnboardingReplay() {
   const handle = () => {
     resetOnboarding();
-    window.location.href = '/';
+    window.location.href = '/?setup=1';
   };
   return (
     <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">

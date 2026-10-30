@@ -1,3 +1,8 @@
+import { getCryptoNews } from '@/lib/news/news-agent';
+import { runSpaeher } from '@/lib/akademie/spaeher';
+import { computeEventWindow } from '@/lib/calendar/event-window';
+import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
+import { MoneyPlanEntry } from '@/components/finance/money-plan-entry';
 // Übersicht aller Vorstände auf einer Seite — 12 Persönlichkeiten quer durch
 // Krypto, Aktien, Rohstoffe und WM. Schnellblick: wo ist heute Konsens, wo
 // gehen die Vorstände auseinander.
@@ -37,15 +42,16 @@ export default async function AgentenPage() {
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
   const todayIso = new Date().toISOString().slice(0, 10);
 
-  const [masterSignal, backtest, stockScan, commodityScan, leagues] = await Promise.all([
+  const [masterSignal, backtest, stockScan, commodityScan, leagues, newsItems] = await Promise.all([
     getMasterSignal(tradeMode),
     getBacktestSummary(),
     getStockSafetyScan(),
     getCommoditySafetyScan(),
-    getFootballFixtures()
+    getFootballFixtures(),
+    getCryptoNews()
   ]);
 
-  const cryptoVerdicts = evaluatePersonas(masterSignal, backtest);
+  const cryptoVerdicts = evaluatePersonas(masterSignal, backtest, runSpaeher(newsItems), computeEventWindow(listMacroEventsThisWeek()));
   const stockVerdicts = evaluateStockPersonas(stockScan);
   const commodityVerdicts = evaluateCommodityPersonas(commodityScan);
   const wmVerdicts = evaluateWmPersonas(todayIso);
@@ -80,6 +86,7 @@ export default async function AgentenPage() {
           }
         </p>
       </header>
+      <MoneyPlanEntry />
 
       {(() => {
         const allPicks: PersonaPickEntry[] = [];

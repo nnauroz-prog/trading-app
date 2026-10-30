@@ -1,5 +1,8 @@
+import { computeEventWindow } from '@/lib/calendar/event-window';
+import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { mockAssets, binanceSymbolByAssetId } from '@/lib/data/mock';
 import { TOP_50, getCoinBySymbol } from '@/lib/coin-universe';
 import { runDailyAnalysis } from '@/lib/analysis/engine';
@@ -70,9 +73,10 @@ const actionColor: Record<string, string> = {
 export default async function AssetDetail({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = await params;
   const lower = ticker.toLowerCase();
+  const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
 
   const mockAsset = mockAssets.find((a) => a.ticker.toLowerCase() === lower || a.id === lower);
-  const universeCoin = mockAsset ? undefined : getCoinBySymbol(lower) ?? TOP_50.find((c) => c.id === lower);
+  const universeCoin = getCoinBySymbol(lower) ?? TOP_50.find((c) => c.id === lower);
 
   if (!mockAsset && !universeCoin) notFound();
 
@@ -89,12 +93,12 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
 
   const [snapshots, analysis, headlines, candles, dailyCandles, tickers, masterSignal, backtestSummary, newsItems] = await Promise.all([
     mockAsset ? getSnapshots() : Promise.resolve({} as Record<string, PriceSnapshot>),
-    mockAsset ? runDailyAnalysis() : Promise.resolve({ recommendations: [] }),
+    mockAsset && !universeCoin ? runDailyAnalysis() : Promise.resolve({ recommendations: [] }),
     mockAsset ? fetchAssetHeadlines(asset.id) : Promise.resolve([]),
     hasBinance && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1h', 200) : Promise.resolve(null),
     hasBinance && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1d', 35) : Promise.resolve(null),
-    !mockAsset ? fetchAllTickers() : Promise.resolve(null),
-    universeCoin ? getMasterSignal('swing') : Promise.resolve(null),
+    asset.category === 'crypto' && binanceSymbol ? fetchAllTickers() : Promise.resolve(null),
+    universeCoin ? getMasterSignal(tradeMode) : Promise.resolve(null),
     universeCoin ? getBacktestSummary() : Promise.resolve(null),
     universeCoin ? getCryptoNews() : Promise.resolve([])
   ]);
@@ -141,15 +145,16 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
   // Cross-app intelligence for crypto coins.
   const candidate = masterSignal?.candidates.find((c) => c.coinId === asset.id) ?? null;
   const spaeher = newsItems.length > 0 ? runSpaeher(newsItems) : null;
+  const eventWindow = computeEventWindow(listMacroEventsThisWeek());
   const personas = (masterSignal && backtestSummary)
-    ? evaluatePersonas(masterSignal, backtestSummary, spaeher)
+    ? evaluatePersonas(masterSignal, backtestSummary, spaeher, eventWindow)
     : [];
   // Cross-Persona-Bewertung: was würden alle 3 Firmen über GENAU diesen Coin
   // sagen, wenn sie ihn bewerten müssten? Liefert auch dann 3 Stimmen, wenn
-  // keine Firma ihn natürlich ins Visier nimmt. Nur für Universe-Coins
-  // (mock-Assets bekommen das nicht).
+  // keine Firma ihn natürlich ins Visier nimmt. Gilt auch für BTC/ETH/SOL,
+  // deren Metadaten zusätzlich im kleinen Legacy-Katalog stehen.
   const perCoinFirmaTakes = (universeCoin && masterSignal && backtestSummary)
-    ? evaluatePersonasForCoin(asset.id, masterSignal, backtestSummary, spaeher)
+    ? evaluatePersonasForCoin(asset.id, masterSignal, backtestSummary, spaeher, eventWindow)
     : [];
   const personaTakesOnThisCoin = personas.map((p) => ({
     persona: p,
@@ -349,7 +354,7 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
 
       {hasBinance && (!candles || candles.length < 50) && (
         <div className="rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4 text-sm text-amber-200/80">
-          Binance-Kerzendaten gerade nicht verfügbar. Chart wird beim nächsten Page-Load gerendert.
+          Kerzendaten gerade nicht verfügbar. Lade die Seite später erneut, um den Chart zu aktualisieren.
         </div>
       )}
 

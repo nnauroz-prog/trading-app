@@ -68,10 +68,10 @@ function TradeReadyCard({ trade, action }: { trade: TradeRecommendation; action:
         {`Today's Trade · Ready`}
       </div>
 
-      <h1 className="relative mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+      <h2 className="relative mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
         Kauf {sizing ? <span className="font-mono">{fmtCoins(sizing.positionSizeCoins)}</span> : ''}{' '}
         <span className="text-emerald-200">{trade.coin.symbol}</span>
-      </h1>
+      </h2>
       <p className="relative mt-1 text-sm text-slate-300">
         bei <span className="font-mono font-semibold text-white">${fmtPrice(trade.entry)}</span>
         {sizing && <> · <span className="font-mono">{fmtMoney(sizing.positionSizeQuote, config.currency)}</span> Einsatz</>}
@@ -197,9 +197,9 @@ function NoTradeCard({ report, action }: { report: Exclude<MasterSignalReport, T
         <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
         {`Today's Verdict · No Trade`}
       </div>
-      <h1 className="relative mt-2 text-3xl font-bold tracking-tight text-amber-100 sm:text-4xl">
+      <h2 className="relative mt-2 text-3xl font-bold tracking-tight text-amber-100 sm:text-4xl">
         Heute besser nicht kaufen
-      </h1>
+      </h2>
       <p className="relative mt-1 text-sm text-slate-300">
         Cash halten und auf besseren Setup warten. Markt-Regime: <span className="font-semibold text-slate-200">{report.marketRegime}</span> · Stimmung: <span className="font-semibold text-slate-200">{report.marketMood}</span>
       </p>

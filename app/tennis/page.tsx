@@ -30,14 +30,15 @@ export default async function TennisPage() {
   const todayIso = new Date().toISOString().slice(0, 10);
 
   return (
-    <main className="mx-auto max-w-4xl space-y-5 p-4 md:p-6">
-      <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
+    <main className="mx-auto max-w-5xl space-y-6 p-4 md:space-y-8 md:p-6">
+      <Link href="/" className="inline-flex min-h-9 items-center gap-2 text-xs font-medium text-slate-500 transition hover:text-[#65e6ff]">
         ← zurück zum Trading Desk
       </Link>
-      <header className="space-y-1">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Tennis</div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">ATP, WTA, Grand Slams</h1>
-        <p className="text-sm text-slate-400">ATP/WTA-Live-Ergebnisse von ESPN, alle 30 Sekunden aktualisiert. Ergänzende Spielpläne von TheSportsDB, soweit verfügbar.</p>
+      <header className="relative overflow-hidden border-b border-white/10 pb-6 pt-2 sm:pb-8">
+        <p className="section-kicker text-[#65e6ff]">Sport / Tennis</p>
+        <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-white sm:text-5xl">Tennis. Punkt für Punkt.</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">ATP/WTA-Live-Ergebnisse von ESPN, alle 30 Sekunden aktualisiert. Ergänzende Spielpläne von TheSportsDB, soweit verfügbar.</p>
+        <div className="mt-5 inline-flex items-center gap-2 border border-white/10 bg-white/[0.025] px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500"><span className="h-1 w-1 bg-[#65e6ff]" />Ergebnisse · Spielplan · Modell-Tendenzen</div>
       </header>
       <LiveScoreboard initialSport="tennis" />
 
