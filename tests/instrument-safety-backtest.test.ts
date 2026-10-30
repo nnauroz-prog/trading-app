@@ -64,3 +64,11 @@ describe('backtestSafetyStrategy', () => {
     expect(typeof result.buyAndHoldReturnPct).toBe('number');
   });
 });
+
+it('compares reinvested strategy returns with holding over the same post-warmup period', () => {
+  const candles = buildCandles(0, 400, 0.0014, 0.012);
+  const result = backtestSafetyStrategy(candles);
+  const capital = result.trades.reduce((value, trade) => value * trade.exit / trade.entry, 1);
+  expect(result.totalReturnPct).toBeCloseTo((capital - 1) * 100, 8);
+  expect(result.buyAndHoldReturnPct).toBeCloseTo((candles.at(-1)!.close / candles[200].close - 1) * 100, 8);
+});

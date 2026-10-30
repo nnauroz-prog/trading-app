@@ -1,3 +1,4 @@
+import { marketDataSource, type MarketDataSource } from '@/lib/providers/market-source';
 import { buildChecks } from '@/lib/analysis/master-signal-engine';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { fetchAllTickers, TickerSnapshot } from '@/lib/providers/binance-tickers';
@@ -28,7 +29,7 @@ export interface ScreenerReport {
   analyzedCount: number;
   tradeableCount: number;
   generatedAt: string;
-  dataSource: 'binance' | 'offline';
+  dataSource: MarketDataSource;
 }
 
 async function screenCoin(coin: UniverseCoin, ticker: TickerSnapshot): Promise<ScreenerRow | null> {
@@ -86,6 +87,6 @@ export async function runScreener(deepAnalyzeCount = 18): Promise<ScreenerReport
     analyzedCount: rows.length,
     tradeableCount: rows.filter((r) => r.tradeable).length,
     generatedAt: new Date().toISOString(),
-    dataSource: 'binance'
+    dataSource: marketDataSource([...tickerMap.values()].map(ticker => ticker.source))
   };
 }

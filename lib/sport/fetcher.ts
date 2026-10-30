@@ -127,7 +127,7 @@ function normalize(e: ApiEvent, status: 'upcoming' | 'finished'): Fixture | null
 async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<Fixture[]> {
   const url = `${thesportsdbBase()}/events${kind}league.php?id=${leagueId}`;
   try {
-    const res = await fetch(url, { next: { revalidate: 600 } });
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000), next: { revalidate: 600 } });
     if (!res.ok) return [];
     const data = (await res.json()) as { events?: ApiEvent[] | null };
     const events = data.events ?? [];
@@ -145,7 +145,7 @@ async function fetchEvents(leagueId: string, kind: 'next' | 'past'): Promise<Fix
 async function fetchSeasonEvents(leagueId: string, season: string): Promise<Fixture[]> {
   const url = `${thesportsdbBase()}/eventsseason.php?id=${leagueId}&s=${season}`;
   try {
-    const res = await fetch(url, { next: { revalidate: 86400 } });
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000), next: { revalidate: 86400 } });
     if (!res.ok) return [];
     const data = (await res.json()) as { events?: ApiEvent[] | null };
     const events = data.events ?? [];

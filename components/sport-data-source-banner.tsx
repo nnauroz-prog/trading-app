@@ -18,16 +18,16 @@ export function SportDataSourceBanner() {
       role="alert"
       className="rounded-xl border border-amber-500/40 bg-amber-950/20 p-3 text-[11.5px] leading-snug text-amber-100/90"
     >
-      <div className="font-semibold text-amber-200">⚠ Daten laufen auf dem Gratis-Test-Zugang</div>
+      <div className="font-semibold text-amber-200">⚠ Prognose-Daten laufen auf dem Gratis-Test-Zugang</div>
       <p className="mt-1">
         Diese App nutzt gerade den oeffentlichen Test-Zugang von TheSportsDB. Der ist stark
         limitiert und liefert haeufig <span className="font-semibold">leere oder veraltete</span>{' '}
-        Spielplaene und Ergebnisse — angezeigte Spiele und Vorhersagen koennen deshalb falsch sein.
+        Spielpläne und Ergebnisse für die Prognosemodelle. Die Live-Ergebnisse oben stammen separat von ESPN.
       </p>
       <p className="mt-1 text-amber-100/70">
-        Fuer echte Live-Daten: einen eigenen TheSportsDB-Premium-Key als Umgebungsvariable{' '}
+        Für bessere Spielplan- und Historienabdeckung der Prognosen kann ein eigener TheSportsDB-Key als Umgebungsvariable{' '}
         <code className="rounded bg-amber-500/15 px-1 font-mono text-[10.5px]">THESPORTSDB_KEY</code>{' '}
-        hinterlegen. Danach gehen alle Sportarten automatisch auf echte Daten.
+        hinterlegt werden. Ein Schlüssel allein bestätigt weder die Erreichbarkeit noch die Aktualität des Anbieters.
       </p>
     </section>
   );

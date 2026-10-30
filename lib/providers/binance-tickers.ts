@@ -1,3 +1,4 @@
+import { fetchKrakenTickers } from '@/lib/providers/kraken';
 import { TOP_50 } from '@/lib/coin-universe';
 
 export interface TickerSnapshot {
@@ -10,7 +11,7 @@ export interface TickerSnapshot {
   low: number;
   volume: number;
   quoteVolume: number;
-  source?: 'binance' | 'bybit';
+  source?: 'binance' | 'bybit' | 'kraken';
 }
 
 interface RawBinanceTicker {
@@ -43,7 +44,7 @@ interface BybitTickerResponse {
 async function fetchBybitTickers(): Promise<Map<string, TickerSnapshot> | null> {
   try {
     const url = 'https://api.bybit.com/v5/market/tickers?category=spot';
-    const res = await fetch(url, { next: { revalidate: 15 } });
+    const res = await fetch(url, { next: { revalidate: 15 }, signal: AbortSignal.timeout(8000) });
     if (!res.ok) return null;
     const data = (await res.json()) as BybitTickerResponse;
     if (data.retCode !== 0 || !data.result?.list) return null;
@@ -72,7 +73,7 @@ async function fetchBybitTickers(): Promise<Map<string, TickerSnapshot> | null> 
 async function fetchBinanceTickers(): Promise<Map<string, TickerSnapshot> | null> {
   try {
     const url = `https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeURIComponent(JSON.stringify(TOP_50.map((c) => c.binanceSymbol)))}`;
-    const res = await fetch(url, { next: { revalidate: 15 } });
+    const res = await fetch(url, { next: { revalidate: 15 }, signal: AbortSignal.timeout(8000) });
     if (!res.ok) return null;
     const raw = (await res.json()) as RawBinanceTicker[];
     const map = new Map<string, TickerSnapshot>();
@@ -96,11 +97,13 @@ async function fetchBinanceTickers(): Promise<Map<string, TickerSnapshot> | null
 }
 
 // Binance is the canonical source for the major USDT pairs we follow; prefer
-// it when reachable from the deploy region, fall back to Bybit otherwise.
+// it when reachable, then try Bybit and independent Kraken USDT markets.
 export async function fetchAllTickers(): Promise<Map<string, TickerSnapshot> | null> {
   const binance = await fetchBinanceTickers();
   if (binance && binance.size > 0) return binance;
-  return fetchBybitTickers();
+  const bybit = await fetchBybitTickers();
+  if (bybit && bybit.size > 0) return bybit;
+  return fetchKrakenTickers();
 }
 
 // Fetches both Binance and Bybit ticker maps in parallel — used by the

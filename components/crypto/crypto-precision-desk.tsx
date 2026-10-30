@@ -72,6 +72,9 @@ function aggregateAgents(picks: CryptoPrecisionResult[]): Array<{ id: string; la
   };
   return ids.map((id) => {
     const rank: Record<CryptoAgentStatus, number> = { OK: 0, WARNUNG: 1, BLOCKIERT: 2 };
+    if (!picks.some((p) => p.agentStatuses.some((a) => a.id === id))) {
+      return { id, label: labels[id], status: 'WARNUNG' as const, reason: 'Keine Prüfdaten verfügbar — Prüfung nicht möglich.', affected: 0 };
+    }
     let worst: CryptoAgentStatus = 'OK';
     let worstReason = '';
     let affected = 0;

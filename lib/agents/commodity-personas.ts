@@ -100,7 +100,7 @@ export function evaluateCommodityPersonas(entries: CommoditySafetyEntry[]): Comm
         manifest: p.manifest,
         verdict: 'WARTEN',
         target: null,
-        rationale: p.id === 'conservative'
+        rationale: entries.length === 0 ? 'Keine auswertbaren Rohstoffe-Daten verfügbar — Bewertung nicht möglich.' : p.id === 'conservative'
           ? 'Kein Rohstoff schafft heute Grade A.'
           : p.id === 'balanced'
             ? 'Kein Grade A oder B — abwarten.'

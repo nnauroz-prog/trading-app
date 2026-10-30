@@ -1,3 +1,4 @@
+import { LiveScoreboard } from '@/components/sport/live-scoreboard';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getBasketballFixtures } from '@/lib/sport/basketball-fetcher';
@@ -39,9 +40,10 @@ export default async function BasketballPage() {
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Basketball</div>
         <h1 className="text-3xl font-bold tracking-tight text-white">NBA, EuroLeague, BBL, NCAA</h1>
         <p className="text-sm text-slate-400">
-          Kommende Basketball-Spiele aus den größten Wett-Märkten. Live-Daten von TheSportsDB, alle 10 Minuten aktualisiert.
+          NBA-Ergebnisse von ESPN mit Aktualisierung alle 30 Sekunden. Ergänzende Spielpläne und Modell-Tendenzen von TheSportsDB, soweit verfügbar.
         </p>
       </header>
+      <LiveScoreboard initialSport="basketball" />
 
       {leagues.map((lf) => {
         const today = lf.next.filter((f) => f.date === todayIso);

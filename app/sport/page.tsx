@@ -1,3 +1,4 @@
+import { LiveScoreboard } from '@/components/sport/live-scoreboard';
 import Link from 'next/link';
 import { getFootballFixtures, Fixture, UpcomingFixture, LeagueFixtures } from '@/lib/sport/fetcher';
 import { WORLD_CUP_LEAGUE_IDS } from '@/lib/sport/leagues';
@@ -570,6 +571,7 @@ export default async function SportPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Fußball-Prognosen für Tipprunden</h1>
         <p className="text-sm text-slate-400">Modell-Tendenz pro Spiel mit Quality-Score 0–100 — basierend auf 3 Saisons echter Daten. Keine Wettempfehlung, keine Garantien.</p>
       </header>
+      <LiveScoreboard initialSport="football" />
 
       <SportDataSourceBanner />
       <SportTabTitle />
@@ -868,7 +870,7 @@ export default async function SportPage() {
       </SportCollapsibleLegacySection>
 
       <div className="flex items-center gap-2">
-        <DataRefreshIndicator initialTimestamp={Date.now()} refreshIntervalMs={600_000} />
+        <DataRefreshIndicator initialTimestamp={Date.now()} refreshIntervalMs={600_000} hasData={anyData} />
         <ManualRefreshButton />
       </div>
 

@@ -22,6 +22,7 @@ export interface CommoditySafetyBacktestSummary {
   totalTrades: number;
   combinedWinRatePct: number | null;
   combinedAvgPnlPct: number;
+  combinedStrategyReturnPct: number;
   combinedBuyAndHoldPct: number;
   perAsset: PerCommodityBacktest[];
   bestTradePct: number | null;
@@ -34,6 +35,7 @@ const UNAVAILABLE: CommoditySafetyBacktestSummary = {
   totalTrades: 0,
   combinedWinRatePct: null,
   combinedAvgPnlPct: 0,
+  combinedStrategyReturnPct: 0,
   combinedBuyAndHoldPct: 0,
   perAsset: [],
   bestTradePct: null,
@@ -79,6 +81,7 @@ async function compute(): Promise<CommoditySafetyBacktestSummary> {
     totalTrades: allTrades.length,
     combinedWinRatePct: allTrades.length > 0 ? Math.round((wins / allTrades.length) * 100) : null,
     combinedAvgPnlPct: combinedAvg,
+    combinedStrategyReturnPct: perAsset.reduce((sum, asset) => sum + asset.totalReturnPct, 0) / perAsset.length,
     combinedBuyAndHoldPct: combinedBnH,
     perAsset,
     bestTradePct: pnlValues.length > 0 ? Math.max(...pnlValues) : null,
@@ -89,6 +92,6 @@ async function compute(): Promise<CommoditySafetyBacktestSummary> {
 
 export const getCommoditySafetyBacktestSummary = unstable_cache(
   compute,
-  ['commodity-safety-backtest-v1'],
+  ['commodity-safety-backtest-v2'],
   { revalidate: 60 * 60 * 24 }
 );

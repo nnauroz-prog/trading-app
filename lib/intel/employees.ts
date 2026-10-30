@@ -51,20 +51,22 @@ export function derivateAnalyst(ctx: IntelContext): EmployeeReport {
       signal: 'kein_signal', confidence: 'keine_daten'
     };
   }
-  const max = Math.max(btc ?? 0, eth ?? 0);
+  const max = Math.max(...[btc, eth].filter((rate): rate is number => rate !== null));
+  const btcLabel = btc === null ? 'nicht verfügbar' : `${btc.toFixed(0)}%`;
+  const ethLabel = eth === null ? 'nicht verfügbar' : `${eth.toFixed(0)}%`;
   let signal: EmployeeReport['signal'] = 'neutral';
   let finding: string;
   if (max > 30) {
     signal = 'risk-off';
-    finding = `Funding annualisiert teuer (BTC ${btc?.toFixed(0)}%, ETH ${eth?.toFixed(0)}%). Long-Seite ist überfüllt — wenn der Wind dreht, wird es eng. Vorsicht mit neuen Longs.`;
+    finding = `Funding annualisiert teuer (BTC ${btcLabel}, ETH ${ethLabel}). Long-Seite ist überfüllt — wenn der Wind dreht, wird es eng. Vorsicht mit neuen Longs.`;
   } else if (max > 15) {
     signal = 'neutral';
-    finding = `Funding moderat (BTC ${btc?.toFixed(0)}%, ETH ${eth?.toFixed(0)}%). Longs haben den Vorteil, aber noch keine Überhitzung.`;
+    finding = `Funding moderat (BTC ${btcLabel}, ETH ${ethLabel}). Longs haben den Vorteil, aber noch keine Überhitzung.`;
   } else if (max < 0) {
     signal = 'risk-on';
-    finding = `Funding negativ (BTC ${btc?.toFixed(0)}%, ETH ${eth?.toFixed(0)}%). Shorts zahlen — meistens ein Contrarian-Signal für eine Erholung.`;
+    finding = `Funding negativ (BTC ${btcLabel}, ETH ${ethLabel}). Shorts zahlen — meistens ein Contrarian-Signal für eine Erholung.`;
   } else {
-    finding = `Funding ruhig (BTC ${btc?.toFixed(0)}%, ETH ${eth?.toFixed(0)}%). Keine Überhitzung auf einer Seite.`;
+    finding = `Funding ruhig (BTC ${btcLabel}, ETH ${ethLabel}). Keine Überhitzung auf einer Seite.`;
   }
   return {
     id: 'derivate', title: 'Derivate-Analyst', department: 'Marktstimmung',
@@ -237,8 +239,8 @@ export function makroBeobachter(ctx: IntelContext): EmployeeReport {
     return {
       id: 'makro', title: 'Makro-Beobachter', department: 'Nachrichten & Makro',
       expertise: 'Verfolgt US/EU-Wirtschaftstermine (FOMC, CPI, NFP, Core PCE).',
-      finding: 'In den nächsten 7 Tagen kein hoch-impact Termin im Plan — Märkte handeln rein technisch.',
-      signal: 'neutral', confidence: 'sicher'
+      finding: 'Kein bestätigter Hochrisiko-Termin im verfügbaren Kalender. Eine vollständige Terminabdeckung ist damit nicht bestätigt.',
+      signal: 'kein_signal', confidence: 'keine_daten'
     };
   }
   const e = ctx.nextHighImpactEvent;
@@ -280,6 +282,14 @@ export function zyklusForscher(ctx: IntelContext): EmployeeReport {
 }
 
 export function strategieAuswerter(ctx: IntelContext): EmployeeReport {
+  if (ctx.backtestPeriodDays <= 0) {
+    return {
+      id: 'strategie', title: 'Strategie-Auswerter', department: 'Eigene Performance',
+      expertise: 'Berichtet, wie die strenge Strategie der App historisch lief.',
+      finding: 'Keine auswertbaren Backtest-Daten verfügbar. Daraus lässt sich keine Aussage über die Strategie ableiten.',
+      signal: 'kein_signal', confidence: 'keine_daten'
+    };
+  }
   if (ctx.backtestSafeTrades === 0) {
     return {
       id: 'strategie', title: 'Strategie-Auswerter', department: 'Eigene Performance',

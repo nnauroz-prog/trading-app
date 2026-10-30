@@ -22,6 +22,7 @@ export interface SafetyBacktestSummary {
   totalTrades: number;
   combinedWinRatePct: number | null;
   combinedAvgPnlPct: number;
+  combinedStrategyReturnPct: number;
   // Aggregate Buy-and-Hold Benchmark über alle gescannten Aktien.
   combinedBuyAndHoldPct: number;
   // Pro-Asset-Sicht für die UI-Tabelle.
@@ -36,6 +37,7 @@ const UNAVAILABLE: SafetyBacktestSummary = {
   totalTrades: 0,
   combinedWinRatePct: null,
   combinedAvgPnlPct: 0,
+  combinedStrategyReturnPct: 0,
   combinedBuyAndHoldPct: 0,
   perAsset: [],
   bestTradePct: null,
@@ -81,6 +83,7 @@ async function compute(): Promise<SafetyBacktestSummary> {
     totalTrades: allTrades.length,
     combinedWinRatePct: allTrades.length > 0 ? Math.round((wins / allTrades.length) * 100) : null,
     combinedAvgPnlPct: combinedAvg,
+    combinedStrategyReturnPct: perAsset.reduce((sum, asset) => sum + asset.totalReturnPct, 0) / perAsset.length,
     combinedBuyAndHoldPct: combinedBnH,
     perAsset,
     bestTradePct: pnlValues.length > 0 ? Math.max(...pnlValues) : null,
@@ -92,6 +95,6 @@ async function compute(): Promise<SafetyBacktestSummary> {
 // 24h Cache — Backtest ändert sich nur, wenn neue Tagesschlüsse dazukommen.
 export const getStockSafetyBacktestSummary = unstable_cache(
   compute,
-  ['stock-safety-backtest-v1'],
+  ['stock-safety-backtest-v2'],
   { revalidate: 60 * 60 * 24 }
 );

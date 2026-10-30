@@ -44,6 +44,9 @@ function aggregateAgents(picks: InstrumentPrecisionResult[]): Array<{ id: string
   const labels: Record<string, string> = { data: 'Datenpruefer', model: 'Modellpruefer', risk: 'Risiko-Veto', calibration: 'Kalibrierungswaechter' };
   return ids.map((id) => {
     const rank: Record<InstrumentAgentStatus, number> = { OK: 0, WARNUNG: 1, BLOCKIERT: 2 };
+    if (!picks.some((p) => p.agentStatuses.some((a) => a.id === id))) {
+      return { id, label: labels[id], status: 'WARNUNG' as const, reason: 'Keine Prüfdaten verfügbar — Prüfung nicht möglich.', affected: 0 };
+    }
     let worst: InstrumentAgentStatus = 'OK';
     let worstReason = '';
     let affected = 0;
@@ -118,7 +121,7 @@ export function InstrumentPrecisionDesk({ title, hrefBase, picks }: Props) {
       {!hero && (
         <section className="space-y-1.5 rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
           <h3 className="text-base font-bold text-slate-100">Heute keine Aktien-/Rohstoff-Modell-Freigabe</h3>
-          <p className="text-[11.5px] text-slate-300">Kein Wert erfuellt heute alle Pflicht-Kriterien — Cash bleibt eine Position.</p>
+          <p className="text-[11.5px] text-slate-300">{matchesEvaluated === 0 ? 'Keine auswertbaren Marktdaten verfügbar — eine Prüfung ist derzeit nicht möglich.' : 'Kein Wert erfüllt heute alle Pflicht-Kriterien — Cash bleibt eine Position.'}</p>
         </section>
       )}
 

@@ -1,3 +1,4 @@
+import { LiveScoreboard } from '@/components/sport/live-scoreboard';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getHockeyFixtures } from '@/lib/sport/multi-sport-fetcher';
@@ -40,6 +41,7 @@ export default async function HockeyPage() {
         <h1 className="text-3xl font-bold tracking-tight text-white">NHL, DEL, KHL, SHL</h1>
         <p className="text-sm text-slate-400">Live-Spielpläne der vier wichtigsten Eishockey-Ligen.</p>
       </header>
+      <LiveScoreboard initialSport="hockey" />
 
       {leagues.every((l) => l.next.length === 0 && l.last.length === 0) && (
         <section className="rounded-2xl border border-amber-500/30 bg-amber-950/15 p-4 text-[11.5px] leading-snug text-amber-100/85">
