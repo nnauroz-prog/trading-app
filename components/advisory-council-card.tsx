@@ -22,10 +22,10 @@ const AGENT_EMOJI: Record<string, string> = {
 export function AdvisoryCouncilCard({ council }: { council: CouncilResult }) {
   const net = STANCE_STYLE[council.netStance];
   return (
-    <section className="space-y-3 rounded-2xl border border-slate-700/60 bg-slate-950/40 p-4 md:p-5">
+    <section className="space-y-3 rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/70 to-slate-950/70 p-4 backdrop-blur-sm md:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400">
-          Der Rat · mehrere Analysten
+        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-300">
+          <span aria-hidden>🧭</span> Der Rat · mehrere Analysten
         </div>
         <span className={`rounded-md border px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider ${net.chip}`}>
           Konsens: {net.label}
@@ -33,11 +33,11 @@ export function AdvisoryCouncilCard({ council }: { council: CouncilResult }) {
       </div>
 
       {/* Chef-Direktive zuerst — die Synthese */}
-      <div className="rounded-xl border border-emerald-400/30 bg-emerald-950/15 p-3">
+      <div className="rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/[0.12] to-emerald-500/[0.03] p-3.5 shadow-[0_12px_34px_-18px_rgba(52,211,153,0.5)]">
         <div className="flex items-center gap-1.5 text-[9.5px] font-semibold uppercase tracking-wider text-emerald-300">
           <span aria-hidden>🎩</span> Chef-Direktive
         </div>
-        <p className="mt-1 text-[12.5px] font-semibold leading-snug text-white">{council.chiefDirective}</p>
+        <p className="mt-1 text-[13px] font-semibold leading-snug text-white">{council.chiefDirective}</p>
       </div>
 
       {/* Einzelne Stimmen */}

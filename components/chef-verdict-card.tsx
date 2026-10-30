@@ -4,11 +4,11 @@
 import Link from 'next/link';
 import type { ChefVerdict } from '@/lib/analysis/chef-verdict';
 
-const STANCE_STYLE: Record<ChefVerdict['stance'], { ring: string; badge: string; dot: string; label: string }> = {
-  opportunity: { ring: 'border-emerald-400/50', badge: 'text-emerald-200 border-emerald-400/40 bg-emerald-500/10', dot: 'bg-emerald-400', label: 'Gelegenheit' },
-  selective: { ring: 'border-amber-400/40', badge: 'text-amber-200 border-amber-400/40 bg-amber-500/10', dot: 'bg-amber-400', label: 'Selektiv' },
-  patience: { ring: 'border-slate-600/60', badge: 'text-slate-300 border-slate-600/50 bg-slate-500/10', dot: 'bg-slate-400', label: 'Geduld' },
-  no_data: { ring: 'border-slate-700/60', badge: 'text-slate-400 border-slate-700/50 bg-slate-800/40', dot: 'bg-slate-500', label: 'Keine Daten' }
+const STANCE_STYLE: Record<ChefVerdict['stance'], { ring: string; badge: string; dot: string; label: string; glow: string }> = {
+  opportunity: { ring: 'border-emerald-400/50', badge: 'text-emerald-200 border-emerald-400/40 bg-emerald-500/10', dot: 'bg-emerald-400', label: 'Gelegenheit', glow: 'shadow-[0_18px_50px_-18px_rgba(52,211,153,0.55)]' },
+  selective: { ring: 'border-amber-400/40', badge: 'text-amber-200 border-amber-400/40 bg-amber-500/10', dot: 'bg-amber-400', label: 'Selektiv', glow: 'shadow-[0_18px_50px_-18px_rgba(251,191,36,0.45)]' },
+  patience: { ring: 'border-slate-600/60', badge: 'text-slate-300 border-slate-600/50 bg-slate-500/10', dot: 'bg-slate-400', label: 'Geduld', glow: 'shadow-[0_18px_50px_-24px_rgba(148,163,184,0.4)]' },
+  no_data: { ring: 'border-slate-700/60', badge: 'text-slate-400 border-slate-700/50 bg-slate-800/40', dot: 'bg-slate-500', label: 'Keine Daten', glow: '' }
 };
 
 const CONFIDENCE_STYLE: Record<ChefVerdict['confidence'], string> = {
@@ -20,11 +20,11 @@ const CONFIDENCE_STYLE: Record<ChefVerdict['confidence'], string> = {
 export function ChefVerdictCard({ verdict }: { verdict: ChefVerdict }) {
   const s = STANCE_STYLE[verdict.stance];
   return (
-    <section className={`space-y-3 rounded-2xl border ${s.ring} bg-gradient-to-br from-slate-900/70 to-slate-950/50 p-4 md:p-5`}>
+    <section className={`relative space-y-3 overflow-hidden rounded-3xl border ${s.ring} bg-gradient-to-br from-slate-900/80 via-slate-950/60 to-slate-950/80 p-4 backdrop-blur-sm md:p-5 ${s.glow}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400">
-          <span className={`inline-block h-1.5 w-1.5 rounded-full ${s.dot}`} />
-          Berater · Tages-Verdict
+        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-300">
+          <span className={`inline-block h-1.5 w-1.5 rounded-full ${s.dot} ${verdict.stance === 'opportunity' ? 'shadow-[0_0_10px_2px_rgba(52,211,153,0.8)]' : ''}`} />
+          <span aria-hidden>🎩</span> Dein Berater · Tages-Verdict
         </div>
         <div className="flex items-center gap-2">
           <span className={`rounded-md border px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider ${s.badge}`}>
@@ -36,20 +36,20 @@ export function ChefVerdictCard({ verdict }: { verdict: ChefVerdict }) {
         </div>
       </div>
 
-      <h2 className="text-lg font-bold leading-snug tracking-tight text-white sm:text-xl">
+      <h2 className="text-xl font-bold leading-snug tracking-tight text-white sm:text-2xl">
         {verdict.headline}
       </h2>
 
       {verdict.primary && (
         <Link
           href={verdict.primary.href}
-          className="block rounded-xl border border-slate-700/70 bg-slate-950/50 p-3 transition hover:border-emerald-400/40 hover:bg-slate-900/60"
+          className="group block rounded-2xl border border-emerald-400/30 bg-emerald-500/[0.06] p-3.5 transition duration-200 hover:-translate-y-0.5 hover:border-emerald-400/60 hover:bg-emerald-500/[0.1] hover:shadow-[0_12px_34px_-14px_rgba(52,211,153,0.6)]"
         >
           <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{verdict.primary.assetClass}</span>
-            <span className="text-[10px] text-emerald-300">ansehen →</span>
+            <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-emerald-200">{verdict.primary.assetClass}</span>
+            <span className="text-[10px] font-semibold text-emerald-300 transition group-hover:translate-x-0.5">ansehen →</span>
           </div>
-          <div className="mt-0.5 text-[14px] font-bold text-white">{verdict.primary.label}</div>
+          <div className="mt-1.5 text-[15px] font-bold text-white">{verdict.primary.label}</div>
           <p className="mt-1 text-[11.5px] leading-snug text-slate-300">{verdict.primary.detail}</p>
         </Link>
       )}
