@@ -74,7 +74,6 @@ export const FOOTBALL_LEAGUES: League[] = [
   // nicht zuverlässig gepflegt.
   { id: '4396', name: 'Indian Super League', country: 'Indien' },
   // === International ===
-  { id: '4429', name: 'FIFA World Cup', country: 'International' },
   { id: '4503', name: 'International Friendlies', country: 'International' }
 ];
 

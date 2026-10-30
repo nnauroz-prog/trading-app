@@ -103,7 +103,7 @@ export function evaluateStockPersonas(entries: StockSafetyEntry[]): StockAgentVe
         manifest: p.manifest,
         verdict: 'WARTEN',
         target: null,
-        rationale: p.id === 'conservative'
+        rationale: entries.length === 0 ? 'Keine auswertbaren Aktien-Daten verfügbar — Bewertung nicht möglich.' : p.id === 'conservative'
           ? 'Keine Aktie schafft heute Grade A. Cash ist Position.'
           : p.id === 'balanced'
             ? 'Keine Aktie schafft Grade A oder B. Lieber abwarten.'

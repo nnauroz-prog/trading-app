@@ -13,12 +13,12 @@ export function StockSafetyBacktestCard({ summary }: { summary: SafetyBacktestSu
     return (
       <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Funktioniert die Aktien-Strategie? — Backtest</h2>
-        <p className="text-xs text-slate-500">Backtest wird berechnet … (gleich verfügbar).</p>
+        <p className="text-xs text-slate-500">Backtest nicht verfügbar: Es fehlen ausreichend historische Kursdaten. Bitte später erneut laden.</p>
       </section>
     );
   }
 
-  const beatBnH = summary.combinedAvgPnlPct > summary.combinedBuyAndHoldPct / Math.max(1, summary.totalAssetsScanned);
+  const beatBnH = summary.combinedStrategyReturnPct > summary.combinedBuyAndHoldPct;
   const positive = summary.combinedAvgPnlPct >= 0;
 
   return (
@@ -32,7 +32,7 @@ export function StockSafetyBacktestCard({ summary }: { summary: SafetyBacktestSu
           beim Verlust von Grade A wieder Exit. {summary.totalAssetsScanned} Aktien geprüft.
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
         <Stat label="Trades" value={summary.totalTrades.toString()} tone="neutral" />
         <Stat
           label="Treffer"
@@ -48,6 +48,11 @@ export function StockSafetyBacktestCard({ summary }: { summary: SafetyBacktestSu
           label="Buy-and-Hold ⌀"
           value={`${summary.combinedBuyAndHoldPct >= 0 ? '+' : ''}${summary.combinedBuyAndHoldPct.toFixed(1)} %`}
           tone="neutral"
+        />
+        <Stat
+          label="Strategie ⌀"
+          value={`${summary.combinedStrategyReturnPct >= 0 ? '+' : ''}${summary.combinedStrategyReturnPct.toFixed(1)} %`}
+          tone={summary.combinedStrategyReturnPct >= 0 ? 'good' : 'bad'}
         />
         <Stat
           label="vs. BnH"
@@ -71,6 +76,8 @@ export function StockSafetyBacktestCard({ summary }: { summary: SafetyBacktestSu
           )}
         </div>
       )}
+
+      <p className="text-[10.5px] text-slate-500">Strategie und Buy-and-Hold: gleichgewichteter Mittelwert über denselben Zeitraum ab Tag 200 nach der Aufwärmphase. Strategie mit Wiederanlage, ohne Gebühren und Slippage; außerhalb von Trades unverzinstes Cash.</p>
 
       {summary.perAsset.length > 0 && (
         <details className="rounded-lg border border-slate-800 bg-slate-950/40">

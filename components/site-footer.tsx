@@ -21,9 +21,9 @@ export function SiteFooter() {
         <div>
           <div className="font-semibold uppercase tracking-wider text-slate-400">Datenquellen</div>
           <ul className="mt-1 space-y-0.5">
-            <li>Krypto: Binance, CoinGecko</li>
+            <li>Krypto: Binance, Bybit, Kraken, CoinGecko</li>
             <li>Aktien/Rohstoffe: Yahoo Finance</li>
-            <li>WM/Sport: TheSportsDB, hartkodierter FIFA-Spielplan</li>
+            <li>Sport-Live: ESPN · Prognosen: TheSportsDB und FIFA-Spielplan</li>
             <li>Sentiment: Alternative.me, Finnhub</li>
           </ul>
         </div>

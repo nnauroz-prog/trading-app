@@ -1,3 +1,4 @@
+import { marketDataSource, type MarketDataSource } from '@/lib/providers/market-source';
 import { Candle, TradeSignal } from '@/lib/types/domain';
 import { ema, rsi, macd, macdState, sma, last } from '@/lib/analysis/indicators';
 import { fetchCandlesBatch } from '@/lib/providers/binance';
@@ -123,7 +124,7 @@ export interface SignalReport {
   signals: TradeSignal[];
   statuses: IndicatorStatus[];
   generatedAt: string;
-  dataSource: 'binance' | 'offline';
+  dataSource: MarketDataSource;
 }
 
 export async function generateSignals(): Promise<SignalReport> {
@@ -187,6 +188,6 @@ export async function generateSignals(): Promise<SignalReport> {
     signals: signals.sort((a, b) => b.confidence - a.confidence),
     statuses,
     generatedAt: new Date().toISOString(),
-    dataSource: anyData ? 'binance' : 'offline'
+    dataSource: anyData ? marketDataSource([...Object.values(batch1h), ...Object.values(batch4h)].flatMap(batch => (batch ?? []).map(candle => candle.source))) : 'offline'
   };
 }

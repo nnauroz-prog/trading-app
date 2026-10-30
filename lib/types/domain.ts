@@ -19,7 +19,7 @@ export interface PriceSnapshot {
   volume: number;
   /** today's volume divided by recent average; null when no baseline is available. */
   volumeRatio?: number | null;
-  source: 'mock' | 'coingecko' | 'finnhub' | 'yahoo' | 'binance';
+  source: 'mock' | 'coingecko' | 'finnhub' | 'yahoo' | 'binance' | 'bybit' | 'kraken';
 }
 
 export interface AnalysisSignal {
@@ -47,6 +47,7 @@ export interface Recommendation {
 }
 
 export interface Candle {
+  source?: 'binance' | 'bybit' | 'kraken';
   openTime: number;
   open: number;
   high: number;

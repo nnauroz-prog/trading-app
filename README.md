@@ -131,3 +131,13 @@ Ohne `TELEGRAM_*`-Envs läuft alles wie gewohnt, nur die Push-Nachrichten fehlen
 ## Nächster Schritt
 - Supabase Auth aktivieren (single-user access).
 - Sentiment-Modell auf VADER/LLM upgraden, sobald die naïve Lexikon-Heuristik zu rauschig wird.
+
+## Klare Krypto-Signale und Live-Sport
+
+Die Startseite zeigt bis zu drei Krypto-Kaufsignale aus dem bestehenden Precision-Filter mit Einstieg, Stop-Loss und zwei Kurszielen. Nur FREIGABE ohne Warnungen/Vetos und mit gültigen Preisniveaus erscheint als Kauf-Signal. Eine mehr als fünf Minuten alte Analyse wird nicht verwendet. Ohne aktuelle Daten oder geeignete Kandidaten erscheint ABWARTEN; es werden keine Ersatzsignale aus Mock-Daten erzeugt. Der Modell-Score ist keine Gewinnwahrscheinlichkeit.
+
+Auf `/sport`, `/basketball`, `/tennis` und `/eishockey` gibt es einen separaten Live-Ergebnisbereich. Er fragt den öffentlichen ESPN-Scoreboard-Endpunkt alle 30 Sekunden ab, solange der Browser-Tab sichtbar ist. Fußball umfasst Top-5-Ligen, Champions League und WM, Basketball NBA, Eishockey NHL und Tennis ATP/WTA. Handball sowie weitere Ligen sind in diesem Feed nicht abgedeckt. Es ist kein API-Schlüssel für diesen Feed vorgesehen. Es handelt sich um einen öffentlichen, nicht vertraglich garantierten Endpunkt; Schema und Verfügbarkeit können sich ändern.
+
+Der Server benötigt HTTPS-Zugriff auf `site.api.espn.com`. Die bisherigen Prognosemodelle nutzen weiterhin `www.thesportsdb.com`; ihre Daten werden nicht durch den Live-Feed ersetzt. Krypto-Quellen benötigen `api.binance.com` und als Fallback `api.bybit.com`, zusätzliche Marktdaten `api.coingecko.com`. Bei regional gesperrtem Binance/Bybit nutzt die App echte USDT-Paare von `api.kraken.com`; Details und Abdeckungsgrenzen stehen in `docs/crypto-data-sources.md`. In eingeschränkten Cloud-Umgebungen müssen die Anbieter-Domains in der aktiven Netzwerkregel erlaubt sein. Das Veröffentlichen einer Entwicklungsumgebung ersetzt kein Vercel-Deployment der Anwendung. Node.js 24 mit `NODE_USE_ENV_PROXY=1` nutzt den bereitgestellten HTTPS-Proxy.
+
+Bei Ausfall meldet der Live-Bereich die fehlende Verbindung. Bereits angezeigte Ergebnisse werden als möglicherweise veraltet gekennzeichnet; fehlende Ergebnisse werden nicht als 0:0 dargestellt. Die Oberfläche zeigt den letzten erfolgreichen Abruf und Teilausfälle an. Der Tagesfilter und die Zeiten nutzen Europe/Berlin.

@@ -132,7 +132,7 @@ export default async function AssetDetail({ params }: { params: Promise<{ ticker
         change7d,
         change30d,
         volume: tk.quoteVolume,
-        source: 'binance'
+        source: tk.source ?? 'binance'
       };
     }
   }

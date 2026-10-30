@@ -137,6 +137,7 @@ import { LastSafeBuyCard } from '@/components/last-safe-buy-card';
 import { ProofCard } from '@/components/proof-card';
 import { NewsFeed } from '@/components/news-feed';
 import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
+import { CryptoBuySignals } from '@/components/crypto/crypto-buy-signals';
 import { CryptoPrecisionDesk } from '@/components/crypto/crypto-precision-desk';
 import { CryptoPrecisionCalibrationHydrator } from '@/components/crypto/crypto-precision-calibration-hydrator';
 import { CryptoPrecisionOverrideBanner } from '@/components/crypto/crypto-precision-override-banner';
@@ -657,11 +658,43 @@ export default async function HomePage() {
     recentChangePct: masterSignal.kind === 'trade' ? masterSignal.ticker.priceChangePct : null
   });
 
+  // News-Verarbeitung im Hintergrund: Spaeher-Sentiment + Chase-Detektor
+  // fliessen direkt ins Precision-Gate. Baerische News-Lage = Warnung
+  // (verhindert FREIGABE), "News schon eingepreist" = hartes Veto.
+  const sentimentBySymbol = new Map(spaeherReport.perCoin.map((s) => [s.coin.toUpperCase(), s]));
+  const chaseSet = new Set(chaseSignals.filter((c) => c.kind === 'hot_news_already_run').map((c) => c.coin.toUpperCase()));
+  const cryptoPrecisionPicks = cryptoScored.map((x) => {
+    const edge = backtestSummary.perAssetEdge[x.c.coinId] ?? null;
+    const sentiment = sentimentBySymbol.get(x.c.symbol.toUpperCase()) ?? null;
+    return evaluateCryptoPrecisionPick({
+      coinId: x.c.coinId,
+      symbol: x.c.symbol,
+      passedCount: x.c.passedCount,
+      totalCount: x.c.totalCount,
+      marketMood: masterSignal.marketMood,
+      btcRegime: masterSignal.btcRegime,
+      structure: x.c.structure,
+      nearSupport: x.c.nearSupport,
+      quoteVolume: x.c.quoteVolume,
+      stopDistancePct: x.c.stopDistancePct,
+      priceChangePct24h: x.c.priceChangePct24h,
+      crowdCautious: masterSignal.crowd.cautious,
+      confirmed: x.c.confirmed,
+      backtestWinRatePct: edge?.winRatePct ?? null,
+      backtestSampleSize: backtestSummary.trades ?? 0,
+      safety: x.safety,
+      newsTilt: sentiment?.tilt ?? null,
+      newsNetScore: sentiment?.netScore ?? null,
+      chaseWarning: chaseSet.has(x.c.symbol.toUpperCase())
+    });
+  });
+
   return (
     <main className="mx-auto max-w-5xl space-y-5 p-4 md:space-y-6 md:p-6">
       <OnboardingGuide />
       <AutoRefresh intervalMs={20000} />
       <HomeHero todayIso={todayIso} />
+      <CryptoBuySignals picks={cryptoPrecisionPicks} candidates={masterSignal.candidates} generatedAt={masterSignal.generatedAt} mode={tradeMode} />
       <ChefVerdictCard verdict={chefVerdict} />
       <AdvisoryCouncilCard council={council} />
       <details className="rounded-md border border-slate-800 bg-slate-900/30">
@@ -794,47 +827,11 @@ export default async function HomePage() {
         aggressive={personas.find((p) => p.persona === 'aggressive') ?? null}
       />
 
-      {(() => {
-        // News-Verarbeitung im Hintergrund: Spaeher-Sentiment + Chase-Detektor
-        // fliessen direkt ins Precision-Gate. Baerische News-Lage = Warnung
-        // (verhindert FREIGABE), "News schon eingepreist" = hartes Veto.
-        const sentimentBySymbol = new Map(spaeherReport.perCoin.map((s) => [s.coin.toUpperCase(), s]));
-        const chaseSet = new Set(chaseSignals.filter((c) => c.kind === 'hot_news_already_run').map((c) => c.coin.toUpperCase()));
-        const cryptoPrecisionPicks = cryptoScored.map((x) => {
-          const edge = backtestSummary.perAssetEdge[x.c.coinId] ?? null;
-          const sentiment = sentimentBySymbol.get(x.c.symbol.toUpperCase()) ?? null;
-          return evaluateCryptoPrecisionPick({
-            coinId: x.c.coinId,
-            symbol: x.c.symbol,
-            passedCount: x.c.passedCount,
-            totalCount: x.c.totalCount,
-            marketMood: masterSignal.marketMood,
-            btcRegime: masterSignal.btcRegime,
-            structure: x.c.structure,
-            nearSupport: x.c.nearSupport,
-            quoteVolume: x.c.quoteVolume,
-            stopDistancePct: x.c.stopDistancePct,
-            priceChangePct24h: x.c.priceChangePct24h,
-            crowdCautious: masterSignal.crowd.cautious,
-            confirmed: x.c.confirmed,
-            backtestWinRatePct: edge?.winRatePct ?? null,
-            backtestSampleSize: backtestSummary.trades ?? 0,
-            safety: x.safety,
-            newsTilt: sentiment?.tilt ?? null,
-            newsNetScore: sentiment?.netScore ?? null,
-            chaseWarning: chaseSet.has(x.c.symbol.toUpperCase())
-          });
-        });
-        return (
-          <>
-            <CryptoPrecisionDesk picks={cryptoPrecisionPicks} cryptoStrongCount={cryptoStrongCount} />
-            <CryptoPrecisionOverrideBanner
-              picks={cryptoPrecisionPicks.map((p) => ({ coinId: p.coinId, symbol: p.symbol, verdict: p.verdict }))}
-              latestPrices={latestPrices}
-            />
-          </>
-        );
-      })()}
+      <CryptoPrecisionDesk picks={cryptoPrecisionPicks} cryptoStrongCount={cryptoStrongCount} />
+      <CryptoPrecisionOverrideBanner
+        picks={cryptoPrecisionPicks.map((p) => ({ coinId: p.coinId, symbol: p.symbol, verdict: p.verdict }))}
+        latestPrices={latestPrices}
+      />
       <CryptoPrecisionCalibrationHydrator latestPrices={latestPrices} />
 
       {(() => {

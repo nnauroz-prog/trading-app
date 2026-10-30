@@ -93,3 +93,36 @@ describe('data-backup', () => {
     expect(env.data['trading-app.vorstand-log-v1']).toEqual([{ id: 'v1' }]);
   });
 });
+
+describe('WM data in the general backup', () => {
+  beforeEach(() => store.clear());
+  it('round-trips WM notes and bankroll without a separate WM export', () => {
+    const values = {
+      'trading-app.wm-pick-notes-v1': { match1: 'Meine Notiz' },
+      'trading-app.wm-bankroll-ledger-v1': [{ id: 'entry1', amount: 25 }],
+      'trading-app.wm-manual-results-v1': { match1: { home: 2, away: 1 } }
+    };
+    for (const [key, value] of Object.entries(values)) store.set(key, JSON.stringify(value));
+    const backup = exportToString();
+    store.clear();
+    expect(importData(backup, 'replace').ok).toBe(true);
+    for (const [key, value] of Object.entries(values)) expect(JSON.parse(store.get(key)!)).toEqual(value);
+  });
+  it('merges notes without dropping existing matches or overwriting conflicts', () => {
+    store.set('trading-app.wm-pick-notes-v1', JSON.stringify({ a: 'importiert', b: 'neu' }));
+    const backup = exportToString();
+    store.set('trading-app.wm-pick-notes-v1', JSON.stringify({ a: 'lokal', c: 'behalten' }));
+    expect(importData(backup, 'merge').ok).toBe(true);
+    expect(JSON.parse(store.get('trading-app.wm-pick-notes-v1')!)).toEqual({ a: 'lokal', b: 'neu', c: 'behalten' });
+  });
+});
+
+
+it('preserves the raw sport signal mode through the general backup', () => {
+  store.clear();
+  store.set('trading-app.sport-signal-mode-v1', 'PRECISION');
+  const backup = exportToString();
+  store.clear();
+  expect(importData(backup).ok).toBe(true);
+  expect(store.get('trading-app.sport-signal-mode-v1')).toBe('PRECISION');
+});

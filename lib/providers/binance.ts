@@ -1,3 +1,4 @@
+import { fetchKrakenCandles } from '@/lib/providers/kraken';
 import { Candle } from '@/lib/types/domain';
 import { binanceSymbolByAssetId } from '@/lib/data/mock';
 import { getCoinById } from '@/lib/coin-universe';
@@ -38,12 +39,13 @@ function intervalToBybit(interval: string): string {
 async function fetchBybit(symbol: string, interval: string, limit: number): Promise<Candle[] | null> {
   try {
     const url = `https://api.bybit.com/v5/market/kline?category=spot&symbol=${symbol}&interval=${intervalToBybit(interval)}&limit=${Math.min(limit, 1000)}`;
-    const res = await fetch(url, { next: { revalidate: 60 } });
+    const res = await fetch(url, { next: { revalidate: 60 }, signal: AbortSignal.timeout(8000) });
     if (!res.ok) return null;
     const data = (await res.json()) as BybitKlineResponse;
     if (data.retCode !== 0 || !data.result?.list) return null;
     return data.result.list
       .map((k) => ({
+        source: 'bybit' as const,
         openTime: parseInt(k[0], 10),
         open: parseFloat(k[1]),
         high: parseFloat(k[2]),
@@ -60,10 +62,11 @@ async function fetchBybit(symbol: string, interval: string, limit: number): Prom
 async function fetchBinance(symbol: string, interval: string, limit: number): Promise<Candle[] | null> {
   try {
     const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-    const res = await fetch(url, { next: { revalidate: 60 } });
+    const res = await fetch(url, { next: { revalidate: 60 }, signal: AbortSignal.timeout(8000) });
     if (!res.ok) return null;
     const raw = (await res.json()) as RawBinanceKline[];
     return raw.map((k) => ({
+      source: 'binance' as const,
       openTime: k[0],
       open: parseFloat(k[1]),
       high: parseFloat(k[2]),
@@ -77,11 +80,13 @@ async function fetchBinance(symbol: string, interval: string, limit: number): Pr
 }
 
 // Binance is the canonical source for chart candles; prefer it when reachable
-// from the deploy region, fall back to Bybit otherwise.
+// from the deploy region, then try Bybit and independent Kraken USDT markets.
 export async function fetchKlinesBySymbol(symbol: string, interval: string, limit = 200): Promise<Candle[] | null> {
   const binance = await fetchBinance(symbol, interval, limit);
   if (binance && binance.length > 0) return binance;
-  return fetchBybit(symbol, interval, limit);
+  const bybit = await fetchBybit(symbol, interval, limit);
+  if (bybit && bybit.length > 0) return bybit;
+  return fetchKrakenCandles(symbol, interval, limit);
 }
 
 export async function fetchCandles(assetId: string, interval: '1h' | '4h', limit = 200): Promise<Candle[] | null> {

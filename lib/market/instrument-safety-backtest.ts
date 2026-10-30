@@ -30,7 +30,7 @@ export interface SafetyBacktestResult {
   totalReturnPct: number;     // kumulierter Return aller Trades
   bestTradePct: number | null;
   worstTradePct: number | null;
-  buyAndHoldReturnPct: number; // Vergleichs-Benchmark: 1J einfach halten
+  buyAndHoldReturnPct: number; // Vergleichs-Benchmark: ab Tag 200 bis zur letzten Kerze halten
 }
 
 const EMPTY_RESULT: SafetyBacktestResult = {
@@ -95,7 +95,7 @@ export function backtestSafetyStrategy(candles: PriceCandle[]): SafetyBacktestRe
   }
 
   if (trades.length === 0) {
-    const first = candles[0].close;
+    const first = candles[200].close;
     const last = candles[candles.length - 1].close;
     return {
       ...EMPTY_RESULT,
@@ -112,7 +112,7 @@ export function backtestSafetyStrategy(candles: PriceCandle[]): SafetyBacktestRe
   const bestPnl = Math.max(...pnlValues);
   const worstPnl = Math.min(...pnlValues);
 
-  const first = candles[0].close;
+  const first = candles[200].close;
   const last = candles[candles.length - 1].close;
   const buyAndHold = first > 0 ? ((last - first) / first) * 100 : 0;
 
@@ -122,7 +122,7 @@ export function backtestSafetyStrategy(candles: PriceCandle[]): SafetyBacktestRe
     winRatePct: Math.round((wins / trades.length) * 100),
     avgPnlPct: avgPnl,
     medianHoldDays: medianHold,
-    totalReturnPct: sumPnl,
+    totalReturnPct: (trades.reduce((capital, trade) => capital * (1 + trade.pnlPct / 100), 1) - 1) * 100,
     bestTradePct: bestPnl,
     worstTradePct: worstPnl,
     buyAndHoldReturnPct: buyAndHold

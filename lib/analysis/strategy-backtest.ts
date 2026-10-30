@@ -1,3 +1,4 @@
+import { marketDataSource, type MarketDataSource } from '@/lib/providers/market-source';
 import { Candle } from '@/lib/types/domain';
 import { adx, atr, bollinger, detectSwingLow, ema, macd, rsi, sma } from '@/lib/analysis/indicators';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
@@ -64,7 +65,7 @@ export interface StrategyBacktestReport {
   periodDays: number;
   minConfluence: number;
   generatedAt: string;
-  dataSource: 'binance' | 'offline';
+  dataSource: MarketDataSource;
 }
 
 function alignedIndexAt(times: number[], target: number): number {
@@ -298,7 +299,7 @@ export function runStrategyBacktestOnCandles(candles: AssetCandles[], params: St
     periodDays,
     minConfluence: params.minConfluence,
     generatedAt: new Date().toISOString(),
-    dataSource: candles.length > 0 ? 'binance' : 'offline'
+    dataSource: marketDataSource(candles.flatMap(asset => [...asset.c1h, ...asset.c4h, ...asset.c1d]).map(candle => candle.source))
   };
 }
 

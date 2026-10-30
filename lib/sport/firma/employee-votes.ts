@@ -1,3 +1,4 @@
+import { leagueLabelForKey } from '@/lib/sport/firma/league-key-mapping';
 import type { UpcomingFixture, Fixture } from '@/lib/sport/fetcher';
 import type { TeamForm } from '@/lib/sport/firma/scouts';
 import type { HeadToHeadResult } from '@/lib/sport/h2h';
@@ -304,6 +305,7 @@ function hitRateWeight(hitRatePct: number | undefined): number {
 export function collectFirmaVotes(ctx: MatchVoteContext): FirmaVoteResult {
   const votes: EmployeeVote[] = [];
   for (const employee of SPORT_FIRMA) {
+    if (employee.leagueKey && leagueLabelForKey(employee.leagueKey) !== ctx.leagueName) continue;
     let voteFn = VOTE_FUNCTIONS[employee.id];
     // Team-Analysten kriegen den generischen teamAnalystVote.
     if (!voteFn && isTeamAnalyst(employee.id)) voteFn = teamAnalystVote;

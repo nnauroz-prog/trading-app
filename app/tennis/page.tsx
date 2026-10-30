@@ -1,3 +1,4 @@
+import { LiveScoreboard } from '@/components/sport/live-scoreboard';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTennisFixtures } from '@/lib/sport/tennis-fetcher';
@@ -36,8 +37,9 @@ export default async function TennisPage() {
       <header className="space-y-1">
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Tennis</div>
         <h1 className="text-3xl font-bold tracking-tight text-white">ATP, WTA, Grand Slams</h1>
-        <p className="text-sm text-slate-400">Kommende Matches der vier Grand Slams und der ATP/WTA-Tour. Live von TheSportsDB.</p>
+        <p className="text-sm text-slate-400">ATP/WTA-Live-Ergebnisse von ESPN, alle 30 Sekunden aktualisiert. Ergänzende Spielpläne von TheSportsDB, soweit verfügbar.</p>
       </header>
+      <LiveScoreboard initialSport="tennis" />
 
       {leagues.every((l) => l.next.length === 0 && l.last.length === 0) && (
         <section className="rounded-2xl border border-amber-500/30 bg-amber-950/15 p-4 text-[11.5px] leading-snug text-amber-100/85">

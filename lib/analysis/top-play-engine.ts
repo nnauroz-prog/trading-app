@@ -1,3 +1,4 @@
+import { marketDataSource, type MarketDataSource } from '@/lib/providers/market-source';
 import { Candle } from '@/lib/types/domain';
 import { ema, macd, macdState, rsi, sma, last } from '@/lib/analysis/indicators';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
@@ -191,7 +192,7 @@ export interface TopPlayReport {
   tickers: TickerSnapshot[];
   generatedAt: string;
   analyzedCount: number;
-  dataSource: 'binance' | 'offline';
+  dataSource: MarketDataSource;
 }
 
 export async function buildTopPlayReport(deepAnalyzeCount = 15): Promise<TopPlayReport> {
@@ -229,6 +230,6 @@ export async function buildTopPlayReport(deepAnalyzeCount = 15): Promise<TopPlay
     tickers: withTickers.map((x) => x.ticker),
     generatedAt: new Date().toISOString(),
     analyzedCount: plays.length,
-    dataSource: 'binance'
+    dataSource: marketDataSource([...tickerMap.values()].map(ticker => ticker.source))
   };
 }

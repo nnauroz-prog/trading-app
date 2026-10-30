@@ -1,7 +1,10 @@
 // Vollständiges Backup/Restore aller lokalen App-Daten. Keine externe
 // Abhängigkeit — funktioniert offline, kann nichts kaputt machen.
 
+import { WM_BACKUP_KEYS } from '@/lib/sport/wm-backup';
+
 const BACKUP_KEYS = [
+  ...WM_BACKUP_KEYS,
   // Konfiguration + Profil
   'trading-app.account-config',
   'trading-app.user-profile',
@@ -53,7 +56,9 @@ const CHANGE_EVENTS = [
   'trading-app:dca-changed',
   'trading-app:config-changed',
   'trading-app:profile-changed',
-  'trading-app:drawings-changed'
+  'trading-app:drawings-changed',
+  'trading-app:wm-pick-notes-changed',
+  'trading-app:wm-bankroll-ledger-changed'
 ];
 
 export interface BackupEnvelope {
@@ -141,8 +146,19 @@ export function importData(json: string, mode: 'replace' | 'merge' = 'replace'):
         }
       }
       window.localStorage.setItem(key, JSON.stringify(merged));
+    } else if (mode === 'merge' && key === 'trading-app.wm-pick-notes-v1' && incoming && typeof incoming === 'object' && !Array.isArray(incoming)) {
+      let existing: Record<string, unknown> = {};
+      try {
+        const value: unknown = JSON.parse(window.localStorage.getItem(key) ?? '{}');
+        if (value && typeof value === 'object' && !Array.isArray(value)) existing = value as Record<string, unknown>;
+      } catch { /* Restore incoming notes when the local store is invalid. */ }
+      // Keep existing notes on conflict, as with array merge above.
+      window.localStorage.setItem(key, JSON.stringify({ ...incoming, ...existing }));
     } else {
-      window.localStorage.setItem(key, JSON.stringify(incoming));
+      // Signal mode is stored as a raw string by its existing store.
+      const raw = key === 'trading-app.sport-signal-mode-v1' && typeof incoming === 'string'
+        ? incoming : JSON.stringify(incoming);
+      window.localStorage.setItem(key, raw);
     }
     restored.push(key);
   }
