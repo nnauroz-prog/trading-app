@@ -60,7 +60,7 @@ function getTag(block: string, tag: string): string | null {
 
 // Minimal RSS 2.0 / Atom parser — extracts <item> (or <entry>) blocks and pulls
 // title / link / pubDate. Avoids adding an XML dependency.
-function parseRss(xml: string, sourceName: string): NewsItem[] {
+export function parseRss(xml: string, sourceName: string): NewsItem[] {
   const items: NewsItem[] = [];
   const blocks = xml.match(/<item[\s\S]*?<\/item>|<entry[\s\S]*?<\/entry>/g) ?? [];
   for (const block of blocks) {

@@ -54,6 +54,20 @@ export function HomeHero({ todayIso }: Props) {
         <HeroBullet emoji="📈" label="Aktien-Check" desc="8-Kriterien-Sicherheit" href="/aktien" />
         <HeroBullet emoji="⚖️" label="Optionsscheine" desc="3 Risiko-Setups bei Kauf" href="/optionsscheine" />
       </ul>
+
+      <a
+        href="/radar"
+        className="group flex items-center justify-between gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-500/[0.07] p-3 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-400/60 hover:shadow-[0_12px_34px_-14px_rgba(56,189,248,0.6)]"
+      >
+        <span className="flex items-center gap-2.5">
+          <span aria-hidden className="text-xl">🛰️</span>
+          <span>
+            <span className="block text-[12.5px] font-semibold text-white">Geld-Radar — womit andere gerade Geld machen</span>
+            <span className="block text-[10px] text-slate-400">Weltweite Finanz-News, auf Deutsch nach Geld-Relevanz sortiert</span>
+          </span>
+        </span>
+        <span className="shrink-0 text-[11px] font-semibold text-cyan-300 transition group-hover:translate-x-0.5">öffnen →</span>
+      </a>
       </div>
     </header>
   );
