@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Market Decision Support',
+    name: 'Trading Desk · Mein Geld',
     short_name: 'Trading Desk',
-    description: 'Transparente Krypto- und Aktien-Entscheidungshilfe. Keine Finanzberatung.',
+    description: 'Dein verfügbares Geld einfach aufteilen und im Blick behalten.',
     start_url: '/',
     display: 'standalone',
     orientation: 'portrait',

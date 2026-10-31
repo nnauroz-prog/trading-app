@@ -3,23 +3,15 @@ import Link from 'next/link';
 import { PositionsPanel } from '@/components/positions-panel';
 
 export const metadata: Metadata = {
-  title: 'Positionen verwalten',
-  description: 'Offene Positionen verwalten, Stop/TP setzen, Live-P/L pruefen. Lokal im Browser.'
+  title: 'Meine Käufe',
+  description: 'Deine Käufe, Kaufpreise und Veränderungen im Blick behalten. Deine Angaben bleiben in diesem Browser.'
 };
-import { PositionHealthStrip, type CoinHealth } from '@/components/position-health-strip';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
-import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
-import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
-import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PositionsPage() {
-  const [tickers, masterSignal, backtestSummary] = await Promise.all([
-    fetchAllTickers(),
-    getMasterSignal('swing'),
-    getBacktestSummary()
-  ]);
+  const tickers = await fetchAllTickers();
 
   const latestPrices: Record<string, number | null> = {};
   if (tickers) {
@@ -29,35 +21,26 @@ export default async function PositionsPage() {
     }
   }
 
-  const healthByCoin: Record<string, CoinHealth> = {};
-  for (const c of masterSignal.candidates) {
-    healthByCoin[c.symbol.toLowerCase()] = {
-      symbol: c.symbol,
-      safety: scoreCandidateSafety(c, masterSignal, backtestSummary),
-      priceChangePct24h: c.priceChangePct24h
-    };
-  }
-
   return (
     <main className="mx-auto max-w-5xl space-y-6 p-4 md:space-y-6 md:p-6">
       <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
-        ← zurück zum Trading Desk
+        ← zurück zu meinem Geld
       </Link>
 
       <header className="space-y-1">
         <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-          My Positions
+          Meine Anlagen
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Positionen verwalten</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-white">Meine Käufe</h1>
         <p className="max-w-2xl text-sm text-slate-400">
-          Erfasse hier alle echten Käufe — Crypto auf Coinbase, Aktien/Optionsscheine auf Scalable oder Trade Republic. Live-PnL für Crypto via Bybit Spot. Für Aktien/Hebelprodukte den Exit-Preis manuell setzen, dann wird der realisierte Gewinn/Verlust berechnet.
+          Trage ein, was du gekauft hast. So behältst du Kaufpreis, Menge und spätere Verkäufe im Blick. Die App führt keine Käufe oder Verkäufe aus.
         </p>
       </header>
 
-      <PositionHealthStrip healthByCoin={healthByCoin} />
+      <PositionsPanel latestPrices={latestPrices} quoteCurrency="USDT" />
 
-      <PositionsPanel latestPrices={latestPrices} />
+
     </main>
   );
 }

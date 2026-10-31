@@ -23,6 +23,12 @@ function elements(node: ReactNode): Array<{ type: unknown; props: Record<string,
   if (!isValidElement<{ children?: ReactNode }>(node)) return [];
   return [{ type: node.type, props: node.props }, ...elements(node.props.children)];
 }
+function textContent(node: ReactNode): string {
+  if (Array.isArray(node)) return node.map(textContent).join(' ');
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (!isValidElement<{ children?: ReactNode }>(node)) return '';
+  return textContent(node.props.children);
+}
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.mode = 'daytrade';
@@ -53,5 +59,26 @@ describe('crypto detail page across the legacy metadata catalog', () => {
     expect(mocks.getMasterSignal).not.toHaveBeenCalled();
     expect(mocks.fetchAllTickers).not.toHaveBeenCalled();
     expect(mocks.runDailyAnalysis).toHaveBeenCalledOnce();
+  });
+  it('sends raw crypto candidates to the shared buy check without creating a weaker buy signal', async () => {
+    mocks.getMasterSignal.mockResolvedValueOnce({
+      candidates: [{ coinId: 'btc', symbol: 'BTC', entry: 110, stopLoss: 100, takeProfit1: 125, takeProfit2: 140, reasons: ['INTERNAL_RAW_CANDIDATE'] }],
+      generatedAt: new Date().toISOString()
+    });
+    const tree = await AssetDetail({ params: Promise.resolve({ ticker: 'btc' }) });
+    const text = textContent(tree);
+    const buyCheck = elements(tree).find(element => element.props.href === '/krypto' && textContent(element.props.children as ReactNode).includes('Kaufprüfung ansehen'));
+    expect(buyCheck).toBeDefined();
+    expect(text).toContain('Aktueller Preis');
+    expect(text).toContain('110');
+    expect(text).toContain('Käufe für heute');
+    expect(text).not.toMatch(/KAUF-SIGNAL|INTERNAL_RAW_CANDIDATE|Konfluenz|Precision|Firmen|Trefferquote/);
+  });
+  it('does not display the example price when real crypto quotes are unavailable', async () => {
+    mocks.fetchAllTickers.mockResolvedValueOnce(null);
+    const tree = await AssetDetail({ params: Promise.resolve({ ticker: 'btc' }) });
+    expect(textContent(tree)).toContain('Der aktuelle Preis ist gerade nicht verfügbar');
+    expect(elements(tree).some(element => element.type === DataQualityBadge)).toBe(false);
+    expect(textContent(tree)).not.toContain('66.350');
   });
 });

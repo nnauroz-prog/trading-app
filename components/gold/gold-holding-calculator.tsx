@@ -30,30 +30,30 @@ const UNIT_LABEL: Record<AmountUnit, string> = {
 };
 
 const MODE_LABEL: Record<PurchasePriceMode, string> = {
-  'auto': 'Automatisch (historischer Tagespreis)',
-  'total': 'Kaufpreis gesamt (USD)',
-  'per-gram': 'Kaufpreis pro Gramm (USD)',
-  'per-ounce': 'Kaufpreis pro Unze (USD)'
+  'auto': 'Damals üblichen Goldpreis verwenden',
+  'total': 'Gesamter Kaufpreis ($)',
+  'per-gram': 'Kaufpreis pro Gramm ($)',
+  'per-ounce': 'Kaufpreis pro Feinunze ($)'
 };
 
-const VERDICT_TONE: Record<Verdict, { box: string; head: string; pill: string; emoji: string; intro: string }> = {
-  VERKAUFEN:  { box: 'border-rose-500/50 bg-rose-950/20', head: 'text-rose-100', pill: 'bg-rose-500/30 text-rose-100', emoji: '🔻', intro: 'Der Markt spricht eher dafür, Position zu reduzieren oder zu schließen.' },
-  HALTEN:     { box: 'border-emerald-500/50 bg-emerald-950/20', head: 'text-emerald-100', pill: 'bg-emerald-500/30 text-emerald-100', emoji: '🤝', intro: 'Der Markt spricht eher für Halten — der langfristige Trend ist intakt.' },
-  NACHKAUFEN: { box: 'border-sky-500/50 bg-sky-950/20', head: 'text-sky-100', pill: 'bg-sky-500/30 text-sky-100', emoji: '➕', intro: 'Nachkaufen nur mit klar begrenzter Position — niemals alles auf einmal.' },
-  BEOBACHTEN: { box: 'border-amber-500/50 bg-amber-950/20', head: 'text-amber-100', pill: 'bg-amber-500/30 text-amber-100', emoji: '👀', intro: 'Heute keine klare Aktion — den Markt erst stabilisieren lassen.' }
+const VERDICT_TONE: Record<Verdict, { box: string; head: string; title: string; intro: string }> = {
+  VERKAUFEN: { box: 'border-rose-500/50 bg-rose-950/20', head: 'text-rose-100', title: 'Einen Verkauf prüfen', intro: 'Die bisherigen Kursregeln sprechen eher für einen Verkauf. Vergleiche zuerst den tatsächlichen Händlerpreis mit deinem Kaufpreis und deinem Geldplan.' },
+  HALTEN: { box: 'border-emerald-500/50 bg-emerald-950/20', head: 'text-emerald-100', title: 'Behalten prüfen', intro: 'Der bisherige Kursverlauf spricht eher dafür, das Gold zu behalten. Ob das zu dir passt, hängt auch davon ab, wann du das Geld brauchst.' },
+  NACHKAUFEN: { box: 'border-sky-500/50 bg-sky-950/20', head: 'text-sky-100', title: 'Einen weiteren Kauf prüfen', intro: 'Die bisherigen Kursregeln machen einen weiteren Kauf prüfenswert. Nutze dafür nur Geld, das in deinem Geldplan langfristig für Gold vorgesehen ist.' },
+  BEOBACHTEN: { box: 'border-amber-500/50 bg-amber-950/20', head: 'text-amber-100', title: 'Erst einmal abwarten', intro: 'Der Kursverlauf liefert gerade keinen klaren Hinweis. Du kannst später erneut nachsehen.' }
 };
 
 function fmtUsd(value: number | null, opts: { withSign?: boolean; decimals?: number } = {}): string {
   if (value === null || !Number.isFinite(value)) return '—';
   const decimals = opts.decimals ?? 2;
   const sign = opts.withSign && value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} $`;
+  return `${sign}${value.toLocaleString('de-DE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })} $`;
 }
 
 function fmtPct(value: number | null, opts: { withSign?: boolean } = {}): string {
   if (value === null || !Number.isFinite(value)) return '—';
   const sign = opts.withSign && value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(2)} %`;
+  return `${sign}${value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`;
 }
 
 function fmtGrams(value: number): string {
@@ -152,16 +152,16 @@ export function GoldHoldingCalculator({ history, currentGoldPricePerOz, todayIso
   return (
     <section className="space-y-4">
       <header className="space-y-1">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-400">Gold-Holding-Rechner</div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Was ist dein Bestand wirklich wert?</h2>
+        <div className="text-sm font-medium text-amber-400">Deine Goldmenge</div>
+        <h2 className="text-2xl font-bold tracking-tight text-white">Rechne mit deinem eigenen Gold.</h2>
         <p className="text-sm text-slate-400">
-          Eingabe inkl. Legierung, Gebühren und Verkaufsspread. Der Rechner berücksichtigt die echte Feingoldmenge — nicht die Bruttomenge — und liefert ein Verkaufs-Urteil aus der aktuellen Marktstruktur.
+          Trage deine Goldmenge und das Kaufdatum ein. Du siehst den geschätzten Wert und den Unterschied zu deinem Kaufpreis. Alle Beträge sind in US-Dollar ($). Eine Feinunze entspricht etwa 31,1 Gramm.
         </p>
       </header>
 
-      {/* ===== 1. Eingabe ===== */}
+      {/* ===== Deine Angaben ===== */}
       <div className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">1. Eingabe</h3>
+        <h3 className="text-sm font-semibold text-emerald-300">Deine Angaben</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Label text="Kaufdatum">
             <input
@@ -169,7 +169,7 @@ export function GoldHoldingCalculator({ history, currentGoldPricePerOz, todayIso
               value={purchaseDate}
               max={todayIso}
               onChange={(e) => setPurchaseDate(e.target.value)}
-              className="mt-1 block w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
+              className="mt-1 block w-full rounded border border-slate-700 bg-slate-950 px-2 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none"
             />
           </Label>
           <Label text="Menge">
@@ -179,13 +179,13 @@ export function GoldHoldingCalculator({ history, currentGoldPricePerOz, todayIso
                 inputMode="decimal"
                 value={amountStr}
                 onChange={(e) => setAmountStr(e.target.value)}
-                className="block w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-white focus:border-emerald-400 focus:outline-none"
+                className="block min-w-0 w-full rounded border border-slate-700 bg-slate-950 px-2 py-2.5 font-mono text-base text-white focus:border-emerald-400 focus:outline-none"
                 aria-label="Menge"
               />
               <select
                 value={amountUnit}
                 onChange={(e) => setAmountUnit(e.target.value as AmountUnit)}
-                className="shrink-0 rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
+                className="shrink-0 rounded border border-slate-700 bg-slate-950 px-2 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none"
                 aria-label="Einheit"
               >
                 {(Object.keys(UNIT_LABEL) as AmountUnit[]).map((u) => (
@@ -194,7 +194,7 @@ export function GoldHoldingCalculator({ history, currentGoldPricePerOz, todayIso
               </select>
             </div>
           </Label>
-          <Label text="Legierung / Feingehalt" className="sm:col-span-2">
+          <Label text="Goldanteil (oft als Zahl eingeprägt)" className="sm:col-span-2">
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <select
                 value={useCustomPromille ? 'custom' : String(purityPromille)}
@@ -202,12 +202,12 @@ export function GoldHoldingCalculator({ history, currentGoldPricePerOz, todayIso
                   if (e.target.value === 'custom') setUseCustomPromille(true);
                   else { setUseCustomPromille(false); setPurityPromille(Number(e.target.value)); }
                 }}
-                className="rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
+                className="max-w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-base text-white focus:border-emerald-400 focus:outline-none"
               >
                 {ALLOY_OPTIONS.map((a) => (
-                  <option key={a.promille} value={a.promille}>{a.label}</option>
+                  <option key={a.promille} value={a.promille}>{a.promille}er Gold · {(a.promille / 10).toLocaleString('de-DE')} % Gold</option>
                 ))}
-                <option value="custom">Benutzerdefiniert in Promille</option>
+                <option value="custom">Andere Zahl eintragen</option>
               </select>
               {useCustomPromille && (
                 <input
@@ -216,18 +216,18 @@ export function GoldHoldingCalculator({ history, currentGoldPricePerOz, todayIso
                   value={customPromille}
                   onChange={(e) => setCustomPromille(e.target.value)}
                   placeholder="z.B. 833"
-                  className="w-28 rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-white focus:border-emerald-400 focus:outline-none"
-                  aria-label="Feingehalt in Promille"
+                  className="w-28 rounded border border-slate-700 bg-slate-950 px-2 py-2.5 font-mono text-base text-white focus:border-emerald-400 focus:outline-none"
+                  aria-label="Eingeprägte Goldzahl, zum Beispiel 585"
                 />
               )}
             </div>
           </Label>
-          <Label text="Kaufpreis (optional)" className="sm:col-span-2">
+          <Label text="Was hast du bezahlt?" className="sm:col-span-2">
             <div className="mt-1 flex flex-wrap gap-2">
               <select
                 value={purchasePriceMode}
                 onChange={(e) => setPurchasePriceMode(e.target.value as PurchasePriceMode)}
-                className="rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
+                className="max-w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-base text-white focus:border-emerald-400 focus:outline-none"
               >
                 {(Object.keys(MODE_LABEL) as PurchasePriceMode[]).map((m) => (
                   <option key={m} value={m}>{MODE_LABEL[m]}</option>
@@ -240,152 +240,95 @@ export function GoldHoldingCalculator({ history, currentGoldPricePerOz, todayIso
                   value={purchasePriceStr}
                   onChange={(e) => setPurchasePriceStr(e.target.value)}
                   placeholder={
-                    purchasePriceMode === 'total' ? 'Gesamtsumme in USD'
-                    : purchasePriceMode === 'per-gram' ? 'USD pro Gramm'
-                    : 'USD pro Unze'
+                    purchasePriceMode === 'total' ? 'Gesamter Kaufpreis in $'
+                    : purchasePriceMode === 'per-gram' ? '$ pro Gramm'
+                    : '$ pro Feinunze'
                   }
-                  className="block w-full max-w-[14rem] rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-white focus:border-emerald-400 focus:outline-none"
+                  className="block w-full max-w-[14rem] rounded border border-slate-700 bg-slate-950 px-2 py-2.5 font-mono text-base text-white focus:border-emerald-400 focus:outline-none"
                 />
               )}
             </div>
             {purchasePriceMode === 'auto' && historical === null && (
-              <p className="mt-1.5 text-[10.5px] text-amber-300">
-                Für dieses Kaufdatum ist kein historischer Goldpreis verfügbar.
+              <p className="mt-1.5 text-sm text-amber-300">
+                Für dieses Datum fehlt der damalige Kurs. Wähle stattdessen deinen eigenen Kaufpreis.
               </p>
             )}
           </Label>
-          <Label text="Gebühren / Aufgeld (USD, optional)">
+          <details className="rounded-lg border border-slate-800 p-3 sm:col-span-2">
+            <summary className="cursor-pointer text-sm text-slate-300">Kaufkosten und Verkaufsabzug ergänzen</summary>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Label text="Zusätzliche Kaufkosten ($, optional)">
             <input
               type="text"
               inputMode="decimal"
               value={feesStr}
               onChange={(e) => setFeesStr(e.target.value)}
               placeholder="0"
-              className="mt-1 block w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-white focus:border-emerald-400 focus:outline-none"
+              className="mt-1 block w-full rounded border border-slate-700 bg-slate-950 px-2 py-2.5 font-mono text-base text-white focus:border-emerald-400 focus:outline-none"
             />
           </Label>
-          <Label text="Verkaufsspread (%, optional)">
+          <Label text="Abzug beim Verkauf (%, optional)">
             <input
               type="text"
               inputMode="decimal"
               value={sellSpreadPctStr}
               onChange={(e) => setSellSpreadPctStr(e.target.value)}
-              placeholder="z.B. 2.5"
-              className="mt-1 block w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-white focus:border-emerald-400 focus:outline-none"
+              placeholder="Zum Beispiel: 2,5"
+              className="mt-1 block w-full rounded border border-slate-700 bg-slate-950 px-2 py-2.5 font-mono text-base text-white focus:border-emerald-400 focus:outline-none"
             />
           </Label>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-slate-400">Manche Händler zahlen weniger als den Börsenwert. Du kannst diesen Unterschied hier als Prozentwert eintragen.</p>
+          </details>
         </div>
       </div>
 
       {!validAmount && (
-        <p className="rounded-2xl border border-amber-500/30 bg-amber-950/15 p-3 text-[12px] text-amber-100">
+        <p className="rounded-2xl border border-amber-500/30 bg-amber-950/15 p-3 text-sm text-amber-100">
           Bitte eine gültige Menge eintragen, damit der Rechner loslegt.
         </p>
       )}
       {!validPromille && (
-        <p className="rounded-2xl border border-amber-500/30 bg-amber-950/15 p-3 text-[12px] text-amber-100">
-          Feingehalt muss zwischen 1 und 1000 Promille liegen.
+        <p className="rounded-2xl border border-amber-500/30 bg-amber-950/15 p-3 text-sm text-amber-100">
+          Die Goldzahl muss zwischen 1 und 1000 liegen. 585 bedeutet zum Beispiel 58,5 % Gold.
         </p>
       )}
 
       {result && (
         <>
-          {/* ===== 2. Dein Goldbestand ===== */}
-          <div className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">2. Dein Goldbestand</h3>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Tile label="Bruttomenge" value={fmtGrams(result.grossAmountGrams)} />
-              <Tile label="Legierung" value={`${effectivePromille}/1000`} sub={useCustomPromille ? 'benutzerdefiniert' : (ALLOY_OPTIONS.find((a) => a.promille === purityPromille)?.label.split(' ')[0] ?? '—')} />
-              <Tile label="Feingold (Gramm)" value={fmtGrams(result.pureGoldGrams)} />
-              <Tile label="Feingold (Unzen)" value={fmtOunces(result.pureGoldOunces)} />
-            </div>
-          </div>
+          <section className="space-y-4 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
+            <h3 className="text-lg font-semibold text-white">Dein geschätzter Goldwert</h3>
+            <p className="font-mono text-3xl font-bold text-white">{fmtUsd(result.currentValue)}</p>
+            <p className="text-sm leading-relaxed text-slate-400">Für {fmtGrams(result.pureGoldGrams)} reines Gold. Beim Händler können andere Preise gelten.</p>
+            {Number.isFinite(sellSpreadPct) && sellSpreadPct > 0 && <p className="text-sm text-slate-300">Nach deinem eingetragenen Verkaufsabzug: <span className="font-semibold text-white">{fmtUsd(result.estimatedSellValueAfterSpread)}</span></p>}
+            <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Tile label="Was du bezahlt hast" value={fmtUsd(result.purchaseValue)} sub={Number.isFinite(fees) && fees > 0 ? 'Zusätzliche Kaufkosten sind enthalten' : undefined} />
+              <Tile label="Gewinn oder Verlust vor Verkaufsabzug" value={fmtUsd(result.absolutePnL, { withSign: true })} sub={fmtPct(result.percentPnL, { withSign: true })} tone={pnlTone(result.absolutePnL)} />
+              {Number.isFinite(sellSpreadPct) && sellSpreadPct > 0 && <Tile label="Gewinn oder Verlust nach Verkaufsabzug" value={fmtUsd(result.pnlAfterSpread, { withSign: true })} tone={pnlTone(result.pnlAfterSpread)} />}
+            </dl>
+            {!result.hasCompleteData && <p className="text-sm leading-relaxed text-amber-200">{result.currentValue === null ? 'Der aktuelle Kurs fehlt. Wir können den heutigen Wert noch nicht berechnen.' : 'Dein Kaufpreis fehlt. Trage ihn ein, damit wir Gewinn oder Verlust berechnen können.'}</p>}
+          </section>
 
-          {/* ===== 3. Einstand ===== */}
-          <div className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">3. Einstand</h3>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {verdictStyle && result.hasCompleteData && <section className={`space-y-3 rounded-2xl border p-4 ${verdictStyle.box}`}>
+            <h3 className={`text-lg font-semibold ${verdictStyle.head}`}>{verdictStyle.title}</h3>
+            <p className="text-sm leading-relaxed text-slate-300">{verdictStyle.intro}</p>
+            <p className="text-xs leading-relaxed text-slate-400">Diese Einschätzung beruht auf dem bisherigen Kursverlauf. Der Preis kann sich jederzeit anders entwickeln.</p>
+          </section>}
+
+          <details className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-200">Wie setzt sich der Wert zusammen?</summary>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <Tile label="Gesamtgewicht" value={fmtGrams(result.grossAmountGrams)} />
+              <Tile label="Goldanteil" value={`${(effectivePromille / 10).toLocaleString('de-DE')} %`} />
+              <Tile label="Reines Gold" value={fmtGrams(result.pureGoldGrams)} sub={`${fmtOunces(result.pureGoldOunces)} · 1 Feinunze = etwa 31,1 g`} />
               <Tile label="Kaufdatum" value={new Date(`${purchaseDate}T00:00:00`).toLocaleDateString('de-DE')} />
-              <Tile label="Kaufpreis je Unze" value={fmtUsd(result.purchasePricePerOz)} />
-              <Tile label="Kaufwert gesamt" value={fmtUsd(result.purchaseValue)} sub={Number.isFinite(fees) && fees > 0 ? `inkl. ${fmtUsd(fees)} Gebühren` : undefined} />
-              <Tile label="Gebühren" value={fmtUsd(Number.isFinite(fees) && fees > 0 ? fees : 0)} />
-              <Tile label="Break-even je Unze" value={fmtUsd(result.breakEvenPricePerOz)} sub="Goldpreis, der den Einstand exakt deckt" />
+              <Tile label="Kaufpreis pro Feinunze" value={fmtUsd(result.purchasePricePerOz)} />
+              <Tile label="Goldkurs, der deine Kaufkosten deckt" value={fmtUsd(result.breakEvenPricePerOz)} sub="Pro Feinunze, vor einem Abzug beim Verkauf" />
+              <Tile label="Heutiger Kurs pro Feinunze" value={fmtUsd(currentGoldPricePerOz)} />
+              <Tile label="So lange gehört dir das Gold" value={holdingMonthsYearsLabel(result.holdingDays)} />
+              <Tile label="Wertänderung auf ein Jahr umgerechnet" value={fmtPct(result.annualizedReturn, { withSign: true })} sub="Eine Vergleichsrechnung, keine Vorhersage" tone={pnlTone(result.annualizedReturn)} />
             </div>
-          </div>
-
-          {/* ===== 4. Aktueller Wert ===== */}
-          <div className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">4. Aktueller Wert</h3>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              <Tile label="Aktueller Goldpreis" value={fmtUsd(currentGoldPricePerOz)} sub="USD pro Feinunze" />
-              <Tile label="Aktueller Marktwert" value={fmtUsd(result.currentValue)} />
-              <Tile label="Verkaufswert nach Spread" value={fmtUsd(result.estimatedSellValueAfterSpread)} sub={Number.isFinite(sellSpreadPct) && sellSpreadPct > 0 ? `nach ${sellSpreadPct.toFixed(2)} % Abschlag` : 'kein Spread eingegeben'} />
-              <Tile label="Gewinn / Verlust absolut" value={fmtUsd(result.absolutePnL, { withSign: true })} tone={pnlTone(result.absolutePnL)} />
-              <Tile label="Gewinn / Verlust in %" value={fmtPct(result.percentPnL, { withSign: true })} tone={pnlTone(result.percentPnL)} />
-              <Tile label="Nach Spread" value={fmtUsd(result.pnlAfterSpread, { withSign: true })} tone={pnlTone(result.pnlAfterSpread)} />
-            </div>
-            <p className={`mt-1 text-[12px] font-semibold ${result.percentPnL === null ? 'text-slate-300' : result.percentPnL > 0 ? 'text-emerald-300' : result.percentPnL < 0 ? 'text-rose-300' : 'text-slate-300'}`}>
-              {result.percentPnL === null ? 'Keine Performance berechenbar.'
-                : result.percentPnL > 0 ? `Du bist im Gewinn (${result.percentPnL.toFixed(2)} %).`
-                : result.percentPnL < 0 ? `Du bist im Verlust (${result.percentPnL.toFixed(2)} %).`
-                : 'Du bist genau auf Break-even.'}
-            </p>
-          </div>
-
-          {/* ===== 5. Haltedauer ===== */}
-          <div className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">5. Haltedauer</h3>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              <Tile label="Tage" value={`${result.holdingDays}`} />
-              <Tile
-                label="Monate / Jahre"
-                value={result.holdingDays === 0 ? '—' : holdingMonthsYearsLabel(result.holdingDays)}
-              />
-              <Tile label="Annualisierte Rendite" value={fmtPct(result.annualizedReturn, { withSign: true })} sub="Compound (1 + r)^(365/d) − 1" tone={pnlTone(result.annualizedReturn)} />
-            </div>
-          </div>
-
-          {/* ===== 6. Verkaufsurteil ===== */}
-          {verdictStyle && (
-            <section className={`space-y-3 rounded-2xl border-2 p-5 ${verdictStyle.box}`}>
-              <div className="flex items-baseline justify-between gap-2">
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.25em] opacity-80">6. Verkaufsurteil</div>
-                  <h3 className={`mt-1 text-2xl font-bold ${verdictStyle.head}`}>{verdictStyle.emoji} {result.verdict}</h3>
-                </div>
-                <span className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${verdictStyle.pill}`}>
-                  {result.verdict}
-                </span>
-              </div>
-              <p className={`text-[12px] leading-snug ${verdictStyle.head} opacity-90`}>{verdictStyle.intro}</p>
-              <ul className="space-y-1.5 text-[12px] text-slate-200">
-                {result.verdictReasons.slice(0, 3).map((r, i) => (
-                  <li key={i} className="flex items-start gap-2 leading-snug">
-                    <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-400" />
-                    <span>{r}</span>
-                  </li>
-                ))}
-              </ul>
-              {result.warnings.length > 0 && (
-                <div className="space-y-1">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Hinweise</div>
-                  <ul className="flex flex-wrap gap-1.5">
-                    {result.warnings.map((w, i) => (
-                      <li key={i} className="rounded border border-slate-700 bg-slate-950/60 px-2 py-0.5 text-[10px] text-slate-300">
-                        {w}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <p className="rounded-lg border border-slate-700/60 bg-slate-950/40 p-2.5 text-[11px] leading-relaxed text-slate-300">
-                Modell-Hinweise aus Markt-Struktur und Position. Märkte können jederzeit drehen — nie mehr riskieren als du verlieren kannst, immer einen Stop einplanen. Keine Anlageberatung.
-              </p>
-              <p className="text-[10.5px] leading-snug text-slate-400">
-                Steuerstatus bitte individuell prüfen. Die App ersetzt keine Steuerberatung.
-              </p>
-            </section>
-          )}
+          </details>
         </>
       )}
     </section>
@@ -394,8 +337,8 @@ export function GoldHoldingCalculator({ history, currentGoldPricePerOz, todayIso
 
 function Label({ text, children, className = '' }: { text: string; children: React.ReactNode; className?: string }) {
   return (
-    <label className={`text-[11px] text-slate-400 ${className}`}>
-      <span className="font-semibold uppercase tracking-wider">{text}</span>
+    <label className={`text-sm text-slate-400 ${className}`}>
+      <span className="font-medium">{text}</span>
       {children}
     </label>
   );
@@ -407,9 +350,9 @@ function Tile({ label, value, sub, tone }: { label: string; value: string; sub?:
     : 'border-slate-700 bg-slate-950/40 text-slate-100';
   return (
     <div className={`rounded-lg border p-2 ${cls}`}>
-      <div className="text-[9px] uppercase tracking-wider opacity-80">{label}</div>
+      <div className="text-xs leading-relaxed opacity-80">{label}</div>
       <div className="mt-0.5 font-mono text-sm font-bold">{value}</div>
-      {sub && <div className="mt-0.5 text-[9.5px] opacity-70">{sub}</div>}
+      {sub && <div className="mt-0.5 text-xs leading-relaxed opacity-70">{sub}</div>}
     </div>
   );
 }

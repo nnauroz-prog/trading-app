@@ -1,401 +1,128 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getFootballFixtures } from '@/lib/sport/fetcher';
-import { WORLD_CUP_LEAGUE_IDS } from '@/lib/sport/leagues';
-import type { UpcomingFixture, Fixture } from '@/lib/sport/fetcher';
-import { WM_2026_FIXTURES, type WmFixture } from '@/lib/sport/wm-schedule-2026';
-import { predictWmMatch } from '@/lib/sport/wm-match-engine';
-import { WmOutrightCard } from '@/components/wm-outright-card';
-import { SportDataSourceBanner } from '@/components/sport-data-source-banner';
-import { WmTournamentOverBanner } from '@/components/wm-tournament-over-banner';
-import { isWmOver } from '@/lib/sport/wm-tournament-phase';
-import { WmSafeMarketTips } from '@/components/wm-safe-market-tips';
-import { evaluateWmPersonas } from '@/lib/agents/wm-personas';
-import { WmPersonaPanel } from '@/components/wm-persona-panel';
-import { PersonaConsensusBanner } from '@/components/persona-consensus-banner';
-import { rankWmWinnerPicks } from '@/lib/sport/wm-winner-picks';
-import { fetchWmWeatherByFixture } from '@/lib/sport/wm-live-weather-fetch';
-import { reconcileWmSchedule, verifiedFixtureIds, mismatchedFixtureIds } from '@/lib/sport/wm-schedule-reconciler';
-import { buildWmDayPlan } from '@/lib/sport/wm-day-plan';
-import { evaluateIntegrityAction } from '@/lib/sport/wm-data-integrity-action';
-import { getCachedWmBacktest } from '@/lib/sport/wm-backtest-runner';
-import { WmDayPlanCard } from '@/components/sport/wm-day-plan-card';
-import { WmReconcilerCard } from '@/components/sport/wm-reconciler-card';
-import { WmDataIntegrityLive } from '@/components/sport/wm-data-integrity-live';
-import { WmSystemGuide } from '@/components/sport/wm-system-guide';
-import { WmBacktestReportCard } from '@/components/sport/wm-backtest-report-card';
-import { WmWinnerPicksWithLearning } from '@/components/sport/wm-winner-picks-with-learning';
-import { WmBankrollCard } from '@/components/sport/wm-bankroll-card';
-import { WmBankrollLedgerCard } from '@/components/sport/wm-bankroll-ledger-card';
-import { WmComboPicksCard } from '@/components/sport/wm-combo-picks-card';
-import { WmJetztCard } from '@/components/sport/wm-jetzt-card';
-import { WmWeekPlanCard } from '@/components/sport/wm-week-plan-card';
-import { buildWmWeekPlan } from '@/lib/sport/wm-week-plan';
-import { WmPickExplainCard } from '@/components/sport/wm-pick-explain-card';
-import { WmResultsBoardCard } from '@/components/sport/wm-results-board-card';
-import { WmTrefferquoteCard } from '@/components/sport/wm-trefferquote-card';
-import { WmTagesHeldCard } from '@/components/sport/wm-tagesheld-card';
-import { WmOddsCompareCard } from '@/components/sport/wm-odds-compare-card';
-import { WmPickNotesCard } from '@/components/sport/wm-pick-notes-card';
-import { WmBackupCard } from '@/components/sport/wm-backup-card';
-import { WmErsteSchritte } from '@/components/sport/wm-erste-schritte';
-import { WmOpeningBanner } from '@/components/sport/wm-opening-banner';
-import { WmSimplePicksCard } from '@/components/sport/wm-simple-picks-card';
-import { WmTurnierTippCard } from '@/components/sport/wm-turnier-tipp-card';
 import { getCachedWmLiveData } from '@/lib/sport/wm-live-schedule';
-import { mergeWmFixtures } from '@/lib/sport/wm-schedule-merge';
-import { WmSection } from '@/components/sport/wm-section';
-import { WmHeuteZusammenfassung } from '@/components/sport/wm-heute-zusammenfassung';
-import { WmAnstossWarnungCard } from '@/components/sport/wm-anstoss-warnung-card';
-import { WmErgebnisNachtragCard } from '@/components/sport/wm-ergebnis-nachtrag-card';
-import { WmHeuteBilanzStrip } from '@/components/sport/wm-heute-bilanz-strip';
-import { WmTabTitleUpdater } from '@/components/sport/wm-tab-title-updater';
-import { WmMorgenVorschauStrip } from '@/components/sport/wm-morgen-vorschau-strip';
-import { WmRoiVerlaufStrip } from '@/components/sport/wm-roi-verlauf-strip';
-import { WmGlossarCard } from '@/components/sport/wm-glossar-card';
-import { PlainHint } from '@/components/sport/plain-hint';
-import { WmLearningStatusCard } from '@/components/sport/wm-learning-status-card';
-import { WmCalibrationCard } from '@/components/sport/wm-calibration-card';
-import { WmEloDriftCard } from '@/components/sport/wm-elo-drift-card';
-import { WmPickResolver } from '@/components/sport/wm-pick-resolver';
-import { WmResultInputCard } from '@/components/sport/wm-result-input-card';
-import { SportCollapsibleLegacySection } from '@/components/sport/sport-collapsible-legacy-section';
-import { buildWorldCupDashboard } from '@/lib/sports/world-cup-prediction-engine';
-import { WmDashboardHero } from '@/components/sport/wm-dashboard-hero';
-import { WmDashboardTop8 } from '@/components/sport/wm-dashboard-top8';
-import { WmDashboardMatches } from '@/components/sport/wm-dashboard-matches';
-import { WmDashboardBracket } from '@/components/sport/wm-dashboard-bracket';
-import { WmDashboardStickySummary } from '@/components/sport/wm-dashboard-sticky-summary';
+import type { WmFixture } from '@/lib/sport/wm-schedule-2026';
 
-// Nur 'revalidate' setzen — 'force-dynamic' wuerde die ISR-Cache deaktivieren
-// und 'revalidate' damit wirkungslos machen (Next.js-Widerspruch). Die Seite
-// hat keine User-spezifischen Server-Reads, ISR mit 10-Minuten-Refresh passt.
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: 'WM 2026 — Gewinner-Vorhersage pro Spiel',
-  description: 'WM 2026 chronologisch: pro Spiel der Modell-Gewinner, Endstand sobald nachgepflegt, Weltmeister-Tipp und kompletter Turnierbaum. Modell-Tendenz, keine Garantie.'
+  title: 'WM 2026 – Spiele und Ergebnisse',
+  description: 'Der Rückblick auf die Fußball-WM 2026 mit verfügbaren Spielständen und Spielterminen.'
 };
 
-function fmtDate(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' });
-}
-
-function fmtTime(time: string | null, date: string): string {
-  if (!time) return '';
-  const iso = `${date}T${time}:00Z`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return time;
-  return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
-}
-
-const PHASE_TONE: Record<WmFixture['phase'], string> = {
-  Gruppe: 'border-slate-700 bg-slate-900/40 text-slate-300',
-  Achtelfinale: 'border-sky-400/40 bg-sky-500/10 text-sky-200',
-  Viertelfinale: 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200',
-  Halbfinale: 'border-amber-400/50 bg-amber-500/15 text-amber-200',
-  'Spiel um Platz 3': 'border-rose-400/40 bg-rose-500/10 text-rose-200',
-  Finale: 'border-yellow-300/70 bg-yellow-500/20 text-yellow-100'
-};
-
-interface WinnerVerdict {
-  text: string;
-  confidence: number;
-  tone: string;
-  knownPair: boolean;
-}
-
-function isKnownTeam(name: string): boolean {
-  // Alles was nicht mit "Sieger", "Verlierer", "Zweiter", "TBD" beginnt = echtes Team
-  return !/^(Sieger|Verlierer|Zweiter|TBD)/i.test(name);
-}
-
-function winnerVerdict(home: string, away: string, venue: string, phase: WmFixture['phase'], _finishedPool: Fixture[]): WinnerVerdict {
-  void _finishedPool;
-  if (!isKnownTeam(home) || !isKnownTeam(away)) {
-    return { text: 'Paarung noch offen', confidence: 0, tone: 'border-slate-700 bg-slate-900/40 text-slate-400', knownPair: false };
-  }
-  // Profi-WM-Engine: ELO + Form-Index + xG + Spielort. Funktioniert
-  // ohne TheSportsDB-Form-Pool, weil ELO-Datenbasis intern gepflegt ist.
-  const p = predictWmMatch({ homeTeam: home, awayTeam: away, venue, phase });
-  const pct = p.pick.confidencePct;
-  if (p.pick.winner === 'undecided' || p.pick.clarity === 'open') {
-    return {
-      text: `Offen — Heim ${p.regular.homePct} %, Remis ${p.regular.drawPct} %, Auswärts ${p.regular.awayPct} %`,
-      confidence: pct, tone: 'border-amber-400/40 bg-amber-500/10 text-amber-200', knownPair: true
-    };
-  }
-  if (p.pick.winner === 'home') {
-    return {
-      text: `${home} gewinnt`, confidence: pct,
-      tone: pct >= 65 ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-100' : 'border-sky-400/50 bg-sky-500/15 text-sky-200',
-      knownPair: true
-    };
-  }
-  if (p.pick.winner === 'away') {
-    return {
-      text: `${away} gewinnt`, confidence: pct,
-      tone: pct >= 65 ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-100' : 'border-sky-400/50 bg-sky-500/15 text-sky-200',
-      knownPair: true
-    };
-  }
-  return { text: 'Remis wahrscheinlich', confidence: pct, tone: 'border-amber-400/50 bg-amber-500/15 text-amber-200', knownPair: true };
+interface ResultRow {
+  fixture: WmFixture;
+  homeScore: number;
+  awayScore: number;
 }
 
 export default async function WorldCupPage() {
-  const leagues = await getFootballFixtures();
-  const wmCandidates = leagues.filter((l) => WORLD_CUP_LEAGUE_IDS.includes(l.league.id));
-  const liveNext: UpcomingFixture[] = [];
-  const liveLast: Fixture[] = [];
-  for (const lf of wmCandidates) {
-    for (const f of lf.next) liveNext.push(f);
-    for (const f of lf.last) liveLast.push(f);
+  const liveData = await getCachedWmLiveData();
+  const finishedById = new Map(liveData.finished.map((result) => [result.fixtureId, result]));
+  const schedule = liveData.schedule
+    .filter((fixture) => fixture.date >= '2026-06-11' && fixture.date <= '2026-07-19')
+    .sort((a, b) => `${b.date}T${b.time ?? '00:00'}`.localeCompare(`${a.date}T${a.time ?? '00:00'}`));
+  const results: ResultRow[] = [];
+  const withoutResult: WmFixture[] = [];
+
+  for (const fixture of schedule) {
+    const result = finishedById.get(fixture.id);
+    if (result && Number.isInteger(result.homeScore) && result.homeScore >= 0 && Number.isInteger(result.awayScore) && result.awayScore >= 0) {
+      results.push({ fixture, homeScore: result.homeScore, awayScore: result.awayScore });
+    } else {
+      withoutResult.push(fixture);
+    }
   }
-  const hasLiveData = liveNext.length > 0 || liveLast.length > 0;
-
-  // Pool aller Liga-Vergangenheits-Spiele für die Nationalmannschafts-Form.
-  // Da TheSportsDB Nationalmannschaften eher dünn pflegt, ist die Trefferquote
-  // hier niedriger als bei Vereins-Ligen — ehrlich gesagt.
-  const fullPool = leagues.flatMap((lf) => lf.last);
-
-  const byPhase = new Map<WmFixture['phase'], WmFixture[]>();
-  for (const f of WM_2026_FIXTURES) {
-    if (!byPhase.has(f.phase)) byPhase.set(f.phase, []);
-    byPhase.get(f.phase)!.push(f);
-  }
-  const phaseOrder: WmFixture['phase'][] = ['Gruppe', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Spiel um Platz 3', 'Finale'];
-
-  // Neues Dashboard ganz oben — Hero, Top 8, naechste Spiele, Bracket.
-  const nowIso = new Date().toISOString();
-  const todayIso = nowIso.slice(0, 10);
-  const dashboard = buildWorldCupDashboard({ nowIso, upcomingLimit: WM_2026_FIXTURES.length });
-  // Zeitstatus: nach dem Finale darf die Sieger-Vorhersage nicht mehr wie
-  // eine aktuelle Prognose wirken.
-  const wmOver = isWmOver(todayIso);
 
   return (
-    <main className="mx-auto max-w-4xl space-y-5 p-4 md:p-6">
-      <Link href="/sport" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
-        ← zurück zum Sport-Reiter
-      </Link>
-
-      <header className="space-y-1">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">FIFA World Cup 2026</div>
-          <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-amber-200">
-            Keine Wettempfehlung
-          </span>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">
-          {wmOver ? 'WM 2026 — Rückblick' : 'WM-Gewinner-Vorhersage'}
-        </h1>
-        <p className="max-w-2xl text-sm text-slate-400">
-          11. Juni – 19. Juli 2026 in USA, Kanada, Mexiko. Modell-Tendenz, keine Garantie.
-        </p>
+    <main className="mx-auto max-w-3xl space-y-6 p-4 pb-20 md:p-6">
+      <Link href="/sport" className="text-sm text-slate-400 hover:text-cyan-200">← Zurück zum Sport</Link>
+      <header className="space-y-3">
+        <p className="section-kicker">Fußball-WM 2026</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-white">Spiele und Ergebnisse.</h1>
+        <p className="text-sm leading-relaxed text-slate-400">Das Turnier vom 11. Juni bis 19. Juli 2026 ist beendet. Hier findest du die Ergebnisse, die unsere Datenquelle liefert.</p>
       </header>
 
-      {wmOver && <WmTournamentOverBanner todayIso={todayIso} />}
-
-      <SportDataSourceBanner />
-
-      {dashboard.globalWarnings.length > 0 && (
-        <div role="alert" className="rounded-xl border border-amber-400/40 bg-amber-500/5 p-3 text-[11.5px] text-amber-100/90">
-          {dashboard.globalWarnings.join(' · ')}
-        </div>
-      )}
-
-      {/* Nach dem Finale: kein "aktueller" Top-Favorit und keine
-          "naechsten Spiele" mehr — das waere sachlich falsch. Das
-          Ranking bleibt als Archiv-Stand (per Banner klar markiert). */}
-      {!wmOver && <WmDashboardHero topFavorite={dashboard.topFavorite} lastUpdated={dashboard.lastUpdated} />}
-      <WmDashboardTop8 ranking={dashboard.ranking} />
-      {!wmOver && <WmDashboardMatches matches={dashboard.upcomingMatches} />}
-      {!wmOver && <WmDashboardBracket todayIso={todayIso} />}
-
-      <details className="rounded-2xl border border-slate-700/60 bg-slate-950/30">
-        <summary className="cursor-pointer list-none px-4 py-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-300 hover:text-emerald-300">
-          ▸ Erweiterte Sicht (Tag-für-Tag-Liste, Bankroll, Backtest, Werkzeuge)
-        </summary>
-        <div className="space-y-5 border-t border-slate-700/60 p-3 sm:p-4">
-
-      {/* Precision-Stack komplett zugeklappt — siehe "Mehr Details"
-          unter der Turnier-Tipp-Karte. */}
-      {await (async () => {
-        const todayIso = new Date().toISOString().slice(0, 10);
-        const horizonDays = 40;
-        const weatherByFixtureId = await fetchWmWeatherByFixture({ todayIso, horizonDays });
-        const wmLiveData = await getCachedWmLiveData();
-        const mergedWmSchedule = mergeWmFixtures(WM_2026_FIXTURES, wmLiveData.schedule);
-        const wmExternalFixtures = [...liveNext, ...liveLast].map((f) => ({
-          date: f.date, time: f.time ?? null, homeTeam: f.homeTeam, awayTeam: f.awayTeam
-        }));
-        const horizonEndIso = (() => {
-          const d = new Date(`${todayIso}T00:00:00`);
-          d.setUTCDate(d.getUTCDate() + 40);
-          return d.toISOString().slice(0, 10);
-        })();
-        const reconcile = reconcileWmSchedule({ external: wmExternalFixtures, fromIso: todayIso, toIso: horizonEndIso });
-        const verifiedIds = verifiedFixtureIds(reconcile);
-        const mismatchedIds = mismatchedFixtureIds(reconcile);
-        const winnerPicks = rankWmWinnerPicks({
-          todayIso, horizonDays, weatherByFixtureId,
-          verifiedFixtureIds: verifiedIds, mismatchedFixtureIds: mismatchedIds
-        });
-        const backtestReport = await getCachedWmBacktest();
-        const dayPlan = buildWmDayPlan({
-          todayIso, picks: winnerPicks, weatherByFixtureId,
-          verifiedFixtureIds: verifiedIds, mismatchedFixtureIds: mismatchedIds
-        });
-        return (
-          <>
-            <WmTabTitleUpdater picks={winnerPicks} />
-            <WmTurnierTippCard schedule={mergedWmSchedule} externalLast={wmLiveData.externalLast} />
-            <details className="rounded-2xl border border-slate-700 bg-slate-950/30">
-              <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 hover:text-slate-200">
-                ▸ Mehr Details (Tagesplan, Picks-Filter, Bankroll, Quoten, Bilanz, Werkzeuge)
-              </summary>
-              <div className="space-y-2 border-t border-slate-800 p-3">
-                <WmSystemGuide />
-                <WmDataIntegrityLive initial={evaluateIntegrityAction()} />
-                <WmBacktestReportCard report={backtestReport} />
-                <WmSimplePicksCard />
-            <WmOpeningBanner todayIso={todayIso} />
-            <WmJetztCard todayIso={todayIso} plan={dayPlan} />
-            <WmSection title="Heute" hint="Was los ist + Tipps" defaultOpen>
-              <WmAnstossWarnungCard picks={winnerPicks} />
-              <WmErgebnisNachtragCard picks={winnerPicks} />
-              <WmHeuteZusammenfassung picks={winnerPicks} todayIso={todayIso} />
-              <WmHeuteBilanzStrip todayIso={todayIso} />
-              <PlainHint id="day-plan" />
-              <WmDayPlanCard plan={dayPlan} />
-              <PlainHint id="winner-picks" />
-              <WmWinnerPicksWithLearning serverPicks={winnerPicks} todayIso={todayIso} horizonDays={horizonDays} />
-              <WmPickExplainCard picks={winnerPicks} />
-              <PlainHint id="bankroll" />
-              <WmBankrollCard picks={winnerPicks} />
-              <WmOddsCompareCard picks={winnerPicks} />
-              <WmMorgenVorschauStrip picks={winnerPicks} todayIso={todayIso} />
-            </WmSection>
-            <WmSection title="Bilanz & Verlauf" hint="wie laeuft es bisher">
-              <WmRoiVerlaufStrip todayIso={todayIso} />
-              <WmTrefferquoteCard todayIso={todayIso} />
-              <WmTagesHeldCard todayIso={todayIso} />
-              <WmResultsBoardCard todayIso={todayIso} lookbackDays={7} />
-              <WmWeekPlanCard plan={buildWmWeekPlan({ todayIso, horizonDays: 7, picks: winnerPicks })} />
-              <PlainHint id="ledger" />
-              <WmBankrollLedgerCard />
-            </WmSection>
-            <WmSection title="Werkzeuge & Daten" hint="Notizen, Ergebnisse pflegen, Glossar">
-              <WmErsteSchritte />
-              <WmPickNotesCard picks={winnerPicks} />
-              <PlainHint id="reconciler" />
-              <WmReconcilerCard result={reconcile} />
-              <PlainHint id="combo" />
-              <WmComboPicksCard picks={winnerPicks} />
-              <WmPickResolver externalFinished={liveLast
-                .filter((f) => f.homeScore !== null && f.awayScore !== null)
-                .map((f) => ({ homeTeam: f.homeTeam, awayTeam: f.awayTeam, homeScore: f.homeScore as number, awayScore: f.awayScore as number, date: f.date }))}
-              />
-              <PlainHint id="result-input" />
-              <WmResultInputCard />
-              <PlainHint id="learning" />
-              <WmLearningStatusCard />
-              <PlainHint id="calibration" />
-              <WmCalibrationCard />
-              <PlainHint id="elo-drift" />
-              <WmEloDriftCard />
-              <WmBackupCard />
-              <WmGlossarCard />
-            </WmSection>
+      {results.length > 0 ? (
+        <>
+          <section className="terminal-panel space-y-4 p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-white">Zuletzt gemeldete Ergebnisse</h2>
+            <ResultsList rows={results.slice(0, 6)} />
+          </section>
+          {results.length > 6 && (
+            <details className="terminal-panel p-5 sm:p-6">
+              <summary className="cursor-pointer text-sm font-semibold text-slate-200">Weitere Ergebnisse ansehen ({results.length - 6})</summary>
+              <div className="mt-5 space-y-6">
+                {groupByDate(results.slice(6)).map(([date, rows]) => (
+                  <section key={date} className="space-y-3">
+                    <h2 className="text-sm font-medium text-slate-300">{date}</h2>
+                    <ResultsList rows={rows} />
+                  </section>
+                ))}
               </div>
             </details>
-          </>
-        );
-      })()}
-
-      <SportCollapsibleLegacySection
-        title="WM-Rohranking und Modellübersicht"
-        subtitle="Multi-Markt-Picks, Personas, Turniersieger"
-        hint="Rohdaten-Ansicht — der Precision-Stack oben filtert strenger. Diese Karten zeigen ungefilterte Modell-Tendenzen und sind keine Freigabe."
-      >
-        <WmSafeMarketTips todayIso={new Date().toISOString().slice(0, 10)} />
-        {(() => {
-          const wmVerdicts = evaluateWmPersonas(new Date().toISOString().slice(0, 10));
-          return (
-            <>
-              <PersonaConsensusBanner verdicts={wmVerdicts} context="WM" />
-              <WmPersonaPanel verdicts={wmVerdicts} />
-            </>
-          );
-        })()}
-        <WmOutrightCard todayIso={new Date().toISOString().slice(0, 10)} />
-      </SportCollapsibleLegacySection>
-
-      <section className="rounded-2xl border border-emerald-400/30 bg-emerald-950/15 p-3 text-[11.5px] leading-snug text-emerald-100/90">
-        <span className="font-semibold">Datenquelle: </span>
-        Festgelegter FIFA-Spielplan mit allen 16 Standorten und Anstoßzeiten. Für Begegnungen mit feststehenden Mannschaften wird ein Poisson-Modell auf Nationalmannschafts-Form aus dem TheSportsDB-Pool gerechnet. {hasLiveData ? `Plus ${liveNext.length} Live-Spiele aus dem TheSportsDB-Feed.` : 'TheSportsDB-Live-Feed für die WM ist aktuell noch nicht aktiv — wir nutzen den festen Spielplan.'}
-      </section>
-
-      {phaseOrder.map((phase) => {
-        const fixtures = byPhase.get(phase) ?? [];
-        if (fixtures.length === 0) return null;
-        return (
-          <section key={phase} className={`space-y-2 rounded-2xl border-2 p-4 ${PHASE_TONE[phase]}`}>
-            <h2 className="text-xs font-semibold uppercase tracking-wider">{phase} · {fixtures.length} Spiel{fixtures.length === 1 ? '' : 'e'}</h2>
-            <ul className="space-y-1.5">
-              {fixtures.map((f) => {
-                const v = winnerVerdict(f.homeTeam, f.awayTeam, f.venue, f.phase, fullPool);
-                return (
-                  <li key={f.id}>
-                    <Link href={`/wm/${encodeURIComponent(f.id)}`} className="grid grid-cols-[auto_1fr_auto] gap-2 rounded-lg border border-slate-800 bg-slate-950/60 px-2.5 py-2 text-[11.5px] transition hover:brightness-110">
-                    <span className="font-mono text-[10px] text-slate-400">
-                      {fmtDate(f.date)}
-                      <br />
-                      {fmtTime(f.time, f.date) || '—'}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-[13px] font-semibold text-slate-100">
-                        {f.homeTeam} <span className="text-slate-500">vs.</span> {f.awayTeam}
-                      </div>
-                      <div className="mt-0.5 truncate text-[10px] text-slate-500">📍 {f.venue}{f.group ? ` · Gruppe ${f.group}` : ''}</div>
-                    </div>
-                    <span className={`rounded-md border-2 px-2 py-1 text-center font-mono text-[10.5px] font-bold ${v.tone}`}>
-                      <div className="text-[9px] uppercase tracking-wider">{v.knownPair ? 'Gewinner' : 'Status'}</div>
-                      <div className="mt-0.5">{v.text}</div>
-                      {v.confidence > 0 && <div className="text-[9px] opacity-80">{v.confidence} %</div>}
-                    </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        );
-      })}
-
-      {hasLiveData && (
-        <section className="rounded-2xl border border-sky-400/40 bg-sky-950/15 p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-sky-300">Zusätzlich aus dem Live-Feed ({liveNext.length})</h2>
-          <ul className="mt-2 space-y-1">
-            {liveNext.map((f) => (
-              <li key={f.id} className="grid grid-cols-[auto_1fr] gap-2 rounded border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
-                <span className="font-mono text-[10px] text-slate-500">{fmtDate(f.date)}</span>
-                <span className="text-slate-200">{f.homeTeam} vs. {f.awayTeam}{f.prediction ? ` · Tipp: ${f.prediction.likelyScore.home}:${f.prediction.likelyScore.away} (${Math.round(f.prediction.pickConfidence * 100)} %)` : ''}</span>
-              </li>
-            ))}
-          </ul>
+          )}
+        </>
+      ) : (
+        <section className="terminal-panel space-y-3 p-5 sm:p-6">
+          <h2 className="text-lg font-semibold text-white">Ergebnisse sind gerade nicht verfügbar.</h2>
+          <p className="text-sm leading-relaxed text-slate-400">Unsere Datenquelle liefert derzeit keine zugehörigen Endstände für die WM 2026.</p>
+          <Link href="/sport" className="terminal-button terminal-button-primary">Aktuelle Sportergebnisse ansehen →</Link>
         </section>
       )}
 
-      <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
-        Spielplan-Daten manuell aus offiziellen FIFA-Quellen gepflegt (Stand: vor Turnier-Beginn). Sobald TheSportsDB die WM live führt, fließen deren Daten ergänzend mit ein. Modell: Poisson auf Nationalmannschafts-Form — Trefferquote dünner als bei Vereins-Ligen, weil Länderspiele seltener sind.
-      </footer>
-        </div>
-      </details>
+      {withoutResult.length > 0 && (
+        <details className="terminal-panel p-5 sm:p-6">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-200">Gemeldete Spiele ohne Ergebnis ({withoutResult.length})</summary>
+          <p className="mt-3 text-sm leading-relaxed text-slate-400">Diese Spiele stehen im gelieferten Spielplan. Ein Endstand liegt uns dazu nicht vor.</p>
+          <ul className="mt-4 divide-y divide-slate-800">
+            {withoutResult.map((fixture) => (
+              <li key={fixture.id} className="space-y-1 py-3">
+                <p className="text-xs text-slate-500">{dateLabel(fixture)}</p>
+                <p className="text-sm text-slate-200">{fixture.homeTeam} – {fixture.awayTeam}</p>
+                <p className="text-xs text-slate-500">Ergebnis fehlt</p>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
 
-      <WmDashboardStickySummary topFavorite={dashboard.topFavorite} lastUpdated={dashboard.lastUpdated} />
+      <p className="text-xs leading-relaxed text-slate-500">Quelle: TheSportsDB. Termine werden in deutscher Ortszeit angezeigt. Fehlende Ergebnisse bleiben offen.</p>
     </main>
+  );
+}
+
+function dateLabel(fixture: WmFixture): string {
+  const date = new Date(`${fixture.date}T${fixture.time ?? '12:00'}:00Z`);
+  if (!Number.isFinite(date.getTime())) return fixture.date;
+  return new Intl.DateTimeFormat('de-DE', {
+    timeZone: 'Europe/Berlin', weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric'
+  }).format(date);
+}
+
+function groupByDate(rows: ResultRow[]): Array<[string, ResultRow[]]> {
+  const groups = new Map<string, ResultRow[]>();
+  for (const row of rows) {
+    const date = dateLabel(row.fixture);
+    groups.set(date, [...(groups.get(date) ?? []), row]);
+  }
+  return [...groups];
+}
+
+function ResultsList({ rows }: { rows: ResultRow[] }) {
+  return (
+    <ul className="divide-y divide-slate-800">
+      {rows.map(({ fixture, homeScore, awayScore }) => (
+        <li key={fixture.id} className="space-y-2 py-4 first:pt-0 last:pb-0">
+          <p className="text-xs text-slate-500">{dateLabel(fixture)} · Endstand</p>
+          <div className="grid grid-cols-[1fr_auto] gap-x-5 gap-y-1 text-sm">
+            <span className="text-slate-200">{fixture.homeTeam}</span>
+            <span className="text-lg font-semibold tabular-nums text-white">{homeScore}</span>
+            <span className="text-slate-200">{fixture.awayTeam}</span>
+            <span className="text-lg font-semibold tabular-nums text-white">{awayScore}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

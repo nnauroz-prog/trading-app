@@ -6,20 +6,25 @@ import { backupSummary, exportData, exportToString, importData } from '@/lib/dat
 export function DataBackupPanel() {
   const [exported, setExported] = useState<string | null>(null);
   const [importText, setImportText] = useState('');
+  const [fileName, setFileName] = useState('');
   const [mode, setMode] = useState<'replace' | 'merge'>('merge');
   const [status, setStatus] = useState<string | null>(null);
   const [summary, setSummary] = useState<Record<string, number> | null>(null);
 
   const handleExport = () => {
-    const env = exportData();
+    const data = exportData();
     setExported(exportToString());
-    setSummary(backupSummary(env));
+    setSummary(backupSummary(data));
     setStatus(null);
   };
 
   const handleCopy = () => {
     if (exported && typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(exported).then(() => setStatus('In Zwischenablage kopiert.')).catch(() => setStatus('Kopieren fehlgeschlagen — Text manuell markieren.'));
+      navigator.clipboard.writeText(exported)
+        .then(() => setStatus('Der Sicherungstext wurde kopiert.'))
+        .catch(() => setStatus('Kopieren hat nicht geklappt. Du kannst den Text selbst markieren und kopieren.'));
+    } else {
+      setStatus('Automatisches Kopieren ist hier nicht verfügbar. Du kannst den Text selbst markieren und kopieren.');
     }
   };
 
@@ -38,81 +43,69 @@ export function DataBackupPanel() {
 
   const handleImport = () => {
     if (!importText.trim()) return;
-    if (mode === 'replace' && !window.confirm('Im Modus „Ersetzen" werden deine aktuellen Daten überschrieben. Wirklich fortfahren?')) return;
+    if (mode === 'replace' && !window.confirm('Die in der Sicherung enthaltenen Bereiche ersetzen deine bisherigen Angaben. Andere Bereiche bleiben erhalten. Möchtest du fortfahren?')) return;
     const result = importData(importText, mode);
     if (result.ok) {
-      setStatus(`✓ Wiederhergestellt: ${result.restoredKeys.map((k) => k.replace('trading-app.', '')).join(', ')}`);
+      setStatus(result.restoredKeys.length > 0 ? 'Deine gesicherten Daten wurden übernommen.' : 'Diese Sicherung enthält keine Daten, die übernommen werden können.');
       setImportText('');
+      setFileName('');
     } else {
-      setStatus(`✗ Fehler: ${result.error}`);
+      setStatus(result.error === 'invalid_json'
+        ? 'Diese Sicherung konnte nicht gelesen werden. Wähle die ursprüngliche Sicherungsdatei aus.'
+        : 'Diese Datei ist keine passende Sicherung dieser App. Deine bisherigen Daten wurden nicht geändert.');
     }
   };
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    file.text().then((t) => setImportText(t));
+    file.text().then(text => { setImportText(text); setFileName(file.name); setStatus(null); })
+      .catch(() => setStatus('Die Datei konnte nicht geöffnet werden. Bitte wähle sie noch einmal aus.'));
   };
 
   return (
-    <section className="space-y-4 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
+    <section className="space-y-5 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Daten-Backup &amp; Übertragung</h2>
-        <p className="mt-1 text-[11px] text-slate-500">
-          Alle deine Daten (Positionen, Journal, Watchlist, Alerts, DCA, Config) als Datei sichern oder auf ein anderes Gerät übertragen. Funktioniert offline, ohne Account. Daten liegen sonst nur in diesem Browser.
-        </p>
+        <h2 className="text-lg font-semibold text-slate-200">Deine Daten sichern</h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-400">Dein Geldplan, deine Käufe und Listen werden auf diesem Gerät gespeichert. Mit einer Sicherungsdatei kannst du sie aufbewahren oder auf ein anderes Gerät mitnehmen.</p>
       </div>
 
       <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-        <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Export (Backup erstellen)</h3>
-        <button onClick={handleExport} className="rounded-md border border-emerald-400/50 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/30">
-          Daten exportieren
-        </button>
+        <h3 className="text-sm font-semibold text-slate-200">Eine Sicherung erstellen</h3>
+        <button type="button" onClick={handleExport} className="terminal-button mt-3">Meine Daten sichern</button>
         {exported && (
-          <div className="mt-3 space-y-2">
-            {summary && (
-              <div className="flex flex-wrap gap-1.5 text-[10px]">
-                {Object.entries(summary).map(([k, n]) => (
-                  <span key={k} className="rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 font-mono text-slate-300">{k}: {n}</span>
-                ))}
-              </div>
-            )}
-            <textarea readOnly value={exported} className="h-28 w-full rounded border border-slate-700 bg-slate-950 p-2 font-mono text-[10px] text-slate-300" />
-            <div className="flex gap-2">
-              <button onClick={handleCopy} className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1 text-[11px] text-slate-300 hover:border-emerald-500/40 hover:text-emerald-200">Kopieren</button>
-              <button onClick={handleDownload} className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1 text-[11px] text-slate-300 hover:border-emerald-500/40 hover:text-emerald-200">Als Datei laden</button>
-            </div>
+          <div className="mt-4 space-y-3">
+            <p className="text-sm text-slate-300">Deine Sicherung ist bereit. {summary && Object.keys(summary).length === 0 ? 'Es sind noch keine gespeicherten Angaben vorhanden.' : 'Lade die Datei herunter und bewahre sie auf.'}</p>
+            <button type="button" onClick={handleDownload} className="terminal-button terminal-button-primary">Sicherungsdatei herunterladen</button>
+            <details className="text-xs text-slate-500">
+              <summary className="cursor-pointer py-2 hover:text-slate-300">Sicherung als Text kopieren</summary>
+              <p className="mb-2 leading-relaxed">Du kannst auch den vollständigen Sicherungstext auf ein anderes Gerät mitnehmen.</p>
+              <textarea aria-label="Dein Sicherungstext" readOnly value={exported} className="h-28 w-full rounded border border-slate-700 bg-slate-950 p-2 font-mono text-xs text-slate-300" />
+              <button type="button" onClick={handleCopy} className="terminal-button mt-2">Text kopieren</button>
+            </details>
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-        <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-300">Import (Backup einspielen)</h3>
-        <div className="mb-2 flex items-center gap-3 text-[11px]">
-          <label className="flex items-center gap-1 text-slate-400">
-            <input type="radio" checked={mode === 'merge'} onChange={() => setMode('merge')} /> Zusammenführen (empfohlen)
-          </label>
-          <label className="flex items-center gap-1 text-slate-400">
-            <input type="radio" checked={mode === 'replace'} onChange={() => setMode('replace')} /> Ersetzen
-          </label>
-        </div>
-        <textarea value={importText} onChange={(e) => setImportText(e.target.value)} placeholder="Backup-JSON hier einfügen…" className="h-24 w-full rounded border border-slate-700 bg-slate-950 p-2 font-mono text-[10px] text-slate-300" />
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button onClick={handleImport} disabled={!importText.trim()} className="rounded-md border border-amber-400/50 bg-amber-500/20 px-3 py-1.5 text-xs font-semibold text-amber-100 hover:bg-amber-500/30 disabled:opacity-40">
-            Importieren
-          </button>
-          <label className="cursor-pointer rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-300 hover:border-slate-600">
-            Datei wählen
-            <input type="file" accept="application/json,.json" onChange={onFile} className="hidden" />
-          </label>
-        </div>
+      <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+        <h3 className="text-sm font-semibold text-slate-200">Eine Sicherung wiederherstellen</h3>
+        <p className="text-sm leading-relaxed text-slate-400">Wähle eine zuvor heruntergeladene Sicherungsdatei aus. Danach kannst du die enthaltenen Daten übernehmen.</p>
+        <label className="terminal-button cursor-pointer">Sicherungsdatei auswählen<input type="file" accept="application/json,.json" onChange={onFile} className="hidden" /></label>
+        {fileName && <p className="break-all text-xs text-slate-400">Ausgewählt: {fileName}</p>}
+        <details className="text-sm text-slate-400">
+          <summary className="cursor-pointer py-2 hover:text-slate-200">Wie mit vorhandenen Daten umgehen?</summary>
+          <div className="mt-2 space-y-3">
+            <label className="flex items-start gap-2"><input type="radio" name="restore-mode" checked={mode === 'merge'} onChange={() => setMode('merge')} /><span>Daten ergänzen<span className="mt-1 block text-xs text-slate-500">Listen werden ergänzt; bei doppelten Einträgen bleiben deine bisherigen Angaben. Einzeln gespeicherte Einstellungen werden aus der Sicherung übernommen.</span></span></label>
+            <label className="flex items-start gap-2"><input type="radio" name="restore-mode" checked={mode === 'replace'} onChange={() => setMode('replace')} /><span>Angaben aus der Sicherung übernehmen<span className="mt-1 block text-xs text-slate-500">Die enthaltenen Bereiche ersetzen die entsprechenden bisherigen Angaben. Andere Bereiche bleiben unverändert.</span></span></label>
+          </div>
+        </details>
+        <details className="text-xs text-slate-500">
+          <summary className="cursor-pointer py-2 hover:text-slate-300">Sicherungstext einfügen</summary>
+          <textarea aria-label="Sicherungstext zum Wiederherstellen" value={importText} onChange={e => { setImportText(e.target.value); setFileName(''); }} placeholder="Den vollständigen Sicherungstext hier einfügen" className="mt-2 h-24 w-full rounded border border-slate-700 bg-slate-950 p-2 font-mono text-xs text-slate-300" />
+        </details>
+        <button type="button" onClick={handleImport} disabled={!importText.trim()} className="terminal-button terminal-button-primary disabled:opacity-40">Daten wiederherstellen</button>
       </div>
-
-      {status && <p className="rounded-lg border border-slate-800 bg-slate-950/40 p-2.5 text-[11px] text-slate-300">{status}</p>}
-
-      <p className="rounded-lg border border-slate-800 bg-slate-950/40 p-2.5 text-[10px] leading-relaxed text-slate-500">
-        {`So überträgst du auf ein neues Gerät: Hier exportieren → Datei/Text auf das andere Gerät bringen → dort unter /settings importieren. „Zusammenführen" behält bestehende Einträge und fügt neue hinzu (per ID), „Ersetzen" überschreibt alles. Echte automatische Cloud-Sync (Supabase) folgt — dafür brauchst du ein Supabase-Projekt.`}
-      </p>
+      {status && <p role="status" className="rounded-lg border border-slate-800 bg-slate-950/40 p-3 text-sm text-slate-300">{status}</p>}
     </section>
   );
 }

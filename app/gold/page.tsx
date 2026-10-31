@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 
 export const metadata: Metadata = {
-  title: 'Gold · Trend, Halten-Rechner, Portfolio',
-  description: 'Gold-Tageswerte: Trend-Indikatoren, Halten-Rechner fuer Bestaende, Portfolio-Auswertung. Modell-Hinweise, kein Anlageratschlag.'
+  title: 'Gold',
+  description: 'Was ist dein Gold wert? Den letzten verfügbaren Goldkurs ansehen und mit deinem Kaufpreis vergleichen.'
 };
 import { ema, rsi as rsiSeries, atr as atrSeries, sma } from '@/lib/analysis/indicators';
 import { fetchYahooQuote } from '@/lib/market/yahoo-quote';
@@ -25,47 +25,6 @@ function isoFromMs(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
-interface Verdict {
-  tone: 'sell' | 'hold' | 'neutral';
-  headline: string;
-  reasons: string[];
-}
-
-function computeVerdict(price: number, ema50: number | null, ema200: number | null, high52w: number, low52w: number): Verdict {
-  const reasons: string[] = [];
-  let bullish = 0;
-  let bearish = 0;
-
-  if (ema50 !== null) {
-    if (price > ema50) { bullish++; reasons.push(`Über der 50-Tage-Linie (${ema50.toFixed(0)} $) — kurzfristiger Trend hoch`); }
-    else { bearish++; reasons.push(`Unter der 50-Tage-Linie (${ema50.toFixed(0)} $) — kurzfristiger Trend runter`); }
-  }
-  if (ema200 !== null) {
-    if (price > ema200) { bullish++; reasons.push(`Über der 200-Tage-Linie (${ema200.toFixed(0)} $) — langfristig im Aufwärtstrend`); }
-    else { bearish++; reasons.push(`Unter der 200-Tage-Linie (${ema200.toFixed(0)} $) — langfristig im Abwärtstrend`); }
-  }
-
-  const distFromHighPct = ((high52w - price) / high52w) * 100;
-  const distFromLowPct = ((price - low52w) / low52w) * 100;
-  if (distFromHighPct < 3) {
-    bearish++;
-    reasons.push(`Nahe 52-Wochen-Hoch (${high52w.toFixed(0)} $, nur ${distFromHighPct.toFixed(1)}% darunter) — Gewinnmitnahme oft sinnvoll`);
-  } else if (distFromLowPct < 5) {
-    bullish++;
-    reasons.push(`Nahe 52-Wochen-Tief (${low52w.toFixed(0)} $, nur ${distFromLowPct.toFixed(1)}% darüber) — Boden möglich, Verkauf am Tief eher ungünstig`);
-  }
-
-  if (bullish >= 2 && bearish === 0) return { tone: 'hold', headline: 'EHER HALTEN', reasons };
-  if (bearish >= 2 && bullish === 0) return { tone: 'sell', headline: 'JETZT VERKAUFEN IST OKAY', reasons };
-  return { tone: 'neutral', headline: 'NEUTRAL — Bauchentscheidung', reasons };
-}
-
-const TONE: Record<Verdict['tone'], { box: string; head: string }> = {
-  sell: { box: 'border-rose-500/50 bg-rose-950/20', head: 'text-rose-100' },
-  hold: { box: 'border-emerald-500/50 bg-emerald-950/20', head: 'text-emerald-100' },
-  neutral: { box: 'border-amber-500/50 bg-amber-950/20', head: 'text-amber-100' }
-};
-
 export default async function GoldPage({ searchParams }: { searchParams: Promise<{ date?: string; price?: string }> }) {
   const sp = await searchParams;
   // Zwei Datenquellen parallel: PAXG (Crypto-Token-Pegged) für die
@@ -84,8 +43,6 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
   const times = hasData ? candles!.map((c) => c.openTime) : [];
   const ema50Series = hasData && closes.length >= 50 ? ema(closes, 50) : [];
   const ema200Series = hasData && closes.length >= 200 ? ema(closes, 200) : [];
-  const ema50 = ema50Series.length > 0 ? ema50Series[ema50Series.length - 1] ?? null : null;
-  const ema200 = ema200Series.length > 0 ? ema200Series[ema200Series.length - 1] ?? null : null;
   const high52w = hasData ? Math.max(...highs.slice(-365)) : 0;
   const low52w = hasData ? Math.min(...lows.slice(-365)) : 0;
 
@@ -97,22 +54,6 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
   const change30 = nDayChange(30);
   const change90 = nDayChange(90);
   const change180 = nDayChange(180);
-
-  function monthlyBreakdown(): { label: string; pct: number }[] {
-    if (!hasData) return [];
-    const byMonth = new Map<string, { first: number; last: number }>();
-    for (const c of candles!) {
-      const d = new Date(c.openTime);
-      const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
-      const cur = byMonth.get(key);
-      if (!cur) byMonth.set(key, { first: c.close, last: c.close });
-      else cur.last = c.close;
-    }
-    return Array.from(byMonth.entries())
-      .map(([key, v]) => ({ label: key, pct: v.first > 0 ? ((v.last - v.first) / v.first) * 100 : 0 }))
-      .slice(-12);
-  }
-  const months = monthlyBreakdown();
 
   const todayIso = hasData ? isoFromMs(candles![candles!.length - 1].openTime) : '';
   const dateRaw = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : '';
@@ -151,36 +92,12 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
     }
   }
 
-  // Steuer-Hinweis Deutschland: physisches Gold ist nach 12 Monaten
-  // Haltedauer steuerfrei (Spekulationsfrist §23 EStG).
-  let holdingDays: number | null = null;
-  let annualizedPct: number | null = null;
-  let taxFreeReached = false;
-  let daysToTaxFree: number | null = null;
-  if (purchaseDateIso && pnlPct !== null) {
-    const start = new Date(purchaseDateIso + 'T00:00:00').getTime();
-    holdingDays = Math.max(0, Math.floor((Date.now() - start) / (24 * 60 * 60 * 1000)));
-    taxFreeReached = holdingDays >= 365;
-    daysToTaxFree = taxFreeReached ? 0 : 365 - holdingDays;
-    // Annualisierte Rendite per Jahres-Konvention:
-    // (1 + r)^(365/days) - 1
-    if (holdingDays > 0) {
-      const r = pnlPct / 100;
-      annualizedPct = (Math.pow(1 + r, 365 / holdingDays) - 1) * 100;
-    }
-  }
-
   // Cross-Source-Differenz: PAXG vs. Spot-Gold-Future. Bei > 3 %
   // Abweichung Warnung anzeigen.
   let sourceDeltaPct: number | null = null;
   if (currentPrice !== null && spotGold && spotGold.last > 0) {
     sourceDeltaPct = ((currentPrice - spotGold.last) / spotGold.last) * 100;
   }
-
-  const verdict = hasData && currentPrice !== null
-    ? computeVerdict(currentPrice, ema50, ema200, high52w, low52w)
-    : null;
-  const verdictTone = verdict ? TONE[verdict.tone] : null;
 
   // ===== Markt-Kontext + History für den Gold-Holding-Rechner =====
   const sma50Series = hasData && closes.length >= 50 ? sma(closes, 50) : [];
@@ -213,252 +130,85 @@ export default async function GoldPage({ searchParams }: { searchParams: Promise
     : [];
 
   return (
-    <main className="mx-auto max-w-3xl space-y-5 p-4 md:p-6">
-      <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
-        ← zurück zum Signal Desk
-      </Link>
-
-      <header className="space-y-2">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">Gold-Rechner</div>
-          <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-amber-200">
-            Kein Anlageratschlag
-          </span>
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Wann verkaufen?</h1>
-        <p className="text-sm text-slate-400">
-          Gib dein Kaufdatum ein (optional Kaufpreis pro Unze in $). Der Rechner zeigt deinen Stand und ob jetzt ein guter Verkaufszeitpunkt ist. Quelle: PAXG (1:1 mit physischem Gold gedeckt) — Tagesdaten der letzten 12 Monate.
-        </p>
+    <main className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
+      <Link href="/" className="text-sm text-slate-400 hover:text-cyan-200">← Zurück zu meinem Geld</Link>
+      <header className="space-y-3">
+        <h1 className="text-3xl font-semibold text-white">Was ist dein Gold wert?</h1>
+        <p className="text-sm leading-relaxed text-slate-400">Sieh dir den letzten verfügbaren Kurs an und vergleiche ihn mit deinem Kaufpreis. Alle Beträge hier sind in US-Dollar.</p>
       </header>
 
-      <form action="/gold" method="get" className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 space-y-3">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="text-xs text-slate-400">
-            Kaufdatum
-            <input
-              type="date"
-              name="date"
-              defaultValue={dateRaw}
-              max={todayIso}
-              className="mt-1 block w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
-              required
-            />
-          </label>
-          <label className="text-xs text-slate-400">
-            Kaufpreis pro Unze ($, optional)
-            <input
-              type="number"
-              name="price"
-              defaultValue={priceRaw ?? ''}
-              step="0.01"
-              min="0"
-              placeholder="leer = automatischer Tagespreis"
-              className="mt-1 block w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-white focus:border-emerald-400 focus:outline-none"
-            />
-          </label>
+      {hasData && currentPrice !== null ? (
+        <section className="terminal-panel p-5 sm:p-6">
+          <h2 className="text-sm text-slate-400">Eine Feinunze Gold · etwa 31,1 Gramm</h2>
+          <p className="mt-2 font-mono text-3xl font-bold text-white">{currentPrice.toLocaleString('de-DE', { style: 'currency', currency: 'USD' })}</p>
+          <p className="mt-2 text-xs leading-relaxed text-slate-400">Richtwert vom {fmtDate(todayIso)}. Der Preis beim Händler kann davon abweichen.</p>
+          {change30 !== null && <p className={`mt-3 text-sm ${change30 >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{change30 >= 0 ? '+' : ''}{change30.toFixed(1)} % in den letzten 30 Tagen</p>}
+        </section>
+      ) : <p className="terminal-panel p-5 text-sm text-slate-400">Der aktuelle Goldkurs fehlt gerade. Der Rechner kann deshalb noch keinen Wert anzeigen. Versuche es in ein paar Minuten erneut.</p>}
+
+      {sourceDeltaPct !== null && Math.abs(sourceDeltaPct) > 3 && <p className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 text-sm text-amber-100">Unsere beiden Preisquellen weichen gerade stärker voneinander ab. Prüfe den tatsächlichen Händlerpreis, bevor du kaufst oder verkaufst.</p>}
+
+      <GoldHoldingCalculator history={history} currentGoldPricePerOz={currentPrice} todayIso={todayIso || new Date().toISOString().slice(0, 10)} marketContext={goldMarketContext} />
+
+      <details className="terminal-panel p-5 sm:p-6" open={Boolean(dateRaw)}>
+        <summary className="cursor-pointer text-sm font-semibold text-slate-200">Einen früheren Kaufpreis pro Unze vergleichen</summary>
+        <div className="mt-5 space-y-5">
+      <section className="terminal-panel p-5 sm:p-6">
+        <h2 className="text-lg font-semibold text-white">Ist dein Gold mehr oder weniger wert?</h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-400">Dieser Vergleich gilt für eine Feinunze. Deine gesamte Goldmenge berechnest du oben.</p>
+        <form action="/gold" method="get" className="mt-5 space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="text-sm text-slate-300">Wann hast du gekauft?
+              <input type="date" name="date" defaultValue={dateRaw} max={todayIso || undefined} className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none" required />
+            </label>
+            <label className="text-sm text-slate-300">Dein Kaufpreis pro Unze ($, optional)
+              <input type="number" name="price" defaultValue={priceRaw ?? ''} step="0.01" min="0" placeholder="Falls du ihn kennst" className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none" />
+            </label>
+          </div>
+          <p className="text-xs leading-relaxed text-slate-400">Ohne Kaufpreis verwenden wir den damaligen Kurs, soweit er vorliegt.</p>
+          <button type="submit" className="terminal-button">Wert vergleichen</button>
+        </form>
+      </section>
+
+      {dateOutOfRange && <p className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 text-sm text-amber-100">Für dieses Kaufdatum fehlt uns der damalige Kurs. Trage deinen Kaufpreis zusätzlich ein, damit wir den Unterschied berechnen können.</p>}
+
+      {purchasePrice !== null && pnlPct !== null && pnlAbs !== null && currentPrice !== null && (
+        <section className="terminal-panel p-5 sm:p-6" aria-label="Dein Goldvergleich">
+          <h2 className="text-lg font-semibold text-white">Dein Vergleich</h2>
+          <p className="mt-2 text-sm text-slate-400">Eine Feinunze ist heute {pnlAbs >= 0 ? 'mehr' : 'weniger'} wert als am {fmtDate(purchaseDateIso || dateRaw)}.</p>
+          <p className={`mt-3 font-mono text-3xl font-bold ${pnlPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(2)} %</p>
+          <p className={`mt-2 text-sm ${pnlAbs >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{pnlAbs >= 0 ? '+' : '−'}{Math.abs(pnlAbs).toLocaleString('de-DE', { style: 'currency', currency: 'USD' })} pro Feinunze</p>
+          <dl className="mt-5 grid grid-cols-2 gap-4 text-sm"><div><dt className="text-slate-400">Damals</dt><dd className="mt-1 font-mono text-white">{purchasePrice.toLocaleString('de-DE', { style: 'currency', currency: 'USD' })}</dd></div><div><dt className="text-slate-400">Heute</dt><dd className="mt-1 font-mono text-white">{currentPrice.toLocaleString('de-DE', { style: 'currency', currency: 'USD' })}</dd></div></dl>
+          <p className="mt-4 text-xs leading-relaxed text-slate-400">Kauf- und Verkaufskosten sind hier noch nicht berücksichtigt.</p>
+        </section>
+      )}
+
         </div>
-        <button type="submit" className="rounded-md border border-emerald-400/50 bg-emerald-500/20 px-4 py-1.5 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/30">
-          Berechnen
-        </button>
-      </form>
+      </details>
 
-      {!hasData && (
-        <p className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400">
-          Gold-Kursdaten (PAXG) gerade nicht verfügbar. Versuch&apos;s in ein paar Minuten nochmal.
-        </p>
-      )}
+      <details className="terminal-panel p-5 sm:p-6">
+        <summary className="cursor-pointer text-base font-semibold text-white">Goldkäufe speichern und zusammenrechnen</summary>
+        <div className="mt-6 space-y-8">
+          <GoldPortfolioPanel history={history} currentGoldPricePerOz={currentPrice} todayIso={todayIso || new Date().toISOString().slice(0, 10)} marketContext={goldMarketContext} />
+        </div>
+      </details>
 
-      {spotGold && (
-        <section className="rounded-2xl border border-amber-500/30 bg-amber-950/15 p-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-amber-300">PAXG (Crypto-Token)</div>
-              <div className="font-mono text-lg font-bold text-white">${currentPrice?.toFixed(2) ?? '—'}</div>
-              <div className="text-[10px] text-slate-500">via Bybit / Binance</div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-amber-300">Spot-Gold-Future</div>
-              <div className="font-mono text-lg font-bold text-white">${spotGold.last.toFixed(2)}</div>
-              <div className="text-[10px] text-slate-500">via Yahoo / Stooq (GC=F)</div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-amber-300">Differenz</div>
-              {sourceDeltaPct !== null ? (
-                <>
-                  <div className={`font-mono text-lg font-bold ${Math.abs(sourceDeltaPct) <= 3 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                    {sourceDeltaPct >= 0 ? '+' : ''}{sourceDeltaPct.toFixed(2)} %
-                  </div>
-                  <div className="text-[10px] text-slate-500">
-                    {Math.abs(sourceDeltaPct) <= 3 ? 'Quellen stimmen überein' : '⚠ Quellen weichen ab'}
-                  </div>
-                </>
-              ) : (
-                <div className="text-[10px] text-slate-500">—</div>
-              )}
-            </div>
+      <details className="terminal-panel p-5 sm:p-6">
+        <summary className="cursor-pointer text-sm font-semibold text-slate-200">Preisverlauf und Datenquellen ansehen</summary>
+        <div className="mt-5 space-y-5">
+          {hasData && currentPrice !== null && <>
+            <GoldChart times={times} closes={closes} ema50={ema50Series} ema200={ema200Series} purchaseDateIso={purchaseDateIso} purchasePrice={purchasePrice} />
+            <p className="text-xs leading-relaxed text-slate-400">Die blaue und die grüne Linie glätten die täglichen Preisschwankungen über 50 beziehungsweise 200 Tage.</p>
+            <dl className="grid grid-cols-2 gap-3 text-sm"><div><dt className="text-slate-400">Höchster Preis im letzten Jahr</dt><dd className="mt-1 font-mono text-white">{high52w.toLocaleString('de-DE', { style: 'currency', currency: 'USD' })}</dd></div><div><dt className="text-slate-400">Niedrigster Preis im letzten Jahr</dt><dd className="mt-1 font-mono text-white">{low52w.toLocaleString('de-DE', { style: 'currency', currency: 'USD' })}</dd></div></dl>
+            <div className="grid grid-cols-3 gap-3">{[{ label: '30 Tage', v: change30 }, { label: '90 Tage', v: change90 }, { label: '180 Tage', v: change180 }].map(period => <div key={period.label} className="rounded-lg border border-slate-800 p-3 text-sm"><p className="text-slate-400">{period.label}</p><p className={`mt-1 font-mono ${period.v === null ? 'text-slate-500' : period.v >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{period.v === null ? '—' : `${period.v >= 0 ? '+' : ''}${period.v.toFixed(1)} %`}</p></div>)}</div>
+          </>}
+          <div className="space-y-3 text-sm leading-relaxed text-slate-400">
+            <p>Für den Verlauf nutzen wir Tageskurse von PAXG über Binance oder Bybit. PAXG ist ein an Kryptobörsen gehandelter, mit Gold hinterlegter Wert. Er dient hier als Annäherung an den Goldpreis in US-Dollar. Wir haben höchstens die letzten zwölf Monate gespeichert.</p>
+            {spotGold && <p>Zum Vergleich liefert Yahoo Finance einen Goldpreis für eine spätere Lieferung: {spotGold.last.toLocaleString('de-DE', { style: 'currency', currency: 'USD' })} pro Unze. Er kann vom PAXG-Kurs und vom Händlerpreis abweichen.</p>}
+            <p>Ein höherer oder niedrigerer Kurs allein sagt dir noch nicht, ob ein Verkauf zu deinem Geldplan passt.</p>
           </div>
-          <p className="mt-3 text-[10.5px] leading-snug text-amber-100/70">
-            PAXG ist 1:1 mit physischem Gold gedeckt (Paxos), wird aber an Crypto-Börsen gehandelt — der Spot-Future
-            (GC=F) ist der reine Terminmarkt-Preis. Beide sollten nahe beieinander liegen. Größere Abweichungen können
-            auf Crypto-Liquiditäts-Effekte oder Roll-Effekte hindeuten.
-          </p>
-        </section>
-      )}
-
-      {hasData && currentPrice !== null && (
-        <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-500">Aktuell</div>
-              <div className="font-mono text-lg font-bold text-white">${currentPrice.toFixed(2)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-500">52w Hoch</div>
-              <div className="font-mono text-lg font-bold text-slate-200">${high52w.toFixed(0)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-500">52w Tief</div>
-              <div className="font-mono text-lg font-bold text-slate-200">${low52w.toFixed(0)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-500">200-Tage-Linie</div>
-              <div className="font-mono text-lg font-bold text-slate-200">{ema200 !== null ? `$${ema200.toFixed(0)}` : '—'}</div>
-            </div>
-          </div>
-
-          <GoldChart
-            times={times}
-            closes={closes}
-            ema50={ema50Series}
-            ema200={ema200Series}
-            purchaseDateIso={purchaseDateIso}
-            purchasePrice={purchasePrice}
-          />
-
-          <div className="grid grid-cols-3 gap-2 text-center">
-            {[
-              { label: '30 Tage', v: change30 },
-              { label: '90 Tage', v: change90 },
-              { label: '180 Tage', v: change180 }
-            ].map((p) => (
-              <div key={p.label} className="rounded-lg border border-slate-700/60 bg-slate-950/40 p-2">
-                <div className="text-[10px] uppercase tracking-wider text-slate-500">{p.label}</div>
-                <div className={`font-mono text-sm font-bold ${p.v === null ? 'text-slate-500' : p.v >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                  {p.v === null ? '—' : `${p.v >= 0 ? '+' : ''}${p.v.toFixed(1)}%`}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {months.length > 0 && (
-        <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Monatliche Performance (letzte 12 Monate)</h2>
-          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-6">
-            {months.map((m) => (
-              <div key={m.label} className={`rounded-md border p-1.5 text-center ${m.pct >= 0 ? 'border-emerald-500/30 bg-emerald-950/15' : 'border-rose-500/30 bg-rose-950/15'}`}>
-                <div className="text-[9px] font-mono text-slate-500">{m.label}</div>
-                <div className={`font-mono text-xs font-bold ${m.pct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                  {m.pct >= 0 ? '+' : ''}{m.pct.toFixed(1)}%
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {dateOutOfRange && (
-        <p className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3 text-sm text-amber-100/90">
-          Für dein Kaufdatum liegen keine Tagesdaten im 12-Monats-Fenster vor. Trag bitte zusätzlich den Kaufpreis ein, dann rechne ich trotzdem.
-        </p>
-      )}
-
-      {purchasePrice !== null && pnlPct !== null && pnlAbs !== null && (
-        <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Dein Stand</h2>
-            <p className="mt-1 text-sm text-slate-300">
-              Kauf am <span className="font-mono font-semibold text-slate-100">{purchaseDateIso ? fmtDate(purchaseDateIso) : fmtDate(dateRaw)}</span> zu <span className="font-mono font-semibold text-slate-100">${purchasePrice.toFixed(2)}</span> · Heute <span className="font-mono font-semibold text-slate-100">${currentPrice!.toFixed(2)}</span>
-            </p>
-            <div className="mt-2 flex items-baseline gap-3">
-              <span className={`font-mono text-3xl font-bold ${pnlPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(2)}%</span>
-              <span className={`font-mono text-sm ${pnlAbs >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{pnlAbs >= 0 ? '+' : ''}${pnlAbs.toFixed(2)} pro Unze</span>
-            </div>
-          </div>
-
-          <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2.5">
-              <dt className="text-[10px] uppercase tracking-wider text-slate-500">Haltedauer</dt>
-              <dd className="mt-0.5 font-mono text-sm font-semibold text-slate-100">
-                {holdingDays !== null ? `${holdingDays} Tage` : '—'}
-              </dd>
-              <dd className="text-[9.5px] text-slate-500">
-                {holdingDays !== null && holdingDays >= 365 ? '≥ 1 Jahr' : holdingDays !== null ? `< 1 Jahr` : ''}
-              </dd>
-            </div>
-            <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2.5">
-              <dt className="text-[10px] uppercase tracking-wider text-slate-500">Annualisierte Rendite</dt>
-              <dd className={`mt-0.5 font-mono text-sm font-semibold ${annualizedPct === null ? 'text-slate-500' : annualizedPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                {annualizedPct !== null ? `${annualizedPct >= 0 ? '+' : ''}${annualizedPct.toFixed(2)} %` : '—'}
-              </dd>
-              <dd className="text-[9.5px] text-slate-500">p. a. nach Compound-Methode</dd>
-            </div>
-            <div className={`rounded-md border p-2.5 ${taxFreeReached ? 'border-emerald-400/40 bg-emerald-950/15' : 'border-amber-500/30 bg-amber-950/15'}`}>
-              <dt className="text-[10px] uppercase tracking-wider text-slate-500">Steuer-Status DE</dt>
-              <dd className={`mt-0.5 text-sm font-semibold ${taxFreeReached ? 'text-emerald-300' : 'text-amber-300'}`}>
-                {taxFreeReached ? '✓ steuerfrei' : 'noch steuerpflichtig'}
-              </dd>
-              <dd className="text-[9.5px] leading-snug text-slate-500">
-                {taxFreeReached
-                  ? 'Spekulationsfrist §23 EStG erfüllt — Gewinn-Verkauf steuerfrei für Privatpersonen.'
-                  : daysToTaxFree !== null ? `Noch ${daysToTaxFree} Tage bis zur Spekulationsfrist (1 Jahr Haltedauer).` : ''}
-              </dd>
-            </div>
-          </dl>
-
-          <p className="text-[10px] leading-snug text-slate-500">
-            Steuer-Hinweis bezieht sich auf physisches Gold + PAXG-Token für Privatpersonen in Deutschland (§23 EStG, Stand 2026).
-            Keine Steuerberatung — bei Unsicherheit Steuerberater fragen.
-          </p>
-        </section>
-      )}
-
-      {verdict && verdictTone && (
-        <section className={`rounded-2xl border-2 p-4 ${verdictTone.box}`}>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Verkaufs-Verdikt</div>
-          <h2 className={`mt-1 text-xl font-bold ${verdictTone.head}`}>{verdict.headline}</h2>
-          <ul className="mt-2 space-y-1 text-sm text-slate-300">
-            {verdict.reasons.map((r, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-500" />
-                <span>{r}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 rounded-lg border border-slate-700/60 bg-slate-950/40 p-2.5 text-[11px] leading-relaxed text-slate-400">
-            Heuristik aus Trend (50/200-Tage-Linien) und Abstand zu 52w-Hoch/Tief — keine Garantie. Gold reagiert auf Zinsen, Inflation, geopolitische Lage. Vergangenheit ≠ Zukunft.
-          </p>
-        </section>
-      )}
-
-      <GoldHoldingCalculator
-        history={history}
-        currentGoldPricePerOz={currentPrice}
-        todayIso={todayIso || new Date().toISOString().slice(0, 10)}
-        marketContext={goldMarketContext}
-      />
-
-      <GoldPortfolioPanel
-        history={history}
-        currentGoldPricePerOz={currentPrice}
-        todayIso={todayIso || new Date().toISOString().slice(0, 10)}
-        marketContext={goldMarketContext}
-      />
-
-      <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
-        Daten: PAXG (Pax Gold, 1:1 gedeckt) über Binance/Bybit · Tagesdaten · max. 365 Tage Historie · keine Anlageberatung.
-      </footer>
+        </div>
+      </details>
     </main>
   );
 }

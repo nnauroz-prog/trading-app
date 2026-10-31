@@ -22,9 +22,26 @@ describe('clear crypto buy signals', () => {
   });
   it('withholds signals when data is stale, absent or prices are invalid', () => {
     expect(render([pick], [candidate], new Date(now - 360000).toISOString())).toContain('Heute kein Kauf-Signal');
-    expect(render([], [])).toContain('Aktuelle Kurs- und Analysedaten fehlen');
+    expect(render([], [])).toContain('Aktuelle Kurse fehlen gerade');
     expect(render([pick], [{ ...candidate, stopLoss: 105 }])).toContain('Heute kein Kauf-Signal');
     expect(render([pick], [{ ...candidate, entry: NaN }])).toContain('Heute kein Kauf-Signal');
+  });
+  it('withholds even approved candidates while important market events require caution', () => {
+    const html = renderToStaticMarkup(createElement(CryptoBuySignals, { picks: [pick], candidates: [candidate], generatedAt: new Date(now).toISOString(), mode: 'swing', now, pausedReason: 'Wichtige Wirtschaftszahlen stehen bevor.' }));
+    expect(html).toContain('Heute kein Kauf-Signal');
+    expect(html).toContain('Wichtige Wirtschaftszahlen stehen bevor.');
+    expect(html).not.toContain('KAUF-SIGNAL');
+  });
+  it('does not claim prices are absent when prices are visible but a buy assessment is unavailable', () => {
+    const html = renderToStaticMarkup(createElement(CryptoBuySignals, { picks: [], candidates: [], generatedAt: new Date(now).toISOString(), mode: 'swing', now, pricesAvailable: true }));
+    expect(html).toContain('Die Preise sind da.');
+    expect(html).not.toContain('Aktuelle Kurse fehlen');
+  });
+  it('keeps technical checks out of the normal user text', () => {
+    const html = render([{ ...pick, reasons: ['Konfluenz 9/10 · FREIGABE · Modell-Score 90'] }]);
+    expect(html).not.toMatch(/Konfluenz|FREIGABE|Modell-Score|90\/100/);
+    expect(html).toContain('Geplanter Kaufpreis');
+    expect(html).toContain('Ausstieg bei Verlust');
   });
   it('deduplicates coins and blocks picks carrying a veto', () => {
     expect((render([pick, pick]).match(/KAUF-SIGNAL/g) ?? [])).toHaveLength(1);

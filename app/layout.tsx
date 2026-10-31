@@ -7,10 +7,10 @@ import { SkipToContent } from '@/components/skip-to-content';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Trading Desk · Krypto, Aktien, Rohstoffe, Sport',
+    default: 'Trading Desk · Dein Geld im Blick',
     template: '%s · Trading Desk'
   },
-  description: 'Modell-basierte Tageshinweise fuer Krypto, Aktien, Rohstoffe und Sport — transparent mit offener Datenherkunft. Kein Anlageratschlag.',
+  description: 'Dein verfügbares Geld einfach aufteilen. Dazu Kurse, eigene Käufe und Sportergebnisse im Blick behalten.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
@@ -34,8 +34,8 @@ export const metadata: Metadata = {
     }
   },
   openGraph: {
-    title: 'Trading Desk · Krypto, Aktien, Rohstoffe, Sport',
-    description: 'Modell-basierte Tageshinweise. Transparent, mit offener Datenherkunft. Kein Anlageratschlag.',
+    title: 'Trading Desk · Dein Geld im Blick',
+    description: 'Ein verständlicher Plan für dein verfügbares Geld.',
     type: 'website',
     locale: 'de_DE',
     siteName: 'Trading Desk'
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary',
     title: 'Trading Desk',
-    description: 'Modell-basierte Tageshinweise fuer Krypto, Aktien, Rohstoffe, Sport.'
+    description: 'Dein Geld einfach aufteilen und im Blick behalten.'
   }
 };
 
