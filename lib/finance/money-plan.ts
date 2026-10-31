@@ -1,3 +1,5 @@
+import { WORLD_EQUITY_FUND } from '@/lib/finance/investment-product';
+
 /** Transparent planning rules, not market forecasts or automated orders. */
 export type MoneyRiskLevel = 'conservative' | 'balanced' | 'growth';
 export interface QuickMoneyPlanInput {
@@ -48,7 +50,7 @@ export function evaluateQuickMoneyPlan(input: QuickMoneyPlanInput): MoneyPlan {
   const agents: MoneyAgentResult[] = [
     { id: 'reserve', name: 'Puffer-Check', status: input.reserveReady === true ? 'ready' : 'attention', finding: input.reserveReady === true ? 'Du hast bestätigt: Dein Notgroschen ist getrennt von diesem Betrag.' : 'Eine verfügbare Rücklage für unerwartete Ausgaben geht vor. Wie hoch sie sein sollte, hängt von deinen laufenden Kosten ab.' },
     { id: 'debt', name: 'Schulden-Check', status: input.debtFree === true ? 'ready' : 'attention', finding: input.debtFree === true ? 'Du hast bestätigt: Dieser Betrag wird nicht für teure Schulden oder Rechnungen gebraucht.' : 'Prüfe zuerst offene Rechnungen und teure Schulden. Deren Kosten sind bekannt; eine Anlagerendite ist ungewiss.' },
-    { id: 'horizon', name: 'Ziel-Check', status: validHorizon ? 'ready' : 'missing', finding: !validHorizon ? 'Dein Zeitraum fehlt noch.' : input.horizonYears! <= 3 ? 'Du brauchst das Geld bald. Schwankende Anlagen passen dafür nicht in diesen Plan.' : `Du planst mit ${input.horizonYears} Jahren. Auch über mehrere Jahre bleiben Kursverluste möglich.` },
+    { id: 'horizon', name: 'Ziel-Check', status: validHorizon ? 'ready' : 'missing', finding: !validHorizon ? 'Dein Zeitraum fehlt noch.' : input.horizonYears! < WORLD_EQUITY_FUND.minimumYears ? 'Du brauchst das Geld bald. Schwankende Anlagen passen dafür nicht in diesen Plan.' : `Du planst mit ${input.horizonYears} Jahren. Auch über mehrere Jahre bleiben Kursverluste möglich.` },
     { id: 'risk', name: 'Risiko-Check', status: validRisk ? 'ready' : 'missing', finding: !validRisk ? 'Dein Wohlfühl-Profil fehlt noch.' : input.riskLevel === 'conservative' ? 'Mehr Liquidität, weniger Schwankung. Auch ein ruhiger Plan ist nicht vor Kaufkraftverlust geschützt.' : input.riskLevel === 'balanced' ? 'Eine Mischung aus verfügbarem Geld und breit gestreuten Anlagen. Der Anlageteil kann deutlich schwanken.' : 'Ein höherer Anlageteil passt nur, wenn du zwischenzeitliche Verluste aushalten kannst. Das optionale Lernbudget bleibt auf 5 % begrenzt.' },
     { id: 'allocation', name: 'Plan-Check', status: errors.length ? 'missing' : safetyReady ? 'ready' : 'attention', finding: errors.length ? 'Erst deine Angaben ergänzen, dann rechnen wir.' : safetyReady ? `${euro(amount!)} werden vollständig aufgeteilt – ohne zusätzliches Geld oder erwartete Gewinne einzuplanen.` : 'Solange der Sicherheits-Check offen ist, wird kein Anlagebetrag freigegeben.' }
   ];
@@ -64,7 +66,7 @@ export function evaluateQuickMoneyPlan(input: QuickMoneyPlanInput): MoneyPlan {
   const years = input.horizonYears!;
   let diversified = 0;
   let learning = 0;
-  if (years > 3) {
+  if (years >= WORLD_EQUITY_FUND.minimumYears) {
     diversified = years < 8
       ? { conservative: 30, balanced: 50, growth: 65 }[input.riskLevel!]
       : { conservative: 40, balanced: 65, growth: 80 }[input.riskLevel!];
@@ -75,10 +77,10 @@ export function evaluateQuickMoneyPlan(input: QuickMoneyPlanInput): MoneyPlan {
   const learningCents = Math.floor(cents * learning / 100);
   const cashCents = cents - investmentCents - learningCents;
   const allocations: MoneyAllocation[] = [
-    { id: 'cash', label: 'Auf dem Konto lassen', amount: cashCents / 100, percentage: 100 - diversified - learning, explanation: years <= 3 ? 'Du brauchst das Geld bald. Vergleiche Konten, bei denen du schnell an dein Geld kommst.' : 'Diesen Teil kannst du verfügbar halten. Vergleiche Zinsen und prüfe, wie schnell du an dein Geld kommst.' },
-    ...(investmentCents > 0 ? [{ id: 'diversified' as const, label: 'Für später anlegen', amount: investmentCents / 100, percentage: diversified, explanation: 'Zum Beispiel über einen Fonds, der viele Unternehmen enthält. Der Wert kann steigen und fallen. Vergleiche vor dem Kauf die Kosten.' }] : []),
+    { id: 'cash', label: 'Auf dem Konto lassen', amount: cashCents / 100, percentage: 100 - diversified - learning, explanation: years < WORLD_EQUITY_FUND.minimumYears ? 'Du brauchst das Geld bald. Vergleiche Konten, bei denen du schnell an dein Geld kommst.' : 'Diesen Teil kannst du verfügbar halten. Vergleiche Zinsen und prüfe, wie schnell du an dein Geld kommst.' },
+    ...(investmentCents > 0 ? [{ id: 'diversified' as const, label: 'Für später anlegen', amount: investmentCents / 100, percentage: diversified, explanation: 'Eine konkrete Möglichkeit: der Vanguard FTSE All-World ETF. Er enthält viele Unternehmen weltweit. In der Kaufanalyse findest du die genaue Kennnummer, Kosten und Risiken.' }] : []),
     ...(learningCents > 0 ? [{ id: 'learning' as const, label: 'Optional: riskante Anlagen', amount: learningCents / 100, percentage: learning, explanation: 'Höchstens dieser Betrag für riskante Ideen wie Krypto. Du kannst ihn vollständig verlieren. Du kannst diesen Teil auch auf dem Konto lassen.' }] : [])
   ];
-  return { status: 'ready', title: years <= 3 ? 'Lass dein Geld für dein Ziel verfügbar.' : 'So kannst du dein Geld aufteilen.', nextStep: years <= 3 ? `Du brauchst das Geld in den nächsten Jahren. Lass die ${euro(amount!)} auf einem passenden Konto, damit ein Kursverlust deine Pläne nicht verzögert.` : `Die Beträge unten sind ein Vorschlag für dein freies Geld. Du wählst selbst, wo du es lässt oder anlegst.`, amount, agents, allocations, errors: [], assumptions };
+  return { status: 'ready', title: years < WORLD_EQUITY_FUND.minimumYears ? 'Lass dein Geld für dein Ziel verfügbar.' : 'So kannst du dein Geld aufteilen.', nextStep: years < WORLD_EQUITY_FUND.minimumYears ? `Du brauchst das Geld in den nächsten Jahren. Lass die ${euro(amount!)} auf einem passenden Konto, damit ein Kursverlust deine Pläne nicht verzögert.` : `Die Beträge unten sind ein Vorschlag für dein freies Geld. Du wählst selbst, wo du es lässt oder anlegst.`, amount, agents, allocations, errors: [], assumptions };
 }
 export const evaluateMoneyPlan = evaluateQuickMoneyPlan;

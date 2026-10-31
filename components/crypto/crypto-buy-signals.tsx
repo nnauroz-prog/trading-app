@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CryptoPlanBudget } from '@/components/crypto/crypto-plan-budget';
 import { ArrowRight, Clock3, Pause, ShieldCheck } from 'lucide-react';
 import type { CryptoPrecisionResult } from '@/lib/analysis/crypto-precision-gate';
 import type { RankedCandidate, TradeMode } from '@/lib/analysis/master-signal-engine';
@@ -40,6 +41,7 @@ export function CryptoBuySignals({ picks, candidates, generatedAt, mode, now = D
       <p className="mb-2 text-sm text-slate-400">{mode === 'daytrade' ? 'Für den heutigen Tag' : 'Für die nächsten Tage'}</p>
       <h2 className="text-2xl font-semibold leading-tight text-white sm:text-3xl">{signals.length ? 'Diese Coins kannst du näher ansehen' : 'Heute kein Kauf-Signal'}</h2>
     </header>
+    <CryptoPlanBudget hasBuySignal={signals.length > 0} />
     {signals.length === 0 ? <div className="flex items-start gap-3 p-5 sm:p-6">
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-amber-400/30 bg-amber-400/5 text-amber-200"><Pause size={18} aria-hidden /></span>
       <div><h3 className="font-semibold text-amber-200">Abwarten ist heute in Ordnung.</h3><p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">{waitingReason}</p></div>

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { backupSummary, exportData, exportToString, importData } from '@/lib/data-backup';
 
 export function DataBackupPanel() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [exported, setExported] = useState<string | null>(null);
   const [importText, setImportText] = useState('');
   const [fileName, setFileName] = useState('');
@@ -59,6 +60,7 @@ export function DataBackupPanel() {
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
     file.text().then(text => { setImportText(text); setFileName(file.name); setStatus(null); })
       .catch(() => setStatus('Die Datei konnte nicht geöffnet werden. Bitte wähle sie noch einmal aus.'));
   };
@@ -90,7 +92,8 @@ export function DataBackupPanel() {
       <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950/40 p-4">
         <h3 className="text-sm font-semibold text-slate-200">Eine Sicherung wiederherstellen</h3>
         <p className="text-sm leading-relaxed text-slate-400">Wähle eine zuvor heruntergeladene Sicherungsdatei aus. Danach kannst du die enthaltenen Daten übernehmen.</p>
-        <label className="terminal-button cursor-pointer">Sicherungsdatei auswählen<input type="file" accept="application/json,.json" onChange={onFile} className="hidden" /></label>
+        <button type="button" onClick={() => fileInputRef.current?.click()} className="terminal-button">Sicherungsdatei auswählen</button>
+        <input ref={fileInputRef} type="file" accept="application/json,.json" onChange={onFile} className="hidden" />
         {fileName && <p className="break-all text-xs text-slate-400">Ausgewählt: {fileName}</p>}
         <details className="text-sm text-slate-400">
           <summary className="cursor-pointer py-2 hover:text-slate-200">Wie mit vorhandenen Daten umgehen?</summary>
