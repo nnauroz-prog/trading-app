@@ -15,8 +15,9 @@ interface Props {
 }
 
 export function QuoteRow({ quote, fallbackName, fallbackSymbol, unit, emoji, href }: Props) {
+  const changeBasis = quote?.source === 'stooq' ? 'seit Handelsstart' : 'seit letztem Börsenschluss';
   const inner = quote ? (
-    <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-3 py-2 text-[11.5px]">
+    <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-2 gap-y-1 rounded-md border border-slate-800 bg-slate-950/40 px-3 py-2 text-[11.5px]">
       {emoji ? <span className="text-base leading-none">{emoji}</span> : <span className="font-mono text-[10px] text-slate-500">{quote.symbol}</span>}
       <span className="min-w-0">
         {/* Bewusst fallbackName statt quote.name: Yahoo liefert oft
@@ -32,6 +33,7 @@ export function QuoteRow({ quote, fallbackName, fallbackSymbol, unit, emoji, hre
       <span className={`font-mono text-[10.5px] font-semibold ${quote.changePct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
         {fmtChange(quote.changePct)}
       </span>
+      <span className="col-span-4 text-right text-[9.5px] text-slate-500">{changeBasis}</span>
     </div>
   ) : (
     <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800/60 bg-slate-950/40 px-3 py-2 text-[11.5px]">
@@ -49,7 +51,7 @@ export function QuoteRow({ quote, fallbackName, fallbackSymbol, unit, emoji, hre
   return (
     <li>
       {href ? (
-        <Link href={href} className="block transition hover:brightness-110" aria-label={`Details zu ${fallbackName}`}>
+        <Link href={href} className="block transition hover:brightness-110" aria-label={quote ? `Details zu ${fallbackName}: ${fmtCurrency(quote.last, quote.currency)}, ${fmtChange(quote.changePct)} ${changeBasis}` : `Details zu ${fallbackName}, Preis gerade nicht verfügbar`}>
           {inner}
         </Link>
       ) : (

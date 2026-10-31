@@ -20,6 +20,13 @@ describe('working money-plan agents', () => {
     const plan = evaluateQuickMoneyPlan({ ...base, horizonYears: 3, riskLevel: 'growth' });
     expect(plan.allocations).toMatchObject([{ id: 'cash', amount: 2500, percentage: 100 }]);
   });
+  it('does not assign money to the concrete equity fund before its five-year minimum', () => {
+    for (const horizonYears of [3.5, 4, 4.99]) {
+      const plan = evaluateQuickMoneyPlan({ ...base, horizonYears, riskLevel: 'growth' });
+      expect(plan.allocations).toMatchObject([{ id: 'cash', amount: 2500, percentage: 100 }]);
+    }
+    expect(evaluateQuickMoneyPlan({ ...base, horizonYears: 5 }).allocations.some(a => a.id === 'diversified')).toBe(true);
+  });
   it('accounts for every cent without allocating more than the user supplied', () => {
     for (const amount of [1, 12.37, 2500.01, 999999.99]) for (const riskLevel of ['conservative','balanced','growth'] as const) {
       const plan = evaluateQuickMoneyPlan({ ...base, amount, riskLevel });

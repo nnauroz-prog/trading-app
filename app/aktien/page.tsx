@@ -56,7 +56,7 @@ export default async function AktienPage() {
     </section>
 
     <section className="terminal-panel p-5 sm:p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-white">Bekannte Unternehmen</h2><span className="text-xs text-slate-400">Kurs und heutige Veränderung</span></div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-white">Bekannte Unternehmen</h2><span className="text-xs text-slate-400">Kurs und Veränderung</span></div>
       {liveCount === 0 && <p className="mb-4 text-sm text-slate-400">Die Kurse werden gerade nicht geliefert. Fehlende Werte bleiben leer.</p>}
       <ul className="space-y-2">{popular.map(stock => {
         const i = STOCK_UNIVERSE.findIndex(s => s.symbol === stock.symbol);

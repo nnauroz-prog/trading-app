@@ -3,17 +3,19 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, Clock3, RefreshCw, ShieldAlert } from 'lucide-react';
 import { LIVE_SPORTS, type LiveGame, type LiveScoreboard as Scoreboard, type LiveSport } from '@/lib/sport/live-scoreboard';
+import { GamePrediction } from '@/components/sport/game-prediction';
 
 export function LiveScoreboard({ initialSport = 'football' }: { initialSport?: LiveSport }) {
   const [sport, setSport] = useState<LiveSport>(initialSport);
-  const [data, setData] = useState<Scoreboard | null>(null);
+  const [storedData, setData] = useState<Scoreboard | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [retry, setRetry] = useState(0);
+  const data = storedData?.sport === sport ? storedData : null;
   useEffect(() => {
     const controller = new AbortController();
     let busy = false;
-    setData(null);
+    setData(previous => previous?.sport === sport ? previous : null);
     setError(false);
     setLoading(true);
     const load = async () => {
@@ -52,7 +54,7 @@ export function LiveScoreboard({ initialSport = 'football' }: { initialSport?: L
       </header>
       <div className="space-y-4 px-5 pb-5 sm:px-6 sm:pb-6">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Sportart für Live-Ergebnisse">
-          {(Object.keys(LIVE_SPORTS) as LiveSport[]).map(key => <button type="button" key={key} aria-pressed={sport === key} onClick={() => setSport(key)} className={`flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition ${sport === key ? 'border-cyan-300/60 bg-cyan-300/10 text-cyan-200' : 'border-slate-800 bg-white/[0.02] text-slate-400 hover:border-slate-600 hover:text-white'}`}>{LIVE_SPORTS[key].label}{sport === key && <ArrowUpRight size={14} className="shrink-0" aria-hidden />}</button>)}
+          {(Object.keys(LIVE_SPORTS) as LiveSport[]).map(key => <button type="button" key={key} aria-pressed={sport === key} onClick={() => { if (key !== sport) { setSport(key); setError(false); setLoading(true); } }} className={`flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition ${sport === key ? 'border-cyan-300/60 bg-cyan-300/10 text-cyan-200' : 'border-slate-800 bg-white/[0.02] text-slate-400 hover:border-slate-600 hover:text-white'}`}>{LIVE_SPORTS[key].label}{sport === key && <ArrowUpRight size={14} className="shrink-0" aria-hidden />}</button>)}
         </div>
         <div aria-live="polite" className="text-sm">
           {loading && <div className="flex items-center gap-3 rounded-lg border border-slate-800 p-4 text-slate-400"><RefreshCw size={16} className="animate-spin text-cyan-300 motion-reduce:animate-none" aria-hidden />Spielstände werden geladen …</div>}
@@ -61,13 +63,14 @@ export function LiveScoreboard({ initialSport = 'football' }: { initialSport?: L
         </div>
         {data && <>
           {data.failedFeeds > 0 && <p className="border-l-2 border-amber-400/60 pl-3 text-sm leading-relaxed text-amber-200">Einige Ergebnisse fehlen gerade. Die Liste kann unvollständig sein.</p>}
-          <ul className="max-h-[38rem] space-y-3 overflow-y-auto pr-1">
+          <ul className="space-y-3 pr-1 md:max-h-[38rem] md:overflow-y-auto">
             {data.games.map(game => {
               const live = !error && game.state === 'in';
               return <li key={game.id} className={`relative overflow-hidden rounded-xl border p-4 sm:p-5 ${live ? 'border-cyan-300/40 bg-cyan-300/[0.04]' : 'border-slate-800 bg-[#070b12]/65'}`}>
-                <div className="flex items-start justify-between gap-3"><span className="min-w-0 text-xs leading-relaxed text-slate-400">{leagueName(game.league)}</span><span className={`inline-flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-xs font-medium ${live ? 'border-emerald-300/35 bg-emerald-300/[0.07] text-emerald-200' : error ? 'border-amber-400/20 text-amber-200' : 'border-slate-800 text-slate-400'}`}>{live && <span className="h-1.5 w-1.5 rounded-full bg-current" />}{error ? 'Nicht aktuell' : live ? 'LIVE' : game.state === 'post' ? 'Beendet' : `${formatTime(game.startsAt)} Uhr`}</span></div>
+                <div className="flex items-start justify-between gap-3"><span className="min-w-0 text-xs leading-relaxed text-slate-400">{leagueName(game.league)}</span><span className={`inline-flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-xs font-medium ${live ? 'border-emerald-300/35 bg-emerald-300/[0.07] text-emerald-200' : error ? 'border-amber-400/20 text-amber-200' : 'border-slate-800 text-slate-400'}`}>{live && <span className="h-1.5 w-1.5 rounded-full bg-current" />}{error ? 'Nicht aktuell' : live ? 'LIVE' : game.state === 'post' ? 'Spiel beendet' : `${formatTime(game.startsAt)} Uhr`}</span></div>
                 <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-5"><span className="min-w-0 break-words text-sm font-medium leading-snug text-slate-100 sm:text-base">{game.home}</span><div className="text-center"><strong className="whitespace-nowrap font-mono text-2xl font-medium tabular-nums text-white sm:text-3xl">{game.homeScore ?? '–'}<span className="mx-1.5 text-slate-600">:</span>{game.awayScore ?? '–'}</strong>{game.scoreUnit && <span className="mt-1 block text-xs text-slate-400">{game.scoreUnit}</span>}</div><span className="min-w-0 break-words text-right text-sm font-medium leading-snug text-slate-100 sm:text-base">{game.away}</span></div>
                 {(game.state !== 'post' || game.scoreDetail) && <p className="mt-4 border-t border-slate-800 pt-3 text-xs text-slate-400">{game.state === 'pre' ? 'Noch nicht begonnen.' : runningDetail(game, sport)}{game.scoreDetail && <span className="ml-2 font-mono text-slate-300">{game.scoreDetail}</span>}</p>}
+                <GamePrediction game={game} sport={sport} scoresStale={error} />
               </li>;
             })}
           </ul>

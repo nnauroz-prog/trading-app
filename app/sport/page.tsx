@@ -5,7 +5,7 @@ import { LiveScoreboard } from '@/components/sport/live-scoreboard';
 
 export const metadata: Metadata = {
   title: 'Sport · Spiele und Ergebnisse',
-  description: 'Wer spielt heute? Spielstände, Ergebnisse und Startzeiten für Fußball, Basketball, Eishockey und Tennis.'
+  description: 'Spiele, Ergebnisse und datenbasierte Prognosen für Fußball, Basketball, Eishockey und Tennis.'
 };
 
 export default function SportPage() {
@@ -13,7 +13,7 @@ export default function SportPage() {
     <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
       <header className="space-y-3">
         <h1 className="text-3xl font-semibold text-white sm:text-5xl">Was läuft heute?</h1>
-        <p className="max-w-xl text-sm leading-relaxed text-slate-400">Spielstände, Ergebnisse und die nächsten Spiele. Wähle einfach deine Sportart.</p>
+        <p className="max-w-xl text-sm leading-relaxed text-slate-400">Spielstände und die nächsten Spiele. Öffne ein Spiel für eine Prognose mit möglichem Ergebnis, Favorit und den Gründen dafür.</p>
       </header>
       <LiveScoreboard initialSport="football" />
       <details className="terminal-panel p-4 sm:p-5">

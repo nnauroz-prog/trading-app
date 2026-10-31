@@ -16,7 +16,7 @@ export const MOBILE_NAV = [HOME_NAV, MARKET_NAV[0], MARKET_NAV[1], MARKET_NAV[2]
 const SPORT_ROOTS = ['/sport', '/basketball', '/tennis', '/eishockey', '/handball', '/wm'];
 const starts = (path: string, root: string) => path === root || path.startsWith(`${root}/`);
 export function isNavActive(path: string, href: string): boolean {
-  if (href === '/') return path === '/' || path === '/geldplan';
+  if (href === '/') return path === '/' || starts(path, '/geldplan');
   if (href === '/krypto') return starts(path, '/krypto') || ['/assets', '/screener', '/watchlist', '/backtest'].some(root => starts(path, root));
   if (href === '/sport') return SPORT_ROOTS.some(root => starts(path, root));
   return starts(path, href);
