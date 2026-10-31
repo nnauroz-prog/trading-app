@@ -1,8 +1,7 @@
-import { computeEventWindow } from '@/lib/calendar/event-window';
-import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
+import { ArrowUpRight, Clock3 } from 'lucide-react';
 import { mockAssets, binanceSymbolByAssetId } from '@/lib/data/mock';
 import { TOP_50, getCoinBySymbol } from '@/lib/coin-universe';
 import { runDailyAnalysis } from '@/lib/analysis/engine';
@@ -11,510 +10,124 @@ import { fetchAssetHeadlines } from '@/lib/providers/sentiment';
 import { fetchKlinesBySymbol } from '@/lib/providers/binance';
 import { fetchAllTickers } from '@/lib/providers/binance-tickers';
 import { getMasterSignal } from '@/lib/analysis/master-signal-engine';
-import { getBacktestSummary } from '@/lib/analysis/backtest-summary';
-import { getCryptoNews } from '@/lib/news/news-agent';
-import { runSpaeher } from '@/lib/akademie/spaeher';
-import { evaluatePersonas, evaluatePersonasForCoin } from '@/lib/agents/personas';
-import { PerCoinFirmaTakes } from '@/components/per-coin-firma-takes';
-import { CoinOverrideEffectBanner } from '@/components/coin-override-effect-banner';
-import { computeSetupSimilarity } from '@/lib/analysis/setup-similarity';
-import { detectChaseSignals, detectOpportunitySignals, PriceContext } from '@/lib/analysis/chase-detector';
-import { Asset, PriceSnapshot } from '@/lib/types/domain';
-import { HeadlinesList } from '@/components/headlines-list';
-import { InteractiveChart } from '@/components/interactive-chart';
-import { WatchlistToggle } from '@/components/watchlist-toggle';
+import type { Asset, Candle, PriceSnapshot, RecommendationAction } from '@/lib/types/domain';
 import { DataQualityBadge } from '@/components/data-quality-badge';
-import { QuickPositionButton } from '@/components/quick-position-button';
-import { OptionsscheineBridgeCard } from '@/components/optionsscheine-bridge-card';
-import { OptionsscheineSuggestions } from '@/components/optionsscheine-suggestions';
-import { realizedVolCrypto } from '@/lib/optionsscheine/volatility';
-import { CoinAlertForm } from '@/components/coin-alert-form';
-import { AssetSafetyCard } from '@/components/asset-safety-card';
-import { AssetTier90Status } from '@/components/asset-tier-90-status';
-import { evaluateTradeTier90 } from '@/lib/agents/trade-tier-90';
-import { scoreCandidateSafety } from '@/lib/analysis/safety-for-candidate';
-import { CoinOverridePanel } from '@/components/coin-override-panel';
-import { deriveCoinAction } from '@/lib/coin-action';
-import { scoreCryptoCandidate } from '@/lib/opportunity-score';
 
 export const dynamic = 'force-dynamic';
 
-function fmtPrice(value: number): string {
-  if (value >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
-  if (value >= 1) return value.toFixed(2);
-  return value.toFixed(4);
-}
-
-function fmtPct(value: number): string {
-  const sign = value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(2)}%`;
-}
-
-function pctColor(value: number): string {
-  if (value > 0.5) return 'text-emerald-300';
-  if (value < -0.5) return 'text-rose-300';
-  return 'text-slate-300';
-}
-
-function pctBg(value: number): string {
-  if (value > 0.5) return 'border-emerald-500/30 bg-emerald-500/5';
-  if (value < -0.5) return 'border-rose-500/30 bg-rose-500/5';
-  return 'border-slate-700 bg-slate-900/40';
-}
-
-const actionColor: Record<string, string> = {
-  BUY: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-  WATCH: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
-  HOLD: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
-  AVOID: 'border-orange-500/40 bg-orange-500/10 text-orange-300',
-  SELL: 'border-rose-500/40 bg-rose-500/10 text-rose-300'
+const fmtPrice = (value: number) => value.toLocaleString('de-DE', { maximumSignificantDigits: 7 });
+const fmtPct = (value: number) => `${value > 0 ? '+' : ''}${value.toLocaleString('de-DE', { maximumFractionDigits: 2 })} %`;
+const pctColor = (value: number) => value > 0 ? 'text-emerald-300' : value < 0 ? 'text-rose-300' : 'text-slate-300';
+const actionLabels: Record<RecommendationAction, string> = {
+  BUY: 'Ein Kauf kommt infrage', HOLD: 'Vorerst halten', SELL: 'Einen Verkauf prüfen', AVOID: 'Vorerst abwarten', WATCH: 'Weiter beobachten'
 };
+
+function PriceHistory({ candles, unit }: { candles: Candle[]; unit: string }) {
+  const history = candles.filter(candle => Number.isFinite(candle.close) && candle.close > 0 && Number.isFinite(candle.openTime)).slice(-30);
+  if (history.length < 2) return null;
+  const prices = history.map(candle => candle.close);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const span = max - min || min * 0.01;
+  const points = history.map((candle, index) => `${12 + index / (history.length - 1) * 576},${140 - (candle.close - min) / span * 115}`).join(' ');
+  const date = (time: number) => new Date(time).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', timeZone: 'Europe/Berlin' });
+
+  return <section className="terminal-panel p-5 sm:p-6" aria-label="Kursverlauf">
+    <h2 className="text-lg font-semibold text-white">So hat sich der Preis bewegt</h2>
+    <p className="mt-1 text-sm text-slate-400">Ein Preis pro Tag, in {unit}.</p>
+    <div className="mt-5 flex justify-between text-xs text-slate-400"><span>Tiefster Preis: {fmtPrice(min)}</span><span>Höchster Preis: {fmtPrice(max)}</span></div>
+    <svg viewBox="0 0 600 160" role="img" aria-label={`Täglicher Preis vom ${date(history[0].openTime)} bis ${date(history[history.length - 1].openTime)}. Erster Preis ${fmtPrice(prices[0])}, letzter Preis ${fmtPrice(prices[prices.length - 1])} ${unit}.`} className="mt-2 w-full text-cyan-300">
+      <path d="M12 140H588" stroke="currentColor" strokeOpacity="0.15" fill="none" />
+      <polyline points={points} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+    <div className="flex justify-between text-xs text-slate-500"><span>{date(history[0].openTime)}</span><span>{date(history[history.length - 1].openTime)}</span></div>
+  </section>;
+}
 
 export default async function AssetDetail({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = await params;
   const lower = ticker.toLowerCase();
   const tradeMode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-
-  const mockAsset = mockAssets.find((a) => a.ticker.toLowerCase() === lower || a.id === lower);
-  const universeCoin = getCoinBySymbol(lower) ?? TOP_50.find((c) => c.id === lower);
-
+  const mockAsset = mockAssets.find(asset => asset.ticker.toLowerCase() === lower || asset.id === lower);
+  const universeCoin = getCoinBySymbol(lower) ?? TOP_50.find(coin => coin.id === lower);
   if (!mockAsset && !universeCoin) notFound();
 
   const asset: Asset = mockAsset ?? {
-    id: universeCoin!.id,
-    name: universeCoin!.name,
-    ticker: universeCoin!.symbol,
-    category: 'crypto',
-    venueAvailability: ['Binance Spot']
+    id: universeCoin!.id, name: universeCoin!.name, ticker: universeCoin!.symbol,
+    category: 'crypto', venueAvailability: ['Binance Spot']
   };
-
-  const hasBinance = !!(mockAsset ? binanceSymbolByAssetId[asset.id] : universeCoin);
-  const binanceSymbol = mockAsset ? binanceSymbolByAssetId[asset.id] : universeCoin?.binanceSymbol;
-
-  const [snapshots, analysis, headlines, candles, dailyCandles, tickers, masterSignal, backtestSummary, newsItems] = await Promise.all([
+  const crypto = asset.category === 'crypto';
+  const binanceSymbol = universeCoin?.binanceSymbol ?? binanceSymbolByAssetId[asset.id];
+  const [snapshots, analysis, headlines, dailyCandles, tickers, masterSignal] = await Promise.all([
     mockAsset ? getSnapshots() : Promise.resolve({} as Record<string, PriceSnapshot>),
     mockAsset && !universeCoin ? runDailyAnalysis() : Promise.resolve({ recommendations: [] }),
     mockAsset ? fetchAssetHeadlines(asset.id) : Promise.resolve([]),
-    hasBinance && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1h', 200) : Promise.resolve(null),
-    hasBinance && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1d', 35) : Promise.resolve(null),
-    asset.category === 'crypto' && binanceSymbol ? fetchAllTickers() : Promise.resolve(null),
-    universeCoin ? getMasterSignal(tradeMode) : Promise.resolve(null),
-    universeCoin ? getBacktestSummary() : Promise.resolve(null),
-    universeCoin ? getCryptoNews() : Promise.resolve([])
+    crypto && binanceSymbol ? fetchKlinesBySymbol(binanceSymbol, '1d', 35) : Promise.resolve(null),
+    crypto && binanceSymbol ? fetchAllTickers() : Promise.resolve(null),
+    universeCoin ? getMasterSignal(tradeMode) : Promise.resolve(null)
   ]);
-
-  const signalForThisAsset = masterSignal?.candidates.find((c) => c.coinId === asset.id);
-  const signalLevels = signalForThisAsset
-    ? {
-        entry: signalForThisAsset.entry,
-        stopLoss: signalForThisAsset.stopLoss,
-        takeProfit1: signalForThisAsset.takeProfit1,
-        takeProfit2: signalForThisAsset.takeProfit2
-      }
-    : undefined;
 
   let snapshot: PriceSnapshot | undefined = snapshots[asset.id];
   if ((!snapshot || snapshot.source === 'mock') && tickers && binanceSymbol) {
-    const tk = tickers.get(binanceSymbol);
-    if (tk) {
-      // Compute real 7d / 30d returns from daily candles.
-      let change7d = 0;
-      let change30d = 0;
-      if (dailyCandles && dailyCandles.length >= 8) {
-        const last = dailyCandles[dailyCandles.length - 1].close;
-        const seven = dailyCandles[dailyCandles.length - 8]?.close;
-        if (seven) change7d = ((last - seven) / seven) * 100;
-        if (dailyCandles.length >= 31) {
-          const thirty = dailyCandles[dailyCandles.length - 31].close;
-          change30d = ((last - thirty) / thirty) * 100;
-        }
-      }
+    const quote = tickers.get(binanceSymbol);
+    if (quote && Number.isFinite(quote.price) && quote.price > 0) {
+      const closes = dailyCandles?.map(candle => candle.close) ?? [];
+      const last = closes[closes.length - 1];
+      const returnSince = (days: number) => {
+        const previous = closes[closes.length - 1 - days];
+        return Number.isFinite(last) && Number.isFinite(previous) && previous > 0 ? ((last - previous) / previous) * 100 : 0;
+      };
       snapshot = {
-        assetId: asset.id,
-        price: tk.price,
-        change24h: tk.priceChangePct,
-        change7d,
-        change30d,
-        volume: tk.quoteVolume,
-        source: tk.source ?? 'binance'
+        assetId: asset.id, price: quote.price, change24h: quote.priceChangePct,
+        change7d: returnSince(7), change30d: returnSince(30), volume: quote.quoteVolume,
+        source: quote.source ?? 'binance'
       };
     }
   }
-  const recommendation = ('recommendations' in analysis ? analysis.recommendations : []).find((r) => r.assetId === asset.id);
+  // Example prices must never look like current market prices when live sources fail.
+  if (snapshot?.source === 'mock' || (snapshot && (!Number.isFinite(snapshot.price) || snapshot.price <= 0))) snapshot = undefined;
+  const unit = snapshot && ['binance', 'bybit', 'kraken'].includes(snapshot.source) ? 'USDT' : 'USD';
+  const recommendation = analysis.recommendations.find(item => item.assetId === asset.id);
+  const checkedAt = masterSignal?.generatedAt ? new Date(masterSignal.generatedAt) : null;
+  const validCheckedAt = checkedAt && Number.isFinite(checkedAt.getTime()) ? checkedAt : null;
 
-  // Cross-app intelligence for crypto coins.
-  const candidate = masterSignal?.candidates.find((c) => c.coinId === asset.id) ?? null;
-  const spaeher = newsItems.length > 0 ? runSpaeher(newsItems) : null;
-  const eventWindow = computeEventWindow(listMacroEventsThisWeek());
-  const personas = (masterSignal && backtestSummary)
-    ? evaluatePersonas(masterSignal, backtestSummary, spaeher, eventWindow)
-    : [];
-  // Cross-Persona-Bewertung: was würden alle 3 Firmen über GENAU diesen Coin
-  // sagen, wenn sie ihn bewerten müssten? Liefert auch dann 3 Stimmen, wenn
-  // keine Firma ihn natürlich ins Visier nimmt. Gilt auch für BTC/ETH/SOL,
-  // deren Metadaten zusätzlich im kleinen Legacy-Katalog stehen.
-  const perCoinFirmaTakes = (universeCoin && masterSignal && backtestSummary)
-    ? evaluatePersonasForCoin(asset.id, masterSignal, backtestSummary, spaeher, eventWindow)
-    : [];
-  const personaTakesOnThisCoin = personas.map((p) => ({
-    persona: p,
-    isMyTarget: p.target?.coinId === asset.id
-  }));
-  const coinSentiment = spaeher?.perCoin.find((c) => c.coin.toUpperCase() === asset.ticker.toUpperCase()) ?? null;
-  const setupSimilarity = (candidate && backtestSummary)
-    ? computeSetupSimilarity(backtestSummary.safeTrades, {
-        coinId: candidate.coinId, ticker: candidate.symbol, passedCount: candidate.passedCount
-      })
-    : null;
-  const coinNews = newsItems.filter((n) => {
-    const t = n.title.toUpperCase();
-    return t.includes(asset.ticker.toUpperCase()) || t.includes(asset.name.toUpperCase());
-  }).slice(0, 5);
+  return <main className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
+    <Link href={crypto ? '/krypto' : '/aktien'} className="inline-flex py-2 text-sm text-slate-400 hover:text-cyan-300">← {crypto ? 'Zur Krypto-Übersicht' : 'Zur Aktien-Übersicht'}</Link>
+    <header>
+      <p className="text-sm text-cyan-300">{crypto ? 'Krypto' : asset.category === 'etf' ? 'Fonds' : 'Aktie'}</p>
+      <h1 className="mt-2">{asset.name} <span className="text-slate-500">{asset.ticker}</span></h1>
+    </header>
 
-  // Coin-Action card — direct recommendation from the assembled signals.
-  const candidateOppScore = candidate ? scoreCryptoCandidate({
-    passedCount: candidate.passedCount,
-    totalCount: candidate.totalCount,
-    structure: candidate.structure,
-    nearSupport: candidate.nearSupport,
-    rrTp1: candidate.rrTp1,
-    quoteVolume: candidate.quoteVolume,
-    priceChangePct24h: candidate.priceChangePct24h,
-    marketMood: masterSignal!.marketMood,
-    userBrokerAvailable: candidate.brokers.includes('Coinbase') || candidate.brokers.includes('Scalable Capital'),
-    isOnWatchlist: false
-  }).score : 0;
-  const coinAction = deriveCoinAction({
-    hasCandidate: !!candidate,
-    opportunityScore: candidateOppScore,
-    structure: candidate?.structure ?? null,
-    priceChange24h: snapshot?.change24h ?? 0,
-    nearSupport: candidate?.nearSupport ?? false,
-    marketMoodRiskOff: masterSignal?.marketMood === 'risk-off'
-  });
+    <section className="terminal-panel p-5 sm:p-7">
+      <h2 className="text-sm font-medium text-slate-400">Aktueller Preis</h2>
+      {snapshot ? <>
+        <p className="mt-3 break-words font-mono text-3xl font-semibold tracking-tight text-white sm:text-4xl">{fmtPrice(snapshot.price)} <span className="text-lg text-slate-500">{unit}</span></p>
+        {Number.isFinite(snapshot.change24h) && <p className={`mt-3 text-base ${pctColor(snapshot.change24h)}`}>{fmtPct(snapshot.change24h)} seit gestern</p>}
+        <p className="mt-4 text-sm leading-relaxed text-slate-400">{crypto ? `Ein ${asset.ticker} kostet ungefähr diesen Betrag. Dein Kaufpreis kann durch Kursschwankungen und Gebühren abweichen.` : 'Der Preis zeigt den Wert einer Aktie. Gebühren und Kursschwankungen können deinen Kaufpreis verändern.'}</p>
+        <details className="mt-5 border-t border-slate-800 pt-4"><summary className="cursor-pointer text-sm text-slate-400">Quelle und Währung</summary><div className="mt-3"><DataQualityBadge source={snapshot.source} verified={snapshot.source !== 'mock'} fetchedAt={Date.now()} /></div><p className="mt-3 text-sm leading-relaxed text-slate-400">{unit === 'USDT' ? 'USDT ist eine Kryptowährung, deren Wert sich am US-Dollar orientiert. Für einen Kauf in Euro kommt die Umrechnung hinzu.' : 'USD steht für US-Dollar. Für einen Kauf in Euro kommt die Umrechnung hinzu.'}</p></details>
+      </> : <p className="mt-3 text-base leading-relaxed text-slate-300">Der aktuelle Preis ist gerade nicht verfügbar. Schau später noch einmal vorbei.</p>}
+    </section>
 
-  // Chase / Opportunity status specific to this coin.
-  let chaseStatus: { kind: 'chase' | 'opportunity' | 'clean'; reason: string } = { kind: 'clean', reason: '' };
-  if (spaeher && snapshot) {
-    const prices: PriceContext[] = [{ symbol: asset.ticker, priceChangePct24h: snapshot.change24h }];
-    const chases = detectChaseSignals(spaeher.perCoin, prices);
-    const opps = detectOpportunitySignals(spaeher.perCoin, prices);
-    if (chases.length > 0) chaseStatus = { kind: 'chase', reason: chases[0].reason };
-    else if (opps.length > 0) chaseStatus = { kind: 'opportunity', reason: opps[0].reason };
-  }
+    {crypto ? <section className="terminal-panel border-cyan-400/20 p-5 sm:p-6">
+      <h2 className="text-xl font-semibold text-white">Ist jetzt ein guter Zeitpunkt?</h2>
+      <p className="mt-3 text-base leading-relaxed text-slate-300">Ein steigender Kurs allein reicht nicht als Kaufgrund. In der Kaufprüfung siehst du, ob gerade ein Coin infrage kommt und welche Preise dafür geplant sind.</p>
+      <div className="mt-4 flex items-start gap-2 text-sm text-slate-400"><Clock3 size={17} className="mt-0.5 shrink-0 text-cyan-300" aria-hidden /><p>{tradeMode === 'daytrade' ? 'Du schaust auf Käufe für heute. Dafür musst du die Preise im Blick behalten.' : 'Du schaust auf Käufe für die nächsten Tage. Auch in dieser Zeit können die Preise stark schwanken.'}</p></div>
+      <Link href="/krypto" className="terminal-button mt-5">Kaufprüfung ansehen <ArrowUpRight size={16} aria-hidden /></Link>
+      {validCheckedAt && <p className="mt-3 text-xs text-slate-500">Zuletzt geprüft um {validCheckedAt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' })} Uhr (Berlin).</p>}
+    </section> : recommendation ? <section className="terminal-panel p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-white">{actionLabels[recommendation.action]}</h2>
+      <p className="mt-3 text-base leading-relaxed text-slate-300">{recommendation.rationale}</p>
+      <Link href={`/aktien/${asset.ticker.toUpperCase()}`} className="mt-4 inline-flex items-center gap-2 text-sm text-cyan-300">Aktie genauer ansehen <ArrowUpRight size={16} aria-hidden /></Link>
+    </section> : null}
 
-  return (
-    <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
-      <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
-        ← zurück zum Signal Desk
-      </Link>
+    {dailyCandles && <PriceHistory candles={dailyCandles} unit="USDT" />}
 
-      <header className="space-y-1">
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-slate-500">
-          <span>{asset.category}</span>
-          <span className="text-slate-700">·</span>
-          <span>{asset.venueAvailability.join(' · ')}</span>
-        </div>
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            {asset.name} <span className="font-mono text-slate-500">({asset.ticker})</span>
-          </h1>
-          <div className="flex flex-wrap items-baseline gap-2">
-            <WatchlistToggle coinId={asset.id} symbol={asset.ticker} />
-            {candidate && (
-              <QuickPositionButton
-                ticker={candidate.symbol}
-                underlying={asset.name}
-                entry={candidate.entry}
-                stopLoss={candidate.stopLoss}
-                takeProfit={candidate.takeProfit1}
-                brokers={candidate.brokers}
-              />
-            )}
-          </div>
-        </div>
-      </header>
+    {crypto && <section className="rounded-xl border border-slate-800 p-5">
+      <h2 className="font-semibold text-white">Wie viel von deinem Geld passt dazu?</h2>
+      <p className="mt-2 text-sm leading-relaxed text-slate-400">Plane zuerst Geld für deinen Alltag und eine Reserve ein. Für Krypto kommt nur Geld infrage, dessen Verlust du tragen kannst.</p>
+      <Link href="/geldplan" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-cyan-300">Meinen Geldplan ansehen <ArrowUpRight size={16} aria-hidden /></Link>
+    </section>}
 
-      {universeCoin && (
-        <section className={`space-y-2 rounded-2xl border-2 p-5 ${coinAction.toneClass}`}>
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Aktion</span>
-            <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${coinAction.labelClass}`}>
-              {coinAction.kind.replace(/_/g, ' ')}
-            </span>
-          </div>
-          <h2 className="text-lg font-bold text-white sm:text-xl">{coinAction.headline}</h2>
-          <p className="text-[13px] leading-relaxed text-slate-200">{coinAction.body}</p>
-        </section>
-      )}
-
-      {snapshot ? (
-        <section className="rounded-2xl border border-slate-800/80 bg-gradient-to-br from-slate-950 to-slate-900/40 p-5">
-          <div className="flex items-baseline justify-between gap-4">
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-slate-500">Aktuell</div>
-              <div className="mt-1 font-mono text-4xl font-bold text-white">${fmtPrice(snapshot.price)}</div>
-            </div>
-            <div className="text-right">
-              <DataQualityBadge source={snapshot.source} verified={snapshot.source !== 'mock'} fetchedAt={Date.now()} />
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className={`rounded-lg border p-3 ${pctBg(snapshot.change24h)}`}>
-              <div className="text-[10px] uppercase tracking-widest text-slate-500">24h</div>
-              <div className={`mt-1 font-mono text-lg font-bold ${pctColor(snapshot.change24h)}`}>{fmtPct(snapshot.change24h)}</div>
-            </div>
-            <div className={`rounded-lg border p-3 ${snapshot.change7d !== 0 ? pctBg(snapshot.change7d) : 'border-slate-700 bg-slate-900/40'}`}>
-              <div className="text-[10px] uppercase tracking-widest text-slate-500">7 Tage</div>
-              <div className={`mt-1 font-mono text-lg font-bold ${snapshot.change7d !== 0 ? pctColor(snapshot.change7d) : 'text-slate-500'}`}>
-                {snapshot.change7d !== 0 ? fmtPct(snapshot.change7d) : '—'}
-              </div>
-            </div>
-            <div className={`rounded-lg border p-3 ${snapshot.change30d !== 0 ? pctBg(snapshot.change30d) : 'border-slate-700 bg-slate-900/40'}`}>
-              <div className="text-[10px] uppercase tracking-widest text-slate-500">30 Tage</div>
-              <div className={`mt-1 font-mono text-lg font-bold ${snapshot.change30d !== 0 ? pctColor(snapshot.change30d) : 'text-slate-500'}`}>
-                {snapshot.change30d !== 0 ? fmtPct(snapshot.change30d) : '—'}
-              </div>
-            </div>
-            <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-3">
-              <div className="text-[10px] uppercase tracking-widest text-slate-500">Volume</div>
-              <div className="mt-1 font-mono text-lg font-bold text-slate-100">
-                {snapshot.volume >= 1_000_000_000 ? `$${(snapshot.volume / 1_000_000_000).toFixed(1)}B` :
-                 snapshot.volume >= 1_000_000 ? `$${(snapshot.volume / 1_000_000).toFixed(1)}M` :
-                 `$${snapshot.volume.toLocaleString()}`}
-              </div>
-            </div>
-          </div>
-        </section>
-      ) : (
-        <p className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-500">
-          Keine Preisdaten verfügbar.
-        </p>
-      )}
-
-      {candidate && masterSignal && backtestSummary && (() => {
-        const safety = scoreCandidateSafety(candidate, masterSignal, backtestSummary);
-        const buyQualified = safety.grade === 'A' || safety.grade === 'B';
-        return (
-          <>
-            <AssetSafetyCard symbol={asset.ticker} safety={safety} />
-            <CoinOverridePanel coinId={asset.id} symbol={asset.ticker} baseSafetyScore={safety.score} currentPrice={snapshot?.price ?? null} />
-            {buyQualified && snapshot && (
-              <OptionsscheineSuggestions
-                underlyingName={asset.name}
-                underlyingPrice={snapshot.price}
-                direction="call"
-                assetClass="krypto"
-                sigma={dailyCandles ? (realizedVolCrypto(dailyCandles.map((c) => c.close)) ?? undefined) : undefined}
-                historicalCloses={dailyCandles?.map((c) => c.close)}
-                historicalDates={dailyCandles?.map((c) => new Date(c.openTime).toISOString().slice(0, 10))}
-              />
-            )}
-          </>
-        );
-      })()}
-
-      {personas.length > 0 && (
-        <AssetTier90Status result={evaluateTradeTier90(personas)} coinSymbol={asset.ticker} />
-      )}
-
-      {snapshot && (
-        <CoinAlertForm coinId={asset.id} symbol={asset.ticker} currentPrice={snapshot.price} />
-      )}
-
-      <OptionsscheineBridgeCard
-        underlyingName={asset.name}
-        underlyingPrice={snapshot?.price ?? null}
-        assetClass="krypto"
-        sigma={dailyCandles ? (realizedVolCrypto(dailyCandles.map((c) => c.close)) ?? undefined) : undefined}
-      />
-
-      {chaseStatus.kind === 'chase' && (
-        <section className="rounded-2xl border-2 border-amber-400/50 bg-amber-950/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200">Schon gelaufen — nicht hinterherjagen</div>
-          <p className="mt-1 text-[12px] text-amber-100/90">{chaseStatus.reason}</p>
-        </section>
-      )}
-      {chaseStatus.kind === 'opportunity' && (
-        <section className="rounded-2xl border-2 border-sky-400/50 bg-sky-950/20 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-sky-200">Angst war übertrieben — Setup wird besser</div>
-          <p className="mt-1 text-[12px] text-sky-100/90">{chaseStatus.reason}</p>
-        </section>
-      )}
-
-      {hasBinance && candles && candles.length >= 50 && (
-        <InteractiveChart
-          assetId={asset.id}
-          initialCandles={candles}
-          initialInterval="1h"
-          title={`${asset.ticker}/USDT · Technical View`}
-          signalLevels={signalLevels}
-        />
-      )}
-
-      {hasBinance && (!candles || candles.length < 50) && (
-        <div className="rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4 text-sm text-amber-200/80">
-          Kerzendaten gerade nicht verfügbar. Lade die Seite später erneut, um den Chart zu aktualisieren.
-        </div>
-      )}
-
-      {recommendation && (
-        <section className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Daily Outlook</h2>
-            <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${actionColor[recommendation.action] ?? 'border-slate-700 bg-slate-900 text-slate-300'}`}>
-              {recommendation.action}
-            </span>
-          </div>
-          <p className="text-sm leading-relaxed text-slate-300">{recommendation.rationale}</p>
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2.5 text-xs">
-              <div className="font-semibold text-rose-300">Stop-Loss-Idee</div>
-              <div className="mt-0.5 text-slate-300">{recommendation.stopLossIdea}</div>
-            </div>
-            <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2.5 text-xs">
-              <div className="font-semibold text-emerald-300">Take-Profit-Zone</div>
-              <div className="mt-0.5 text-slate-300">{recommendation.takeProfitZone}</div>
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-wider text-slate-500">
-            <span>Risk <span className="text-slate-300">{recommendation.riskLevel}</span></span>
-            <span>Hold <span className="text-slate-300">{recommendation.holdDuration}</span></span>
-            <span>Conf <span className="text-slate-300">{recommendation.confidence}/100</span></span>
-          </div>
-          {recommendation.counterArguments.length > 0 && (
-            <div className="mt-3 rounded-md border border-amber-500/20 bg-amber-950/10 p-2.5 text-[11px] text-amber-200/80">
-              <strong className="text-amber-300">Gegenargumente:</strong> {recommendation.counterArguments.join(' · ')}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Cross-Persona-Take auf GENAU diesen Coin: zwingt alle 3 Firmen, ihn
-          zu bewerten, statt nur den jeweils eigenen Top-Pick zu zeigen. */}
-      {perCoinFirmaTakes.length > 0 && (
-        <>
-          <CoinOverrideEffectBanner coinId={asset.id} symbol={asset.ticker} serverVerdicts={perCoinFirmaTakes} />
-          <PerCoinFirmaTakes verdicts={perCoinFirmaTakes} coinSymbol={asset.ticker} />
-        </>
-      )}
-
-      {/* Fallback für Mock-Assets ohne Universe-Eintrag: zeigt die natürlichen
-          Persona-Takes (jede schaut auf ihren eigenen Top-Pick). */}
-      {perCoinFirmaTakes.length === 0 && personas.length > 0 && (
-        <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Was die drei Firmen sagen</h2>
-            <p className="mt-1 text-[11px] text-slate-500">
-              {asset.ticker} steht aktuell auf keiner Firma-Liste — keine direkte Bewertung möglich.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            {personaTakesOnThisCoin.map(({ persona: p, isMyTarget }) => {
-              const isBuyOnThis = p.verdict === 'BUY' && isMyTarget;
-              const tone = isBuyOnThis ? 'border-emerald-400/50 bg-emerald-950/30' : 'border-slate-700 bg-slate-900/40';
-              const status = isBuyOnThis
-                ? `kauft ${asset.ticker} heute`
-                : isMyTarget
-                ? `hat ${asset.ticker} im Visier, wartet aber`
-                : `schaut auf ${p.target?.symbol ?? '—'}, nicht auf ${asset.ticker}`;
-              return (
-                <div key={p.persona} className={`rounded-lg border-2 p-3 ${tone}`}>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-white">{p.name}</span>
-                    <span className={`text-[9px] font-bold uppercase tracking-wider ${isBuyOnThis ? 'text-emerald-300' : 'text-slate-500'}`}>
-                      {isBuyOnThis ? 'KAUFEN' : 'WARTEN'}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[11px] text-slate-300">{status}.</p>
-                  {isMyTarget && (
-                    <p className="mt-1 text-[10px] text-slate-500">{p.rationale}</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Späher-Sentiment für diesen Coin */}
-      {coinSentiment && (
-        <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Späher-Sentiment für {asset.ticker}</h2>
-          <div className="flex flex-wrap items-baseline gap-2 text-[12px]">
-            <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-              coinSentiment.tilt === 'bullisch' ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200' :
-              coinSentiment.tilt === 'bärisch' ? 'border-rose-400/50 bg-rose-500/15 text-rose-200' :
-              'border-slate-700 bg-slate-900 text-slate-300'
-            }`}>
-              {coinSentiment.tilt}
-            </span>
-            <span className="text-slate-200">
-              {coinSentiment.bullishCount} bullische vs {coinSentiment.bearishCount} bärische Headlines heute
-            </span>
-            {coinSentiment.topItem && (
-              <Link href={`/news/${coinSentiment.topItem.id}`} className="text-[11px] text-sky-300 hover:text-sky-200">
-                Top-News lesen →
-              </Link>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Setup-Ähnlichkeit aus dem Backtest */}
-      {setupSimilarity && (
-        <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Vergleichbare {asset.ticker}-Setups historisch</h2>
-          <p className="text-[12px] text-slate-200">{setupSimilarity.oneLineVerdict}</p>
-          {setupSimilarity.matchCount > 0 && (
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-              <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-center">
-                <div className="text-[9px] uppercase tracking-wider text-slate-500">Matches</div>
-                <div className="font-mono text-sm font-bold text-slate-100">{setupSimilarity.matchCount}</div>
-              </div>
-              <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-center">
-                <div className="text-[9px] uppercase tracking-wider text-slate-500">Trefferquote</div>
-                <div className={`font-mono text-sm font-bold ${(setupSimilarity.hitRatePct ?? 0) >= 50 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                  {setupSimilarity.hitRatePct?.toFixed(0) ?? '—'}%
-                </div>
-              </div>
-              <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-center">
-                <div className="text-[9px] uppercase tracking-wider text-slate-500">Ø Gewinn</div>
-                <div className="font-mono text-sm font-bold text-emerald-300">
-                  +{setupSimilarity.avgWinPct?.toFixed(1) ?? '—'}%
-                </div>
-              </div>
-              <div className="rounded-md border border-slate-800 bg-slate-950/40 p-2 text-center">
-                <div className="text-[9px] uppercase tracking-wider text-slate-500">Ø Verlust</div>
-                <div className="font-mono text-sm font-bold text-rose-300">
-                  {setupSimilarity.avgLossPct?.toFixed(1) ?? '—'}%
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Deutsche News, gefiltert auf diesen Coin */}
-      {coinNews.length > 0 && (
-        <section className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">{asset.ticker} in den deutschen News</h2>
-          <ul className="space-y-1.5">
-            {coinNews.map((n) => (
-              <li key={n.id}>
-                <Link href={`/news/${n.id}`} className="block rounded-lg border border-slate-800 bg-slate-950/40 p-2.5 transition hover:border-emerald-500/40">
-                  <p className="text-[13px] font-semibold leading-snug text-slate-100">{n.title}</p>
-                  <p className="mt-1 text-[10px] text-slate-500">
-                    <span className="text-slate-400">{n.source}</span> · {new Date(n.publishedAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' })}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <HeadlinesList headlines={headlines} />
-    </main>
-  );
+    {headlines.length > 0 && <details className="terminal-panel p-5"><summary className="cursor-pointer text-base font-medium text-white">Aktuelle Nachrichten</summary><ul className="mt-4 space-y-3">{headlines.slice(0, 3).map((headline, index) => <li key={`${headline.url}-${index}`} className="border-t border-slate-800 pt-3"><p className="mb-1 text-xs text-slate-500">{headline.source}</p>{headline.url ? <a href={headline.url} target="_blank" rel="noopener noreferrer" className="text-sm leading-relaxed text-slate-200 hover:text-cyan-300">{headline.headline}</a> : <p className="text-sm leading-relaxed text-slate-200">{headline.headline}</p>}</li>)}</ul></details>}
+  </main>;
 }

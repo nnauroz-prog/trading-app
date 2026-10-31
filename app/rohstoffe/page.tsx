@@ -1,210 +1,40 @@
-// Rohstoff-Hauptseite. Live-Futures-Quotes via Yahoo Finance Chart API.
-// Edelmetalle (Gold, Silber, Platin, Palladium), Energie, Industriemetalle, Agrar.
-
 import type { Metadata } from 'next';
 import Link from 'next/link';
-
-export const metadata: Metadata = {
-  title: 'Rohstoffe · Edelmetalle, Energie, Agrar',
-  description: 'Rohstoff-Tageswerte: Live-Futures-Quotes, Sektor-Heatmap fuer Edelmetalle, Energie und Agrar. Modell-Hinweise, kein Anlageratschlag.'
-};
+import { ArrowUpRight } from 'lucide-react';
 import { QuoteRow } from '@/components/quote-row';
-import { SectorHeatmap, aggregateBuckets } from '@/components/sector-heatmap';
-import { commoditiesByGroup, COMMODITY_UNIVERSE, type CommoditySymbol } from '@/lib/market/commodities';
+import { commoditiesByGroup, type CommoditySymbol } from '@/lib/market/commodities';
 import { fetchManyQuotes } from '@/lib/market/yahoo-quote';
 import { getCommoditySafetyScan } from '@/lib/market/commodity-safety-scan';
 import { getCommoditySafetyBacktestSummary } from '@/lib/market/commodity-safety-backtest-scan';
-import { SafeCommodityPicks } from '@/components/safe-commodity-picks';
-import { InstrumentPrecisionDesk } from '@/components/instruments/instrument-precision-desk';
 import { evaluateInstrumentPrecisionPick } from '@/lib/analysis/instrument-precision-gate';
-import { CommoditySafetyBacktestCard } from '@/components/commodity-safety-backtest-card';
-import { CommoditySectorSafetyHeatmap } from '@/components/commodity-sector-safety-heatmap';
-import { detectHotCommodityGroups } from '@/lib/market/commodity-group-summary';
-import { HotCommodityGroupBanner } from '@/components/hot-commodity-group-banner';
-import { evaluateCommodityPersonas } from '@/lib/agents/commodity-personas';
-import { CommodityPersonaPanel } from '@/components/commodity-persona-panel';
-import { PersonaConsensusBanner } from '@/components/persona-consensus-banner';
 
+export const metadata: Metadata = { title: 'Rohstoffe', description: 'Gold, Silber, Öl und weitere Rohstoffpreise einfach vergleichen.' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
-
 const GROUP_ORDER: CommoditySymbol['group'][] = ['Edelmetalle', 'Energie', 'Industriemetalle', 'Agrar'];
-
-const GROUP_HEADLINE: Record<CommoditySymbol['group'], string> = {
-  Edelmetalle: 'Edelmetalle',
-  Energie: 'Energie',
-  Industriemetalle: 'Industriemetalle',
-  Agrar: 'Agrarrohstoffe'
-};
+const GROUP_LABEL: Record<CommoditySymbol['group'], string> = { Edelmetalle: 'Gold, Silber und andere Edelmetalle', Energie: 'Öl, Gas und Benzin', Industriemetalle: 'Metalle für die Industrie', Agrar: 'Lebensmittel und weitere Rohstoffe' };
 
 export default async function RohstoffePage() {
   const groups = commoditiesByGroup();
-  // Alle in einem Rutsch holen, damit nur ein Promise.all wartet.
-  const allItems: CommoditySymbol[] = GROUP_ORDER.flatMap((g) => groups[g]);
+  const allItems = GROUP_ORDER.flatMap(group => groups[group]);
   const [quotes, safetyScan, safetyBacktest] = await Promise.all([
-    fetchManyQuotes(allItems.map((c) => ({ symbol: c.symbol, name: c.name }))),
-    getCommoditySafetyScan(),
-    getCommoditySafetyBacktestSummary()
+    fetchManyQuotes(allItems.map(item => ({ symbol: item.symbol, name: item.name }))),
+    getCommoditySafetyScan(), getCommoditySafetyBacktestSummary()
   ]);
-  const quoteMap = new Map(allItems.map((c, i) => [c.symbol, quotes[i]]));
-  const liveCount = quotes.filter((q) => q !== null).length;
+  const quoteMap = new Map(allItems.map((item, i) => [item.symbol, quotes[i]]));
+  const reviewed = safetyScan.map(e => evaluateInstrumentPrecisionPick({
+    symbol: e.symbol, name: e.name, group: e.group, kind: 'commodity', price: e.price, safety: e.assessment,
+    marketTrendPct: null, backtestHitRatePct: safetyBacktest.combinedWinRatePct ?? null, backtestSampleSize: safetyBacktest.totalTrades ?? 0
+  }));
+  const candidates = reviewed.filter(p => p.verdict === 'FREIGABE').slice(0, 3);
+  const liveCount = quotes.filter(q => q !== null).length;
 
-  // Tages-Mover für die Schnellsicht: Top-3 hoch, Top-3 runter.
-  // „Stärkste" nur wenn wirklich positiv — sonst irreführend wenn der
-  // ganze Markt rot ist (z. B. „+-0,14 %" für eine Zucker-Position).
-  const liveCommodities = allItems
-    .map((c) => ({ c, q: quoteMap.get(c.symbol) ?? null }))
-    .filter((x): x is { c: CommoditySymbol; q: NonNullable<typeof x.q> } => x.q !== null);
-  const moversUp = [...liveCommodities]
-    .filter((x) => x.q.changePct > 0)
-    .sort((a, b) => b.q.changePct - a.q.changePct)
-    .slice(0, 3);
-  const moversDown = [...liveCommodities]
-    .filter((x) => x.q.changePct < 0)
-    .sort((a, b) => a.q.changePct - b.q.changePct)
-    .slice(0, 3);
-
-  // Sektor-Heatmap pro Gruppe.
-  const sectorBuckets = aggregateBuckets(
-    COMMODITY_UNIVERSE.map((c) => ({ group: c.group, quote: quoteMap.get(c.symbol) ?? null })),
-    GROUP_ORDER
-  );
-
-  return (
-    <main className="mx-auto max-w-5xl space-y-5 p-4 pb-20 md:p-6">
-      <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
-        ← zurück zur Übersicht
-      </Link>
-
-      <header className="space-y-1.5">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-400">🛢️ Rohstoffe</div>
-          <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-amber-200">
-            Kein Anlageratschlag
-          </span>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Rohstoff-Übersicht</h1>
-        <p className="text-sm text-slate-400">
-          Continuous-Front-Month-Futures für Edelmetalle, Energie, Industriemetalle und Agrar.
-          Daten von Yahoo Finance, 5 Min Cache.
-          {liveCount > 0 && <span> · <span className="text-emerald-300">{liveCount} Live-Quotes</span></span>}
-        </p>
-      </header>
-
-      {(() => {
-        // Rohstoffe Precision Desk: identisches Pattern wie Aktien/Krypto.
-        // Rohstoffe folgen oft eigener Dynamik (Gold steigt bei Risk-Off),
-        // daher kein Markt-Veto im modelAgent.
-        const precisionPicks = safetyScan.map((e) => evaluateInstrumentPrecisionPick({
-          symbol: e.symbol,
-          name: e.name,
-          group: e.group,
-          kind: 'commodity',
-          price: e.price,
-          safety: e.assessment,
-          marketTrendPct: null,
-          backtestHitRatePct: safetyBacktest.combinedWinRatePct ?? null,
-          backtestSampleSize: safetyBacktest.totalTrades ?? 0
-        }));
-        return <InstrumentPrecisionDesk title="Rohstoffe Precision Desk" hrefBase="/rohstoffe" picks={precisionPicks} />;
-      })()}
-
-      <SectorHeatmap buckets={sectorBuckets} title="Sektor-Heatmap (Rohstoffe)" />
-
-      <HotCommodityGroupBanner hotGroups={detectHotCommodityGroups(safetyScan)} />
-
-      <SafeCommodityPicks entries={safetyScan} />
-
-      {(() => {
-        const commodityVerdicts = evaluateCommodityPersonas(safetyScan);
-        return (
-          <>
-            <PersonaConsensusBanner verdicts={commodityVerdicts} context="Rohstoffe" />
-            <CommodityPersonaPanel verdicts={commodityVerdicts} />
-          </>
-        );
-      })()}
-
-      <CommoditySectorSafetyHeatmap entries={safetyScan} />
-
-      <CommoditySafetyBacktestCard summary={safetyBacktest} />
-
-      {liveCommodities.length >= 6 && (moversUp.length > 0 || moversDown.length > 0) && (
-        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {moversUp.length > 0 ? (
-            <div className="space-y-2 rounded-2xl border border-emerald-400/30 bg-slate-900/40 p-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Stärkste heute</h2>
-              <ul className="space-y-1">
-                {moversUp.map(({ c, q }) => (
-                  <li key={c.symbol} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
-                    {c.emoji && <span className="text-base leading-none">{c.emoji}</span>}
-                    <span className="min-w-0 truncate text-slate-100">{c.name}</span>
-                    <span className="font-mono font-bold text-emerald-300">+{q.changePct.toFixed(2)} %</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Stärkste heute</h2>
-              <p className="mt-2 text-[10.5px] leading-snug text-slate-500">Heute kein Rohstoff im Plus — gesamter Markt rot.</p>
-            </div>
-          )}
-          {moversDown.length > 0 ? (
-            <div className="space-y-2 rounded-2xl border border-rose-400/30 bg-slate-900/40 p-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-rose-300">Schwächste heute</h2>
-              <ul className="space-y-1">
-                {moversDown.map(({ c, q }) => (
-                  <li key={c.symbol} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
-                    {c.emoji && <span className="text-base leading-none">{c.emoji}</span>}
-                    <span className="min-w-0 truncate text-slate-100">{c.name}</span>
-                    <span className="font-mono font-bold text-rose-300">{q.changePct.toFixed(2)} %</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Schwächste heute</h2>
-              <p className="mt-2 text-[10.5px] leading-snug text-slate-500">Heute kein Rohstoff im Minus.</p>
-            </div>
-          )}
-        </section>
-      )}
-
-      {GROUP_ORDER.map((group) => {
-        const items = groups[group];
-        if (items.length === 0) return null;
-        const groupLive = items.filter((c) => quoteMap.get(c.symbol) !== null).length;
-        return (
-          <section key={group} className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-            <div className="flex items-baseline justify-between gap-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{GROUP_HEADLINE[group]}</h2>
-              <span className="text-[10px] text-slate-500">{groupLive}/{items.length} live</span>
-            </div>
-            <ul className="space-y-1">
-              {items.map((c) => (
-                <QuoteRow
-                  key={c.symbol}
-                  quote={quoteMap.get(c.symbol) ?? null}
-                  fallbackName={c.name}
-                  fallbackSymbol={c.symbol}
-                  unit={c.unit}
-                  emoji={c.emoji}
-                  href={`/rohstoffe/${encodeURIComponent(c.symbol)}`}
-                />
-              ))}
-            </ul>
-          </section>
-        );
-      })}
-
-      <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
-        Datenquelle: Yahoo Finance v8 Chart API (Continuous Front-Month Futures).
-        Cache: 5 Min · Spot vs. Futures kann leicht abweichen (Roll-Effekt).
-        Bei API-Ausfall werden Zeilen klar als „gerade nicht verfügbar“ markiert.
-        Keine Anlageberatung.
-      </footer>
-    </main>
-  );
+  return <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
+    <Link href="/" className="text-sm text-slate-400 hover:text-cyan-200">← Zurück zu meinem Geld</Link>
+    <header className="space-y-3"><h1 className="text-3xl font-semibold text-white">Rohstoffpreise im Überblick.</h1><p className="text-sm text-slate-400">Wie entwickeln sich Gold, Öl und andere Rohstoffe? Hier kannst du die aktuellen Börsenpreise vergleichen.</p><Link href="/gold" className="terminal-button">Meinen Goldwert berechnen<ArrowUpRight size={15} /></Link></header>
+    <section className="terminal-panel p-5 sm:p-6" aria-label="Rohstoffe heute"><h2 className="text-lg font-semibold text-white">Gibt es heute etwas Interessantes?</h2><p className="mt-2 text-sm leading-relaxed text-slate-300">{reviewed.length === 0 ? 'Für eine Einschätzung des Kaufzeitpunkts fehlen gerade Daten. Die verfügbaren Preise findest du unten.' : candidates.length > 0 ? 'Diese Rohstoffe sind einen genaueren Blick wert. Prüfe vor einem Kauf, wie du tatsächlich investieren würdest und welches Risiko das mit sich bringt.' : 'Heute gibt es hier keinen klaren Kaufhinweis. Du musst deshalb nichts an deinem Geldplan ändern.'}</p>{candidates.length > 0 && <ul className="mt-4 flex flex-wrap gap-2">{candidates.map(candidate => <li key={candidate.symbol}><Link href={`/rohstoffe/${encodeURIComponent(candidate.symbol)}`} className="terminal-button">{candidate.name}<ArrowUpRight size={14} /></Link></li>)}</ul>}</section>
+    {liveCount === 0 && <p className="rounded-xl border border-slate-800 p-4 text-sm text-slate-400">Die Preise werden gerade nicht geliefert. Fehlende Werte bleiben leer.</p>}
+    {GROUP_ORDER.map(group => <section key={group} className="terminal-panel p-5 sm:p-6"><h2 className="mb-4 text-lg font-semibold text-white">{GROUP_LABEL[group]}</h2><ul className="space-y-2">{groups[group].map(item => <QuoteRow key={item.symbol} quote={quoteMap.get(item.symbol) ?? null} fallbackName={item.name} fallbackSymbol={item.symbol} unit={item.unit} href={`/rohstoffe/${encodeURIComponent(item.symbol)}`} />)}</ul></section>)}
+    <details className="text-sm text-slate-400"><summary className="cursor-pointer py-3">Was bedeuten diese Preise?</summary><div className="space-y-3 pb-4 leading-relaxed"><p>Die Angaben beziehen sich auf unterschiedliche Mengen, zum Beispiel eine Unze Gold oder ein Fass Öl. Eine Feinunze entspricht etwa 31,1 Gramm; ein Fass Öl etwa 159 Litern. Achte deshalb auf die Einheit unter dem Namen.</p><p>Die Börsenpreise beziehen sich auf Verträge über eine spätere Lieferung. Beim Kauf von Goldbarren, Fonds oder anderen Anlageprodukten können andere Preise und zusätzliche Kosten gelten.</p><p>Die Daten kommen von Yahoo Finance und werden etwa alle fünf Minuten neu abgefragt. Für einen Kaufhinweis werden zusätzlich der Kursverlauf, Schwankungen und vorhandene Daten geprüft.</p></div></details>
+  </main>;
 }

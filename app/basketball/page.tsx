@@ -1,123 +1,36 @@
-import { LiveScoreboard } from '@/components/sport/live-scoreboard';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import Link from 'next/link';
+import { LiveScoreboard } from '@/components/sport/live-scoreboard';
 import { getBasketballFixtures } from '@/lib/sport/basketball-fetcher';
 
-export const metadata: Metadata = {
-  title: 'Basketball · NBA, EuroLeague, BBL, NCAA',
-  description: 'Basketball-Tageswerte fuer NBA, EuroLeague, BBL und NCAA. Modell-Tendenz pro Spiel, keine Wettempfehlung.'
-};
-import { predictWinner } from '@/lib/sport/winner-verdict';
-import { WinnerVerdictCard } from '@/components/winner-verdict-card';
-
+export const metadata: Metadata = { title: 'Basketball · Spiele und Ergebnisse', description: 'NBA-Spielstände auf einen Blick. Weitere Ligen und Termine findest du unten.' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
 
-function fmtDate(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' });
+function formatDate(date: string, time?: string | null): string {
+  const value = new Date(`${date}T${time ?? '12:00'}:00Z`);
+  if (Number.isNaN(value.getTime())) return date;
+  const day = value.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', weekday: 'short', day: '2-digit', month: '2-digit' });
+  return time ? `${day} · ${value.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' })} Uhr` : `${day} · Zeit noch offen`;
 }
 
-function fmtTime(time: string | null, date: string): string {
-  if (!time) return '—';
-  const iso = `${date}T${time}:00Z`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return time;
-  return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
-}
-
-export default async function BasketballPage() {
+async function MoreGames() {
   const leagues = await getBasketballFixtures();
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const available = leagues.filter(league => league.next.length > 0 || league.last.length > 0);
+  if (available.length === 0) return <p className="mt-4 text-sm leading-relaxed text-slate-400">Für weitere Basketball-Ligen sind gerade keine Termine geladen. Die aktuellen Ergebnisse oben kannst du weiterhin ansehen.</p>;
+  return <div className="mt-4 space-y-5">{available.map(league => <section key={league.league.id} className="space-y-3">
+    <h2 className="text-base font-semibold text-slate-100">{league.league.name}</h2>
+    {league.next.length > 0 && <><p className="text-sm text-slate-400">Kommende Spiele</p><ul className="space-y-2">{league.next.map(game => <li key={game.id} className="rounded-lg border border-slate-800 bg-slate-950/50 p-3"><p className="text-xs text-cyan-200">{formatDate(game.date, game.time)}</p><p className="mt-1 text-sm text-slate-100">{game.homeTeam} <span className="text-slate-500">gegen</span> {game.awayTeam}</p>{game.venue && <p className="mt-1 text-xs text-slate-400">{game.venue}</p>}</li>)}</ul></>}
+    {league.last.length > 0 && <details className="rounded-lg border border-slate-800 p-3"><summary className="cursor-pointer text-sm text-slate-400">Letzte Ergebnisse</summary><ul className="mt-3 space-y-2">{league.last.map(game => <li key={game.id} className="border-t border-slate-800 pt-3"><p className="text-xs text-slate-500">{formatDate(game.date)}</p><p className="mt-1 text-sm text-slate-200">{game.homeTeam} <strong className="mx-1 font-mono text-white">{game.homeScore ?? '–'} : {game.awayScore ?? '–'}</strong> {game.awayTeam}</p></li>)}</ul></details>}
+  </section>)}<p className="text-xs leading-relaxed text-slate-500">Diese zusätzlichen Spielpläne kommen von TheSportsDB. Sie können unvollständig sein. Alle Zeiten sind für Deutschland angegeben.</p></div>;
+}
 
-  return (
-    <main className="mx-auto max-w-5xl space-y-6 p-4 md:space-y-8 md:p-6">
-      <Link href="/" className="inline-flex min-h-9 items-center gap-2 text-xs font-medium text-slate-500 transition hover:text-[#65e6ff]">
-        ← zurück zum Trading Desk
-      </Link>
-      <header className="relative overflow-hidden border-b border-white/10 pb-6 pt-2 sm:pb-8">
-        <p className="section-kicker text-[#65e6ff]">Sport / Basketball</p>
-        <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-white sm:text-5xl">NBA &amp; Basketball.</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">NBA-Ergebnisse von ESPN mit Aktualisierung alle 30 Sekunden. Ergänzende Spielpläne und Modell-Tendenzen von TheSportsDB, soweit verfügbar.</p>
-        <div className="mt-5 inline-flex items-center gap-2 border border-white/10 bg-white/[0.025] px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500"><span className="h-1 w-1 bg-[#65e6ff]" />Ergebnisse · Spielplan · Modell-Tendenzen</div>
-      </header>
-      <LiveScoreboard initialSport="basketball" />
-
-      {leagues.map((lf) => {
-        const today = lf.next.filter((f) => f.date === todayIso);
-        const rest = lf.next.filter((f) => f.date !== todayIso);
-        if (lf.next.length === 0 && lf.last.length === 0) return null;
-        return (
-          <section key={lf.league.id} className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-            <div className="flex items-baseline justify-between gap-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{lf.league.name}</h2>
-              <span className="text-[10px] text-slate-500">{lf.league.country} · {lf.next.length} anstehend</span>
-            </div>
-            {today.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-300">Heute</div>
-                <ul className="space-y-2">
-                  {today.map((f) => {
-                    const verdict = predictWinner({
-                      homeTeam: f.homeTeam,
-                      awayTeam: f.awayTeam,
-                      prediction: null,
-                      h2h: null,
-                      finishedPool: lf.last,
-                      sport: 'basketball'
-                    });
-                    return (
-                      <li key={f.id} className="space-y-1.5 rounded-md border border-amber-400/40 bg-amber-950/20 px-2.5 py-2">
-                        <div className="grid grid-cols-[auto_1fr_auto] gap-2 text-[11.5px]">
-                          <span className="font-mono text-[10px] text-amber-300">{fmtTime(f.time, f.date)}</span>
-                          <span className="text-slate-100">{f.homeTeam} <span className="text-slate-500">vs.</span> {f.awayTeam}</span>
-                          <span className="text-[9.5px] uppercase tracking-wider text-slate-500">{f.venue ?? ''}</span>
-                        </div>
-                        <WinnerVerdictCard verdict={verdict} homeTeam={f.homeTeam} awayTeam={f.awayTeam} showExtraTime />
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
-            {rest.length > 0 && (
-              <div className="space-y-1">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Demnächst</div>
-                <ul className="space-y-1">
-                  {rest.map((f) => (
-                    <li key={f.id} className="grid grid-cols-[auto_1fr_auto] gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
-                      <span className="font-mono text-[10px] text-slate-500">{fmtDate(f.date)} {fmtTime(f.time, f.date)}</span>
-                      <span className="text-slate-200">{f.homeTeam} vs. {f.awayTeam}</span>
-                      <span className="text-[9.5px] uppercase tracking-wider text-slate-500">{f.venue ?? ''}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {lf.last.length > 0 && (
-              <details>
-                <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300">
-                  ▸ Letzte {lf.last.length} Ergebnisse
-                </summary>
-                <ul className="mt-2 space-y-1">
-                  {lf.last.map((f) => (
-                    <li key={f.id} className="grid grid-cols-[auto_1fr_auto] gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
-                      <span className="font-mono text-[10px] text-slate-500">{fmtDate(f.date)}</span>
-                      <span className="text-slate-200">{f.homeTeam} {f.homeScore ?? '—'}:{f.awayScore ?? '—'} {f.awayTeam}</span>
-                      <span className="text-[9.5px] uppercase tracking-wider text-slate-500">{f.venue ?? ''}</span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
-          </section>
-        );
-      })}
-
-      <footer className="border-t border-slate-900 pt-4 text-[10px] leading-relaxed text-slate-600">
-        Datenquelle: TheSportsDB. Anstoßzeiten in Europe/Berlin. Aktualisierung alle 10 Minuten.
-      </footer>
-    </main>
-  );
+export default function BasketballPage() {
+  return <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
+    <Link href="/sport" className="inline-flex min-h-10 items-center text-sm text-slate-400 hover:text-cyan-200">← Alle Sportarten</Link>
+    <header className="space-y-3"><h1 className="text-3xl font-semibold text-white sm:text-5xl">Basketball</h1><p className="max-w-2xl text-sm leading-relaxed text-slate-400">NBA-Spielstände auf einen Blick. Weitere Ligen und Termine findest du unten.</p></header>
+    <LiveScoreboard initialSport="basketball" />
+    <details className="terminal-panel p-4 sm:p-5"><summary className="cursor-pointer text-sm font-medium text-slate-300">Weitere Ligen, Termine und Ergebnisse</summary><Suspense fallback={<p className="mt-4 text-sm text-slate-400">Spielplan wird geladen …</p>}><MoreGames /></Suspense></details>
+  </main>;
 }

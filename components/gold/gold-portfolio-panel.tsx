@@ -62,24 +62,24 @@ function nearestHistoricalPrice(history: HistoryPoint[], dateIso: string): numbe
   return null;
 }
 
-const UNIT_LABEL: Record<AmountUnit, string> = { gram: 'g', ounce: 'oz', kilogram: 'kg' };
+const UNIT_LABEL: Record<AmountUnit, string> = { gram: 'Gramm', ounce: 'Feinunzen', kilogram: 'Kilogramm' };
 const MODE_LABEL: Record<PurchasePriceMode, string> = {
-  'auto': 'Automatisch',
-  'total': 'Gesamtsumme USD',
-  'per-gram': 'USD/Gramm',
-  'per-ounce': 'USD/Unze'
+  'auto': 'Damals üblichen Goldpreis verwenden',
+  'total': 'Gesamter Kaufpreis ($)',
+  'per-gram': 'Kaufpreis pro Gramm ($)',
+  'per-ounce': 'Kaufpreis pro Feinunze ($)'
 };
 
 function fmtUsd(value: number | null, opts: { withSign?: boolean } = {}): string {
   if (value === null || !Number.isFinite(value)) return '—';
   const sign = opts.withSign && value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} $`;
+  return `${sign}${value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} $`;
 }
 
 function fmtPct(value: number | null, opts: { withSign?: boolean } = {}): string {
   if (value === null || !Number.isFinite(value)) return '—';
   const sign = opts.withSign && value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(2)} %`;
+  return `${sign}${value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`;
 }
 
 function pnlClass(value: number | null): string {
@@ -149,18 +149,18 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
     setFormError(null);
     const amount = Number.parseFloat(formAmount.replace(',', '.'));
     if (!Number.isFinite(amount) || amount <= 0) {
-      setFormError('Bitte gültige Menge eintragen.');
+      setFormError('Trage eine Goldmenge größer als null ein.');
       return;
     }
     if (!Number.isFinite(formPromille) || formPromille <= 0 || formPromille > 1000) {
-      setFormError('Feingehalt muss zwischen 1 und 1000 Promille liegen.');
+      setFormError('Wähle den Goldanteil, zum Beispiel 585 für 58,5 % Gold.');
       return;
     }
     const priceNum = Number.parseFloat(formPrice.replace(',', '.'));
     const feesNum = Number.parseFloat(formFees.replace(',', '.'));
     const spreadNum = Number.parseFloat(formSpread.replace(',', '.'));
     const payload = {
-      label: formLabel.trim() || 'Position',
+      label: formLabel.trim() || 'Goldkauf',
       purchaseDate: formDate,
       amount,
       amountUnit: formUnit,
@@ -206,19 +206,18 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
     <section className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-300">📒 Gold-Portfolio (lokal)</h3>
-          <p className="mt-1 text-[11px] leading-snug text-slate-400">
-            Mehrere Käufe getrennt speichern. Alles bleibt nur in deinem Browser — kein Server, kein Account.
-            Steuer-Status pro Position nach §23 EStG.
+          <h3 className="text-lg font-semibold text-amber-300">Deine gespeicherten Goldkäufe</h3>
+          <p className="mt-1 text-sm leading-relaxed text-slate-400">
+            Speichere deine Barren, Münzen oder Schmuckstücke und sieh ihren gemeinsamen Wert. Die Liste bleibt auf diesem Gerät in diesem Browser. Alle Geldbeträge sind in US-Dollar ($).
           </p>
         </div>
         {holdings.length > 0 && (
           <button
             type="button"
             onClick={downloadCsv}
-            className="shrink-0 rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1 text-[10.5px] font-semibold text-slate-200 transition hover:border-amber-400/50 hover:text-amber-200"
+            className="shrink-0 rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1 text-sm font-semibold text-slate-200 transition hover:border-amber-400/50 hover:text-amber-200"
           >
-            ⬇ CSV-Export
+            Als Tabelle herunterladen
           </button>
         )}
       </header>
@@ -226,39 +225,39 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
       {holdings.length > 0 && <GoldPortfolioSummary summary={summary} />}
 
       {holdings.length === 0 && (
-        <p className="rounded-lg border border-slate-700/60 bg-slate-950/40 p-3 text-[11px] leading-snug text-slate-400">
-          Noch keine Position gespeichert. Trag unten dein Gold ein — sobald gespeichert, läuft das Aggregat oben durch.
+        <p className="rounded-lg border border-slate-700/60 bg-slate-950/40 p-3 text-sm leading-relaxed text-slate-400">
+          Deine Liste ist noch leer. Trage unten deinen ersten Goldkauf ein. Danach siehst du hier den Gesamtwert.
         </p>
       )}
 
       {holdings.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 text-[10.5px] text-slate-400">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
           <label className="flex items-center gap-1">
             Sortieren:
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as PositionSortKey)}
-              className="rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-[10.5px] text-slate-200 focus:border-amber-400 focus:outline-none"
+              className="rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-sm text-slate-200 focus:border-amber-400 focus:outline-none"
             >
               <option value="purchase-date-desc">Datum, neuest zuerst</option>
               <option value="purchase-date-asc">Datum, ältest zuerst</option>
               <option value="value-desc">aktueller Wert, höchst zuerst</option>
               <option value="value-asc">aktueller Wert, niedrigst zuerst</option>
-              <option value="pnl-desc">PnL, höchst zuerst</option>
-              <option value="pnl-asc">PnL, niedrigst zuerst</option>
+              <option value="pnl-desc">Gewinn, höchst zuerst</option>
+              <option value="pnl-asc">Gewinn, niedrigst zuerst</option>
               <option value="label-asc">Bezeichnung, A–Z</option>
             </select>
           </label>
           <label className="flex items-center gap-1">
-            Steuer-Status:
+            Besitzdauer:
             <select
               value={taxFilter}
               onChange={(e) => setTaxFilter(e.target.value as TaxFilter)}
-              className="rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-[10.5px] text-slate-200 focus:border-amber-400 focus:outline-none"
+              className="rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-sm text-slate-200 focus:border-amber-400 focus:outline-none"
             >
               <option value="all">alle</option>
-              <option value="tax-free">nur steuerfrei (§23 EStG)</option>
-              <option value="taxable">nur noch steuerpflichtig</option>
+              <option value="tax-free">mindestens 1 Jahr</option>
+              <option value="taxable">weniger als 1 Jahr</option>
             </select>
           </label>
           <span className="ml-auto font-mono text-[10px] text-slate-500">
@@ -268,8 +267,8 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
       )}
 
       {holdings.length > 0 && visiblePositions.length === 0 && (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-3 text-[11px] leading-snug text-amber-100">
-          Keine Position passt zum aktiven Filter. Filter zurücksetzen oder anderen Steuer-Status wählen.
+        <p className="rounded-lg border border-amber-500/30 bg-amber-950/15 p-3 text-sm leading-relaxed text-amber-100">
+          Kein Goldkauf passt zu dieser Auswahl. Wähle bei der Besitzdauer „alle“.
         </p>
       )}
 
@@ -278,25 +277,25 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
           {visiblePositions.map((p) => {
             const tax = p.taxStatus;
             return (
-              <li key={p.input.id} className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
+              <li key={p.input.id} className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-sm">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-1.5">
                     <span className="truncate font-semibold text-slate-100">{p.input.label}</span>
                     <span className="font-mono text-[9.5px] text-slate-500">
-                      {p.input.amount} {UNIT_LABEL[p.input.amountUnit]} · {p.input.purityPromille}/1000 · {p.input.purchaseDate}
+                      {p.input.amount} {UNIT_LABEL[p.input.amountUnit]} · {(p.input.purityPromille / 10).toLocaleString('de-DE')} % Gold · {new Date(`${p.input.purchaseDate}T00:00:00`).toLocaleDateString('de-DE')}
                     </span>
                     <span className={`rounded border px-1 py-0 text-[9px] font-bold uppercase tracking-wider ${tax.isTaxFree ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-200' : 'border-amber-400/40 bg-amber-500/10 text-amber-200'}`}>
-                      {tax.isTaxFree ? '§23 steuerfrei' : `${tax.daysToTaxFree}d bis steuerfrei`}
+                      {tax.isTaxFree ? 'Seit mindestens 1 Jahr' : `Noch ${tax.daysToTaxFree} Tage bis 1 Jahr`}
                     </span>
                   </div>
-                  <div className="mt-0.5 grid grid-cols-3 gap-2 text-[10px] text-slate-400">
-                    <div>Einstand: <span className="font-mono text-slate-200">{fmtUsd(p.purchaseValue)}</span></div>
+                  <div className="mt-0.5 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3 text-slate-400">
+                    <div>Bezahlt: <span className="font-mono text-slate-200">{fmtUsd(p.purchaseValue)}</span></div>
                     <div>Aktuell: <span className="font-mono text-slate-200">{fmtUsd(p.currentValue)}</span></div>
-                    <div>PnL: <span className={`font-mono ${pnlClass(p.absolutePnL)}`}>{fmtUsd(p.absolutePnL, { withSign: true })}</span> <span className={`font-mono ${pnlClass(p.percentPnL)}`}>({fmtPct(p.percentPnL, { withSign: true })})</span></div>
+                    <div>Unterschied: <span className={`font-mono ${pnlClass(p.absolutePnL)}`}>{fmtUsd(p.absolutePnL, { withSign: true })}</span> <span className={`font-mono ${pnlClass(p.percentPnL)}`}>({fmtPct(p.percentPnL, { withSign: true })})</span></div>
                   </div>
                   {!p.hasCompleteData && (
                     <p className="mt-1 text-[10px] text-amber-300">
-                      Unvollständig — kein historischer Goldpreis für dieses Kaufdatum. Manuellen Kaufpreis ergänzen, um diese Position in die Summe aufzunehmen.
+                      Für diesen Kauf fehlt ein Preis. Ergänze ihn über „Bearbeiten“, damit er beim Gesamtwert mitgerechnet wird.
                     </p>
                   )}
                 </div>
@@ -309,14 +308,14 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
                     className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-300 hover:border-amber-400/50 hover:text-amber-200"
                     aria-label={`${p.input.label} bearbeiten`}
                   >
-                    ✎ bearbeiten
+                    Bearbeiten
                   </button>
                   <button
                     onClick={() => removeGoldHolding(p.input.id)}
                     className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-300 hover:border-rose-400/50 hover:text-rose-200"
                     aria-label={`${p.input.label} entfernen`}
                   >
-                    × entfernen
+                    Entfernen
                   </button>
                 </div>
               </li>
@@ -325,124 +324,42 @@ export function GoldPortfolioPanel({ history, currentGoldPricePerOz, todayIso, m
         </ul>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-2 rounded-lg border border-slate-700 bg-slate-950/40 p-3">
+      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-slate-700 bg-slate-950/40 p-4">
         <div className="flex items-baseline justify-between gap-2">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
-            {editingId !== null ? 'Position bearbeiten' : 'Position hinzufügen'}
+          <h4 className="text-base font-semibold text-white">{editingId !== null ? 'Goldkauf bearbeiten' : 'Einen Goldkauf hinzufügen'}</h4>
+          {editingId !== null && <button type="button" onClick={cancelEdit} className="text-sm text-slate-400 hover:text-rose-200">Abbrechen</button>}
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label className="text-sm text-slate-300">Wie möchtest du ihn nennen?
+            <input type="text" value={formLabel} onChange={(e) => setFormLabel(e.target.value)} placeholder="Zum Beispiel: Goldmünze" className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none" />
+          </label>
+          <label className="text-sm text-slate-300">Wann hast du gekauft?
+            <input type="date" value={formDate} max={todayIso} onChange={(e) => setFormDate(e.target.value)} className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none" />
+          </label>
+          <label className="text-sm text-slate-300">Wie viel Gold hast du?
+            <span className="mt-2 flex gap-2"><input type="text" inputMode="decimal" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} placeholder="Menge" className="block min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none" /><select value={formUnit} onChange={(e) => setFormUnit(e.target.value as AmountUnit)} className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2.5 text-sm text-white focus:border-emerald-400 focus:outline-none" aria-label="Einheit der Goldmenge"><option value="gram">Gramm</option><option value="ounce">Feinunzen</option><option value="kilogram">Kilogramm</option></select></span>
+          </label>
+          <label className="text-sm text-slate-300">Goldanteil (oft als Zahl eingeprägt)
+            <select value={formPromille} onChange={(e) => setFormPromille(Number(e.target.value))} className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none">{ALLOY_OPTIONS.map((alloy) => <option key={alloy.promille} value={alloy.promille}>{alloy.promille}er Gold · {(alloy.promille / 10).toLocaleString('de-DE')} % Gold</option>)}</select>
+          </label>
+          <label className="text-sm text-slate-300">Wie gibst du deinen Kaufpreis an?
+            <select value={formMode} onChange={(e) => setFormMode(e.target.value as PurchasePriceMode)} className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none">{(Object.keys(MODE_LABEL) as PurchasePriceMode[]).map((mode) => <option key={mode} value={mode}>{MODE_LABEL[mode]}</option>)}</select>
+          </label>
+          {formMode !== 'auto' && <label className="text-sm text-slate-300">Dein Kaufpreis in US-Dollar ($)
+            <input type="text" inputMode="decimal" value={formPrice} onChange={(e) => setFormPrice(e.target.value)} placeholder="Kaufpreis" className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none" />
+          </label>}
+        </div>
+        <details className="rounded-lg border border-slate-800 p-3">
+          <summary className="cursor-pointer text-sm text-slate-300">Kaufkosten und Verkaufsabzug ergänzen</summary>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="text-sm text-slate-300">Zusätzliche Kaufkosten ($, optional)<input type="text" inputMode="decimal" value={formFees} onChange={(e) => setFormFees(e.target.value)} placeholder="0" className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none" /></label>
+            <label className="text-sm text-slate-300">Abzug beim Verkauf (%, optional)<input type="text" inputMode="decimal" value={formSpread} onChange={(e) => setFormSpread(e.target.value)} placeholder="Zum Beispiel: 2,5" className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white focus:border-emerald-400 focus:outline-none" /></label>
           </div>
-          {editingId !== null && (
-            <button
-              type="button"
-              onClick={cancelEdit}
-              className="rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-[9.5px] text-slate-400 hover:text-rose-200"
-            >
-              Bearbeitung abbrechen
-            </button>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <input
-            type="text"
-            value={formLabel}
-            onChange={(e) => setFormLabel(e.target.value)}
-            placeholder="Bezeichnung"
-            className="col-span-2 rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
-            aria-label="Bezeichnung"
-          />
-          <input
-            type="date"
-            value={formDate}
-            max={todayIso}
-            onChange={(e) => setFormDate(e.target.value)}
-            className="rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
-            aria-label="Kaufdatum"
-          />
-          <div className="flex gap-1">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={formAmount}
-              onChange={(e) => setFormAmount(e.target.value)}
-              placeholder="Menge"
-              className="block w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-white focus:border-emerald-400 focus:outline-none"
-              aria-label="Menge"
-            />
-            <select
-              value={formUnit}
-              onChange={(e) => setFormUnit(e.target.value as AmountUnit)}
-              className="shrink-0 rounded border border-slate-700 bg-slate-950 px-1 py-1.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
-              aria-label="Einheit"
-            >
-              <option value="gram">g</option>
-              <option value="ounce">oz</option>
-              <option value="kilogram">kg</option>
-            </select>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <select
-            value={formPromille}
-            onChange={(e) => setFormPromille(Number(e.target.value))}
-            className="rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
-            aria-label="Legierung"
-          >
-            {ALLOY_OPTIONS.map((a) => (
-              <option key={a.promille} value={a.promille}>{a.label}</option>
-            ))}
-          </select>
-          <select
-            value={formMode}
-            onChange={(e) => setFormMode(e.target.value as PurchasePriceMode)}
-            className="rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white focus:border-emerald-400 focus:outline-none"
-            aria-label="Kaufpreis-Modus"
-          >
-            {(Object.keys(MODE_LABEL) as PurchasePriceMode[]).map((m) => (
-              <option key={m} value={m}>{MODE_LABEL[m]}</option>
-            ))}
-          </select>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={formPrice}
-            onChange={(e) => setFormPrice(e.target.value)}
-            placeholder={formMode === 'auto' ? '— (auto)' : 'Kaufpreis'}
-            disabled={formMode === 'auto'}
-            className="rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-white focus:border-emerald-400 focus:outline-none disabled:opacity-50"
-            aria-label="Kaufpreis"
-          />
-          <div className="flex gap-1">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={formFees}
-              onChange={(e) => setFormFees(e.target.value)}
-              placeholder="Gebühren"
-              className="block w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-white focus:border-emerald-400 focus:outline-none"
-              aria-label="Gebühren"
-            />
-            <input
-              type="text"
-              inputMode="decimal"
-              value={formSpread}
-              onChange={(e) => setFormSpread(e.target.value)}
-              placeholder="Spread %"
-              className="block w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-white focus:border-emerald-400 focus:outline-none"
-              aria-label="Verkaufsspread"
-            />
-          </div>
-        </div>
-        {formError && <p className="text-[11px] text-rose-300">{formError}</p>}
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-[10px] leading-snug text-slate-500">
-            Speichert nur in deinem Browser. Steuerhinweis: keine Steuerberatung — bei Unsicherheit Steuerberater fragen.
-          </p>
-          <button
-            type="submit"
-            className="shrink-0 rounded-md border border-emerald-400/50 bg-emerald-500/20 px-3 py-1.5 text-[12px] font-semibold text-emerald-100 transition hover:bg-emerald-500/30"
-          >
-            {editingId !== null ? '✓ Änderungen speichern' : '+ speichern'}
-          </button>
-        </div>
+          <p className="mt-3 text-xs leading-relaxed text-slate-400">Manche Händler zahlen weniger als den Börsenwert. Du kannst diesen Unterschied hier als Prozentwert eintragen.</p>
+        </details>
+        <p className="text-xs leading-relaxed text-slate-400">Eine Feinunze entspricht etwa 31,1 Gramm. Der Rechner verwendet nur den reinen Goldanteil.</p>
+        {formError && <p className="text-sm text-rose-300">{formError}</p>}
+        <button type="submit" className="terminal-button">{editingId !== null ? 'Änderungen speichern' : 'Goldkauf speichern'}</button>
       </form>
     </section>
   );

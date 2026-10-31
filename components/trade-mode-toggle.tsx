@@ -38,7 +38,7 @@ export function TradeModeToggle() {
         aria-pressed={mode === 'swing'}
         className={`px-3 py-1.5 transition ${mode === 'swing' ? 'bg-emerald-500/20 text-emerald-200' : 'bg-slate-900/60 text-slate-400 hover:text-slate-200'}`}
       >
-        Swing
+        Ein paar Tage
       </button>
       <button
         type="button"
@@ -46,7 +46,7 @@ export function TradeModeToggle() {
         aria-pressed={mode === 'daytrade'}
         className={`border-l border-slate-700 px-3 py-1.5 transition ${mode === 'daytrade' ? 'bg-emerald-500/20 text-emerald-200' : 'bg-slate-900/60 text-slate-400 hover:text-slate-200'}`}
       >
-        Daytrading
+        Nur heute
       </button>
     </div>
   );

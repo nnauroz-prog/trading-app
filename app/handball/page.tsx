@@ -1,83 +1,24 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { getHandballFixtures } from '@/lib/sport/multi-sport-fetcher';
 
-export const metadata: Metadata = {
-  title: 'Handball · HBL, EHF Champions League, ASOBAL, LNH',
-  description: 'Handball-Tageswerte fuer Bundesliga, EHF Champions League, ASOBAL und LNH. Modell-Tendenz pro Spiel, keine Wettempfehlung.'
-};
-
+export const metadata: Metadata = { title: 'Handball · Termine und Ergebnisse', description: 'Kommende Handball-Spiele und die letzten Ergebnisse.' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
 
-function fmtDate(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' });
+function formatDate(date: string, time?: string | null): string {
+  const value = new Date(`${date}T${time ?? '12:00'}:00Z`);
+  if (Number.isNaN(value.getTime())) return date;
+  const day = value.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', weekday: 'short', day: '2-digit', month: '2-digit' });
+  return time ? `${day} · ${value.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' })} Uhr` : `${day} · Zeit noch offen`;
 }
 
-function fmtTime(time: string | null, date: string): string {
-  if (!time) return '—';
-  const iso = `${date}T${time}:00Z`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return time;
-  return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
+async function Games() {
+  const leagues = (await getHandballFixtures()).filter(league => league.next.length > 0 || league.last.length > 0);
+  if (leagues.length === 0) return <section className="terminal-panel p-5"><h2 className="text-lg font-semibold text-white">Gerade sind keine Spiele geladen.</h2><p className="mt-2 text-sm leading-relaxed text-slate-400">Versuch es später noch einmal. Einen laufend aktualisierten Handball-Spielstand können wir derzeit nicht anbieten.</p></section>;
+  return <div className="space-y-5">{leagues.map(league => <section key={league.league.id} className="terminal-panel space-y-4 p-5"><h2 className="text-lg font-semibold text-white">{league.league.name}</h2>{league.next.length > 0 && <><h3 className="text-sm text-slate-400">Kommende Spiele</h3><ul className="space-y-3">{league.next.map(game => <li key={game.id} className="rounded-lg border border-slate-800 p-3"><p className="text-xs text-cyan-200">{formatDate(game.date, game.time)}</p><p className="mt-1 text-sm text-slate-100">{game.homeTeam} <span className="text-slate-500">gegen</span> {game.awayTeam}</p></li>)}</ul></>}{league.last.length > 0 && <details className="rounded-lg border border-slate-800 p-3"><summary className="cursor-pointer text-sm text-slate-400">Letzte Ergebnisse</summary><ul className="mt-3 space-y-3">{league.last.map(game => <li key={game.id} className="border-t border-slate-800 pt-3"><p className="text-xs text-slate-500">{formatDate(game.date)}</p><p className="mt-1 text-sm text-slate-100">{game.homeTeam} <strong className="mx-1 font-mono">{game.homeScore ?? '–'} : {game.awayScore ?? '–'}</strong> {game.awayTeam}</p></li>)}</ul></details>}</section>)}<p className="text-xs text-slate-500">Die Spielpläne kommen von TheSportsDB und können unvollständig sein. Alle Zeiten sind für Deutschland angegeben.</p></div>;
 }
-
-export default async function HandballPage() {
-  const leagues = await getHandballFixtures();
-  const todayIso = new Date().toISOString().slice(0, 10);
-
-  return (
-    <main className="mx-auto max-w-4xl space-y-5 p-4 md:p-6">
-      <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-emerald-300">
-        ← zurück zum Trading Desk
-      </Link>
-      <header className="space-y-1">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Handball</div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">HBL, EHF Champions League, ASOBAL, LNH</h1>
-        <p className="text-sm text-slate-400">Live-Spielpläne der wichtigsten Handball-Ligen.</p>
-      </header>
-
-      {leagues.every((l) => l.next.length === 0 && l.last.length === 0) && (
-        <section className="rounded-2xl border border-amber-500/30 bg-amber-950/15 p-4 text-[11.5px] leading-snug text-amber-100/85">
-          Aktuell keine Handball-Daten verfügbar. TheSportsDB pflegt Handball lückenhaft — in der Saison (Sept–Mai) füllt es sich.
-        </section>
-      )}
-
-      {leagues.map((lf) => {
-        if (lf.next.length === 0 && lf.last.length === 0) return null;
-        const today = lf.next.filter((f) => f.date === todayIso);
-        const rest = lf.next.filter((f) => f.date !== todayIso);
-        return (
-          <section key={lf.league.id} className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4">
-            <div className="flex items-baseline justify-between gap-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{lf.league.name}</h2>
-              <span className="text-[10px] text-slate-500">{lf.league.country} · {lf.next.length} anstehend</span>
-            </div>
-            {today.length > 0 && (
-              <ul className="space-y-1">
-                {today.map((f) => (
-                  <li key={f.id} className="grid grid-cols-[auto_1fr] gap-2 rounded-md border border-amber-400/40 bg-amber-950/20 px-2.5 py-1.5 text-[11.5px]">
-                    <span className="font-mono text-[10px] text-amber-300">{fmtTime(f.time, f.date)}</span>
-                    <span className="text-slate-100">{f.homeTeam} <span className="text-slate-500">vs.</span> {f.awayTeam}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {rest.length > 0 && (
-              <ul className="space-y-1">
-                {rest.map((f) => (
-                  <li key={f.id} className="grid grid-cols-[auto_1fr] gap-2 rounded-md border border-slate-800 bg-slate-950/40 px-2.5 py-1.5 text-[11px]">
-                    <span className="font-mono text-[10px] text-slate-500">{fmtDate(f.date)} {fmtTime(f.time, f.date)}</span>
-                    <span className="text-slate-200">{f.homeTeam} vs. {f.awayTeam}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        );
-      })}
-    </main>
-  );
+export default function HandballPage() {
+  return <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-6"><Link href="/sport" className="inline-flex min-h-10 items-center text-sm text-slate-400 hover:text-cyan-200">← Alle Sportarten</Link><header className="space-y-3"><h1 className="text-3xl font-semibold text-white sm:text-5xl">Handball</h1><p className="max-w-xl text-sm leading-relaxed text-slate-400">Wer spielt als Nächstes? Hier findest du Termine und letzte Ergebnisse, soweit sie verfügbar sind.</p></header><Suspense fallback={<p className="text-sm text-slate-400">Spielplan wird geladen …</p>}><Games /></Suspense></main>;
 }

@@ -58,8 +58,8 @@ export function evaluateQuickMoneyPlan(input: QuickMoneyPlanInput): MoneyPlan {
     'Breit gestreut bedeutet mehrere Märkte und Unternehmen statt eines einzelnen Werts. Geld, das bald gebraucht wird, bleibt liquide.',
     'Ein Lernbudget ist optional. Es ist kein aktuelles Kauf-Signal und darf bis zum Totalverlust verloren gehen; ohne geeignetes Signal bleibt es verfügbar.'
   ];
-  if (errors.length) return { status: 'missing', title: 'Dein Plan wartet auf dich.', nextStep: 'Ergänze kurz deine Angaben, dann können deine Helfer rechnen.', amount, agents, allocations: [], errors, assumptions };
-  if (!safetyReady) return { status: 'attention', title: input.reserveReady === true ? 'Dein erster Schritt: teure Schulden klären.' : 'Dein erster Schritt: den Puffer sichern.', nextStep: `Halte die ${euro(amount!)} vorerst verfügbar. Kläre zuerst Rücklage, Rechnungen und teure Schulden – erst der danach freie Betrag gehört in einen Anlageplan.`, amount, agents, allocations: [], errors: [], assumptions };
+  if (errors.length) return { status: 'missing', title: 'Noch eine Angabe fehlt.', nextStep: 'Ergänze deine Angaben. Danach siehst du die Aufteilung.', amount, agents, allocations: [], errors, assumptions };
+  if (!safetyReady) return { status: 'attention', title: input.reserveReady === true ? 'Kläre zuerst deine teuren Schulden.' : 'Lege zuerst Geld für Notfälle zurück.', nextStep: `Lass die ${euro(amount!)} vorerst auf einem Konto, an das du schnell herankommst. Bezahle offene Rechnungen, kümmere dich um teure Schulden und lege Geld für Notfälle zurück. Verteile danach nur das Geld, das übrig bleibt.`, amount, agents, allocations: [], errors: [], assumptions };
 
   const years = input.horizonYears!;
   let diversified = 0;
@@ -75,10 +75,10 @@ export function evaluateQuickMoneyPlan(input: QuickMoneyPlanInput): MoneyPlan {
   const learningCents = Math.floor(cents * learning / 100);
   const cashCents = cents - investmentCents - learningCents;
   const allocations: MoneyAllocation[] = [
-    { id: 'cash', label: 'Verfügbar halten', amount: cashCents / 100, percentage: 100 - diversified - learning, explanation: years <= 3 ? 'Für dein nahes Ziel liquide halten. Prüfe Zinsen, Zugang und Konditionen eines passenden Kontos.' : 'Der flexible Teil deines Plans. Er steht für absehbare Ausgaben und als Ruhepol bereit.' },
-    ...(investmentCents > 0 ? [{ id: 'diversified' as const, label: 'Breit gestreut anlegen', amount: investmentCents / 100, percentage: diversified, explanation: 'Als Ausgangspunkt für die Auswahl breit gestreuter, kostengünstiger Anlagen. Prüfe Produkte, Kosten und Verlustrisiko vor dem Kauf.' }] : []),
-    ...(learningCents > 0 ? [{ id: 'learning' as const, label: 'Optionales Lernbudget', amount: learningCents / 100, percentage: learning, explanation: 'Höchstens dieser Betrag für spekulative Ideen wie Krypto. Nicht einsetzen, wenn du das Risiko nicht tragen möchtest oder kein geeignetes Signal vorliegt.' }] : [])
+    { id: 'cash', label: 'Auf dem Konto lassen', amount: cashCents / 100, percentage: 100 - diversified - learning, explanation: years <= 3 ? 'Du brauchst das Geld bald. Vergleiche Konten, bei denen du schnell an dein Geld kommst.' : 'Diesen Teil kannst du verfügbar halten. Vergleiche Zinsen und prüfe, wie schnell du an dein Geld kommst.' },
+    ...(investmentCents > 0 ? [{ id: 'diversified' as const, label: 'Für später anlegen', amount: investmentCents / 100, percentage: diversified, explanation: 'Zum Beispiel über einen Fonds, der viele Unternehmen enthält. Der Wert kann steigen und fallen. Vergleiche vor dem Kauf die Kosten.' }] : []),
+    ...(learningCents > 0 ? [{ id: 'learning' as const, label: 'Optional: riskante Anlagen', amount: learningCents / 100, percentage: learning, explanation: 'Höchstens dieser Betrag für riskante Ideen wie Krypto. Du kannst ihn vollständig verlieren. Du kannst diesen Teil auch auf dem Konto lassen.' }] : [])
   ];
-  return { status: 'ready', title: years <= 3 ? 'Dein Ziel braucht Bewegungsfreiheit.' : 'Dein Geld bekommt einen klaren Platz.', nextStep: years <= 3 ? `Halte die ${euro(amount!)} für dein Ziel verfügbar. Du musst dafür kein Marktrisiko eingehen.` : `Starte mit der Aufteilung unten. Wähle passende Produkte in Ruhe; die App führt keine Käufe aus.`, amount, agents, allocations, errors: [], assumptions };
+  return { status: 'ready', title: years <= 3 ? 'Lass dein Geld für dein Ziel verfügbar.' : 'So kannst du dein Geld aufteilen.', nextStep: years <= 3 ? `Du brauchst das Geld in den nächsten Jahren. Lass die ${euro(amount!)} auf einem passenden Konto, damit ein Kursverlust deine Pläne nicht verzögert.` : `Die Beträge unten sind ein Vorschlag für dein freies Geld. Du wählst selbst, wo du es lässt oder anlegst.`, amount, agents, allocations, errors: [], assumptions };
 }
 export const evaluateMoneyPlan = evaluateQuickMoneyPlan;
