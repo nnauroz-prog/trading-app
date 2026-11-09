@@ -2,7 +2,6 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { BottomNav } from '@/components/bottom-nav';
 import { TopNav } from '@/components/top-nav';
-import { SiteFooter } from '@/components/site-footer';
 import { SkipToContent } from '@/components/skip-to-content';
 
 export const metadata: Metadata = {
@@ -72,7 +71,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <TopNav />
         <div className="app-workspace">
           <div id="main-content" tabIndex={-1}>{children}</div>
-          <SiteFooter />
         </div>
         <BottomNav />
       </body>
