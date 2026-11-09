@@ -6,6 +6,8 @@ import { STOCK_INDEX_SYMBOLS, STOCK_UNIVERSE, type StockSymbol } from '@/lib/mar
 import { fetchManyQuotes } from '@/lib/market/yahoo-quote';
 import { marketAverageChangePct } from '@/lib/market/stock-setup-score';
 import { getStockSafetyScan } from '@/lib/market/stock-safety-scan';
+import { conveneCouncil } from '@/lib/analysis/advisory-council';
+import { AdvisoryCouncilCard } from '@/components/advisory-council-card';
 import { getStockSafetyBacktestSummary } from '@/lib/market/stock-safety-backtest-scan';
 import { evaluateInstrumentPrecisionPick } from '@/lib/analysis/instrument-precision-gate';
 
@@ -36,6 +38,22 @@ export default async function AktienPage() {
   const candidates = reviewed.filter(p => p.verdict === 'FREIGABE').slice(0, 3);
   const liveCount = stocks.filter(q => q !== null).length;
   const popular = STOCK_UNIVERSE.slice(0, 7);
+  // Analysten-Rat fuer Aktien: Marktumfeld aus der Tagesbewegung der
+  // beobachteten Werte, Top-Kandidat aus der Freigabe-Liste.
+  const top = candidates[0] ?? null;
+  const topQuote = top ? stocks.find(q => q?.symbol === top.symbol) ?? null : null;
+  const council = conveneCouncil({
+    dataAvailable: liveCount > 0,
+    hasOpportunity: top !== null,
+    primaryLabel: top ? `${top.name} — Kauf-Kandidat` : null,
+    primaryAssetClass: top ? 'Aktien' : null,
+    confidencePct: top ? 70 : null,
+    marketMood: marketTrend > 0.5 ? 'risk-on' : marketTrend < -0.5 ? 'risk-off' : 'neutral',
+    fearGreedValue: null,
+    crowdState: 'neutral',
+    crowdCautious: false,
+    recentChangePct: topQuote?.changePct ?? null
+  });
 
   return <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
     <Link href="/" className="text-sm text-slate-400 hover:text-cyan-200">← Zurück zu meinem Geld</Link>
@@ -54,6 +72,8 @@ export default async function AktienPage() {
           : 'Heute gibt es hier keinen klaren Kaufhinweis. Du musst deshalb nichts an deinem Geldplan ändern.'}</p>
       {candidates.length > 0 && <ul className="mt-4 flex flex-wrap gap-2">{candidates.map(candidate => <li key={candidate.symbol}><Link href={`/aktien/${encodeURIComponent(candidate.symbol)}`} className="terminal-button">{candidate.name}<ArrowUpRight size={14} /></Link></li>)}</ul>}
     </section>
+
+    <AdvisoryCouncilCard council={council} />
 
     <section className="terminal-panel p-5 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-white">Bekannte Unternehmen</h2><span className="text-xs text-slate-400">Kurs und Veränderung</span></div>

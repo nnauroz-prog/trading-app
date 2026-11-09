@@ -85,7 +85,7 @@ function sentimentAnalyst(i: CouncilInput): AgentVoice {
   if (i.crowdState === 'greed') {
     return { ...base, stance: 'caution', say: `Leichte Gier (Index ${fgText(i.fearGreedValue)}) — noch okay, aber nicht der Euphorie hinterherlaufen.` };
   }
-  return { ...base, stance: 'neutral', say: `Stimmung neutral (Index ${fgText(i.fearGreedValue)}) — kein Emotions-Extrem, das die Richtung vorgibt.` };
+  return { ...base, stance: 'neutral', say: i.fearGreedValue === null ? 'Keine Extrem-Stimmung erkennbar — die Emotion gibt keine Richtung vor.' : `Stimmung neutral (Index ${fgText(i.fearGreedValue)}) — kein Emotions-Extrem, das die Richtung vorgibt.` };
 }
 
 function disciplineCoach(i: CouncilInput): AgentVoice {
@@ -130,7 +130,7 @@ export function conveneCouncil(i: CouncilInput): CouncilResult {
       ? `Markt-Emotion: Gier (Index ${fgText(i.fearGreedValue)}) — Euphorie ist ein Warnsignal, kein Kaufsignal.`
       : (i.crowdState === 'fear' || (i.fearGreedValue ?? 100) <= 25)
         ? `Markt-Emotion: Angst (Index ${fgText(i.fearGreedValue)}) — oft die besseren Chancen, wenn das Setup stimmt.`
-        : `Markt-Emotion: ausgeglichen (Index ${fgText(i.fearGreedValue)}).`;
+        : i.fearGreedValue === null ? 'Markt-Emotion: ausgeglichen.' : `Markt-Emotion: ausgeglichen (Index ${fgText(i.fearGreedValue)}).`;
 
   const disciplineReminder = disciplineCoach(i).say;
 
