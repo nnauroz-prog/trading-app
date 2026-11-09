@@ -16,6 +16,9 @@ import { detectChaseSignals } from '@/lib/analysis/chase-detector';
 import { computeEventWindow } from '@/lib/calendar/event-window';
 import { listMacroEventsThisWeek } from '@/lib/calendar/macro-events';
 import { TOP_50 } from '@/lib/coin-universe';
+import { fetchFearGreed } from '@/lib/providers/sentiment-indicators';
+import { conveneCouncil } from '@/lib/analysis/advisory-council';
+import { AdvisoryCouncilCard } from '@/components/advisory-council-card';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
@@ -27,8 +30,8 @@ const price = (value: number) => `${value.toLocaleString('de-DE', { maximumSigni
 
 export default async function CryptoPage() {
   const mode = (await cookies()).get('trade-mode')?.value === 'daytrade' ? 'daytrade' : 'swing';
-  const [report, backtest, news, tickers] = await Promise.all([
-    getMasterSignal(mode), getBacktestSummary(), getCryptoNews(), fetchAllTickers()
+  const [report, backtest, news, tickers, fearGreed] = await Promise.all([
+    getMasterSignal(mode), getBacktestSummary(), getCryptoNews(), fetchAllTickers(), fetchFearGreed()
   ]);
   const sentiment = runSpaeher(news);
   const newsBySymbol = new Map(sentiment.perCoin.map(item => [item.coin.toUpperCase(), item]));
@@ -70,6 +73,22 @@ export default async function CryptoPage() {
       return ticker && Number.isFinite(ticker.price) && ticker.price > 0 ? [{ coin, ticker }] : [];
     });
 
+  // Analysten-Rat: Trend, Risiko, Markt-Emotion und Disziplin zu einer
+  // klaren Direktive — als zweite Meinung zu den Kaufsignalen.
+  const tradeSymbol = report.kind === 'trade' ? report.coin.symbol : null;
+  const council = conveneCouncil({
+    dataAvailable: report.kind === 'trade' || report.bestCandidate !== null || report.candidates.length > 0,
+    hasOpportunity: tradeSymbol !== null,
+    primaryLabel: tradeSymbol ? `${tradeSymbol} — Kauf-Setup` : null,
+    primaryAssetClass: tradeSymbol ? 'Krypto' : null,
+    confidencePct: report.kind === 'trade' ? report.confidence : null,
+    marketMood: report.marketMood,
+    fearGreedValue: fearGreed?.value ?? null,
+    crowdState: report.crowd.state,
+    crowdCautious: report.crowd.cautious,
+    recentChangePct: report.kind === 'trade' ? report.ticker.priceChangePct : null
+  });
+
   return <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
     <AutoRefresh intervalMs={30_000} />
     <header>
@@ -77,6 +96,7 @@ export default async function CryptoPage() {
       <p>Hier siehst du, ob ein Kauf gerade infrage kommt. Ein guter Grund zum Warten ist genauso wichtig.</p>
     </header>
     <CryptoBuySignals picks={picks} candidates={report.candidates} generatedAt={report.generatedAt} mode={mode} pausedReason={pausedReason} pricesAvailable={(tickers?.size ?? 0) > 0} />
+    <AdvisoryCouncilCard council={council} />
 
     {featured.length > 0 && <section aria-label="Aktuelle Kryptopreise" className="terminal-panel p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-white">Die bekanntesten Coins</h2>
